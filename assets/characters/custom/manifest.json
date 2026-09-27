@@ -1,0 +1,371 @@
+{
+  "canvas": [
+    32,
+    40
+  ],
+  "anchor": "semua layer 32x40, ditumpuk di posisi (0,0) yang sama",
+  "draw_order": [
+    "hair_back",
+    "body",
+    "head",
+    "eyes",
+    "mouth",
+    "blush",
+    "facial_hair",
+    "hair_front",
+    "brows",
+    "accessory",
+    "hat",
+    "item"
+  ],
+  "frame_offsets": {
+    "idle1": 0,
+    "idle2": "baris 0-26 turun 1px (kepala + bahu), baris 27+ diam",
+    "tap": "semua naik 2px, pakai ekspresi 'senang'"
+  },
+  "hat_hides_hair_above_row": {
+    "ikat_kepala": null,
+    "topi_kain": 12,
+    "toque_pendek": 11,
+    "toque_modern": 11,
+    "toque_empu": 11,
+    "topi_pet": 12
+  },
+  "colour_swaps": {
+    "skin": {
+      "default": "sawo_matang",
+      "keys": [
+        "s",
+        "S",
+        "l"
+      ],
+      "options": {
+        "kuning_langsat": {
+          "name": "Kuning langsat",
+          "replace": {
+            "#d99a6c": "#f1c79e",
+            "#b0714b": "#cf9a72",
+            "#f0bb8e": "#fbdcbc"
+          }
+        },
+        "sawo_matang": {
+          "name": "Sawo matang",
+          "replace": {
+            "#d99a6c": "#d99a6c",
+            "#b0714b": "#b0714b",
+            "#f0bb8e": "#f0bb8e"
+          }
+        },
+        "cokelat": {
+          "name": "Cokelat",
+          "replace": {
+            "#d99a6c": "#b5774a",
+            "#b0714b": "#8c5433",
+            "#f0bb8e": "#cf915f"
+          }
+        },
+        "gelap": {
+          "name": "Cokelat gelap",
+          "replace": {
+            "#d99a6c": "#8a5433",
+            "#b0714b": "#653a22",
+            "#f0bb8e": "#a5683f"
+          }
+        },
+        "pucat": {
+          "name": "Terang",
+          "replace": {
+            "#d99a6c": "#f7dcc6",
+            "#b0714b": "#dcb294",
+            "#f0bb8e": "#fff0e2"
+          }
+        }
+      },
+      "apply_to": "seluruh sprite (kulit juga ada di tangan & kaki)"
+    },
+    "hair_color": {
+      "default": "hitam",
+      "keys": [
+        "h",
+        "H"
+      ],
+      "options": {
+        "hitam": {
+          "name": "Hitam",
+          "replace": {
+            "#33242b": "#33242b",
+            "#56404a": "#56404a"
+          }
+        },
+        "cokelat_tua": {
+          "name": "Cokelat tua",
+          "replace": {
+            "#33242b": "#5a3a28",
+            "#56404a": "#80583c"
+          }
+        },
+        "uban": {
+          "name": "Uban",
+          "replace": {
+            "#33242b": "#8f8c96",
+            "#56404a": "#c4c2cc"
+          }
+        },
+        "pirang": {
+          "name": "Pirang (cat)",
+          "replace": {
+            "#33242b": "#c98b3a",
+            "#56404a": "#ecc06a"
+          }
+        },
+        "merah": {
+          "name": "Merah (cat)",
+          "replace": {
+            "#33242b": "#9c3b2e",
+            "#56404a": "#c9604a"
+          }
+        }
+      },
+      "apply_to": [
+        "hair_front",
+        "hair_back",
+        "brows",
+        "facial_hair"
+      ]
+    },
+    "hijab_color": {
+      "default": "hijau",
+      "keys": [
+        "i",
+        "I",
+        "j"
+      ],
+      "options": {
+        "hijau": {
+          "name": "Hijau",
+          "replace": {
+            "#5f8a5a": "#5f8a5a",
+            "#3f6040": "#3f6040",
+            "#86ad78": "#86ad78"
+          }
+        },
+        "merah_bata": {
+          "name": "Merah bata",
+          "replace": {
+            "#5f8a5a": "#b5553c",
+            "#3f6040": "#843826",
+            "#86ad78": "#d27a5c"
+          }
+        },
+        "biru": {
+          "name": "Biru",
+          "replace": {
+            "#5f8a5a": "#4f86a6",
+            "#3f6040": "#2e5570",
+            "#86ad78": "#7fb0cc"
+          }
+        },
+        "krem": {
+          "name": "Krem",
+          "replace": {
+            "#5f8a5a": "#e3d3b0",
+            "#3f6040": "#b8a57f",
+            "#86ad78": "#f6ecd4"
+          }
+        },
+        "ungu": {
+          "name": "Ungu",
+          "replace": {
+            "#5f8a5a": "#7b4fb0",
+            "#3f6040": "#4d2d78",
+            "#86ad78": "#a07ad0"
+          }
+        }
+      },
+      "apply_to": [
+        "hair_front"
+      ]
+    }
+  },
+  "layers": {
+    "head": "parts/base/head.png",
+    "blush": "parts/base/blush.png"
+  },
+  "options": {
+    "hair": {
+      "pendek": {
+        "name": "Pendek",
+        "front": "parts/hair/pendek.png"
+      },
+      "cepak": {
+        "name": "Cepak",
+        "front": "parts/hair/cepak.png"
+      },
+      "belah_tengah": {
+        "name": "Belah tengah",
+        "front": "parts/hair/belah_tengah.png"
+      },
+      "jambul": {
+        "name": "Jambul",
+        "front": "parts/hair/jambul.png"
+      },
+      "gondrong": {
+        "name": "Gondrong",
+        "front": "parts/hair/gondrong.png",
+        "back": "parts/hair/gondrong_back.png"
+      },
+      "cepol": {
+        "name": "Cepol",
+        "front": "parts/hair/cepol.png"
+      },
+      "keriting": {
+        "name": "Keriting",
+        "front": "parts/hair/keriting.png"
+      },
+      "botak": {
+        "name": "Botak",
+        "front": "parts/hair/botak.png"
+      },
+      "kerudung": {
+        "name": "Kerudung",
+        "front": "parts/hair/kerudung.png"
+      }
+    },
+    "eyes": {
+      "bulat": {
+        "name": "Bulat",
+        "layer": "parts/eyes/bulat.png"
+      },
+      "berbinar": {
+        "name": "Berbinar",
+        "layer": "parts/eyes/berbinar.png"
+      },
+      "sipit": {
+        "name": "Sipit",
+        "layer": "parts/eyes/sipit.png"
+      },
+      "sayu": {
+        "name": "Sayu",
+        "layer": "parts/eyes/sayu.png"
+      },
+      "tajam": {
+        "name": "Tajam",
+        "layer": "parts/eyes/tajam.png"
+      }
+    },
+    "brows": {
+      "none": {
+        "name": "Tanpa alis",
+        "layer": null
+      },
+      "tebal": {
+        "name": "Tebal",
+        "layer": "parts/brows/tebal.png"
+      },
+      "galak": {
+        "name": "Galak",
+        "layer": "parts/brows/galak.png"
+      },
+      "ramah": {
+        "name": "Ramah",
+        "layer": "parts/brows/ramah.png"
+      }
+    },
+    "mouth": {
+      "senyum": {
+        "name": "Senyum",
+        "layer": "parts/mouth/senyum.png"
+      },
+      "datar": {
+        "name": "Datar",
+        "layer": "parts/mouth/datar.png"
+      },
+      "nyengir": {
+        "name": "Nyengir",
+        "layer": "parts/mouth/nyengir.png"
+      },
+      "ketawa": {
+        "name": "Ketawa",
+        "layer": "parts/mouth/ketawa.png"
+      },
+      "kaget": {
+        "name": "Kaget",
+        "layer": "parts/mouth/kaget.png"
+      },
+      "cemberut": {
+        "name": "Cemberut",
+        "layer": "parts/mouth/cemberut.png"
+      }
+    },
+    "facial_hair": {
+      "none": {
+        "name": "Tanpa",
+        "layer": null
+      },
+      "kumis_tipis": {
+        "name": "Kumis tipis",
+        "layer": "parts/facial_hair/kumis_tipis.png"
+      },
+      "kumis_baplang": {
+        "name": "Kumis baplang",
+        "layer": "parts/facial_hair/kumis_baplang.png"
+      },
+      "janggut_kambing": {
+        "name": "Janggut kambing",
+        "layer": "parts/facial_hair/janggut_kambing.png"
+      },
+      "brewok": {
+        "name": "Brewok",
+        "layer": "parts/facial_hair/brewok.png"
+      },
+      "jenggot_panjang": {
+        "name": "Jenggot panjang",
+        "layer": "parts/facial_hair/jenggot_panjang.png"
+      }
+    },
+    "accessory": {
+      "none": {
+        "name": "Tanpa",
+        "layer": null
+      },
+      "kacamata": {
+        "name": "Kacamata",
+        "layer": "parts/accessory/kacamata.png"
+      },
+      "kacamata_hitam": {
+        "name": "Kacamata hitam",
+        "layer": "parts/accessory/kacamata_hitam.png"
+      },
+      "tahi_lalat": {
+        "name": "Tahi lalat",
+        "layer": "parts/accessory/tahi_lalat.png"
+      }
+    }
+  },
+  "expressions": {
+    "senang": {
+      "eyes": "parts/expression/eyes_senang.png",
+      "mouth": "parts/mouth/ketawa.png"
+    },
+    "pamer": {
+      "eyes": "parts/expression/eyes_kedip.png",
+      "mouth": "parts/mouth/nyengir.png"
+    },
+    "kaget": {
+      "eyes": null,
+      "mouth": "parts/mouth/kaget.png"
+    }
+  },
+  "default_look": {
+    "skin": "sawo_matang",
+    "hair": "pendek",
+    "hair_color": "hitam",
+    "hijab_color": "hijau",
+    "eyes": "bulat",
+    "brows": "none",
+    "mouth": "senyum",
+    "facial_hair": "none",
+    "accessory": "none",
+    "blush": true
+  }
+}
