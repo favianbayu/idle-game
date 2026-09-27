@@ -39,8 +39,10 @@ def mid(s):
 
 
 def hexc(h):
+    """'#rrggbb' or '#rrggbbaa' -> RGBA tuple."""
     h = h.lstrip("#")
-    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
+    alpha = int(h[6:8], 16) if len(h) == 8 else 255
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) + (alpha,)
 
 
 def blank(w=W, h=H):
@@ -119,7 +121,7 @@ def checker(w, h, cell=8):
     return bg
 
 
-def save_set(out_dir, frames, gif_order=None, durations=None):
+def save_set(out_dir, frames, gif_order=None, durations=None, gif_scale=8):
     """Save frames as 1x + @4x PNGs plus an animated preview.gif.
 
     frames: list of (name, Image). gif_order: indices into frames.
@@ -131,8 +133,9 @@ def save_set(out_dir, frames, gif_order=None, durations=None):
     order = gif_order or list(range(len(frames)))
     durations = durations or [400] * len(order)
     w, h = frames[0][1].size
-    bg = checker(w * 8, h * 8, 32)
-    seq = [Image.alpha_composite(bg, scale(frames[i][1], 8)).convert("P", palette=Image.ADAPTIVE)
+    bg = checker(w * gif_scale, h * gif_scale, 4 * gif_scale)
+    seq = [Image.alpha_composite(bg, scale(frames[i][1], gif_scale))
+           .convert("P", palette=Image.ADAPTIVE)
            for i in order]
     seq[0].save(out_dir / "preview.gif", save_all=True, append_images=seq[1:],
                 duration=durations, loop=0, disposal=2)

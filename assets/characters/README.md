@@ -1,6 +1,7 @@
 # Aset karakter — pixel art
 
 Semua sprite di sini hasil generate dari `tools/sprites/` (jalankan `python3 tools/gen_sprites.py`, butuh Pillow).
+Bangunan per stage ada di `assets/buildings/`.
 Kalau mau ubah desain, edit grid di script-nya lalu generate ulang, jangan edit PNG-nya langsung.
 
 **Aturan umum** (dari art direction "Gerobak Empire"):

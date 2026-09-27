@@ -8,7 +8,7 @@ Layout on the 32x40 canvas: head rows 9-23, eyes rows 17-19 at cols 11-12 and
 19-20, mouth rows 20-22 at cols 14-17. Rows are written as `mid(...)` = cols 6-25.
 """
 
-from .core import E6, mid, row
+from .core import mid, row
 
 # ---------------------------------------------------------------- colour ramps
 SKIN_TONES = {
