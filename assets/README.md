@@ -12,6 +12,7 @@ Jalankan `python3 tools/gen_sprites.py` (butuh Pillow). Jangan edit PNG-nya lang
 | `scenes/` | Preview gabungan environment + toko + karakter (`overview.png`, `<kota>_preview.png`) |
 | `food/<kota>/` | Icon menu 24×24 (+ `@4x`, + versi `_locked`) |
 | `food/menu.json` | Menu lengkap tiap kota: stage, jenis, cara buka, tier, harga, waktu masak, harga buka, kombo |
+| `ui/` | Ikon UI 24×24 (+ `@4x`), `ui_icons_sheet.png` + `ui_icons_atlas.json`, preview |
 | `cities.json` | Data kota: makanan spesial, tulisan papan toko, landmark, path aset tiap stage |
 
 ## Kota & stage
@@ -73,3 +74,18 @@ harga buka menu terkunci = 60× harga jualnya. Silakan disetel saat balancing.
 
 Toko diletakkan di tengah dengan kaki di garis tanah y=238 (stage 5 melayang, dasar di y=248).
 `vendor_spot` di `buildings/buildings.json` = titik kaki tokoh utama relatif ke gambar toko.
+
+## Ikon UI
+
+`ui/` berisi 45 ikon 24×24 (versi `@4x`), satu sprite sheet `ui_icons_sheet.png` dan
+`ui_icons_atlas.json` (nama → posisi di sheet). Lihat semuanya di `ui/ui_icons_preview.png`.
+
+| Grup | Ikon |
+|---|---|
+| Mata uang | `koin`, `koin_tumpuk`, `bintang_rasa` (mata uang prestige), `pendapatan` |
+| Tab bawah | `tab_racikan`, `tab_karyawan`, `tab_naik_kelas`, `tab_misi` |
+| Tombol | `upgrade`, `gembok`, `gembok_terbuka`, `pengaturan`, `suara_on`, `suara_off`, `tutup`, `kembali`, `centang`, `tambah`, `info`, `notifikasi` |
+| Status | `waktu_masak`, `pelanggan`, `rating`, `rating_kosong`, `offline`, `boost`, `boost_rempi`, `kombo`, `menu_spesial`, `menu_legendaris` |
+| Fitur | `toko`, `peta`, `misi_harian`, `hadiah`, `trofi`, `iklan_bonus` |
+| Badge stage | `stage1_gerobak` … `stage5_istana` |
+| Pin kota | `kota_jakarta`, `kota_bandung`, `kota_bali`, `kota_surabaya` (warna aksen tiap kota) |

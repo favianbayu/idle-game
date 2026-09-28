@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from sprites import (buildings, customization, environments, food, main_character,  # noqa: E402
-                     npcs, scenes, world)
+                     npcs, scenes, ui_icons, world)
 
 if __name__ == "__main__":
     main_character.generate()
@@ -19,6 +19,7 @@ if __name__ == "__main__":
     environments.generate()
     food.validate()
     food.generate()
+    ui_icons.generate()
     world.generate()
     scenes.generate()
     print("done")
