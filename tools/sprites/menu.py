@@ -2,7 +2,7 @@
 
 Each stage unlocks new dishes automatically, and also offers "locked" dishes the
 player buys with coins. Stage 3+ adds a special (spesial) dish, stage 5 a
-legendary one. Combos give a bonus when both items are on the menu.
+legendary one; specials and legendaries are always coin-locked. Combos give a bonus when both items are on the menu.
 
 Fields per item:
   id, name, kind (makanan|minuman|dessert), stage, unlock ("stage" | "coins"),
@@ -16,6 +16,8 @@ M, D, S = "makanan", "minuman", "dessert"
 
 
 def item(id_, name, kind, stage, icon, unlock="stage", tier="biasa"):
+    if tier != "biasa":                     # menu spesial & legendaris selalu dibuka pakai koin
+        unlock = "coins"
     return {"id": id_, "name": name, "kind": kind, "stage": stage, "unlock": unlock,
             "tier": tier, "icon": icon}
 

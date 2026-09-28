@@ -285,9 +285,9 @@ def generate():
     data = {"stage_rules": {
         "1": "1 makanan + 1 minuman terbuka; 1 minuman terkunci (koin)",
         "2": "+1 makanan; 1 makanan terkunci",
-        "3": "+2 makanan + 1 menu spesial; 1 minuman terkunci",
-        "4": "+2 makanan + 1 minuman + 1 menu spesial; 1 dessert terkunci",
-        "5": "+2 makanan + 1 menu legendaris; 1 menu legendaris terkunci",
+        "3": "+2 makanan; terkunci: 1 menu spesial + 1 minuman",
+        "4": "+2 makanan + 1 minuman; terkunci: 1 menu spesial + 1 dessert",
+        "5": "+2 makanan; terkunci: 2 menu legendaris",
     }, "cities": {}}
     rows, labels = [], []
     for ci, city in enumerate(CITY_ORDER):

@@ -38,9 +38,11 @@ Aturan buka menu (sama untuk semua kota):
 |---|---|---|
 | 1 Gerobak | 1 makanan + 1 minuman | 1 minuman |
 | 2 Warung | +1 makanan | 1 makanan |
-| 3 Kedai | +2 makanan + 1 menu **spesial** | 1 minuman |
-| 4 Resto | +2 makanan + 1 minuman + 1 menu **spesial** | 1 dessert |
-| 5 Istana | +2 makanan + 1 menu **legendaris** | 1 menu legendaris |
+| 3 Kedai | +2 makanan | 1 menu **spesial** + 1 minuman |
+| 4 Resto | +2 makanan + 1 minuman | 1 menu **spesial** + 1 dessert |
+| 5 Istana | +2 makanan | 2 menu **legendaris** |
+
+Semua menu spesial (⭐) dan legendaris (🔥) selalu terkunci dan harus dibuka pakai koin.
 
 18 menu per kota (72 total). Icon: menu spesial punya bingkai emas + bintang, menu legendaris punya
 aura api merah muda, versi `_locked` = siluet abu-abu + gembok untuk tampilan toko.
@@ -49,9 +51,9 @@ aura api merah muda, versi `_locked` = siluet abu-abu + gembok untuk tampilan to
 |---|---|---|---|---|
 | 1 | Kerak Telor, Es Teh Manis · 🔒 Bir Pletok | Batagor, Es Cendol · 🔒 Bajigur | Sate Lilit, Es Kelapa Muda · 🔒 Loloh Cemcem | Rawon, Es Degan · 🔒 Es Dawet |
 | 2 | Ketoprak · 🔒 Gado-gado | Cireng · 🔒 Cilok | Tipat Cantok · 🔒 Nasi Jinggo | Tahu Tek · 🔒 Tahu Campur |
-| 3 | Soto Betawi, Nasi Uduk, ⭐ Nasi Uduk Komplit · 🔒 Es Selendang Mayang | Seblak, Mie Kocok, ⭐ Seblak Komplit · 🔒 Bandrek | Ayam Betutu, Lawar, ⭐ Nasi Campur Bali · 🔒 Es Daluman | Lontong Balap, Rujak Cingur, ⭐ Rawon Setan · 🔒 Es Sinom |
-| 4 | Asinan Betawi, Gabus Pucung, Es Kopi Susu, ⭐ Soto Betawi Iga · 🔒 Kue Rangi | Surabi, Nasi Timbel, Es Goyobod, ⭐ Nasi Timbel Komplit · 🔒 Colenak | Bebek Betutu, Serombotan, Es Kopi Kintamani, ⭐ Ayam Betutu Utuh · 🔒 Jaje Laklak | Sate Klopo, Lontong Kupang, Es Kopi Tubruk, ⭐ Rawon Iga Komplit · 🔒 Lapis Surabaya |
-| 5 | Laksa Betawi, Sayur Babanci, 🔥 Kerak Telor Api Legenda · 🔒🔥 Dodol Betawi Emas | Karedok, Mie Kocok Kikil, 🔥 Batagor Kristal Tangkuban · 🔒🔥 Surabi Bulan Emas | Sate Plecing, Tum Ayam, 🔥 Betutu Api Dewata · 🔒🔥 Bubuh Injin Pelangi | Nasi Cumi Hitam, Pecel Semanggi, 🔥 Rawon Api Legenda · 🔒🔥 Rujak Cingur Mahkota |
+| 3 | Soto Betawi, Nasi Uduk, 🔒⭐ Nasi Uduk Komplit · 🔒 Es Selendang Mayang | Seblak, Mie Kocok, 🔒⭐ Seblak Komplit · 🔒 Bandrek | Ayam Betutu, Lawar, 🔒⭐ Nasi Campur Bali · 🔒 Es Daluman | Lontong Balap, Rujak Cingur, 🔒⭐ Rawon Setan · 🔒 Es Sinom |
+| 4 | Asinan Betawi, Gabus Pucung, Es Kopi Susu, 🔒⭐ Soto Betawi Iga · 🔒 Kue Rangi | Surabi, Nasi Timbel, Es Goyobod, 🔒⭐ Nasi Timbel Komplit · 🔒 Colenak | Bebek Betutu, Serombotan, Es Kopi Kintamani, 🔒⭐ Ayam Betutu Utuh · 🔒 Jaje Laklak | Sate Klopo, Lontong Kupang, Es Kopi Tubruk, 🔒⭐ Rawon Iga Komplit · 🔒 Lapis Surabaya |
+| 5 | Laksa Betawi, Sayur Babanci, 🔒🔥 Kerak Telor Api Legenda · 🔒🔥 Dodol Betawi Emas | Karedok, Mie Kocok Kikil, 🔒🔥 Batagor Kristal Tangkuban · 🔒🔥 Surabi Bulan Emas | Sate Plecing, Tum Ayam, 🔒🔥 Betutu Api Dewata · 🔒🔥 Bubuh Injin Pelangi | Nasi Cumi Hitam, Pecel Semanggi, 🔒🔥 Rawon Api Legenda · 🔒🔥 Rujak Cingur Mahkota |
 
 ⭐ = spesial, 🔥 = legendaris, 🔒 = dibuka pakai koin.
 
