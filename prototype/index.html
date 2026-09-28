@@ -1,0 +1,214 @@
+<title>Gerobak Empire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #1b1420;
+    --panel: #241a29;
+    --panel-2: #2f2233;
+    --line: #3a2b40;
+    --edge: #100b13;
+    --ink: #f3e9d8;
+    --dim: #b9a9a0;
+    --gold: #f2c94c;
+    --gold-hi: #fff2a8;
+    --gold-lo: #b8892a;
+    --green: #5fae4a;
+    --green-hi: #8fd06a;
+    --green-lo: #2f7a3a;
+    --purple: #8e62c4;
+    --purple-hi: #b18ae0;
+    --purple-lo: #4d2d78;
+    --blue: #4f86a6;
+    --red: #d8432a;
+    --grey: #6d777d;
+    --pink: #ff8fdc;
+    --display: "Press Start 2P", "Courier New", monospace;
+    --body: "Pixelify Sans", "Trebuchet MS", system-ui, sans-serif;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.25 var(--body);
+    padding-inline: 0;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  button { font: inherit; color: inherit; }
+  .app {
+    height: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--edge);
+    position: relative;
+  }
+  .stage-wrap {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    background: #0d0b10;
+    overflow: hidden;
+  }
+  #scene { display: block; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: manipulation; cursor: pointer; }
+  .hud {
+    position: absolute; inset: 0; pointer-events: none;
+    display: flex; flex-direction: column; gap: 6px; padding: 8px;
+  }
+  .hud-row { display: flex; gap: 6px; align-items: center; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(36, 26, 41, .92);
+    border: 2px solid var(--edge);
+    box-shadow: inset 0 0 0 1px var(--line);
+    padding: 2px 8px 2px 3px;
+    font: 10px/1 var(--display);
+    font-variant-numeric: tabular-nums;
+    border-radius: 3px;
+  }
+  .pill.gold { color: var(--gold-hi); }
+  .pill.small { font-size: 8px; color: var(--green-hi); }
+  .hud .spacer { flex: 1; }
+  .hud-btn {
+    pointer-events: auto;
+    background: rgba(36, 26, 41, .92); border: 2px solid var(--edge);
+    box-shadow: inset 0 0 0 1px var(--line); border-radius: 4px;
+    padding: 2px; cursor: pointer; line-height: 0;
+  }
+  .hud-btn:focus-visible, .btn:focus-visible, .tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .city-label {
+    align-self: center;
+    font: 9px/1 var(--display); letter-spacing: .04em;
+    background: rgba(36, 26, 41, .92); border: 2px solid var(--edge); padding: 4px 8px; border-radius: 3px;
+  }
+  .boost {
+    position: absolute; right: 8px; bottom: 10px; pointer-events: auto;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: rgba(36, 26, 41, .92); border: 2px solid var(--edge);
+    box-shadow: inset 0 0 0 1px var(--line); border-radius: 4px; padding: 3px 5px; cursor: pointer;
+    font: 8px/1 var(--display); color: var(--gold);
+  }
+  .boost[disabled] { opacity: .55; cursor: default; }
+  .toast {
+    position: absolute; left: 50%; top: 64px; transform: translateX(-50%);
+    width: min(92%, 380px);
+    background: var(--panel); border: 2px solid var(--edge); box-shadow: inset 0 0 0 1px var(--gold-lo), 0 4px 0 var(--edge);
+    padding: 8px 10px; border-radius: 4px; font-size: 14px; pointer-events: none;
+    display: flex; gap: 8px; align-items: center;
+    transition: opacity .3s;
+  }
+  .toast b { color: var(--gold); display: block; font-weight: 700; }
+  .panel {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column;
+    background: var(--panel);
+    border-top: 2px solid var(--edge);
+  }
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 7px 10px; background: var(--panel-2); border-bottom: 1px solid var(--line);
+    font: 9px/1.2 var(--display); color: var(--gold); letter-spacing: .03em;
+  }
+  .panel-head small { font: 13px/1 var(--body); color: var(--dim); letter-spacing: 0; }
+  .list { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 5px; overscroll-behavior: contain; }
+  .card {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center;
+    background: var(--panel-2); border: 2px solid var(--edge); box-shadow: inset 0 0 0 1px var(--line);
+    border-radius: 3px; padding: 5px 6px;
+  }
+  .card .thumb { background: var(--panel); border: 1px solid var(--edge); line-height: 0; padding: 1px; }
+  .card .name { font-weight: 700; font-size: 15px; }
+  .card .meta { font-size: 13px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .tier-spesial .name { color: var(--gold); }
+  .tier-legendaris .name { color: var(--purple-hi); }
+  .card.dim .name { color: var(--dim); }
+  .bar { height: 6px; background: #3e4448; border: 1px solid var(--edge); margin-top: 3px; }
+  .bar > i { display: block; height: 100%; background: var(--gold); }
+  .bar.green > i { background: var(--green); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    min-width: 76px; min-height: 36px; padding: 3px 8px;
+    border: 2px solid var(--edge); border-radius: 3px; cursor: pointer;
+    font: 9px/1.1 var(--display); color: #fff;
+    background: var(--green); box-shadow: inset 0 2px 0 var(--green-hi), inset 0 -3px 0 var(--green-lo);
+    font-variant-numeric: tabular-nums;
+  }
+  .btn.gold { background: var(--gold); color: #2a1c24; box-shadow: inset 0 2px 0 var(--gold-hi), inset 0 -3px 0 var(--gold-lo); }
+  .btn.purple { background: var(--purple); box-shadow: inset 0 2px 0 var(--purple-hi), inset 0 -3px 0 var(--purple-lo); }
+  .btn.blue { background: var(--blue); box-shadow: inset 0 2px 0 #7fb0cc, inset 0 -3px 0 #2e5570; }
+  .btn.red { background: var(--red); box-shadow: inset 0 2px 0 #f07a5a, inset 0 -3px 0 #8a1f12; }
+  .btn[disabled], .btn.off { background: var(--grey); color: #d0d4d6; box-shadow: inset 0 2px 0 #9aa3a8, inset 0 -3px 0 #3e4448; cursor: default; }
+  .btn.wide { width: 100%; min-height: 44px; font-size: 11px; }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--edge); gap: 2px; padding-top: 2px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .tab {
+    background: var(--panel); border: 0; cursor: pointer; padding: 3px 0 5px;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    font: 7px/1 var(--display); color: var(--dim); position: relative;
+  }
+  .tab[aria-selected="true"] { background: var(--panel-2); color: var(--gold); box-shadow: inset 0 2px 0 var(--gold); }
+  .tab .dot { position: absolute; top: 3px; right: 18%; width: 9px; height: 9px; background: var(--red); border: 2px solid var(--edge); border-radius: 50%; }
+  .section-title { font: 8px/1 var(--display); color: var(--gold); padding: 6px 2px 2px; letter-spacing: .03em; }
+  .note { font-size: 13px; color: var(--dim); padding: 2px 4px; }
+  .track { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 4px 4px; }
+  .track .st { display: flex; flex-direction: column; align-items: center; gap: 3px; font: 7px/1 var(--display); color: var(--dim); width: 20%; }
+  .track .st.on { color: var(--gold); }
+  .track .st .ring { border: 2px solid #3e4448; border-radius: 50%; padding: 4px; background: var(--panel-2); line-height: 0; }
+  .track .st.on .ring { border-color: var(--gold); }
+  .req { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 14px; }
+  .req .bar { grid-column: 1 / -1; margin-bottom: 6px; }
+  .modal {
+    position: absolute; inset: 0; background: rgba(10, 6, 14, .72);
+    display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 5;
+  }
+  .modal-box {
+    width: 100%; max-width: 360px; max-height: 92%; overflow-y: auto;
+    background: var(--panel); border: 2px solid var(--edge); box-shadow: inset 0 0 0 1px var(--line), 0 6px 0 var(--edge);
+    border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .modal-box h2 { font: 11px/1.4 var(--display); color: var(--gold); margin: 0; text-align: center; text-wrap: balance; }
+  .modal-box p { margin: 0; text-align: center; color: var(--dim); }
+  .big { font: 20px/1 var(--display); color: var(--gold-hi); text-align: center; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ic { display: inline-block; image-rendering: pixelated; background-repeat: no-repeat; flex: 0 0 auto; }
+  .album { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .album div { background: var(--panel-2); border: 2px solid var(--edge); text-align: center; padding: 3px 2px; font-size: 11px; color: var(--dim); line-height: 1.1; }
+  .album div.found { color: var(--ink); }
+  .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 10px var(--display); color: var(--gold); background: var(--bg); z-index: 9; }
+  .switch { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div class="app" id="app">
+  <div class="stage-wrap" id="stageWrap">
+    <canvas id="scene" width="448" height="512" aria-label="Adegan toko. Tap untuk memasak."></canvas>
+    <div class="hud">
+      <div class="hud-row">
+        <span class="pill gold" id="hudCoins"></span>
+        <span class="pill" id="hudGems"></span>
+        <span class="spacer"></span>
+        <button class="hud-btn" id="btnMap" aria-label="Peta ekspansi kota"></button>
+        <button class="hud-btn" id="btnSettings" aria-label="Pengaturan"></button>
+      </div>
+      <span class="city-label" id="hudCity"></span>
+      <div class="hud-row"><span class="pill small" id="hudRate"></span></div>
+    </div>
+    <button class="boost" id="btnBoost" aria-label="Boost Rempi"></button>
+    <div class="toast" id="toast" hidden></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span id="panelTitle"></span><small id="panelSub"></small></div>
+    <div class="list" id="list"></div>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+  <div class="modal" id="modal" hidden><div class="modal-box" id="modalBox"></div></div>
+  <div class="loading" id="loading">MEMUAT...</div>
+</div>
+
+<script src="game.js"></script>

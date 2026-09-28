@@ -9,8 +9,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from sprites import (buildings, costumes, customization, easter, env_anim, environments,  # noqa: E402
-                     food, main_character, npc_anim, npcs, scenes, tap_fx, ui_icons, ui_layout,
-                     world)
+                     food, main_character, npc_anim, npcs, prototype_pack, scenes, tap_fx, ui_icons,
+                     ui_layout, world)
 
 if __name__ == "__main__":
     main_character.generate()
@@ -29,4 +29,5 @@ if __name__ == "__main__":
     scenes.generate()
     ui_layout.generate()
     tap_fx.generate()
+    prototype_pack.generate()
     print("done")
