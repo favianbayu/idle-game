@@ -1,0 +1,361 @@
+{
+  "order": [
+    "jakarta",
+    "bandung",
+    "bali",
+    "surabaya"
+  ],
+  "cities": {
+    "jakarta": {
+      "name": "Jakarta",
+      "culture": "Betawi",
+      "landmark": "Monas",
+      "specials": [
+        {
+          "id": "kerak_telor",
+          "name": "Kerak Telor"
+        },
+        {
+          "id": "soto_betawi",
+          "name": "Soto Betawi"
+        },
+        {
+          "id": "nasi_uduk",
+          "name": "Nasi Uduk"
+        },
+        {
+          "id": "ketoprak",
+          "name": "Ketoprak"
+        },
+        {
+          "id": "asinan_betawi",
+          "name": "Asinan Betawi"
+        }
+      ],
+      "shop_signs": {
+        "stage1": "KERAK TELOR",
+        "stage2": "SOTO BETAWI * KETOPRAK * UDUK",
+        "stage3": "NASI UDUK",
+        "stage4": "RESTO"
+      },
+      "props": [
+        "ondel_ondel",
+        "bajaj"
+      ],
+      "stages": {
+        "stage1": {
+          "environment": "environments/jakarta/stage1/bg.png",
+          "environment_layers": [
+            "environments/jakarta/stage1/layer_sky.png",
+            "environments/jakarta/stage1/layer_far.png",
+            "environments/jakarta/stage1/layer_mid.png",
+            "environments/jakarta/stage1/layer_near.png"
+          ],
+          "building": "buildings/jakarta/stage1_gerobak/"
+        },
+        "stage2": {
+          "environment": "environments/jakarta/stage2/bg.png",
+          "environment_layers": [
+            "environments/jakarta/stage2/layer_sky.png",
+            "environments/jakarta/stage2/layer_far.png",
+            "environments/jakarta/stage2/layer_mid.png",
+            "environments/jakarta/stage2/layer_near.png"
+          ],
+          "building": "buildings/jakarta/stage2_warung_tenda/"
+        },
+        "stage3": {
+          "environment": "environments/jakarta/stage3/bg.png",
+          "environment_layers": [
+            "environments/jakarta/stage3/layer_sky.png",
+            "environments/jakarta/stage3/layer_far.png",
+            "environments/jakarta/stage3/layer_mid.png",
+            "environments/jakarta/stage3/layer_near.png"
+          ],
+          "building": "buildings/jakarta/stage3_ruko/"
+        },
+        "stage4": {
+          "environment": "environments/jakarta/stage4/bg.png",
+          "environment_layers": [
+            "environments/jakarta/stage4/layer_sky.png",
+            "environments/jakarta/stage4/layer_far.png",
+            "environments/jakarta/stage4/layer_mid.png",
+            "environments/jakarta/stage4/layer_near.png"
+          ],
+          "building": "buildings/jakarta/stage4_resto_modern/"
+        },
+        "stage5": {
+          "environment": "environments/jakarta/stage5/bg.png",
+          "environment_layers": [
+            "environments/jakarta/stage5/layer_sky.png",
+            "environments/jakarta/stage5/layer_far.png",
+            "environments/jakarta/stage5/layer_near.png"
+          ],
+          "building": "buildings/jakarta/stage5_istana_rasa/"
+        }
+      }
+    },
+    "bandung": {
+      "name": "Bandung",
+      "culture": "Sunda",
+      "landmark": "Gedung Sate & Tangkuban Perahu",
+      "specials": [
+        {
+          "id": "batagor",
+          "name": "Batagor"
+        },
+        {
+          "id": "seblak",
+          "name": "Seblak"
+        },
+        {
+          "id": "surabi",
+          "name": "Surabi"
+        },
+        {
+          "id": "mie_kocok",
+          "name": "Mie Kocok"
+        },
+        {
+          "id": "cireng",
+          "name": "Cireng"
+        }
+      ],
+      "shop_signs": {
+        "stage1": "BATAGOR",
+        "stage2": "SEBLAK * SURABI * CIRENG",
+        "stage3": "MIE KOCOK",
+        "stage4": "RESTO"
+      },
+      "props": [
+        "pinus",
+        "angklung"
+      ],
+      "stages": {
+        "stage1": {
+          "environment": "environments/bandung/stage1/bg.png",
+          "environment_layers": [
+            "environments/bandung/stage1/layer_sky.png",
+            "environments/bandung/stage1/layer_far.png",
+            "environments/bandung/stage1/layer_mid.png",
+            "environments/bandung/stage1/layer_near.png"
+          ],
+          "building": "buildings/bandung/stage1_gerobak/"
+        },
+        "stage2": {
+          "environment": "environments/bandung/stage2/bg.png",
+          "environment_layers": [
+            "environments/bandung/stage2/layer_sky.png",
+            "environments/bandung/stage2/layer_far.png",
+            "environments/bandung/stage2/layer_mid.png",
+            "environments/bandung/stage2/layer_near.png"
+          ],
+          "building": "buildings/bandung/stage2_warung_tenda/"
+        },
+        "stage3": {
+          "environment": "environments/bandung/stage3/bg.png",
+          "environment_layers": [
+            "environments/bandung/stage3/layer_sky.png",
+            "environments/bandung/stage3/layer_far.png",
+            "environments/bandung/stage3/layer_mid.png",
+            "environments/bandung/stage3/layer_near.png"
+          ],
+          "building": "buildings/bandung/stage3_ruko/"
+        },
+        "stage4": {
+          "environment": "environments/bandung/stage4/bg.png",
+          "environment_layers": [
+            "environments/bandung/stage4/layer_sky.png",
+            "environments/bandung/stage4/layer_far.png",
+            "environments/bandung/stage4/layer_mid.png",
+            "environments/bandung/stage4/layer_near.png"
+          ],
+          "building": "buildings/bandung/stage4_resto_modern/"
+        },
+        "stage5": {
+          "environment": "environments/bandung/stage5/bg.png",
+          "environment_layers": [
+            "environments/bandung/stage5/layer_sky.png",
+            "environments/bandung/stage5/layer_far.png",
+            "environments/bandung/stage5/layer_near.png"
+          ],
+          "building": "buildings/bandung/stage5_istana_rasa/"
+        }
+      }
+    },
+    "bali": {
+      "name": "Bali",
+      "culture": "Bali",
+      "landmark": "Gunung Agung & pantai",
+      "specials": [
+        {
+          "id": "sate_lilit",
+          "name": "Sate Lilit"
+        },
+        {
+          "id": "ayam_betutu",
+          "name": "Ayam Betutu"
+        },
+        {
+          "id": "nasi_campur_bali",
+          "name": "Nasi Campur Bali"
+        },
+        {
+          "id": "lawar",
+          "name": "Lawar"
+        },
+        {
+          "id": "tipat_cantok",
+          "name": "Tipat Cantok"
+        }
+      ],
+      "shop_signs": {
+        "stage1": "SATE LILIT",
+        "stage2": "BETUTU * LAWAR * TIPAT",
+        "stage3": "NASI CAMPUR",
+        "stage4": "RESTO"
+      },
+      "props": [
+        "penjor",
+        "kamboja",
+        "canang"
+      ],
+      "stages": {
+        "stage1": {
+          "environment": "environments/bali/stage1/bg.png",
+          "environment_layers": [
+            "environments/bali/stage1/layer_sky.png",
+            "environments/bali/stage1/layer_far.png",
+            "environments/bali/stage1/layer_mid.png",
+            "environments/bali/stage1/layer_near.png"
+          ],
+          "building": "buildings/bali/stage1_gerobak/"
+        },
+        "stage2": {
+          "environment": "environments/bali/stage2/bg.png",
+          "environment_layers": [
+            "environments/bali/stage2/layer_sky.png",
+            "environments/bali/stage2/layer_far.png",
+            "environments/bali/stage2/layer_near.png"
+          ],
+          "building": "buildings/bali/stage2_warung_tenda/"
+        },
+        "stage3": {
+          "environment": "environments/bali/stage3/bg.png",
+          "environment_layers": [
+            "environments/bali/stage3/layer_sky.png",
+            "environments/bali/stage3/layer_far.png",
+            "environments/bali/stage3/layer_mid.png",
+            "environments/bali/stage3/layer_near.png"
+          ],
+          "building": "buildings/bali/stage3_ruko/"
+        },
+        "stage4": {
+          "environment": "environments/bali/stage4/bg.png",
+          "environment_layers": [
+            "environments/bali/stage4/layer_sky.png",
+            "environments/bali/stage4/layer_far.png",
+            "environments/bali/stage4/layer_near.png"
+          ],
+          "building": "buildings/bali/stage4_resto_modern/"
+        },
+        "stage5": {
+          "environment": "environments/bali/stage5/bg.png",
+          "environment_layers": [
+            "environments/bali/stage5/layer_sky.png",
+            "environments/bali/stage5/layer_far.png",
+            "environments/bali/stage5/layer_near.png"
+          ],
+          "building": "buildings/bali/stage5_istana_rasa/"
+        }
+      }
+    },
+    "surabaya": {
+      "name": "Surabaya",
+      "culture": "Jawa Timur (Suroboyoan)",
+      "landmark": "Jembatan Suramadu & Tugu Pahlawan",
+      "specials": [
+        {
+          "id": "rawon",
+          "name": "Rawon"
+        },
+        {
+          "id": "lontong_balap",
+          "name": "Lontong Balap"
+        },
+        {
+          "id": "rujak_cingur",
+          "name": "Rujak Cingur"
+        },
+        {
+          "id": "tahu_tek",
+          "name": "Tahu Tek"
+        },
+        {
+          "id": "sate_klopo",
+          "name": "Sate Klopo"
+        }
+      ],
+      "shop_signs": {
+        "stage1": "RAWON",
+        "stage2": "LONTONG BALAP * TAHU TEK",
+        "stage3": "SATE KLOPO",
+        "stage4": "RESTO"
+      },
+      "props": [
+        "becak",
+        "bendera"
+      ],
+      "stages": {
+        "stage1": {
+          "environment": "environments/surabaya/stage1/bg.png",
+          "environment_layers": [
+            "environments/surabaya/stage1/layer_sky.png",
+            "environments/surabaya/stage1/layer_far.png",
+            "environments/surabaya/stage1/layer_mid.png",
+            "environments/surabaya/stage1/layer_near.png"
+          ],
+          "building": "buildings/surabaya/stage1_gerobak/"
+        },
+        "stage2": {
+          "environment": "environments/surabaya/stage2/bg.png",
+          "environment_layers": [
+            "environments/surabaya/stage2/layer_sky.png",
+            "environments/surabaya/stage2/layer_far.png",
+            "environments/surabaya/stage2/layer_mid.png",
+            "environments/surabaya/stage2/layer_near.png"
+          ],
+          "building": "buildings/surabaya/stage2_warung_tenda/"
+        },
+        "stage3": {
+          "environment": "environments/surabaya/stage3/bg.png",
+          "environment_layers": [
+            "environments/surabaya/stage3/layer_sky.png",
+            "environments/surabaya/stage3/layer_far.png",
+            "environments/surabaya/stage3/layer_mid.png",
+            "environments/surabaya/stage3/layer_near.png"
+          ],
+          "building": "buildings/surabaya/stage3_ruko/"
+        },
+        "stage4": {
+          "environment": "environments/surabaya/stage4/bg.png",
+          "environment_layers": [
+            "environments/surabaya/stage4/layer_sky.png",
+            "environments/surabaya/stage4/layer_far.png",
+            "environments/surabaya/stage4/layer_mid.png",
+            "environments/surabaya/stage4/layer_near.png"
+          ],
+          "building": "buildings/surabaya/stage4_resto_modern/"
+        },
+        "stage5": {
+          "environment": "environments/surabaya/stage5/bg.png",
+          "environment_layers": [
+            "environments/surabaya/stage5/layer_sky.png",
+            "environments/surabaya/stage5/layer_far.png",
+            "environments/surabaya/stage5/layer_near.png"
+          ],
+          "building": "buildings/surabaya/stage5_istana_rasa/"
+        }
+      }
+    }
+  }
+}
