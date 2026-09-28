@@ -1,0 +1,116 @@
+{
+  "palette": {
+    "O": "#100b13",
+    "p": "#241a29",
+    "P": "#2f2233",
+    "q": "#3a2b40",
+    "t": "#f3e9d8",
+    "T": "#b9a9a0",
+    "y": "#f2c94c",
+    "Y": "#fff2a8",
+    "G": "#b8892a",
+    "g": "#5fae4a",
+    "h": "#8fd06a",
+    "H": "#2f7a3a",
+    "r": "#d8432a",
+    "s": "#f07a5a",
+    "S": "#8a1f12",
+    "b": "#4f86a6",
+    "c": "#7fb0cc",
+    "B": "#2e5570",
+    "u": "#8e62c4",
+    "v": "#b18ae0",
+    "U": "#4d2d78",
+    "k": "#6d777d",
+    "l": "#9aa3a8",
+    "K": "#3e4448",
+    "d": "#00000088",
+    "w": "#fbf6ec"
+  },
+  "parts": {
+    "panel": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "panel_terang": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "pill": {
+      "size": [
+        24,
+        12
+      ],
+      "nine_slice_border": 4
+    },
+    "tombol_hijau": {
+      "size": [
+        24,
+        18
+      ],
+      "nine_slice_border": 4
+    },
+    "tombol_merah": {
+      "size": [
+        24,
+        18
+      ],
+      "nine_slice_border": 4
+    },
+    "tombol_biru": {
+      "size": [
+        24,
+        18
+      ],
+      "nine_slice_border": 4
+    },
+    "tombol_ungu": {
+      "size": [
+        24,
+        18
+      ],
+      "nine_slice_border": 4
+    },
+    "tombol_emas": {
+      "size": [
+        24,
+        18
+      ],
+      "nine_slice_border": 4
+    },
+    "tombol_abu": {
+      "size": [
+        24,
+        18
+      ],
+      "nine_slice_border": 4
+    },
+    "bar_bingkai": {
+      "size": [
+        24,
+        8
+      ],
+      "nine_slice_border": 2
+    },
+    "bar_isi_emas": {
+      "size": [
+        24,
+        8
+      ],
+      "nine_slice_border": 2
+    },
+    "bar_isi_hijau": {
+      "size": [
+        24,
+        8
+      ],
+      "nine_slice_border": 2
+    }
+  }
+}

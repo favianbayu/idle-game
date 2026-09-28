@@ -12,6 +12,8 @@ Jalankan `python3 tools/gen_sprites.py` (butuh Pillow). Jangan edit PNG-nya lang
 | `scenes/` | Preview gabungan environment + toko + karakter (`overview.png`, `<kota>_preview.png`) |
 | `food/<kota>/` | Icon menu 24×24 (+ `@4x`, + versi `_locked`) |
 | `food/menu.json` | Menu lengkap tiap kota: stage, jenis, cara buka, tier, harga, waktu masak, harga buka, kombo |
+| `ui/layouts/` | Mockup 8 layar (224×400 + `@3x`) dan `layouts_overview.png` |
+| `ui/kit/` | UI kit 9-slice: panel, tombol 6 warna, pill, progress bar + `kit.json` |
 | `ui/` | Ikon UI 24×24 (+ `@4x`), `ui_icons_sheet.png` + `ui_icons_atlas.json`, preview |
 | `cities.json` | Data kota: makanan spesial, tulisan papan toko, landmark, path aset tiap stage |
 
@@ -89,3 +91,41 @@ Toko diletakkan di tengah dengan kaki di garis tanah y=238 (stage 5 melayang, da
 | Fitur | `toko`, `peta`, `misi_harian`, `hadiah`, `trofi`, `iklan_bonus` |
 | Badge stage | `stage1_gerobak` … `stage5_istana` |
 | Pin kota | `kota_jakarta`, `kota_bandung`, `kota_bali`, `kota_surabaya` (warna aksen tiap kota) |
+
+## Layout UI
+
+Resolusi dasar layar **224×400** (portrait, di-scale nearest-neighbor ke layar HP). Mockup ada di
+`ui/layouts/` (versi 1x dan `@3x`), dibuat dari aset asli (`tools/sprites/ui_layout.py`).
+
+```
+┌──────────────────────────┐  y=0
+│ 🪙 koin   ⭐ bintang   🗺 ⚙ │  HUD atas (pill mata uang, peta, pengaturan)
+│    [ JAKARTA - STAGE 3 ]  │  label kota & stage
+│ 🪙 1.2RB/DETIK            │  pendapatan per detik
+│                          │
+│    ADEGAN 224×256        │  environment + toko + karakter (area tap)
+│    koin melayang, boost  │  tombol boost Rempi di kanan
+├──────────────────────────┤  y≈252
+│ PANEL KONTEN TAB         │  isi tab aktif (list kartu, scroll)
+├──────────────────────────┤  y=366
+│ RACIKAN KARYAWAN NAIK MISI│ tab bar 4 tombol (56 px), badge notifikasi
+└──────────────────────────┘  y=400
+```
+
+| Layar | Isi |
+|---|---|
+| `01_layar_utama` | HUD, adegan, pendapatan/detik, boost Rempi (x2 + timer), koin melayang saat tap, 3 menu aktif |
+| `02_racikan` | Filter (semua/makanan/minuman/spesial), kartu menu: level + progress masak + tombol upgrade; menu terkunci dengan harga koin (emas = biasa, ungu = spesial/legendaris) |
+| `03_karyawan` | Karyawan dengan perk (masak +25%, pelanggan +15%, otomatis), level 1–5, tombol upgrade; slot terkunci per stage |
+| `04_naik_kelas` | Jalur 5 stage, syarat naik (koin, jumlah menu aktif, pelanggan), hadiah Bintang Rasa, tombol NAIK KELAS |
+| `05_misi` | Misi harian + progress + hadiah, tombol AMBIL, jumlah pencapaian |
+| `06_peta_ekspansi` | Peta Jawa-Bali, pin kota terbuka/terkunci + harga buka, makanan spesial kota, tombol pindah kota |
+| `07_popup_offline` | Hasil jualan selama offline, tombol AMBIL / AMBIL X2 (iklan) |
+| `08_popup_buka_menu` | Detail menu spesial terkunci: harga jual, bonus kombo, tombol BUKA dengan harga koin |
+
+**UI kit** (`ui/kit/`): semua potongan dibuat untuk 9-slice (`nine_slice_border` di `kit.json`),
+jadi bisa direntang ke ukuran apa pun tanpa sudut yang melar. Warna tombol: hijau (aksi utama/upgrade),
+emas (beli pakai koin), ungu (premium/spesial/naik kelas), biru (navigasi/filter aktif),
+merah (tutup/bahaya), abu (nonaktif).
+
+Angka di mockup (koin, harga, syarat) cuma contoh untuk layout.
