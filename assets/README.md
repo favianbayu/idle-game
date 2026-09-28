@@ -190,3 +190,11 @@ tertentu, supaya aman dari masalah hak cipta dan hak atas citra diri. Rambut bar
 `ui/efek_tap/`: `ledakan1-4`, `koin_putar1-4`, `lingkar_makanan` (latar putih di belakang ikon menu).
 Saat layar di-tap: ledakan kecil, koin berputar naik, dan ikon menu yang barusan terjual muncul dalam
 lingkaran lalu melayang dan memudar. Timing di `tap_fx.json`, contoh di `preview_tap.gif`.
+
+## UI kit v2 (gaya detail)
+
+`ui/kit_v2/`: potongan 9-slice bergaya pixel hangat (bingkai kayu berpaku emas, kertas bertepi sobek,
+kartu, plat nama, kotak potret motif wajik, tooltip bersiku emas, jendela dengan title bar, tombol tebal
+7 warna + versi ditekan, tab kayu aktif/pasif, pita judul, pill harga, bar statistik 6 warna, tombol tutup,
+pola latar). `kit_v2.json` berisi ukuran & lebar border 9-slice tiap potongan; preview di
+`kit_v2_preview.png`. Prototipe (`prototype/`) sudah memakai kit ini lewat CSS `border-image`.

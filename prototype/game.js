@@ -357,84 +357,120 @@
 
   // ------------------------------------------------------------------ HUD & panels
   let tab = 0;
-  const TABS = [["ui:tab_racikan", "RACIKAN"], ["ui:tab_karyawan", "KARYAWAN"], ["ui:tab_naik_kelas", "NAIK KELAS"], ["ui:tab_misi", "MISI"]];
+  const TABS = [["ui:tab_racikan", "RACIKAN"], ["ui:tab_karyawan", "KARYAWAN"], ["ui:tab_naik_kelas", "KELAS"], ["ui:tab_misi", "MISI"]];
+  const KIND = { makanan: "Makanan", minuman: "Minuman", dessert: "Dessert" };
 
   function renderTabs() {
     $("#tabs").innerHTML = TABS.map(([ic, l], i) =>
-      `<button class="tab" role="tab" aria-selected="${i === tab}" data-tab="${i}">${icon(ic, 1.5)}${l}<span class="dot" data-dot="${i}" hidden></span></button>`).join("");
+      `<button class="tab" role="tab" aria-selected="${i === tab}" data-tab="${i}">${icon(ic, 1)}${l}<span class="dot" data-dot="${i}" hidden></span></button>`).join("");
+  }
+
+  const meter = (cls, frac, label, ic) =>
+    `<div class="stat"><span class="k-slot">${icon(ic, 1)}</span><div class="meter ${cls}"><i style="width:calc(${Math.round(clamp(frac, 0, 1) * 100)}% + 6px)"></i><b>${label}</b></div></div>`;
+
+  function cardShell({ portrait, lv, btn, name, sub, stats, cls = "" }) {
+    return `<div class="card k-card ${cls}">
+      <div class="left">
+        <div class="k-portrait">${portrait}</div>
+        ${lv ? `<span class="lv k-pill">${lv}</span>` : ""}
+        ${btn}
+      </div>
+      <div class="right">
+        <div class="k-plate"><div class="name">${name}</div><div class="sub">${sub}</div></div>
+        ${stats}
+      </div></div>`;
   }
 
   function menuCard(it) {
-    const st = itemState(it);
     const tier = `tier-${it.tier}`;
+    const maxPrice = Math.max(...menuOf().map((m) => m.price));
+    const kind = KIND[it.kind] + (it.tier !== "biasa" ? " " + it.tier : "");
     if (!available(it)) {
-      return `<div class="card dim ${tier}"><span class="thumb">${icon(`food:${S.city}:${it.id}:locked`, 1.5)}</span>
-        <div><div class="name">${it.name}</div><div class="meta">Terbuka di stage ${it.stage} (${STAGE_LABEL[it.stage].toLowerCase()})</div></div>
-        <button class="btn off" disabled>STAGE ${it.stage}</button></div>`;
+      return cardShell({
+        cls: `dim ${tier}`, portrait: icon(`food:${S.city}:${it.id}:locked`, 2), name: it.name,
+        sub: `${kind} \u00b7 stage ${it.stage}`,
+        btn: `<button class="btn off" disabled>${icon("ui:gembok", 1)}STAGE ${it.stage}</button>`,
+        stats: meter("orange", it.price / maxPrice, fmt(it.price), "ui:koin") +
+          `<div class="sub">Terbuka saat naik ke ${STAGE_LABEL[it.stage].toLowerCase()}.</div>`,
+      });
     }
     if (!isUnlocked(it)) {
-      const cls = it.tier === "biasa" ? "gold" : "purple";
-      return `<div class="card ${tier}"><span class="thumb">${icon(`food:${S.city}:${it.id}:locked`, 1.5)}</span>
-        <div><div class="name">${it.name}</div><div class="meta">${it.tier === "biasa" ? "Menu terkunci" : "Menu " + it.tier} \u00b7 jual ${fmt(it.price)}</div></div>
-        <button class="btn ${cls}" data-act="unlock" data-id="${it.id}" data-cost="${it.unlock_cost}">${icon("ui:koin", 1)}${fmt(it.unlock_cost)}</button></div>`;
+      return cardShell({
+        cls: tier, portrait: icon(`food:${S.city}:${it.id}:locked`, 2), name: it.name,
+        sub: `${kind} \u00b7 terkunci`,
+        btn: `<button class="btn ${it.tier === "biasa" ? "gold" : "purple"}" data-act="unlock" data-id="${it.id}" data-cost="${it.unlock_cost}">${fmt(it.unlock_cost)}${icon("ui:koin", 1)}</button>`,
+        stats: meter("orange", it.price / maxPrice, fmt(it.price), "ui:koin") +
+          meter("", 1.5 / cookTime(it), `${cookTime(it).toFixed(1)}s`, "ui:waktu_masak"),
+      });
     }
     const lv = level(it);
-    return `<div class="card ${tier}"><span class="thumb">${icon(`food:${S.city}:${it.id}`, 1.5)}</span>
-      <div><div class="name">${it.name}</div><div class="meta">Lv ${lv} \u00b7 +${fmt(salePrice(it))} / ${cookTime(it).toFixed(1)} dtk</div>
-      <div class="bar green"><i style="width:${Math.min(100, lv * 10)}%"></i></div></div>
-      <button class="btn" data-act="upgrade" data-id="${it.id}" data-cost="${upgradeCost(it)}">${icon("ui:upgrade", 1)}${fmt(upgradeCost(it))}</button></div>`;
+    return cardShell({
+      cls: tier, portrait: icon(`food:${S.city}:${it.id}`, 2), name: it.name, sub: kind,
+      lv: `${icon("ui:rating", 0.5)}LV ${lv}`,
+      btn: `<button class="btn" data-act="upgrade" data-id="${it.id}" data-cost="${upgradeCost(it)}">${fmt(upgradeCost(it))}${icon("ui:koin", 1)}</button>`,
+      stats: meter("orange", salePrice(it) / (maxPrice * 4), "+" + fmt(salePrice(it)), "ui:koin") +
+        meter("", 1.5 / cookTime(it), `${cookTime(it).toFixed(1)}s`, "ui:waktu_masak") +
+        meter("green", lv / 10, `LV ${lv}`, "ui:upgrade"),
+    });
+  }
+
+  function staffCard(k, s) {
+    const lv = S.staff[k];
+    const locked = C().stage < s.stage && lv === 0;
+    const portrait = icon(`cust:${s.face}:tunggu1`, 2);
+    if (locked) return cardShell({
+      cls: "dim", portrait, name: s.name, sub: `Terbuka di stage ${s.stage}`,
+      btn: `<button class="btn off" disabled>${icon("ui:gembok", 1)}STAGE ${s.stage}</button>`,
+      stats: meter("purple", 0, "LV 0", "ui:upgrade") + `<div class="sub">${s.perk(1)}</div>`,
+    });
+    const max = lv >= STAFF_MAX;
+    return cardShell({
+      portrait, name: s.name, sub: lv ? s.perk(lv) : "Belum direkrut", lv: lv ? `LV ${lv}` : "",
+      btn: max ? `<button class="btn off" disabled>MAKS</button>` :
+        `<button class="btn" data-act="staff" data-id="${k}" data-cost="${staffCost(k)}">${fmt(staffCost(k))}${icon("ui:koin", 1)}</button>`,
+      stats: meter("purple", lv / STAFF_MAX, `LV ${lv}/${STAFF_MAX}`, "ui:upgrade") +
+        `<div class="sub">Berikutnya: ${s.perk(lv + 1)}</div>`,
+    });
+  }
+
+  function section(t) {
+    return `<div class="section"><div class="k-ribbon"><span class="h-title">${t}</span></div></div>`;
   }
 
   function renderPanel() {
     const L = $("#list");
     const stage = C().stage;
     if (tab === 0) {
-      const combos = D.menu[S.city].combos;
       const act = new Set(activeItems().map((i) => i.id));
       $("#panelTitle").textContent = "RACIKAN";
       $("#panelSub").textContent = `${activeItems().length} menu aktif \u00b7 kombo x${comboMult().toFixed(2)}`;
-      L.innerHTML = menuOf().map(menuCard).join("") +
-        `<div class="section-title">KOMBO</div>` +
-        combos.map((c) => {
+      L.innerHTML = menuOf().map(menuCard).join("") + section("KOMBO") +
+        D.menu[S.city].combos.map((c) => {
           const on = c.items.every((id) => act.has(id));
-          const names = c.items.map((id) => menuOf().find((i) => i.id === id).name).join(" + ");
-          return `<div class="card ${on ? "" : "dim"}"><span class="thumb">${icon("ui:kombo", 1.5)}</span>
-            <div><div class="name">${c.name}</div><div class="meta">${names}</div></div>
-            <span class="pill ${on ? "gold" : ""}">x${c.bonus}</span></div>`;
+          return `<div class="row-card k-card ${on ? "" : "dim"}"><span class="k-slot">${icon("ui:kombo", 1)}</span>
+            <div><div class="name">${c.name}</div><div class="sub">${c.items.map((id) => menuOf().find((i) => i.id === id).name).join(" + ")}</div></div>
+            <span class="lv k-pill" style="position:static">x${c.bonus}</span></div>`;
         }).join("");
     } else if (tab === 1) {
       $("#panelTitle").textContent = "KARYAWAN";
       $("#panelSub").textContent = "Berlaku di semua kota";
-      L.innerHTML = Object.entries(STAFF).map(([k, s]) => {
-        const lv = S.staff[k];
-        const locked = stage < s.stage && lv === 0;
-        const face = icon(`cust:${s.face}:tunggu1`, 1);
-        if (locked) return `<div class="card dim"><span class="thumb">${face}</span>
-          <div><div class="name">${s.name}</div><div class="meta">Terbuka di stage ${s.stage}</div></div>
-          <button class="btn off" disabled>${icon("ui:gembok", 1)}</button></div>`;
-        const max = lv >= STAFF_MAX;
-        return `<div class="card"><span class="thumb">${face}</span>
-          <div><div class="name">${s.name} \u00b7 Lv ${lv}</div><div class="meta">${lv ? s.perk(lv) : "Belum direkrut"} \u2192 ${s.perk(lv + 1)}</div>
-          <div class="bar"><i style="width:${lv * 10}%"></i></div></div>
-          ${max ? `<button class="btn off" disabled>MAKS</button>` :
-          `<button class="btn" data-act="staff" data-id="${k}" data-cost="${staffCost(k)}">${icon("ui:koin", 1)}${fmt(staffCost(k))}</button>`}</div>`;
-      }).join("");
+      L.innerHTML = Object.entries(STAFF).map(([k, s]) => staffCard(k, s)).join("");
     } else if (tab === 2) {
       $("#panelTitle").textContent = "NAIK KELAS";
       $("#panelSub").textContent = `${D.cities[S.city].name} \u00b7 stage ${stage}/5`;
-      const track = `<div class="track">${[1, 2, 3, 4, 5].map((s) =>
-        `<div class="st ${s <= stage ? "on" : ""}"><span class="ring">${icon(`ui:${STAGE_BADGE[s]}`, 1)}</span>${STAGE_LABEL[s]}</div>`).join("")}</div>`;
+      const track = `<div class="k-paper"><div class="track">${[1, 2, 3, 4, 5].map((s) =>
+        `<div class="st ${s <= stage ? "on" : "off"}"><span class="k-slot">${icon(`ui:${STAGE_BADGE[s]}`, 1)}</span>${STAGE_LABEL[s]}</div>`).join("")}</div></div>`;
       if (stage >= 5) {
         L.innerHTML = track + `<div class="note">Istana Rasa sudah berdiri di ${D.cities[S.city].name}! Buka kota berikutnya lewat peta.</div>`;
       } else {
-        const need = stageReq(stage), cnt = stage + 1;
-        L.innerHTML = track + `<div class="card" style="grid-template-columns:1fr"><div class="req">
-          <span>Pendapatan di ${D.cities[S.city].name}</span><span data-bind="earned"></span>
-          <div class="bar"><i data-bind="earnedBar"></i></div>
-          <span>Menu aktif</span><span>${activeItems().length}/${cnt}</span>
-          <div class="bar green"><i style="width:${Math.min(100, activeItems().length / cnt * 100)}%"></i></div>
-          <span>Hadiah</span><span>${icon("ui:bintang_rasa", 1)} +${stage * 2} Bintang Rasa</span></div></div>
-          <button class="btn purple wide" data-act="stageup" data-cost="${need}" data-menu="${cnt}">NAIK KE ${STAGE_LABEL[stage + 1]}</button>
+        const cnt = stage + 1, need = stageReq(stage);
+        L.innerHTML = track + section(`MENUJU ${STAGE_LABEL[stage + 1]}`) + `<div class="k-card"><div class="req">
+          <div class="lab"><span>Pendapatan di ${D.cities[S.city].name}</span></div>
+          <div class="meter gold"><i data-bind="earnedBar"></i><b data-bind="earned"></b></div>
+          <div class="lab"><span>Menu aktif</span></div>
+          <div class="meter green"><i style="width:calc(${Math.min(100, activeItems().length / cnt * 100)}% + 6px)"></i><b>${activeItems().length}/${cnt}</b></div>
+          <div class="lab"><span>Hadiah</span><span>${icon("ui:bintang_rasa", 1)} +${stage * 2} Bintang Rasa</span></div></div></div>
+          <button class="btn purple wide" data-act="stageup" data-cost="${need}" data-menu="${cnt}">NAIK KELAS!</button>
           <div class="note">Tiap Bintang Rasa menambah pendapatan +2% di semua kota.</div>`;
       }
     } else {
@@ -443,27 +479,25 @@
       ensureMissions();
       L.innerHTML = S.missions.map((m, i) => {
         const def = MISSION_TYPES.find((x) => x.t === m.t);
-        const rw = m.reward.gems ? `${icon("ui:bintang_rasa", 1)}${m.reward.gems}` : `${icon("ui:koin", 1)}${fmt(m.reward.coins)}`;
-        return `<div class="card"><span class="thumb">${icon("ui:misi_harian", 1.5)}</span>
-          <div><div class="name">${def.label(m.target)}</div><div class="meta" data-bind="mtext${i}"></div>
-          <div class="bar green"><i data-bind="mbar${i}"></i></div></div>
+        const rw = m.reward.gems ? `${m.reward.gems}${icon("ui:bintang_rasa", 1)}` : `${fmt(m.reward.coins)}${icon("ui:koin", 1)}`;
+        return `<div class="row-card k-card"><span class="k-slot">${icon("ui:misi_harian", 1)}</span>
+          <div><div class="name">${def.label(m.target)}</div>
+          <div class="meter green" style="margin-top:4px"><i data-bind="mbar${i}"></i><b data-bind="mtext${i}"></b></div></div>
           <button class="btn" data-act="claim" data-i="${i}" data-mission="${i}">${rw}</button></div>`;
-      }).join("") +
-        `<div class="section-title">ALBUM PELANGGAN LANGKA \u00b7 ${Object.keys(S.album).length}/${D.easter.length}</div>
-        <div class="album">${D.easter.map((e) => `<div class="${S.album[e.id] ? "found" : ""}">${icon(`cust:${e.id}:tunggu1`, 1)}<br>${S.album[e.id] ? e.name : "???"}</div>`).join("")}</div>`;
-      if (!S.album) S.album = {};
+      }).join("") + section(`ALBUM LANGKA ${Object.keys(S.album).length}/${D.easter.length}`) +
+        `<div class="k-paper"><div class="album">${D.easter.map((e) =>
+          `<div class="${S.album[e.id] ? "found" : ""}">${icon(`cust:${e.id}:tunggu1`, 1)}<br>${S.album[e.id] ? e.name : "???"}</div>`).join("")}</div></div>`;
     }
     refresh();
   }
 
   function refresh() {
-    $("#hudCoins").innerHTML = `${icon("ui:koin", 1)}${fmt(S.coins)}`;
-    $("#hudGems").innerHTML = `${icon("ui:bintang_rasa", 1)}${S.gems}`;
-    $("#hudRate").innerHTML = `${icon("ui:pendapatan", 0.5)}${fmt(estRate())}/DTK${boostOn() ? " \u00b7 X2" : ""}`;
-    $("#hudCity").textContent = `${D.cities[S.city].name.toUpperCase()} \u00b7 ${STAGE_LABEL[C().stage]}`;
+    $("#hudCoins").innerHTML = `${icon("ui:koin", 1.5)}${fmt(S.coins)}`;
+    $("#hudGems").innerHTML = `${icon("ui:bintang_rasa", 1.5)}${S.gems}`;
+    $("#hudRate").innerHTML = `${icon("ui:pendapatan", 1)}${fmt(estRate())}/DTK${boostOn() ? " X2" : ""}`;
+    $("#hudCity").textContent = `${D.cities[S.city].name} \u00b7 ${STAGE_LABEL[C().stage]}`;
     document.querySelectorAll("[data-cost]").forEach((b) => {
       let ok = S.coins >= +b.dataset.cost;
-      if (b.dataset.menu) ok = ok && activeItems().length >= +b.dataset.menu && C().earned >= +b.dataset.cost;
       if (b.dataset.act === "stageup") ok = C().earned >= +b.dataset.cost && activeItems().length >= +b.dataset.menu;
       b.disabled = !ok;
     });
@@ -472,11 +506,11 @@
     const stage = C().stage;
     if (stage < 5) {
       bind("earned", (el) => { el.textContent = `${fmt(C().earned)}/${fmt(stageReq(stage))}`; });
-      bind("earnedBar", (el) => { el.style.width = `${Math.min(100, C().earned / stageReq(stage) * 100)}%`; });
+      bind("earnedBar", (el) => { el.style.width = `calc(${Math.min(100, C().earned / stageReq(stage) * 100)}% + 6px)`; });
     }
     S.missions.forEach((m, i) => {
       bind(`mtext${i}`, (el) => { el.textContent = `${fmt(Math.min(m.target, S.stats[m.t] - m.start))}/${fmt(m.target)}`; });
-      bind(`mbar${i}`, (el) => { el.style.width = `${missionProg(m) * 100}%`; });
+      bind(`mbar${i}`, (el) => { el.style.width = `calc(${missionProg(m) * 100}% + 6px)`; });
     });
     const dot = document.querySelector('[data-dot="3"]');
     if (dot) dot.hidden = !S.missions.some((m) => missionProg(m) >= 1);
@@ -497,37 +531,42 @@
     toastTimer = setTimeout(() => { t.hidden = true; }, 3800);
   }
 
-  function modal(html) {
-    $("#modalBox").innerHTML = html;
+  function modal(title, ribbon, body, closable = true) {
+    $("#modalBox").innerHTML = `<div class="bar-title">${title}${closable ? `<button class="x" data-act="close" aria-label="Tutup"><img src="kit/tutup.png" width="36" height="36" alt=""></button>` : ""}</div>
+      <div class="modal-body">${ribbon ? `<div class="ribbon-wrap"><div class="k-ribbon"><span class="h-title">${ribbon}</span></div></div>` : ""}${body}</div>`;
     $("#modal").hidden = false;
   }
   const closeModal = () => { $("#modal").hidden = true; };
 
   function openMap() {
-    modal(`<h2>EKSPANSI KOTA</h2>` + D.cityOrder.map((c, i) => {
+    modal("Peta", "EKSPANSI KOTA", D.cityOrder.map((c, i) => {
       const cs = S.cities[c], here = c === S.city;
-      const specials = D.menu[c].menu.filter((m) => m.stage === 1 && m.unlock === "stage").map((m) => m.name).join(", ");
+      const starters = D.menu[c].menu.filter((m) => m.stage === 1 && m.unlock === "stage");
       const btn = here ? `<button class="btn off" disabled>DI SINI</button>` :
         cs.unlocked ? `<button class="btn blue" data-act="goto" data-city="${c}">PINDAH</button>` :
-          `<button class="btn gold" data-act="buycity" data-city="${c}" data-cost="${CITY_COST[i]}">${icon("ui:koin", 1)}${fmt(CITY_COST[i])}</button>`;
-      return `<div class="card"><span class="thumb">${icon(`ui:kota_${c}`, 1.5)}</span>
-        <div><div class="name">${D.cities[c].name}</div><div class="meta">${cs.unlocked ? "Stage " + cs.stage + " \u00b7 " : ""}${D.cities[c].landmark}<br>Mulai: ${specials}</div></div>${btn}</div>`;
-    }).join("") + `<button class="btn red wide" data-act="close">TUTUP</button>`);
+          `<button class="btn gold" data-act="buycity" data-city="${c}" data-cost="${CITY_COST[i]}">${fmt(CITY_COST[i])}${icon("ui:koin", 1)}</button>`;
+      return cardShell({
+        cls: cs.unlocked ? "" : "dim",
+        portrait: icon(`ui:kota_${c}`, 2) + starters.map((m) => icon(`food:${c}:${m.id}`, 1)).join(""),
+        name: D.cities[c].name, sub: D.cities[c].culture, btn,
+        lv: cs.unlocked ? `S${cs.stage}` : "",
+        stats: `<div class="sub">${D.cities[c].landmark}</div><div class="sub">Mulai: ${starters.map((m) => m.name).join(", ")}</div>`,
+      });
+    }).join(""));
     refresh();
   }
 
   function openSettings() {
-    modal(`<h2>PENGATURAN</h2>
+    modal("Pengaturan", "OPSI", `<div class="k-card">
       <label class="switch" for="eggBoost"><span>Perbanyak pelanggan langka (mode tes, x25)</span>
-        <input type="checkbox" id="eggBoost" ${S.eggBoost ? "checked" : ""}></label>
+      <input type="checkbox" id="eggBoost" ${S.eggBoost ? "checked" : ""}></label></div>
       <p>Progres tersimpan di browser ini saja.</p>
-      <button class="btn red wide" data-act="reset">MULAI ULANG DARI AWAL</button>
-      <button class="btn blue wide" data-act="close">TUTUP</button>`);
+      <button class="btn red wide" data-act="reset">MULAI ULANG</button>`);
     $("#eggBoost").addEventListener("change", (e) => { S.eggBoost = e.target.checked; save(); });
   }
 
   function confirmReset() {
-    modal(`<h2>HAPUS SEMUA PROGRES?</h2><p>Koin, kota, menu dan karyawan akan kembali ke awal.</p>
+    modal("Konfirmasi", "HAPUS PROGRES?", `<p>Koin, kota, menu dan karyawan akan kembali ke awal.</p>
       <div class="row2"><button class="btn blue" data-act="close">BATAL</button><button class="btn red" data-act="doreset">HAPUS</button></div>`);
   }
 
@@ -535,12 +574,11 @@
     const gain = Math.floor(estRate() * Math.min(secs, 8 * 3600) * 0.5);
     if (gain < 1 || secs < 30) return;
     const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60);
-    modal(`${icon("ui:offline", 2)}<h2>SELAMAT DATANG LAGI!</h2>
-      <p>Selama kamu pergi (${h ? h + " jam " : ""}${m} menit), gerobakmu tetap jualan:</p>
-      <div class="big">+${fmt(gain)}</div>
+    modal("Selamat datang", "HASIL JUALAN", `<p>Selama kamu pergi (${h ? h + " jam " : ""}${m} menit), gerobakmu tetap jualan:</p>
+      <div class="big">${icon("ui:koin_tumpuk", 2)}+${fmt(gain)}</div>
       <div class="row2"><button class="btn" data-act="offline" data-x="1" data-gain="${gain}">AMBIL</button>
-      <button class="btn purple" data-act="offline" data-x="2" data-gain="${gain}">${icon("ui:iklan_bonus", 1)}AMBIL X2</button></div>
-      <p style="font-size:12px">Tombol X2 di prototipe ini tidak memutar iklan.</p>`);
+      <button class="btn purple" data-act="offline" data-x="2" data-gain="${gain}">X2${icon("ui:iklan_bonus", 1)}</button></div>
+      <p style="font-size:13px">Tombol X2 di prototipe ini tidak memutar iklan.</p>`, false);
   }
 
   // ------------------------------------------------------------------ actions

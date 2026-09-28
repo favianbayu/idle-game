@@ -1,0 +1,296 @@
+{
+  "palette": {
+    "O": "#2a1418",
+    "w": "#8a4a2b",
+    "W": "#5a3222",
+    "l": "#b0683a",
+    "L": "#d08a4a",
+    "g": "#6e3b24",
+    "c": "#f4e4bf",
+    "C": "#e0c898",
+    "e": "#c9a86a",
+    "E": "#fbf0d8",
+    "y": "#f2c94c",
+    "Y": "#fff2a8",
+    "G": "#b8892a",
+    "r": "#d8432a",
+    "R": "#8a1f12",
+    "s": "#f07a5a",
+    "h": "#4fae5a",
+    "H": "#2a7a3a",
+    "j": "#8fe07a",
+    "b": "#3f8ac6",
+    "B": "#1f4a7a",
+    "k": "#7ab8e8",
+    "u": "#8e4ab0",
+    "U": "#4d2468",
+    "v": "#c080e0",
+    "a": "#8a8f94",
+    "A": "#50565a",
+    "q": "#b8bcc0",
+    "o": "#f0902a",
+    "Q": "#a8581a",
+    "z": "#ffc070",
+    "t": "#3a2230",
+    "T": "#24141e",
+    "n": "#2e4a52",
+    "N": "#1c2e34",
+    "m": "#4a7280",
+    "d": "#d8b890",
+    "D": "#c9a070"
+  },
+  "pieces": {
+    "frame_kayu": {
+      "size": [
+        32,
+        32
+      ],
+      "nine_slice_border": 9
+    },
+    "kertas": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "kartu": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "plat_nama": {
+      "size": [
+        20,
+        20
+      ],
+      "nine_slice_border": 4
+    },
+    "potret": {
+      "size": [
+        32,
+        32
+      ],
+      "nine_slice_border": 3
+    },
+    "latar_pola": {
+      "size": [
+        16,
+        16
+      ],
+      "nine_slice_border": 0
+    },
+    "tooltip": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 7
+    },
+    "strip": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 4
+    },
+    "slot_ikon": {
+      "size": [
+        16,
+        16
+      ],
+      "nine_slice_border": 3
+    },
+    "jendela": {
+      "size": [
+        32,
+        32
+      ],
+      "nine_slice_border": 11
+    },
+    "tombol_hijau": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_hijau_tekan": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_emas": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_emas_tekan": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_merah": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_merah_tekan": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_biru": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_biru_tekan": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_ungu": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_ungu_tekan": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_abu": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_abu_tekan": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_oranye": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tombol_oranye_tekan": {
+      "size": [
+        24,
+        24
+      ],
+      "nine_slice_border": 6
+    },
+    "tab_aktif": {
+      "size": [
+        24,
+        20
+      ],
+      "nine_slice_border": 6
+    },
+    "tab_pasif": {
+      "size": [
+        24,
+        20
+      ],
+      "nine_slice_border": 6
+    },
+    "pita": {
+      "size": [
+        48,
+        18
+      ],
+      "nine_slice_border": 12
+    },
+    "pill_harga": {
+      "size": [
+        24,
+        14
+      ],
+      "nine_slice_border": 5
+    },
+    "bar_track": {
+      "size": [
+        12,
+        8
+      ],
+      "nine_slice_border": 3
+    },
+    "bar_biru": {
+      "size": [
+        12,
+        8
+      ],
+      "nine_slice_border": 3
+    },
+    "bar_hijau": {
+      "size": [
+        12,
+        8
+      ],
+      "nine_slice_border": 3
+    },
+    "bar_oranye": {
+      "size": [
+        12,
+        8
+      ],
+      "nine_slice_border": 3
+    },
+    "bar_ungu": {
+      "size": [
+        12,
+        8
+      ],
+      "nine_slice_border": 3
+    },
+    "bar_emas": {
+      "size": [
+        12,
+        8
+      ],
+      "nine_slice_border": 3
+    },
+    "bar_merah": {
+      "size": [
+        12,
+        8
+      ],
+      "nine_slice_border": 3
+    },
+    "tutup": {
+      "size": [
+        18,
+        18
+      ],
+      "nine_slice_border": 0
+    }
+  }
+}

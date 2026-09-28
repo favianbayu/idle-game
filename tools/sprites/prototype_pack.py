@@ -5,6 +5,7 @@ Output: prototype/atlas0.png, atlas1.png, ... and prototype/data.json
 """
 
 import json
+import shutil
 
 from PIL import Image
 
@@ -121,4 +122,9 @@ def generate():
         "tint": waktu["tint_latar_depan"],
         "tods": TODS,
     }
+    kit = OUT / "kit"
+    kit.mkdir(exist_ok=True)
+    for f in (ROOT / "ui" / "kit_v2").glob("*.png"):
+        if f.name != "kit_v2_preview.png":
+            shutil.copy(f, kit / f.name)
     (OUT / "data.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
