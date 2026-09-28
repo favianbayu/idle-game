@@ -10,7 +10,16 @@
   const DAY_LEN = 120;            // detik untuk satu siklus pagi-siang-sore-malam
   const TOD_TINT = {
     pagi: "rgba(255,220,180,0.08)", siang: null,
-    sore: "rgba(255,130,80,0.14)", malam: "rgba(20,24,70,0.38)",
+    sore: "rgba(255,120,80,0.2)", malam: "rgba(12,14,48,0.58)",
+  };
+  const LIGHT_A = { pagi: 0, siang: 0, sore: 0.45, malam: 1 };
+  const UMBRELLAS = ["merah", "biru", "kuning", "hijau"];
+  const WALKERS = {
+    kucing: { w: 22, h: 16, speed: 16, frames: ["jalan1", "jalan2", "jalan3", "jalan4"], ms: 150, lane: 250, weight: 3, say: "MEONG~", dry: true },
+    ayam: { w: 16, h: 16, speed: 9, frames: ["jalan1", "jalan2"], ms: 250, lane: 249, weight: 1, maxStage: 3, day: true, dry: true },
+    motor_ojek: { w: 52, h: 40, speed: 72, frames: ["jalan1", "jalan2"], ms: 90, lane: 255, weight: 2, say: "TIN TIN!", rain: true, lamp: true },
+    motor_keluarga: { w: 52, h: 40, speed: 60, frames: ["jalan1", "jalan2"], ms: 90, lane: 255, weight: 2, rain: true, lamp: true },
+    tukang_sayur: { w: 64, h: 42, speed: 14, frames: ["jalan1", "jalan2", "jalan3", "jalan4"], ms: 180, lane: 254, weight: 2, say: "SAYUUUR!", day: true, rain: true },
   };
   const STAGE_LABEL = { 1: "GEROBAK", 2: "WARUNG", 3: "KEDAI", 4: "RESTO", 5: "ISTANA" };
   const STAGE_BADGE = { 1: "stage1_gerobak", 2: "stage2_warung", 3: "stage3_kedai", 4: "stage4_resto", 5: "stage5_istana" };
@@ -154,11 +163,14 @@
   }
 
   let customers = [], parts = [], texts = [], cooking = null, lastSpawn = 0;
+  let walkers = [], nextWalker = 4;
   let heroFlash = 0, clock = 0, rain = false, lastTod = null;
   const clouds = [{ n: "awan_besar", x: 30, y: 22, v: 3 }, { n: "awan_sedang", x: 150, y: 46, v: 5 },
     { n: "awan_kecil", x: 90, y: 12, v: 7 }];
 
+  const isRain = () => rain || S.forceRain;
   function tod() {
+    if (S.forceTod) return { cur: S.forceTod, next: S.forceTod, blend: 0 };
     const t = (clock % DAY_LEN) / DAY_LEN * 4;
     const i = Math.floor(t);
     return { cur: D.tods[i], next: D.tods[(i + 1) % 4], blend: clamp((t - i - 0.9) / 0.1, 0, 1) };
@@ -179,7 +191,7 @@
     const slot = slots[0];
     customers.push({
       who, egg, it, slot, x: -34, tx: (L.bx >= 60 ? L.bx - 12 : L.footX - 44) - slot * 24, state: "walk", t: 0,
-      patience: 14 + S.staff.kasir, waited: 0,
+      patience: 14 + S.staff.kasir, waited: 0, umb: pick(UMBRELLAS),
     });
     if (egg) {
       const first = !S.album[egg.id];
@@ -257,11 +269,68 @@
       autoAcc += dt * S.staff.pelayan * 0.8;
       while (autoAcc >= 1) { autoAcc -= 1; tap(0, 0, true); }
     }
+    updateWalkers(dt);
     heroFlash = Math.max(0, heroFlash - dt);
     for (const p of parts) p.t += dt;
     parts = parts.filter((p) => p.t < (p.k === "burst" ? 0.3 : 0.9));
     for (const x of texts) x.t += dt;
     texts = texts.filter((x) => x.t < 1);
+  }
+
+  function spawnWalker() {
+    const t = tod().cur, stage = C().stage;
+    if (stage === 5) return;
+    const pool = [];
+    for (const [k, d] of Object.entries(WALKERS)) {
+      if (isRain() && d.dry) continue;
+      if (d.day && t === "malam") continue;
+      if (d.maxStage && stage > d.maxStage) continue;
+      for (let i = 0; i < d.weight; i++) pool.push(k);
+    }
+    if (!pool.length) return;
+    const kind = pick(pool), d = WALKERS[kind], dir = Math.random() < 0.5 ? 1 : -1;
+    walkers.push({ kind, d, dir, x: dir > 0 ? -d.w : W, t: 0, state: "walk", st: 0, said: false,
+      sitAt: kind === "kucing" && Math.random() < 0.5 ? rand(40, 170) : null });
+  }
+
+  function updateWalkers(dt) {
+    nextWalker -= dt;
+    if (nextWalker <= 0) { nextWalker = rand(6, 14); spawnWalker(); }
+    for (const w of walkers) {
+      w.t += dt; w.st += dt;
+      if (w.state === "sit") { if (w.st > 3) { w.state = "walk"; w.st = 0; } continue; }
+      if (w.state === "peck") { if (w.st > 1) { w.state = "walk"; w.st = 0; } continue; }
+      w.x += w.d.speed * w.dir * dt;
+      const cx = w.x + w.d.w / 2;
+      if (w.sitAt !== null && Math.abs(cx - w.sitAt) < 2) { w.state = "sit"; w.st = 0; w.sitAt = null; }
+      if (w.kind === "ayam" && w.st > 2.5 && Math.random() < dt) { w.state = "peck"; w.st = 0; }
+      if (w.d.say && !w.said && cx > 50 && cx < 174) {
+        w.said = true;
+        texts.push({ s: w.d.say, x: cx, y: w.d.lane - w.d.h - 2, t: 0, col: "#fbf0d8" });
+      }
+    }
+    walkers = walkers.filter((w) => w.x > -w.d.w - 4 && w.x < W + 4);
+  }
+
+  function walkerSprite(w, now) {
+    const rainy = isRain() && w.d.rain ? "_hujan" : "";
+    let fr = w.d.frames[Math.floor(now / w.d.ms) % w.d.frames.length];
+    if (w.state === "sit") fr = "duduk" + (1 + Math.floor(w.st / 0.6) % 2);
+    if (w.state === "peck") fr = "matuk" + (1 + Math.floor(w.st / 0.2) % 2);
+    return `lewat:${w.kind}${rainy}:${fr}`;
+  }
+
+  function sprFlip(ctx, name, x, y, flip) {
+    if (!flip) return spr(ctx, name, x, y);
+    const m = D.atlas[name];
+    if (!m) return;
+    ctx.save(); ctx.translate(Math.round(x) + m[3], Math.round(y)); ctx.scale(-1, 1);
+    ctx.drawImage(sheets[m[0]], m[1], m[2], m[3], m[4], 0, 0, m[3], m[4]);
+    ctx.restore();
+  }
+
+  function lightAlpha(t) {
+    return LIGHT_A[t.cur] * (1 - t.blend) + LIGHT_A[t.next] * t.blend;
   }
 
   function draw(now) {
@@ -291,6 +360,7 @@
       if (c.state === "walk" || c.state === "leave") fr = "jalan" + (1 + Math.floor(now / 140) % 4);
       if (c.state === "happy") fr = "senang" + (1 + Math.floor(c.t / 0.16) % 3);
       spr(fx, `cust:${c.who}:${fr}`, c.x, L.footY - 39);
+      if (isRain() && stage !== 5) spr(fx, `payung:${c.umb}`, c.x + 8, L.footY - 39 - 6);
     }
     let hf = "idle" + (1 + Math.floor(now / 400) % 2);
     if (cooking) hf = "masak" + (1 + Math.floor(now / 120) % 4);
@@ -298,13 +368,31 @@
     spr(fx, `hero:${S.city}:${stage}:${hf}`, L.footX - 16, L.footY - 39);
     if (stage >= 2) spr(fx, `rempi:${boostOn() ? "senang" : "float" + (1 + Math.floor(now / 450) % 2)}`,
       L.footX + 14, L.footY - 52 + Math.round(Math.sin(now / 400)));
+    for (const w of walkers) sprFlip(fx, walkerSprite(w, now), w.x, w.d.lane - w.d.h, w.dir < 0);
     const tint = stage === 5 ? null : TOD_TINT[t.cur];
     if (tint) {
       fx.globalCompositeOperation = "source-atop";
       fx.fillStyle = tint; fx.fillRect(0, 0, W, H);
       fx.globalCompositeOperation = "source-over";
     }
+    const la = stage === 5 ? 0 : lightAlpha(t);
+    const lightName = `bldL:${S.city}:${stage}:${bf}`;
+    if (la > 0 && D.atlas[lightName]) spr(fx, lightName, L.bx, L.by, la);
     sc.drawImage(fg, 0, 0);
+    if (la > 0) {
+      sc.save();
+      sc.globalCompositeOperation = "lighter";
+      sc.filter = "blur(3px)";
+      if (D.atlas[lightName]) spr(sc, lightName, L.bx, L.by, 0.5 * la);
+      sc.filter = "none";
+      for (const w of walkers) if (w.d.lamp) {                    // lampu depan motor
+        const hx = w.dir > 0 ? w.x + w.d.w : w.x;
+        const g = sc.createRadialGradient(hx, w.d.lane - 20, 1, hx + 18 * w.dir, w.d.lane - 14, 22);
+        g.addColorStop(0, `rgba(255,236,160,${0.55 * la})`); g.addColorStop(1, "rgba(255,236,160,0)");
+        sc.fillStyle = g; sc.fillRect(hx - 30, w.d.lane - 44, 60, 44);
+      }
+      sc.restore();
+    }
     // bubbles (not tinted)
     for (const c of customers) {
       const bx = c.x + 12, by = L.footY - 39 - 20;
@@ -326,7 +414,7 @@
     if (!day) for (let i = 0; i < 8; i++) {
       spr(sc, `fx:kunang${1 + (Math.floor(now / 300) + i) % 2}`, (i * 31 + clock * 4) % W, 150 + (i * 17) % 60 + Math.sin(clock + i) * 3);
     }
-    if (rain && stage !== 5) spr(sc, `fx:hujan${1 + Math.floor(now / 110) % 4}`, 0, 0, 0.9);
+    if (isRain() && stage !== 5) spr(sc, `fx:hujan${1 + Math.floor(now / 110) % 4}`, 0, 0, 0.9);
     for (const p of parts) {
       const a = p.t < 0.55 ? 1 : 1 - (p.t - 0.55) / 0.35;
       if (p.k === "burst") spr(sc, `fx:ledakan${1 + Math.min(3, Math.floor(p.t / 0.075))}`, p.x - 10, p.y - 10);
@@ -349,7 +437,7 @@
       vctx.lineWidth = 3; vctx.strokeStyle = "#100b13";
       const y = (x.y - 26 * x.t) * zoom;
       vctx.strokeText(x.s, x.x * zoom, y);
-      vctx.fillStyle = x.big ? "#fff2a8" : "#f2c94c";
+      vctx.fillStyle = x.col || (x.big ? "#fff2a8" : "#f2c94c");
       vctx.fillText(x.s, x.x * zoom, y);
     }
     vctx.globalAlpha = 1;
@@ -559,10 +647,17 @@
   function openSettings() {
     modal("Pengaturan", "OPSI", `<div class="k-card">
       <label class="switch" for="eggBoost"><span>Perbanyak pelanggan langka (mode tes, x25)</span>
-      <input type="checkbox" id="eggBoost" ${S.eggBoost ? "checked" : ""}></label></div>
+      <input type="checkbox" id="eggBoost" ${S.eggBoost ? "checked" : ""}></label>
+      <label class="switch" for="forceTod"><span>Waktu</span>
+      <select id="forceTod">${["", "pagi", "siang", "sore", "malam"].map((v) =>
+        `<option value="${v}" ${(S.forceTod || "") === v ? "selected" : ""}>${v || "ikuti siklus"}</option>`).join("")}</select></label>
+      <label class="switch" for="forceRain"><span>Paksa hujan</span>
+      <input type="checkbox" id="forceRain" ${S.forceRain ? "checked" : ""}></label></div>
       <p>Progres tersimpan di browser ini saja.</p>
       <button class="btn red wide" data-act="reset">MULAI ULANG</button>`);
     $("#eggBoost").addEventListener("change", (e) => { S.eggBoost = e.target.checked; save(); });
+    $("#forceTod").addEventListener("change", (e) => { S.forceTod = e.target.value || null; save(); });
+    $("#forceRain").addEventListener("change", (e) => { S.forceRain = e.target.checked; save(); });
   }
 
   function confirmReset() {
@@ -600,7 +695,7 @@
     } else if (a === "stageup") {
       const s = C().stage;
       if (C().earned < stageReq(s) || activeItems().length < s + 1) return;
-      C().stage = s + 1; S.gems += s * 2; customers = []; cooking = null;
+      C().stage = s + 1; S.gems += s * 2; customers = []; walkers = []; cooking = null;
       showToast(`ui:${STAGE_BADGE[s + 1]}`, `Naik kelas: ${STAGE_LABEL[s + 1]}!`, ` +${s * 2} Bintang Rasa. Menu baru terbuka.`);
     } else if (a === "claim") {
       const i = +el.dataset.i, m = S.missions[i];
@@ -610,10 +705,10 @@
     } else if (a === "buycity") {
       const c = el.dataset.city, cost = +el.dataset.cost;
       if (S.coins < cost) return;
-      S.coins -= cost; S.cities[c].unlocked = true; S.city = c; customers = []; cooking = null; closeModal();
+      S.coins -= cost; S.cities[c].unlocked = true; S.city = c; customers = []; walkers = []; cooking = null; closeModal();
       showToast(`ui:kota_${c}`, `Selamat datang di ${D.cities[c].name}!`, " Mulai lagi dari gerobak dengan menu khas kota ini.");
     } else if (a === "goto") {
-      S.city = el.dataset.city; customers = []; cooking = null; closeModal();
+      S.city = el.dataset.city; customers = []; walkers = []; cooking = null; closeModal();
     } else if (a === "close") { closeModal(); return; }
     else if (a === "reset") { confirmReset(); return; }
     else if (a === "doreset") { S = freshState(); ensureMissions(); closeModal(); save(); renderPanel(); return; }
@@ -642,7 +737,15 @@
     window.addEventListener("resize", fit);
     view.addEventListener("pointerdown", (e) => {
       const r = view.getBoundingClientRect();
-      tap((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H, false);
+      const gx = (e.clientX - r.left) / r.width * W, gy = (e.clientY - r.top) / r.height * H;
+      const cat = walkers.find((w) => w.kind === "kucing" && gx > w.x - 4 && gx < w.x + w.d.w + 4 &&
+        gy > w.d.lane - w.d.h - 6 && gy < w.d.lane + 4);
+      if (cat) {
+        cat.state = "sit"; cat.st = 0;
+        const bonus = Math.max(1, Math.round(estRate() * 3));
+        earn(bonus);
+        texts.push({ s: "MEONG! +" + fmt(bonus), x: cat.x + 11, y: cat.d.lane - 20, t: 0, col: "#ffb0d8" });
+      } else tap(gx, gy, false);
       refresh();
     });
     $("#tabs").addEventListener("click", (e) => {

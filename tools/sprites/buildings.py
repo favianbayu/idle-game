@@ -1218,6 +1218,44 @@ STAGES = {
 }
 
 
+# Night lights: which pixels glow. Each rule = (keys, rect or None); "*" = any non-outline pixel.
+LIGHTS = {
+    1: {"*": [("bh", None), ("*", (14, 18, 34, 15)), ("e", (48, 15, 24, 18))]},
+    2: {"*": [("*", (8, 30, 144, 50)), ("Ypa", (0, 30, 160, 12)), ("*", (92, 66, 34, 15))]},
+    3: {"*": [("gGi", (16, 42, 112, 34)), ("*", (14, 128, 116, 40)), ("*", (10, 95, 124, 22))]},
+    4: {"jakarta": [("Yya", (8, 22, 160, 98)), ("nNur", (8, 120, 160, 21)), ("*", (10, 141, 156, 45))],
+        "bandung": [("IJiLp", (30, 56, 116, 106)), ("L", (14, 166, 48, 16)), ("*", (80, 140, 17, 22))],
+        "bali": [("*", (16, 126, 144, 24)), ("LPCfFwW", None)],
+        "surabaya": [("IJinNL", None)]},
+}
+
+
+def _lit(rules, grid):
+    h, w = len(grid), len(grid[0])
+    out = [["."] * w for _ in range(h)]
+    for keys, rect in rules:
+        x0, y0, rw, rh = rect if rect else (0, 0, w, h)
+        for y in range(max(0, y0), min(h, y0 + rh)):
+            for x in range(max(0, x0), min(w, x0 + rw)):
+                k = grid[y][x]
+                if k in (".", "O", "q"):
+                    continue
+                if keys == "*" or k in keys:
+                    out[y][x] = k
+    return out
+
+
+def light_frames(city, stage):
+    """Only the glowing pixels of each frame (drawn untinted over the darkened building)."""
+    spec = LIGHTS.get(stage)
+    if not spec:
+        return []
+    rules = spec.get(city, spec.get("*"))
+    st = STAGES[stage]
+    pal = st["palette"](city)
+    return [render(_lit(rules, cv.g), pal) for cv in st["frames"](city)]
+
+
 def render_frames(city, stage):
     st = STAGES[stage]
     pal = st["palette"](city)
@@ -1233,6 +1271,8 @@ def generate():
             frames = [(f"frame{i + 1}", im) for i, im in enumerate(imgs)]
             folder = f"{city}/stage{stage}_{st['slug']}"
             save_set(OUT / folder, frames, durations=[500, 500], gif_scale=4)
+            for i, im in enumerate(light_frames(city, stage)):
+                im.save(OUT / folder / f"frame{i + 1}_lampu.png")
             meta[city][f"stage{stage}"] = {
                 "folder": folder,
                 "size": list(imgs[0].size),

@@ -38,8 +38,23 @@ def _collect():
             folder = ROOT / "buildings" / city / f"stage{s}_{BSTAGES[s]['slug']}"
             for f in (1, 2):
                 add(f"bld:{city}:{s}:{f}", folder / f"frame{f}.png")
+                if (folder / f"frame{f}_lampu.png").exists():
+                    add(f"bldL:{city}:{s}:{f}", folder / f"frame{f}_lampu.png")
             for fr in HERO_FRAMES:
                 add(f"hero:{city}:{s}:{fr}", ASSETS / "main" / "kota" / city / f"stage{s}" / f"{fr}.png")
+    lw = ASSETS / "lewat"
+    for n in ("jalan1", "jalan2", "jalan3", "jalan4", "duduk1", "duduk2"):
+        add(f"lewat:kucing:{n}", lw / "kucing" / f"{n}.png")
+    for n in ("jalan1", "jalan2", "matuk1", "matuk2"):
+        add(f"lewat:ayam:{n}", lw / "ayam" / f"{n}.png")
+    for m in ("motor_ojek", "motor_ojek_hujan", "motor_keluarga", "motor_keluarga_hujan"):
+        for n in ("jalan1", "jalan2"):
+            add(f"lewat:{m}:{n}", lw / m / f"{n}.png")
+    for m in ("tukang_sayur", "tukang_sayur_hujan"):
+        for n in ("jalan1", "jalan2", "jalan3", "jalan4"):
+            add(f"lewat:{m}:{n}", lw / m / f"{n}.png")
+    for c in ("merah", "biru", "kuning", "hijau"):
+        add(f"payung:{c}", lw / f"payung_{c}.png")
     for fr in ("float1", "float2", "senang"):
         add(f"rempi:{fr}", ASSETS / "npc" / "rempi" / f"{fr}.png")
     anim = ASSETS / "npc" / "animasi"

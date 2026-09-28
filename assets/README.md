@@ -198,3 +198,13 @@ kartu, plat nama, kotak potret motif wajik, tooltip bersiku emas, jendela dengan
 7 warna + versi ditekan, tab kayu aktif/pasif, pita judul, pill harga, bar statistik 6 warna, tombol tutup,
 pola latar). `kit_v2.json` berisi ukuran & lebar border 9-slice tiap potongan; preview di
 `kit_v2_preview.png`. Prototipe (`prototype/`) sudah memakai kit ini lewat CSS `border-image`.
+
+## Lampu malam, payung & yang lewat
+
+- `buildings/<kota>/stageN_*/frame{1,2}_lampu.png`: hanya piksel yang menyala (jendela, interior,
+  etalase, spanduk, papan nama, neon, lampu tumblr, obor, kolam). Saat malam game menggelapkan gedung,
+  lalu menggambar layer ini tanpa digelapkan + efek pendar (sore setengah terang).
+- `characters/lewat/`: yang lewat di jalan depan toko (sprite menghadap kanan, dibalik untuk arah kiri):
+  `kucing` (jalan 1-4, duduk 1-2), `ayam` (jalan, matuk), `motor_ojek`, `motor_keluarga`
+  (+ versi `_hujan` jas hujan), `tukang_sayur` (+ `_hujan` terpal plastik), dan `payung_{merah,biru,kuning,hijau}`
+  untuk pelanggan saat hujan. Preview: `lewat_preview.png`.

@@ -24,7 +24,11 @@ Isi folder:
 - **Boost Rempi** (mulai stage 2): pendapatan ×2 selama 30 detik.
 - **Siklus waktu** pagi → siang → sore → malam (2 menit per siklus), awan, burung, kunang-kunang,
   kadang hujan di malam hari.
+- **Malam hari**: gedung gelap tapi jendela, interior, papan nama dan neon menyala (dengan pendar).
+- **Hujan**: pelanggan datang pakai payung, motor pakai jas hujan, gerobak sayur ditutup terpal.
+- **Yang lewat**: kucing oren (tap untuk elus, dapat bonus), ayam kampung, motor ojek & keluarga
+  ("TIN TIN!", lampu depan menyala saat malam), tukang sayur ("SAYUUUR!").
 - **Penghasilan offline** saat kembali membuka game (maks 8 jam, 50%).
-- **Pengaturan:** mode tes pelanggan langka (peluang ×25) dan reset progres.
+- **Pengaturan:** mode tes pelanggan langka (peluang ×25), paksa waktu (pagi/siang/sore/malam), paksa hujan, dan reset progres.
 
 Progres disimpan di `localStorage` browser. Semua angka ekonomi masih angka awal untuk dicoba.
