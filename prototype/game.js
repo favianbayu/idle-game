@@ -12,6 +12,8 @@
     pagi: "rgba(255,220,180,0.08)", siang: null,
     sore: "rgba(255,120,80,0.2)", malam: "rgba(12,14,48,0.58)",
   };
+  // Karakter di depan toko ikut kena cahaya toko, jadi digelapkan lebih ringan.
+  const CHAR_TINT = { pagi: "rgba(255,220,180,0.06)", siang: null, sore: "rgba(255,140,90,0.12)", malam: "rgba(20,22,60,0.3)" };
   const LIGHT_A = { pagi: 0, siang: 0, sore: 0.45, malam: 1 };
   const UMBRELLAS = ["merah", "biru", "kuning", "hijau"];
   const WALKERS = {
@@ -163,7 +165,7 @@
   }
 
   let customers = [], parts = [], texts = [], cooking = null, lastSpawn = 0;
-  let walkers = [], nextWalker = 4;
+  let walkers = [], nextWalker = 20;
   let heroFlash = 0, clock = 0, rain = false, lastTod = null;
   const clouds = [{ n: "awan_besar", x: 30, y: 22, v: 3 }, { n: "awan_sedang", x: 150, y: 46, v: 5 },
     { n: "awan_kecil", x: 90, y: 12, v: 7 }];
@@ -272,7 +274,7 @@
     updateWalkers(dt);
     heroFlash = Math.max(0, heroFlash - dt);
     for (const p of parts) p.t += dt;
-    parts = parts.filter((p) => p.t < (p.k === "burst" ? 0.3 : 0.9));
+    parts = parts.filter((p) => p.t < (p.k === "burst" ? 0.3 : p.k === "heart" ? 1.2 : 0.9));
     for (const x of texts) x.t += dt;
     texts = texts.filter((x) => x.t < 1);
   }
@@ -295,7 +297,7 @@
 
   function updateWalkers(dt) {
     nextWalker -= dt;
-    if (nextWalker <= 0) { nextWalker = rand(6, 14); spawnWalker(); }
+    if (nextWalker <= 0) { nextWalker = rand(25, 50); spawnWalker(); }
     for (const w of walkers) {
       w.t += dt; w.st += dt;
       if (w.state === "sit") { if (w.st > 3) { w.state = "walk"; w.st = 0; } continue; }
@@ -351,10 +353,30 @@
         spr(sc, `fx:burung${1 + (Math.floor(clock * 6) + i) % 3}`, bx, 62 + i * 6 + Math.sin(clock * 2 + i) * 2);
       }
     }
-    // foreground (tinted per time of day)
+    // 1) gedung: digelapkan sesuai waktu, lalu lampunya dinyalakan
+    const tintLayer = (color) => {
+      if (!color) return;
+      fx.globalCompositeOperation = "source-atop";
+      fx.fillStyle = color; fx.fillRect(0, 0, W, H);
+      fx.globalCompositeOperation = "source-over";
+    };
     fx.clearRect(0, 0, W, H);
     const bf = Math.floor(now / 500) % 2 + 1;
     spr(fx, `bld:${S.city}:${stage}:${bf}`, L.bx, L.by);
+    tintLayer(stage === 5 ? null : TOD_TINT[t.cur]);
+    const la = stage === 5 ? 0 : lightAlpha(t);
+    const lightName = `bldL:${S.city}:${stage}:${bf}`;
+    if (la > 0 && D.atlas[lightName]) spr(fx, lightName, L.bx, L.by, la);
+    sc.drawImage(fg, 0, 0);
+    if (la > 0 && D.atlas[lightName]) {
+      sc.save();
+      sc.globalCompositeOperation = "lighter";
+      sc.filter = "blur(3px)";
+      spr(sc, lightName, L.bx, L.by, 0.5 * la);
+      sc.restore();
+    }
+    // 2) karakter & yang lewat, di depan gedung, dengan tint lebih ringan
+    fx.clearRect(0, 0, W, H);
     for (const c of customers) {
       let fr = "tunggu" + (1 + Math.floor(c.t / 0.6) % 2);
       if (c.state === "walk" || c.state === "leave") fr = "jalan" + (1 + Math.floor(now / 140) % 4);
@@ -369,22 +391,11 @@
     if (stage >= 2) spr(fx, `rempi:${boostOn() ? "senang" : "float" + (1 + Math.floor(now / 450) % 2)}`,
       L.footX + 14, L.footY - 52 + Math.round(Math.sin(now / 400)));
     for (const w of walkers) sprFlip(fx, walkerSprite(w, now), w.x, w.d.lane - w.d.h, w.dir < 0);
-    const tint = stage === 5 ? null : TOD_TINT[t.cur];
-    if (tint) {
-      fx.globalCompositeOperation = "source-atop";
-      fx.fillStyle = tint; fx.fillRect(0, 0, W, H);
-      fx.globalCompositeOperation = "source-over";
-    }
-    const la = stage === 5 ? 0 : lightAlpha(t);
-    const lightName = `bldL:${S.city}:${stage}:${bf}`;
-    if (la > 0 && D.atlas[lightName]) spr(fx, lightName, L.bx, L.by, la);
+    tintLayer(stage === 5 ? null : CHAR_TINT[t.cur]);
     sc.drawImage(fg, 0, 0);
     if (la > 0) {
       sc.save();
       sc.globalCompositeOperation = "lighter";
-      sc.filter = "blur(3px)";
-      if (D.atlas[lightName]) spr(sc, lightName, L.bx, L.by, 0.5 * la);
-      sc.filter = "none";
       for (const w of walkers) if (w.d.lamp) {                    // lampu depan motor
         const hx = w.dir > 0 ? w.x + w.d.w : w.x;
         const g = sc.createRadialGradient(hx, w.d.lane - 20, 1, hx + 18 * w.dir, w.d.lane - 14, 22);
@@ -417,7 +428,19 @@
     if (isRain() && stage !== 5) spr(sc, `fx:hujan${1 + Math.floor(now / 110) % 4}`, 0, 0, 0.9);
     for (const p of parts) {
       const a = p.t < 0.55 ? 1 : 1 - (p.t - 0.55) / 0.35;
-      if (p.k === "burst") spr(sc, `fx:ledakan${1 + Math.min(3, Math.floor(p.t / 0.075))}`, p.x - 10, p.y - 10);
+      if (p.k === "heart") {
+        if (p.t < 0) continue;
+        const ha = clamp(1 - (p.t - 0.7) / 0.5, 0, 1);
+        const hx = Math.round(p.x + Math.sin(p.t * 8 + p.dx) * 3), hy = Math.round(p.y - 30 * p.t);
+        sc.globalAlpha = ha;
+        sc.fillStyle = "#2a1c24";
+        sc.fillRect(hx - 1, hy - 1, 7, 6); sc.fillRect(hx, hy + 5, 5, 1); sc.fillRect(hx + 1, hy + 6, 3, 1);
+        sc.fillStyle = "#ff5a7a";
+        sc.fillRect(hx, hy, 2, 1); sc.fillRect(hx + 3, hy, 2, 1); sc.fillRect(hx, hy + 1, 5, 2);
+        sc.fillRect(hx + 1, hy + 3, 3, 1); sc.fillRect(hx + 2, hy + 4, 1, 1);
+        sc.fillStyle = "#ffc0d0"; sc.fillRect(hx, hy, 1, 1);
+        sc.globalAlpha = 1;
+      } else if (p.k === "burst") spr(sc, `fx:ledakan${1 + Math.min(3, Math.floor(p.t / 0.075))}`, p.x - 10, p.y - 10);
       else if (p.k === "coin") spr(sc, `fx:koin_putar${1 + Math.floor(p.t / 0.08) % 4}`, p.x - 6 + p.dx * p.t, p.y - 6 - 44 * p.t, a);
       else if (p.k === "food") {
         const s = p.t < 0.15 ? 0.6 + p.t * 3 : 1;
@@ -738,13 +761,18 @@
     view.addEventListener("pointerdown", (e) => {
       const r = view.getBoundingClientRect();
       const gx = (e.clientX - r.left) / r.width * W, gy = (e.clientY - r.top) / r.height * H;
-      const cat = walkers.find((w) => w.kind === "kucing" && gx > w.x - 4 && gx < w.x + w.d.w + 4 &&
-        gy > w.d.lane - w.d.h - 6 && gy < w.d.lane + 4);
-      if (cat) {
-        cat.state = "sit"; cat.st = 0;
-        const bonus = Math.max(1, Math.round(estRate() * 3));
-        earn(bonus);
-        texts.push({ s: "MEONG! +" + fmt(bonus), x: cat.x + 11, y: cat.d.lane - 20, t: 0, col: "#ffb0d8" });
+      const pet = walkers.find((w) => (w.kind === "kucing" || w.kind === "ayam") && gx > w.x - 6 &&
+        gx < w.x + w.d.w + 6 && gy > w.d.lane - w.d.h - 8 && gy < w.d.lane + 4);
+      if (pet) {
+        const cx = pet.x + pet.d.w / 2;
+        pet.state = pet.kind === "kucing" ? "sit" : "peck"; pet.st = 0;
+        for (let i = 0; i < 4; i++) parts.push({ k: "heart", x: cx - 3 + rand(-6, 6), y: pet.d.lane - pet.d.h - 2 - i * 3, t: -i * 0.12, dx: i });
+        if (!pet.petted) {
+          pet.petted = true;
+          const bonus = Math.max(1, Math.round(estRate() * 3));
+          earn(bonus);
+          texts.push({ s: (pet.kind === "kucing" ? "MEONG! +" : "PETOK! +") + fmt(bonus), x: cx, y: pet.d.lane - 22, t: 0, col: "#ffb0d8" });
+        }
       } else tap(gx, gy, false);
       refresh();
     });

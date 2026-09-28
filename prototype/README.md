@@ -26,8 +26,8 @@ Isi folder:
   kadang hujan di malam hari.
 - **Malam hari**: gedung gelap tapi jendela, interior, papan nama dan neon menyala (dengan pendar).
 - **Hujan**: pelanggan datang pakai payung, motor pakai jas hujan, gerobak sayur ditutup terpal.
-- **Yang lewat**: kucing oren (tap untuk elus, dapat bonus), ayam kampung, motor ojek & keluarga
-  ("TIN TIN!", lampu depan menyala saat malam), tukang sayur ("SAYUUUR!").
+- **Yang lewat** (sesekali, tiap ±25-50 detik): kucing oren & ayam kampung (tap = keluar hati + bonus
+  kecil), motor ojek & keluarga ("TIN TIN!", lampu depan menyala saat malam), tukang sayur ("SAYUUUR!").
 - **Penghasilan offline** saat kembali membuka game (maks 8 jam, 50%).
 - **Pengaturan:** mode tes pelanggan langka (peluang ×25), paksa waktu (pagi/siang/sore/malam), paksa hujan, dan reset progres.
 

@@ -205,6 +205,8 @@ pola latar). `kit_v2.json` berisi ukuran & lebar border 9-slice tiap potongan; p
   etalase, spanduk, papan nama, neon, lampu tumblr, obor, kolam). Saat malam game menggelapkan gedung,
   lalu menggambar layer ini tanpa digelapkan + efek pendar (sore setengah terang).
 - `characters/lewat/`: yang lewat di jalan depan toko (sprite menghadap kanan, dibalik untuk arah kiri):
-  `kucing` (jalan 1-4, duduk 1-2), `ayam` (jalan, matuk), `motor_ojek`, `motor_keluarga`
-  (+ versi `_hujan` jas hujan), `tukang_sayur` (+ `_hujan` terpal plastik), dan `payung_{merah,biru,kuning,hijau}`
+  `kucing` (jalan 1-4, duduk 1-2), `ayam` (jalan, matuk), `motor_ojek` (NPC berhelm + jaket hijau),
+  `motor_keluarga` (ibu berkerudung + anak dibonceng) (+ versi `_hujan` jas hujan), `tukang_sayur`
+  (NPC bercaping dorong gerobak, + `_hujan` terpal plastik). Pengendara & tukang sayur dirakit dari kit NPC
+  yang sama dengan pelanggan (helm = topi baru `helm`), dan `payung_{merah,biru,kuning,hijau}`
   untuk pelanggan saat hujan. Preview: `lewat_preview.png`.

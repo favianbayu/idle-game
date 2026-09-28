@@ -7,8 +7,16 @@
 - payung 4 warna untuk pelanggan saat hujan
 """
 
+from PIL import Image
+
+from . import easter
+from . import face
+from .character import BODY_KAOS, HATS, compose, full_palette
 from .core import ASSETS, contact_sheet, render, save_set
 from .draw import Canvas
+from .npc_anim import customer_frames
+
+_ = easter  # memastikan topi caping sudah terdaftar
 
 OUT = ASSETS / "lewat"
 O = "#2a1c24"
@@ -80,92 +88,117 @@ def ayam(frame):
 
 
 # ------------------------------------------------------------------- motor
+# Riders and the vegetable seller are regular NPCs from the face kit + extra elements.
 MOTOR = {"T": "#2b2530", "M": "#9aa3a8", "m": "#5d666b", "k": "#c9322a", "K": "#8a1f12",
-         "s": "#d99a6c", "e": "#1e1420", "l": "#fff2a8", "p": "#3e3a4a"}
+         "l": "#fff2a8", "p": "#3e3a4a"}
+
+
+def _helm():
+    cv = Canvas(32, 40)
+    cv.ellipse(16, 12, 11, 7, "c")
+    cv.rect(4, 12, 24, 7, ".")
+    cv.rect(5, 12, 3, 7, "c"), cv.rect(24, 12, 3, 7, "c")          # pelindung pipi
+    cv.hline(6, 13, 20, "C"), cv.hline(6, 14, 20, "C")              # kaca helm terbuka
+    cv.hline(9, 7, 6, "B")                                          # kilap
+    cv.outline("O")
+    return {y: "".join(r) for y, r in enumerate(cv.g) if any(ch != "." for ch in r)}
+
+
+HATS["helm"] = {"clip": 14, "layer": _helm()}
+
 RIDERS = {
-    "ojek": {"j": "#3fae5a", "J": "#2a7a3a", "h": "#3fae5a", "H": "#2a7a3a", "v": "#1e1420"},
-    "keluarga": {"j": "#8e62c4", "J": "#5a3a8a", "h": "#fbf6ec", "H": "#c9c1b3", "v": "#4f86a6",
-                 "c": "#f2c94c", "C": "#b8892a"},
+    "ojek": [dict(look=dict(hair="cepak", skin="sawo_matang", brows="tebal", mouth="senyum"),
+                  outfit={"g": "#3fae5a", "G": "#2a7a3a", "L": "#6fd07a", "q": "#fbf6ec",
+                          "c": "#3fae5a", "C": "#1e1420", "B": "#9fe0a8"})],
+    "keluarga": [dict(look=dict(hair="pendek", skin="kuning_langsat", eyes="berbinar", mouth="ketawa"),
+                      outfit={"g": "#f2c94c", "G": "#b8892a", "L": "#ffe08a", "q": "#d8432a",
+                              "c": "#fbf6ec", "C": "#1e1420", "B": "#ffffff"}, dx=-11),
+                 dict(look=dict(hair="kerudung", hijab_color="ungu", skin="sawo_matang", mouth="senyum"),
+                      outfit={"g": "#8e62c4", "G": "#5a3a8a", "L": "#b08ae0", "q": "#8e62c4",
+                              "c": "#fbf6ec", "C": "#1e1420", "B": "#ffffff", "i": "#7b4fb0",
+                              "I": "#4d2d78", "j": "#a07ad0"}, dx=0)],
 }
-JAS_HUJAN = {"j": "#4fa8e0", "J": "#2e6aa0", "c": "#f2d24c", "C": "#c9a020"}
+JAS_HUJAN = {"g": "#4fa8e0", "G": "#2e6aa0", "L": "#8fd0f8", "q": "#4fa8e0", "i": "#4fa8e0",
+             "I": "#2e6aa0", "j": "#8fd0f8"}
+
+
+def _rider(r, rain):
+    lk = face.look(**r["look"])
+    outfit = dict(r["outfit"])
+    if rain:
+        outfit.update(JAS_HUJAN)
+    pal = full_palette(lk, {**outfit, "p": "#3e3a4a", "P": "#2c2836", "f": "#2a2430", "F": "#16121a"})
+    hat = None if lk["hair"] == "kerudung" else "helm"
+    img = render(compose(lk, BODY_KAOS, hat=hat), pal)
+    return img.crop((0, 0, 32, 31))
 
 
 def motor(kind, frame, rain=False):
-    cv = Canvas(52, 40)
+    cv = Canvas(56, 52)
     bob = frame % 2
-    for cx in (11, 41):                                               # roda
-        cv.disc(cx, 33, 6, "T")
-        cv.disc(cx, 33, 3, "M")
-        for a in ((0, -2), (2, 0), (0, 2), (-2, 0)) if frame % 2 == 0 else ((1, -1), (1, 1), (-1, 1), (-1, -1)):
-            cv.px(cx + a[0], 33 + a[1], "m")
-    y0 = bob
-    cv.poly([(8, 26 + y0), (30, 24 + y0), (40, 22 + y0), (44, 26 + y0), (40, 30 + y0), (12, 30 + y0)], "k")
-    cv.poly([(36, 14 + y0), (42, 14 + y0), (45, 26 + y0), (39, 26 + y0)], "k")   # tameng depan
-    cv.hline(10, 29 + y0, 30, "K")
-    cv.rect(14, 22 + y0, 16, 3, "p")                                  # jok
-    cv.rect(44, 18 + y0, 3, 3, "l")                                   # lampu
-    cv.line(37, 12 + y0, 42, 10 + y0, "m")                            # setang
-    cv.line(40, 30 + y0, 44, 33 + y0, "m")
-    # pengendara
-    r = dict(RIDERS[kind])
-    if rain:
-        r.update(JAS_HUJAN)
-    cv.rect(22, 12 + y0, 9, 11, "j")                                  # badan
-    cv.vline(30, 12 + y0, 11, "J")
-    cv.line(29, 15 + y0, 38, 12 + y0, "j")                            # lengan
-    cv.rect(24, 22 + y0, 12, 3, "p")                                  # paha
-    cv.vline(35, 22 + y0, 7, "p")                                     # kaki
-    cv.disc(27, 7 + y0, 4, "h")                                       # helm
-    cv.rect(28, 6 + y0, 4, 3, "v")                                    # kaca helm
-    cv.hline(23, 9 + y0, 3, "H")
-    if kind == "keluarga":                                            # anak dibonceng
-        cv.rect(15, 15 + y0, 7, 8, "c")
-        cv.vline(15, 15 + y0, 8, "C")
-        cv.disc(18, 11 + y0, 3, "h" if not rain else "c")
-        cv.px(20, 11 + y0, "e")
-        cv.rect(16, 23 + y0, 6, 2, "p")
-    if rain:                                                          # ujung jas hujan berkibar
-        cv.poly([(22, 22 + y0), (14 if kind == "ojek" else 12, 26 + y0 + frame % 2), (22, 26 + y0)], "j")
-    return _fin(cv, {**MOTOR, **r})
+    oy = 12
+    for cx in (12, 44):                                               # roda
+        cv.disc(cx, 33 + oy, 6, "T")
+        cv.disc(cx, 33 + oy, 3, "M")
+        spokes = ((0, -2), (2, 0), (0, 2), (-2, 0)) if frame % 2 == 0 else ((1, -1), (1, 1), (-1, 1), (-1, -1))
+        for dx, dy in spokes:
+            cv.px(cx + dx, 33 + oy + dy, "m")
+    y0 = bob + oy
+    cv.poly([(8, 26 + y0), (32, 24 + y0), (42, 22 + y0), (47, 26 + y0), (43, 30 + y0), (12, 30 + y0)], "k")
+    cv.hline(10, 29 + y0, 32, "K")
+    cv.rect(12, 22 + y0, 22, 3, "p")                                  # jok
+    cv.line(43, 30 + y0, 47, 33 + y0, "m")
+    body = _fin(cv, MOTOR)
+    front = Canvas(56, 52)                                            # tameng + setang di depan rider
+    front.poly([(38, 12 + y0), (44, 12 + y0), (48, 26 + y0), (41, 26 + y0)], "k")
+    front.rect(46, 16 + y0, 3, 3, "l")
+    front.line(33, 22 + y0, 42, 16 + y0, "m")
+    front = _fin(front, MOTOR)
+    img = body.copy()
+    for r in RIDERS[kind]:
+        rider = _rider(r, rain)
+        img.alpha_composite(rider, (14 + r.get("dx", 0), y0 - 7))
+    img.alpha_composite(front)
+    return img
 
 
 # ------------------------------------------------------------- tukang sayur
 SAYUR = {"w": "#a0643a", "W": "#6b4a32", "M": "#50585c", "g": "#5fae4a", "G": "#2f7a3a",
-         "r": "#d8322a", "o": "#f0902a", "y": "#f2c94c", "s": "#b0714b", "S": "#8a5433",
-         "b": "#4f86a6", "B": "#2e5570", "c": "#d8b860", "C": "#a8883a", "e": "#1e1420",
-         "p": "#3e3a4a", "t": "#bfe6f0aa"}
+         "r": "#d8322a", "o": "#f0902a", "y": "#f2c94c", "p": "#3e3a4a", "t": "#bfe6f0aa"}
+SAYUR_LOOK = dict(hair="pendek", skin="cokelat", brows="tebal", mouth="ketawa", facial_hair="kumis_tipis")
 
 
-def tukang_sayur(frame, rain=False):
-    cv = Canvas(64, 42)
-    # gerobak sayur di depan (kanan)
-    cv.rect(28, 20, 32, 12, "w")
-    cv.hline(28, 24, 32, "W"), cv.hline(28, 28, 32, "W")
-    for x, col in ((31, "g"), (37, "r"), (43, "o"), (49, "g"), (55, "y")):
-        cv.ellipse(x, 18, 3, 3, col)
-    cv.px(37, 15, "G"), cv.px(49, 15, "G")
-    cv.rect(29, 16, 2, 3, "g"), cv.rect(41, 15, 2, 4, "G")
-    cv.line(28, 22, 20, 18, "M")                                      # pegangan
-    for cx in (34, 54):
-        cv.disc(cx, 36, 4, "p")
-        cv.disc(cx, 36, 1, "M")
-    cv.vline(46, 32, 4, "M")
+def _gerobak_sayur(rain):
+    cv = Canvas(40, 42)
+    cv.rect(6, 22, 32, 11, "w")
+    cv.hline(6, 26, 32, "W"), cv.hline(6, 30, 32, "W")
+    for x, col in ((9, "g"), (15, "r"), (21, "o"), (27, "g"), (33, "y")):
+        cv.ellipse(x, 20, 3, 3, col)
+    cv.px(15, 17, "G"), cv.px(27, 17, "G")
+    cv.rect(7, 18, 2, 3, "g"), cv.rect(19, 17, 2, 4, "G")
+    cv.line(6, 24, 0, 30, "M")                                        # pegangan ke tangan
+    for cx in (12, 32):
+        cv.disc(cx, 37, 4, "p")
+        cv.disc(cx, 37, 1, "M")
     if rain:
-        cv.poly([(27, 8), (61, 8), (62, 21), (26, 21)], "t")          # terpal plastik
-    # orangnya (menghadap kanan, mendorong)
-    step = frame % 4
-    legs = [(12, 16), (13, 15), (14, 14), (13, 15)][step]
-    cv.vline(legs[0], 32, 8, "p"), cv.vline(legs[1], 32, 8, "p")
-    cv.px(legs[0] + 1, 39, "e"), cv.px(legs[1] + 1, 39, "e")
-    cv.rect(9, 20, 10, 13, "b")
-    cv.vline(18, 20, 13, "B")
-    cv.line(17, 23, 21, 19, "s")                                      # tangan
-    cv.disc(14, 14, 4, "s")
-    cv.px(17, 14, "e")
-    cv.rect(12, 16, 3, 1, "S")
-    cv.poly([(5, 12), (23, 12), (14, 5)], "c")                        # caping
-    cv.hline(5, 12, 19, "C")
+        cv.poly([(5, 10), (39, 10), (39, 23), (5, 23)], "t")
     return _fin(cv, SAYUR, skip=(".", "t"))
+
+
+def tukang_sayur_frames(rain=False):
+    lk = face.look(**SAYUR_LOOK)
+    outfit = {"g": "#4f86a6", "G": "#2e5570", "L": "#7fb0cc", "q": "#4f86a6", "c": "#d8b860",
+              "C": "#a8883a", "p": "#3e3a4a", "P": "#2c2836", "f": "#6b4a32", "F": "#4a3222"}
+    pal = full_palette(lk, outfit)
+    frames = customer_frames(lambda e: compose(lk, BODY_KAOS, hat="caping", expression=e), pal)
+    cart = _gerobak_sayur(rain)
+    out = []
+    for name, im in frames[:4]:
+        c = Image.new("RGBA", (72, 42), (0, 0, 0, 0))
+        c.alpha_composite(im, (0, 2))
+        c.alpha_composite(cart, (32, 0))
+        out.append((name, c))
+    return out
 
 
 # ------------------------------------------------------------------- payung
@@ -203,11 +236,11 @@ def generate():
             save_set(OUT / name, [(f"jalan{i + 1}", motor(kind, i, rain)) for i in range(2)],
                      durations=[90, 90])
     for rain in (False, True):
-        save_set(OUT / ("tukang_sayur" + ("_hujan" if rain else "")),
-                 [(f"jalan{i + 1}", tukang_sayur(i, rain)) for i in range(4)], durations=[180] * 4)
+        save_set(OUT / ("tukang_sayur" + ("_hujan" if rain else "")), tukang_sayur_frames(rain),
+                 durations=[180] * 4)
     for c in PAYUNG:
         payung(c).save(OUT / f"payung_{c}.png")
     rows = [[kucing(i) for i in range(4)] + [kucing_duduk(0), kucing_duduk(1)] + [ayam(i) for i in range(4)],
             [motor("ojek", 0), motor("ojek", 0, True), motor("keluarga", 0), motor("keluarga", 1, True)],
-            [tukang_sayur(0), tukang_sayur(2, True)] + [payung(c) for c in PAYUNG]]
+            [tukang_sayur_frames()[0][1], tukang_sayur_frames(True)[2][1]] + [payung(c) for c in PAYUNG]]
     contact_sheet(rows, k=4, pad=10).save(OUT / "lewat_preview.png")
