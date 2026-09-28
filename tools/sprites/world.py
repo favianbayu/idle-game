@@ -25,6 +25,7 @@ def generate():
             "culture": c["culture"],
             "landmark": c["landmark"],
             "specials": c["specials"],
+            "menu": "food/menu.json",
             "shop_signs": {f"stage{k}": v for k, v in c["signs"].items() if v},
             "props": c["props"],
             "stages": {

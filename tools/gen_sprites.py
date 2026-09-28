@@ -8,8 +8,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from sprites import (buildings, customization, environments, main_character, npcs,  # noqa: E402
-                     scenes, world)
+from sprites import (buildings, customization, environments, food, main_character,  # noqa: E402
+                     npcs, scenes, world)
 
 if __name__ == "__main__":
     main_character.generate()
@@ -17,6 +17,8 @@ if __name__ == "__main__":
     customization.generate()
     buildings.generate()
     environments.generate()
+    food.validate()
+    food.generate()
     world.generate()
     scenes.generate()
     print("done")

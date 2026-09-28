@@ -32,6 +32,7 @@
           "name": "Asinan Betawi"
         }
       ],
+      "menu": "food/menu.json",
       "shop_signs": {
         "stage1": "KERAK TELOR",
         "stage2": "SOTO BETAWI * KETOPRAK * UDUK",
@@ -120,6 +121,7 @@
           "name": "Cireng"
         }
       ],
+      "menu": "food/menu.json",
       "shop_signs": {
         "stage1": "BATAGOR",
         "stage2": "SEBLAK * SURABI * CIRENG",
@@ -208,6 +210,7 @@
           "name": "Tipat Cantok"
         }
       ],
+      "menu": "food/menu.json",
       "shop_signs": {
         "stage1": "SATE LILIT",
         "stage2": "BETUTU * LAWAR * TIPAT",
@@ -295,6 +298,7 @@
           "name": "Sate Klopo"
         }
       ],
+      "menu": "food/menu.json",
       "shop_signs": {
         "stage1": "RAWON",
         "stage2": "LONTONG BALAP * TAHU TEK",
