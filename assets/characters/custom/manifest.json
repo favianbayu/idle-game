@@ -29,7 +29,14 @@
     "toque_pendek": 11,
     "toque_modern": 11,
     "toque_empu": 11,
-    "topi_pet": 12
+    "topi_pet": 12,
+    "peci": 11,
+    "iket": 10,
+    "udeng": 10,
+    "odheng": 10,
+    "caping": 11,
+    "deerstalker": 11,
+    "headset": null
   },
   "colour_swaps": {
     "skin": {
@@ -229,6 +236,15 @@
       "kerudung": {
         "name": "Kerudung",
         "front": "parts/hair/kerudung.png"
+      },
+      "jabrik": {
+        "name": "Jabrik",
+        "front": "parts/hair/jabrik.png"
+      },
+      "kuncir_dua": {
+        "name": "Kuncir dua",
+        "front": "parts/hair/kuncir_dua.png",
+        "back": "parts/hair/kuncir_dua_back.png"
       }
     },
     "eyes": {

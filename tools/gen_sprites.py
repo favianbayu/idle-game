@@ -8,19 +8,25 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from sprites import (buildings, customization, environments, food, main_character,  # noqa: E402
-                     npcs, scenes, ui_icons, ui_layout, world)
+from sprites import (buildings, costumes, customization, easter, env_anim, environments,  # noqa: E402
+                     food, main_character, npc_anim, npcs, scenes, tap_fx, ui_icons, ui_layout,
+                     world)
 
 if __name__ == "__main__":
     main_character.generate()
     npcs.generate()
+    costumes.generate()
+    npc_anim.generate()
+    easter.generate()
     customization.generate()
     buildings.generate()
     environments.generate()
+    env_anim.generate()
     food.validate()
     food.generate()
     ui_icons.generate()
     world.generate()
     scenes.generate()
     ui_layout.generate()
+    tap_fx.generate()
     print("done")

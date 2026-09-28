@@ -129,3 +129,64 @@ emas (beli pakai koin), ungu (premium/spesial/naik kelas), biru (navigasi/filter
 merah (tutup/bahaya), abu (nonaktif).
 
 Angka di mockup (koin, harga, syarat) cuma contoh untuk layout.
+
+## Kostum kota (tokoh utama)
+
+`characters/main/kota/<kota>/stageN/`: frame `idle1`, `idle2`, `tap`, dan animasi masak `masak1`–`masak4`
+(ayunan wajan: api di bawah, nasi terlempar lalu jatuh). Preview: `characters/main/kostum_kota_preview.png`,
+`characters/main/animasi_masak_preview.png`.
+
+| Kota | Stage 1–2 | Semua stage |
+|---|---|---|
+| Jakarta | Peci hitam + baju sadariah putih | Sarung kotak di leher |
+| Bandung | Iket batik (simpul lancip) + pangsi hitam | Selendang batik |
+| Bali | Udeng putih + baju putih, kamen cokelat | Selendang poleng |
+| Surabaya | Odheng bertanduk + kaos loreng merah-putih ala Sakera | Selendang merah-putih |
+
+Stage 3–5 tetap pakai toque/seragam stage masing-masing, ditambah selendang kota.
+
+## Animasi pelanggan
+
+`characters/npc/animasi/<nama>/`: `jalan1`–`jalan4` (jalan di tempat, game yang menggeser posisi),
+`tunggu1`–`tunggu2`, `senang1`–`senang3` (lompat + hati). Gelembung dialog terpisah:
+`gelembung_pesan` (game menggambar ikon menu pesanan di dalamnya), `gelembung_tunggu`, `gelembung_senang`,
+`gelembung_kesal`.
+
+Alur yang disarankan: jalan masuk → tunggu + gelembung pesan → (dilayani) senang + ikon makanan → jalan keluar.
+Kalau terlalu lama nunggu: gelembung kesal lalu pergi.
+
+## NPC easter egg
+
+`characters/npc/easter_egg/`: 8 pelanggan langka dengan animasi yang sama seperti pelanggan biasa.
+`easter_egg.json` berisi peluang muncul (`chance`, per pelanggan baru), pengali bayaran (`reward`) dan kutipan.
+
+| NPC | Homage | Peluang | Bayaran |
+|---|---|---|---|
+| Pendekar Jabrik | petarung shonen rambut jabrik ber-aura | 0,2% | ×10 |
+| Gadis Penyihir Rasa | magical girl + tongkat bintang | 0,3% | ×8 |
+| Pilot Robot Raksasa | pilot mecha | 0,3% | ×8 |
+| Samurai Pengembara | ronin bertopi caping | 0,2% | ×10 |
+| Detektif Bertopi | detektif klasik + kaca pembesar | 0,4% | ×6 |
+| Food Vlogger Viral | kreator kuliner + kamera | 0,6% | ×5 |
+| Raja Panggung Dangdut | bintang dangdut berkumis + gitar | 0,3% | ×8 |
+| Legenda Bulutangkis | atlet juara + raket | 0,4% | ×6 |
+
+Semua karakter ini **original** (mengambil arketipe/trope), bukan tiruan karakter anime atau tokoh nyata
+tertentu, supaya aman dari masalah hak cipta dan hak atas citra diri. Rambut baru `jabrik` dan
+`kuncir_dua` juga otomatis masuk ke kit kustomisasi muka.
+
+## Animasi environment
+
+- `environments/<kota>/stageN/waktu/{pagi,siang,sore,malam}.png`: background stage 1–4 di 4 waktu.
+  `environments/waktu.json`: urutan siklus, saran durasi, tint untuk toko & karakter per waktu,
+  kapan lampu menyala.
+- `environments/efek/`: `awan_{besar,sedang,kecil}` (digeser pelan ke samping), `burung1-3`,
+  `hujan1-4` (overlay layar penuh), `kunang1-2` (malam), `asap1-6` (cerobong / wajan).
+- Preview: `preview_siklus_hari.gif` (Jakarta, pagi→malam dengan awan, burung, kunang-kunang),
+  `preview_hujan.gif` (Bandung malam hujan), `preview_waktu_bali.png`.
+
+## Efek tap
+
+`ui/efek_tap/`: `ledakan1-4`, `koin_putar1-4`, `lingkar_makanan` (latar putih di belakang ikon menu).
+Saat layar di-tap: ledakan kecil, koin berputar naik, dan ikon menu yang barusan terjual muncul dalam
+lingkaran lalu melayang dan memudar. Timing di `tap_fx.json`, contoh di `preview_tap.gif`.
