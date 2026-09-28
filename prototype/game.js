@@ -21,8 +21,30 @@
     ayam: { w: 16, h: 16, speed: 9, frames: ["jalan1", "jalan2"], ms: 250, lane: 249, weight: 1, maxStage: 3, day: true, dry: true },
     motor_ojek: { w: 52, h: 40, speed: 72, frames: ["jalan1", "jalan2"], ms: 90, lane: 255, weight: 2, say: "TIN TIN!", rain: true, lamp: true },
     motor_keluarga: { w: 52, h: 40, speed: 60, frames: ["jalan1", "jalan2"], ms: 90, lane: 255, weight: 2, rain: true, lamp: true },
-    tukang_sayur: { w: 64, h: 42, speed: 14, frames: ["jalan1", "jalan2", "jalan3", "jalan4"], ms: 180, lane: 254, weight: 2, say: "SAYUUUR!", day: true, rain: true },
+    tukang_sayur: { w: 64, h: 42, speed: 14, frames: ["jalan1", "jalan2", "jalan3", "jalan4"], ms: 180, lane: 254, weight: 2, say: "SAYUUUR!", day: true, rain: true, snd: "sayur" },
+    bakso: { speed: 14, n: 4, ms: 180, lane: 254, weight: 2, say: "TING TING TING!", snd: "ting", dry: true },
+    // khas kota
+    ondel_ngamen: { speed: 10, n: 4, ms: 220, lane: 252, weight: 2, city: "jakarta", say: "TEREJET TEJET!", tapSay: "SAWER!", snd: "tanjidor", dry: true },
+    bajaj: { speed: 46, n: 2, ms: 90, lane: 255, weight: 2, city: "jakarta", say: "BREM BREM!", snd: "bajaj", lamp: true },
+    delman: { speed: 22, n: 2, ms: 220, lane: 255, weight: 2, city: "bandung", say: "KLOP KLOP!", snd: "klop", day: true, dry: true },
+    angklung_ngamen: { speed: 14, n: 4, ms: 180, lane: 252, weight: 2, city: "bandung", say: "KLONG KLONG~", tapSay: "NUHUN!", snd: "angklung", dry: true },
+    gebogan: { speed: 11, n: 4, ms: 200, lane: 252, weight: 2, city: "bali", say: "OM SWASTIASTU", snd: "gamelan", day: true, dry: true },
+    monyet: { speed: 22, n: 4, ms: 130, lane: 250, weight: 2, city: "bali", say: "UK UK!", pet: "UK UK!", snd: "monyet", dry: true },
+    becak: { speed: 18, n: 2, ms: 220, lane: 255, weight: 2, city: "surabaya", say: "KRING KRING!", tapSay: "AYO REK!", snd: "kring", dry: true },
+    kerupuk: { speed: 20, n: 2, ms: 200, lane: 255, weight: 2, city: "surabaya", say: "KERUPUK REK!", snd: "kring", day: true, dry: true },
+    // khusus event
+    balap_karung: { speed: 18, n: 3, ms: 200, lane: 252, weight: 5, event: "kemerdekaan", say: "HOP! HOP!", tapSay: "AYO MENANG!", snd: "hop", day: true, dry: true },
+    barongsai: { speed: 16, n: 3, ms: 220, lane: 254, weight: 5, event: "imlek", say: "DUNG DUNG CHANG!", tapSay: "GONG XI!", snd: "tambur" },
   };
+  const PETS = { kucing: "MEONG!", ayam: "PETOK!" };
+  const PET_SND = { kucing: "meong", ayam: "petok", monyet: "monyet" };
+  // Tanggal hari besar yang bergeser tiap tahun (perkiraan kalender resmi).
+  const LEBARAN = { 2025: "03-31", 2026: "03-20", 2027: "03-10", 2028: "02-27", 2029: "02-14", 2030: "02-05" };
+  const IMLEK = { 2025: "01-29", 2026: "02-17", 2027: "02-06", 2028: "01-26", 2029: "02-13", 2030: "02-03" };
+  const GALUNGAN_BASE = Date.UTC(2024, 8, 25);   // Galungan berulang tiap 210 hari (wuku Dungulan)
+  const EVENT_GLOW = { lebaran: 1, imlek: 1, natal: 1, tahun_baru: 1 };
+  const EVENT_BONUS = 1.2;
+  const SINGLE_STRING = { imlek: 1, batik: 1, lebaran: 1 };
   const STAGE_LABEL = { 1: "GEROBAK", 2: "WARUNG", 3: "KEDAI", 4: "RESTO", 5: "ISTANA" };
   const STAGE_BADGE = { 1: "stage1_gerobak", 2: "stage2_warung", 3: "stage3_kedai", 4: "stage4_resto", 5: "stage5_istana" };
   const CITY_COST = [0, 20e3, 400e3, 8e6];
@@ -100,7 +122,135 @@
     return m;
   }
   const boostOn = () => Date.now() < S.boostUntil;
-  const incomeMult = () => (1 + S.gems * 0.02) * comboMult() * (boostOn() ? 2 : 1);
+  const incomeMult = () => (1 + S.gems * 0.02) * comboMult() * (boostOn() ? 2 : 1) * (curEvent ? EVENT_BONUS : 1);
+
+  // ------------------------------------------------------------------ events (hari besar)
+  function dateEvent(now) {
+    const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate(), md = m * 100 + d;
+    const today = Date.UTC(y, m - 1, d);
+    const near = (tbl, before, after) => [y - 1, y, y + 1].some((yy) => {
+      if (!tbl[yy]) return false;
+      const [mm, dd] = tbl[yy].split("-").map(Number);
+      const diff = (today - Date.UTC(yy, mm - 1, dd)) / 864e5;
+      return diff >= -before && diff <= after;
+    });
+    if (near(LEBARAN, 7, 7)) return "lebaran";
+    if (near(IMLEK, 3, 15)) return "imlek";
+    if (S.city === "bali") {
+      const k = ((Math.round((today - GALUNGAN_BASE) / 864e5) % 210) + 210) % 210;
+      if (k <= 10) return "galungan";
+    }
+    if (m === 8) return "kemerdekaan";
+    if (md >= 1001 && md <= 1004) return "batik";
+    if (md >= 1108 && md <= 1112) return "pahlawan";
+    if (md >= 1220 && md <= 1227) return "natal";
+    if (md >= 1228 || md <= 102) return "tahun_baru";
+    if (md >= 419 && md <= 423) return "kartini";
+    return null;
+  }
+  function pickEvent() {
+    if (S.forceEvent === "none") return null;
+    if (S.forceEvent && D.events[S.forceEvent]) return S.forceEvent;
+    return dateEvent(new Date());
+  }
+  let curEvent = null;
+  const evBase = () => curEvent && (D.events[curEvent].pakai || curEvent);
+  function checkEvent(announce) {
+    const ev = pickEvent();
+    if (ev === curEvent) return;
+    curEvent = ev;
+    if (ev && announce) announceEvent();
+  }
+  function announceEvent() {
+    if (!curEvent) return;
+    const e = D.events[curEvent];
+    showToast(`ev:${evBase()}:ikon`, e.name, ` ${e.pesan} Pendapatan +${Math.round((EVENT_BONUS - 1) * 100)}%.`);
+    Sfx.play("toast");
+  }
+
+  // ------------------------------------------------------------------ sound (WebAudio chiptune)
+  const Sfx = (() => {
+    let ctx = null, master = null, noiseBuf = null, armed = false;
+    function ensure() {
+      if (!armed) return null;
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        master = ctx.createGain(); master.gain.value = 0.45; master.connect(ctx.destination);
+        noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+        const ch = noiseBuf.getChannelData(0);
+        for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+      }
+      if (ctx.state === "suspended") ctx.resume();
+      return ctx;
+    }
+    function env(g, t0, dur, vol) {
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    }
+    function tone(f, dur, o = {}) {
+      const t0 = ctx.currentTime + (o.at || 0);
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = o.type || "square";
+      osc.frequency.setValueAtTime(f, t0);
+      if (o.slide) osc.frequency.exponentialRampToValueAtTime(f * o.slide, t0 + dur);
+      if (o.vib) {
+        const l = ctx.createOscillator(), lg = ctx.createGain();
+        l.frequency.value = o.vib; lg.gain.value = f * (o.depth || 0.05);
+        l.connect(lg).connect(osc.frequency); l.start(t0); l.stop(t0 + dur);
+      }
+      env(g, t0, dur, o.vol ?? 0.12);
+      osc.connect(g).connect(master);
+      osc.start(t0); osc.stop(t0 + dur + 0.02);
+    }
+    function noise(dur, o = {}) {
+      const t0 = ctx.currentTime + (o.at || 0);
+      const src = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = noiseBuf;
+      fl.type = o.ft || "lowpass"; fl.frequency.value = o.f || 1200;
+      env(g, t0, dur, o.vol ?? 0.15);
+      src.connect(fl).connect(g).connect(master);
+      src.start(t0, Math.random() * 0.5); src.stop(t0 + dur + 0.02);
+    }
+    const seq = (notes, step, o) => notes.forEach((f, i) => f && tone(f, step * 1.3, { ...o, at: i * step }));
+    const P = {
+      tap: () => tone(rand(560, 720), 0.07, { slide: 1.5, vol: 0.08 }),
+      click: () => tone(660, 0.04, { vol: 0.06 }),
+      coin: () => { tone(988, 0.07, { vol: 0.07 }); tone(1319, 0.16, { vol: 0.07, at: 0.06 }); },
+      buy: () => seq([523, 659, 784, 1047], 0.06, { type: "square", vol: 0.08 }),
+      upgrade: () => { tone(392, 0.16, { slide: 2, vol: 0.08 }); tone(1047, 0.1, { vol: 0.06, at: 0.14 }); },
+      stage: () => seq([523, 523, 659, 784, 0, 659, 1047], 0.1, { type: "square", vol: 0.09 }),
+      boost: () => { tone(200, 0.35, { type: "sawtooth", slide: 4, vol: 0.06 }); noise(0.3, { ft: "highpass", f: 3000, vol: 0.04 }); },
+      rare: () => seq([1319, 1568, 2093, 2637], 0.07, { type: "triangle", vol: 0.1 }),
+      toast: () => seq([784, 1175], 0.09, { type: "triangle", vol: 0.1 }),
+      heart: () => tone(880, 0.18, { type: "sine", slide: 1.5, vol: 0.1 }),
+      meong: () => tone(620, 0.42, { type: "sawtooth", slide: 0.7, vib: 9, vol: 0.06 }),
+      petok: () => [0, 0.09, 0.18].forEach((at) => tone(900, 0.05, { at, slide: 0.6, vol: 0.07 })),
+      monyet: () => [0, 0.14].forEach((at) => tone(500, 0.1, { at, slide: 1.8, vol: 0.08 })),
+      horn: () => [0, 0.16].forEach((at) => { tone(440, 0.12, { at, vol: 0.06 }); tone(554, 0.12, { at, vol: 0.05 }); }),
+      sayur: () => tone(330, 0.5, { type: "triangle", vib: 6, vol: 0.08 }),
+      ting: () => [0, 0.2, 0.4].forEach((at) => { tone(1760, 0.25, { at, type: "sine", vol: 0.08 }); tone(3520, 0.12, { at, type: "sine", vol: 0.03 }); }),
+      kring: () => { for (let i = 0; i < 6; i++) tone(i % 2 ? 2400 : 2000, 0.05, { at: i * 0.05, type: "square", vol: 0.04 }); },
+      klop: () => [0, 0.15, 0.36, 0.51].forEach((at) => tone(i2f(at), 0.05, { at, type: "triangle", vol: 0.12 })),
+      angklung: () => seq([523, 659, 784, 659], 0.16, { type: "triangle", vib: 18, depth: 0.03, vol: 0.1 }),
+      tanjidor: () => seq([392, 440, 494, 587, 494, 440], 0.12, { type: "square", vol: 0.06 }),
+      gamelan: () => seq([587, 659, 880, 784], 0.2, { type: "sine", vol: 0.1 }),
+      bajaj: () => { for (let i = 0; i < 7; i++) noise(0.05, { at: i * 0.07, f: 400, vol: 0.12 }); },
+      tambur: () => { [0, 0.2, 0.3].forEach((at) => noise(0.15, { at, f: 180, vol: 0.25 })); noise(0.4, { at: 0.45, ft: "highpass", f: 5000, vol: 0.08 }); },
+      hop: () => tone(300, 0.12, { type: "triangle", slide: 2.2, vol: 0.1 }),
+      dor: () => { noise(0.5, { f: 900, vol: 0.14 }); noise(0.25, { ft: "highpass", f: 4000, vol: 0.03, at: 0.1 }); },
+    };
+    function i2f(at) { return at * 10 % 3 < 1.5 ? 420 : 360; }
+    return {
+      arm() { armed = true; ensure(); },
+      play(n) {
+        if (!S || S.mute || !P[n] || !ensure()) return;
+        try { P[n](); } catch (e) { /* audio unavailable */ }
+      },
+    };
+  })();
   const salePrice = (it) => it.price * level(it) * incomeMult();
 
   function estRate() {
@@ -165,7 +315,7 @@
   }
 
   let customers = [], parts = [], texts = [], cooking = null, lastSpawn = 0;
-  let walkers = [], nextWalker = 20;
+  let walkers = [], nextWalker = 20, fireworks = [], nextFw = 1;
   let heroFlash = 0, clock = 0, rain = false, lastTod = null;
   const clouds = [{ n: "awan_besar", x: 30, y: 22, v: 3 }, { n: "awan_sedang", x: 150, y: 46, v: 5 },
     { n: "awan_kecil", x: 90, y: 12, v: 7 }];
@@ -199,6 +349,7 @@
       const first = !S.album[egg.id];
       S.album[egg.id] = true;
       showToast(`cust:${egg.id}:tunggu1`, first ? `Pelanggan langka baru: ${egg.name}!` : egg.name, `"${egg.quote}"`);
+      Sfx.play("rare");
       if (first) renderPanel();
     }
   }
@@ -219,7 +370,7 @@
     earn(coins);
     if (cooking) cooking.left -= 0.35;
     heroFlash = 0.15;
-    if (!auto) pop(px, py, it, coins);
+    if (!auto) { pop(px, py, it, coins); Sfx.play("tap"); }
     else if (Math.random() < 0.3) { const L = layout(); pop(L.footX + 10, L.footY - 34, it, coins); }
   }
 
@@ -229,6 +380,7 @@
     S.stats.served++;
     c.state = "happy"; c.t = 0;
     pop(c.x + 16, GROUND - 44, c.it, pay, true);
+    Sfx.play("coin");
   }
 
   let autoAcc = 0;
@@ -272,11 +424,71 @@
       while (autoAcc >= 1) { autoAcc -= 1; tap(0, 0, true); }
     }
     updateWalkers(dt);
+    updateFireworks(dt, t);
     heroFlash = Math.max(0, heroFlash - dt);
     for (const p of parts) p.t += dt;
     parts = parts.filter((p) => p.t < (p.k === "burst" ? 0.3 : p.k === "heart" ? 1.2 : 0.9));
     for (const x of texts) x.t += dt;
     texts = texts.filter((x) => x.t < 1);
+  }
+
+  const FW_COLS = ["#ff5a7a", "#f2c94c", "#7cd8e8", "#9fe0a8", "#e0a0ff", "#ffffff"];
+  function updateFireworks(dt, t) {
+    const ev = evBase();
+    const on = (ev === "tahun_baru" || ev === "kemerdekaan") && t.cur === "malam" && C().stage !== 5;
+    nextFw -= dt;
+    if (on && nextFw <= 0) {
+      nextFw = rand(0.8, 2.2);
+      const col = ev === "kemerdekaan" ? pick(["#ff4a3a", "#ffffff"]) : pick(FW_COLS);
+      fireworks.push({ x: rand(30, W - 30), y: 200, ty: rand(24, 90), t: 0, col, sparks: null });
+    }
+    for (const f of fireworks) {
+      f.t += dt;
+      if (!f.sparks) {
+        f.y -= 190 * dt;
+        if (f.y <= f.ty) {
+          f.sparks = Array.from({ length: 22 }, (_, i) => {
+            const a = i / 22 * Math.PI * 2, v = rand(26, 40);
+            return { vx: Math.cos(a) * v, vy: Math.sin(a) * v };
+          });
+          f.t = 0;
+          Sfx.play("dor");
+        }
+      }
+    }
+    fireworks = fireworks.filter((f) => !f.sparks || f.t < 1.4);
+  }
+  function drawFireworks() {
+    for (const f of fireworks) {
+      if (!f.sparks) {
+        sc.fillStyle = "#fff2a8"; sc.fillRect(Math.round(f.x), Math.round(f.y), 1, 3);
+        continue;
+      }
+      sc.globalAlpha = clamp(1.4 - f.t, 0, 1);
+      sc.fillStyle = f.t < 0.12 ? "#ffffff" : f.col;
+      for (const p of f.sparks) {
+        const x = f.x + p.vx * f.t, y = f.ty + p.vy * f.t + 14 * f.t * f.t;
+        const sz = f.t < 0.5 ? 2 : 1;
+        sc.fillRect(Math.round(x), Math.round(y), sz, sz);
+      }
+      sc.globalAlpha = 1;
+    }
+  }
+
+  function drawDecor(ctx, now, a = 1) {
+    const ev = evBase();
+    if (!ev) return;
+    const f = 1 + Math.floor(now / 600) % 2;
+    const n = D.events[ev].tiang;
+    if (n && a === 1) {
+      const tf = 1 + Math.floor(now / 180) % n;
+      const name = `ev:${ev}:tiang${tf}`, m = D.atlas[name];
+      const y = GROUND + 3 - m[4];
+      sprFlip(ctx, name, 0, y, false);
+      sprFlip(ctx, `ev:${ev}:tiang${1 + (tf % n)}`, W - m[3], y, true);
+    }
+    spr(ctx, `ev:${ev}:untai${f}`, 0, 84, a);
+    if (!SINGLE_STRING[ev]) spr(ctx, `ev:${ev}:untai${3 - f}`, 0, 124, a);
   }
 
   function spawnWalker() {
@@ -287,10 +499,17 @@
       if (isRain() && d.dry) continue;
       if (d.day && t === "malam") continue;
       if (d.maxStage && stage > d.maxStage) continue;
+      if (d.city && d.city !== S.city) continue;
+      if (d.event && d.event !== evBase()) continue;
       for (let i = 0; i < d.weight; i++) pool.push(k);
     }
     if (!pool.length) return;
     const kind = pick(pool), d = WALKERS[kind], dir = Math.random() < 0.5 ? 1 : -1;
+    if (!d.frames) {
+      d.frames = Array.from({ length: d.n }, (_, i) => `jalan${i + 1}`);
+      const m = D.atlas[`lewat:${kind}:jalan1`];
+      d.w = m[3]; d.h = m[4];
+    }
     walkers.push({ kind, d, dir, x: dir > 0 ? -d.w : W, t: 0, state: "walk", st: 0, said: false,
       sitAt: kind === "kucing" && Math.random() < 0.5 ? rand(40, 170) : null });
   }
@@ -308,7 +527,8 @@
       if (w.kind === "ayam" && w.st > 2.5 && Math.random() < dt) { w.state = "peck"; w.st = 0; }
       if (w.d.say && !w.said && cx > 50 && cx < 174) {
         w.said = true;
-        texts.push({ s: w.d.say, x: cx, y: w.d.lane - w.d.h - 2, t: 0, col: "#fbf0d8" });
+        texts.push({ s: w.d.say, x: clamp(cx, 40, W - 40), y: w.d.lane - w.d.h - 2, t: 0, col: "#fbf0d8" });
+        Sfx.play(w.d.snd || (w.kind.startsWith("motor") ? "horn" : PET_SND[w.kind]));
       }
     }
     walkers = walkers.filter((w) => w.x > -w.d.w - 4 && w.x < W + 4);
@@ -353,6 +573,7 @@
         spr(sc, `fx:burung${1 + (Math.floor(clock * 6) + i) % 3}`, bx, 62 + i * 6 + Math.sin(clock * 2 + i) * 2);
       }
     }
+    if (!day) drawFireworks();
     // 1) gedung: digelapkan sesuai waktu, lalu lampunya dinyalakan
     const tintLayer = (color) => {
       if (!color) return;
@@ -363,31 +584,38 @@
     fx.clearRect(0, 0, W, H);
     const bf = Math.floor(now / 500) % 2 + 1;
     spr(fx, `bld:${S.city}:${stage}:${bf}`, L.bx, L.by);
+    drawDecor(fx, now);
     tintLayer(stage === 5 ? null : TOD_TINT[t.cur]);
     const la = stage === 5 ? 0 : lightAlpha(t);
+    const glow = la > 0 && EVENT_GLOW[evBase()];
+    if (glow) drawDecor(fx, now, la);
     const lightName = `bldL:${S.city}:${stage}:${bf}`;
     if (la > 0 && D.atlas[lightName]) spr(fx, lightName, L.bx, L.by, la);
     sc.drawImage(fg, 0, 0);
-    if (la > 0 && D.atlas[lightName]) {
+    if (la > 0 && (D.atlas[lightName] || glow)) {
       sc.save();
       sc.globalCompositeOperation = "lighter";
       sc.filter = "blur(3px)";
-      spr(sc, lightName, L.bx, L.by, 0.5 * la);
+      if (D.atlas[lightName]) spr(sc, lightName, L.bx, L.by, 0.5 * la);
+      if (glow) drawDecor(sc, now, 0.6 * la);
       sc.restore();
     }
     // 2) karakter & yang lewat, di depan gedung, dengan tint lebih ringan
     fx.clearRect(0, 0, W, H);
+    const evc = evBase();
     for (const c of customers) {
       let fr = "tunggu" + (1 + Math.floor(c.t / 0.6) % 2);
       if (c.state === "walk" || c.state === "leave") fr = "jalan" + (1 + Math.floor(now / 140) % 4);
       if (c.state === "happy") fr = "senang" + (1 + Math.floor(c.t / 0.16) % 3);
-      spr(fx, `cust:${c.who}:${fr}`, c.x, L.footY - 39);
+      const who = !c.egg && evc && D.atlas[`cust:${c.who}@${evc}:${fr}`] ? `${c.who}@${evc}` : c.who;
+      spr(fx, `cust:${who}:${fr}`, c.x, L.footY - 39);
       if (isRain() && stage !== 5) spr(fx, `payung:${c.umb}`, c.x + 8, L.footY - 39 - 6);
     }
     let hf = "idle" + (1 + Math.floor(now / 400) % 2);
     if (cooking) hf = "masak" + (1 + Math.floor(now / 120) % 4);
     if (heroFlash > 0) hf = "tap";
     spr(fx, `hero:${S.city}:${stage}:${hf}`, L.footX - 16, L.footY - 39);
+    if (evc) spr(fx, `evhero:${evc}`, L.footX - 16, L.footY - 39 - (hf === "tap" ? 2 : 0));
     if (stage >= 2) spr(fx, `rempi:${boostOn() ? "senang" : "float" + (1 + Math.floor(now / 450) % 2)}`,
       L.footX + 14, L.footY - 52 + Math.round(Math.sin(now / 400)));
     for (const w of walkers) sprFlip(fx, walkerSprite(w, now), w.x, w.d.lane - w.d.h, w.dir < 0);
@@ -625,6 +853,10 @@
     });
     const dot = document.querySelector('[data-dot="3"]');
     if (dot) dot.hidden = !S.missions.some((m) => missionProg(m) >= 1);
+    $("#btnSound").innerHTML = icon(S.mute ? "ui:suara_off" : "ui:suara_on", 1);
+    const be = $("#btnEvent");
+    be.hidden = !curEvent;
+    if (curEvent && be.dataset.ev !== curEvent) { be.dataset.ev = curEvent; be.innerHTML = icon(`ev:${evBase()}:ikon`, 1); be.title = D.events[curEvent].name; }
     const bt = $("#btnBoost");
     bt.hidden = C().stage < 2;
     const now = Date.now();
@@ -675,12 +907,23 @@
       <select id="forceTod">${["", "pagi", "siang", "sore", "malam"].map((v) =>
         `<option value="${v}" ${(S.forceTod || "") === v ? "selected" : ""}>${v || "ikuti siklus"}</option>`).join("")}</select></label>
       <label class="switch" for="forceRain"><span>Paksa hujan</span>
-      <input type="checkbox" id="forceRain" ${S.forceRain ? "checked" : ""}></label></div>
+      <input type="checkbox" id="forceRain" ${S.forceRain ? "checked" : ""}></label>
+      <label class="switch" for="sound"><span>Efek suara</span>
+      <input type="checkbox" id="sound" ${S.mute ? "" : "checked"}></label>
+      <label class="switch" for="forceEvent"><span>Hari besar</span>
+      <select id="forceEvent">${[["", "ikut tanggal"], ["none", "matikan"], ...Object.entries(D.events).map(([k, e]) => [k, e.name])].map(([v, n]) =>
+        `<option value="${v}" ${(S.forceEvent || "") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
+      <p style="font-size:13px">${Object.values(D.events).map((e) => `<b>${e.name}</b>: ${e.tanggal}`).join("<br>")}</p>
       <p>Progres tersimpan di browser ini saja.</p>
       <button class="btn red wide" data-act="reset">MULAI ULANG</button>`);
     $("#eggBoost").addEventListener("change", (e) => { S.eggBoost = e.target.checked; save(); });
     $("#forceTod").addEventListener("change", (e) => { S.forceTod = e.target.value || null; save(); });
     $("#forceRain").addEventListener("change", (e) => { S.forceRain = e.target.checked; save(); });
+    $("#sound").addEventListener("change", (e) => { S.mute = !e.target.checked; save(); refresh(); Sfx.play("click"); });
+    $("#forceEvent").addEventListener("change", (e) => {
+      S.forceEvent = e.target.value || null; save();
+      curEvent = undefined; checkEvent(true); customers = []; walkers = []; cooking = null;
+    });
   }
 
   function confirmReset() {
@@ -707,35 +950,42 @@
       const cost = upgradeCost(it);
       if (S.coins < cost) return;
       S.coins -= cost; itemState(it).lv = level(it) + 1; S.stats.upgrades++;
+      Sfx.play("upgrade");
     } else if (a === "unlock") {
       if (S.coins < it.unlock_cost) return;
       S.coins -= it.unlock_cost; itemState(it).bought = true; itemState(it).lv = 1; S.stats.unlocks++;
+      Sfx.play("buy");
       showToast(`food:${S.city}:${it.id}`, `${it.name} terbuka!`, it.tier !== "biasa" ? ` Menu ${it.tier} siap dijual.` : "");
     } else if (a === "staff") {
       const k = el.dataset.id, cost = staffCost(k);
       if (S.coins < cost) return;
       S.coins -= cost; if (S.staff[k] === 0) S.stats.unlocks++; S.staff[k]++;
+      Sfx.play("buy");
     } else if (a === "stageup") {
       const s = C().stage;
       if (C().earned < stageReq(s) || activeItems().length < s + 1) return;
       C().stage = s + 1; S.gems += s * 2; customers = []; walkers = []; cooking = null;
+      Sfx.play("stage");
       showToast(`ui:${STAGE_BADGE[s + 1]}`, `Naik kelas: ${STAGE_LABEL[s + 1]}!`, ` +${s * 2} Bintang Rasa. Menu baru terbuka.`);
     } else if (a === "claim") {
       const i = +el.dataset.i, m = S.missions[i];
       if (missionProg(m) < 1) return;
       if (m.reward.gems) S.gems += m.reward.gems; else earn(m.reward.coins);
       S.missions.splice(i, 1); ensureMissions();
+      Sfx.play("coin");
     } else if (a === "buycity") {
       const c = el.dataset.city, cost = +el.dataset.cost;
       if (S.coins < cost) return;
       S.coins -= cost; S.cities[c].unlocked = true; S.city = c; customers = []; walkers = []; cooking = null; closeModal();
+      Sfx.play("stage"); checkEvent(true);
       showToast(`ui:kota_${c}`, `Selamat datang di ${D.cities[c].name}!`, " Mulai lagi dari gerobak dengan menu khas kota ini.");
     } else if (a === "goto") {
       S.city = el.dataset.city; customers = []; walkers = []; cooking = null; closeModal();
-    } else if (a === "close") { closeModal(); return; }
-    else if (a === "reset") { confirmReset(); return; }
+      Sfx.play("click"); checkEvent(true);
+    } else if (a === "close") { Sfx.play("click"); closeModal(); return; }
+    else if (a === "reset") { Sfx.play("click"); confirmReset(); return; }
     else if (a === "doreset") { S = freshState(); ensureMissions(); closeModal(); save(); renderPanel(); return; }
-    else if (a === "offline") { earn(+el.dataset.gain * +el.dataset.x); closeModal(); }
+    else if (a === "offline") { earn(+el.dataset.gain * +el.dataset.x); closeModal(); Sfx.play("coin"); }
     save();
     renderPanel();
   }
@@ -758,37 +1008,51 @@
     $("#btnMap").innerHTML = icon("ui:peta", 1);
     $("#btnSettings").innerHTML = icon("ui:pengaturan", 1);
     window.addEventListener("resize", fit);
+    document.addEventListener("pointerdown", () => Sfx.arm(), { once: true, capture: true });
+    $("#btnSound").addEventListener("click", () => { S.mute = !S.mute; save(); refresh(); Sfx.play("click"); });
+    $("#btnEvent").addEventListener("click", () => { Sfx.arm(); announceEvent(); });
+    checkEvent(false);
+    setInterval(() => checkEvent(true), 60000);
+    if (curEvent) setTimeout(announceEvent, 1200);
     view.addEventListener("pointerdown", (e) => {
       const r = view.getBoundingClientRect();
       const gx = (e.clientX - r.left) / r.width * W, gy = (e.clientY - r.top) / r.height * H;
-      const pet = walkers.find((w) => (w.kind === "kucing" || w.kind === "ayam") && gx > w.x - 6 &&
-        gx < w.x + w.d.w + 6 && gy > w.d.lane - w.d.h - 8 && gy < w.d.lane + 4);
-      if (pet) {
-        const cx = pet.x + pet.d.w / 2;
-        pet.state = pet.kind === "kucing" ? "sit" : "peck"; pet.st = 0;
-        for (let i = 0; i < 4; i++) parts.push({ k: "heart", x: cx - 3 + rand(-6, 6), y: pet.d.lane - pet.d.h - 2 - i * 3, t: -i * 0.12, dx: i });
-        if (!pet.petted) {
-          pet.petted = true;
+      // yang lewat bisa diklik: hewan dapat love, orang/kendaraan menyapa balik
+      const hit = [...walkers].reverse().find((w) => gx > w.x - 4 && gx < w.x + w.d.w + 4 &&
+        gy > w.d.lane - w.d.h - 6 && gy < w.d.lane + 4);
+      if (hit) {
+        const cx = clamp(hit.x + hit.d.w / 2, 30, W - 30);
+        const animal = PETS[hit.kind] || hit.d.pet;
+        if (hit.kind === "kucing") { hit.state = "sit"; hit.st = 0; }
+        if (hit.kind === "ayam") { hit.state = "peck"; hit.st = 0; }
+        if (animal) {
+          for (let i = 0; i < 4; i++) parts.push({ k: "heart", x: cx - 3 + rand(-6, 6), y: hit.d.lane - hit.d.h - 2 - i * 3, t: -i * 0.12, dx: i });
+          Sfx.play(PET_SND[hit.kind] || "heart");
+        } else Sfx.play(hit.d.snd || "horn");
+        const label = animal || hit.d.tapSay || hit.d.say || "HALO!";
+        if (!hit.petted) {
+          hit.petted = true;
           const bonus = Math.max(1, Math.round(estRate() * 3));
           earn(bonus);
-          texts.push({ s: (pet.kind === "kucing" ? "MEONG! +" : "PETOK! +") + fmt(bonus), x: cx, y: pet.d.lane - 22, t: 0, col: "#ffb0d8" });
-        }
+          texts.push({ s: `${label} +${fmt(bonus)}`, x: cx, y: hit.d.lane - hit.d.h + 8, t: 0, col: "#ffb0d8" });
+        } else texts.push({ s: label, x: cx, y: hit.d.lane - hit.d.h + 8, t: 0, col: "#fbf0d8" });
       } else tap(gx, gy, false);
       refresh();
     });
     $("#tabs").addEventListener("click", (e) => {
       const b = e.target.closest("[data-tab]");
       if (!b) return;
-      tab = +b.dataset.tab; renderTabs(); renderPanel();
+      tab = +b.dataset.tab; renderTabs(); renderPanel(); Sfx.play("click");
     });
     document.addEventListener("click", (e) => { const b = e.target.closest("[data-act]"); if (b && !b.disabled) act(b); });
     $("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
-    $("#btnMap").addEventListener("click", openMap);
-    $("#btnSettings").addEventListener("click", openSettings);
+    $("#btnMap").addEventListener("click", () => { Sfx.play("click"); openMap(); });
+    $("#btnSettings").addEventListener("click", () => { Sfx.play("click"); openSettings(); });
     $("#btnBoost").addEventListener("click", () => {
       if (boostOn() || Date.now() < S.boostReady) return;
       S.boostUntil = Date.now() + 30000; S.boostReady = Date.now() + 120000;
       showToast("rempi:senang", "Rempi bersemangat!", " Pendapatan X2 selama 30 detik.");
+      Sfx.play("boost");
       save();
     });
     if (!prev) offlinePopup((Date.now() - (S.last || Date.now())) / 1000);

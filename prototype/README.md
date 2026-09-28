@@ -28,7 +28,22 @@ Isi folder:
 - **Hujan**: pelanggan datang pakai payung, motor pakai jas hujan, gerobak sayur ditutup terpal.
 - **Yang lewat** (sesekali, tiap ±25-50 detik): kucing oren & ayam kampung (tap = keluar hati + bonus
   kecil), motor ojek & keluarga ("TIN TIN!", lampu depan menyala saat malam), tukang sayur ("SAYUUUR!").
+- **Yang lewat khas kota** (tap = sapaan balik + bonus sekali): Jakarta ondel-ondel ngamen & bajaj,
+  Bandung delman & pengamen angklung, Bali iring-iringan gebogan & monyet pencuri kacamata (tap = love),
+  Surabaya becak & sepeda kerupuk, plus tukang bakso "TING TING" di semua kota (juga malam).
+- **Hari besar sesuai tanggal** (pendapatan +20% selama event, ikon event di HUD):
+  17-an (1-31 Agustus: umbul-umbul merah putih, bendera berkibar, pelanggan berkaos merah/putih +
+  ikat kepala, karakter utama pakai selempang & bendera kecil, lomba balap karung lewat, kembang api malam),
+  Hari Batik (1-4 Okt), Hari Pahlawan (8-12 Nov), Natal (20-27 Des: lampu kelap-kelip, pohon natal,
+  topi santa), Tahun Baru (28 Des-2 Jan: topi pesta, kembang api tiap malam), Hari Kartini (19-23 Apr:
+  kebaya + bunga di rambut), Lebaran (H-7 s/d H+7, tabel 2025-2030: ketupat, baju koko + peci),
+  Imlek (H-3 s/d Cap Go Meh, tabel 2025-2030: lampion, baju merah, barongsai lewat),
+  Galungan-Kuningan (siklus 210 hari, hanya di Bali: penjor, udeng & baju putih).
+- **Suara**: efek chiptune WebAudio (tanpa file audio) untuk tap, koin, beli/buka menu, upgrade,
+  naik kelas, tab & tombol, boost, pelanggan langka, suara hewan, klakson, "ting ting" bakso,
+  angklung, gamelan, tambur barongsai, kembang api. Tombol speaker di HUD untuk bisu/nyala.
 - **Penghasilan offline** saat kembali membuka game (maks 8 jam, 50%).
-- **Pengaturan:** mode tes pelanggan langka (peluang ×25), paksa waktu (pagi/siang/sore/malam), paksa hujan, dan reset progres.
+- **Pengaturan:** mode tes pelanggan langka (peluang ×25), paksa waktu (pagi/siang/sore/malam), paksa hujan,
+  efek suara, pilih hari besar untuk preview (atau "ikut tanggal"/"matikan"), dan reset progres.
 
 Progres disimpan di `localStorage` browser. Semua angka ekonomi masih angka awal untuk dicoba.

@@ -15,6 +15,7 @@ Jalankan `python3 tools/gen_sprites.py` (butuh Pillow). Jangan edit PNG-nya lang
 | `ui/layouts/` | Mockup 8 layar (224×400 + `@3x`) dan `layouts_overview.png` |
 | `ui/kit/` | UI kit 9-slice: panel, tombol 6 warna, pill, progress bar + `kit.json` |
 | `ui/` | Ikon UI 24×24 (+ `@4x`), `ui_icons_sheet.png` + `ui_icons_atlas.json`, preview |
+| `events/<event>/` | Hari besar: untaian dekorasi, tiang (bendera/penjor/pohon natal), ikon, selempang tokoh utama, pelanggan berkostum + `events.json` |
 | `cities.json` | Data kota: makanan spesial, tulisan papan toko, landmark, path aset tiap stage |
 
 ## Kota & stage
@@ -210,3 +211,24 @@ pola latar). `kit_v2.json` berisi ukuran & lebar border 9-slice tiap potongan; p
   (NPC bercaping dorong gerobak, + `_hujan` terpal plastik). Pengendara & tukang sayur dirakit dari kit NPC
   yang sama dengan pelanggan (helm = topi baru `helm`), dan `payung_{merah,biru,kuning,hijau}`
   untuk pelanggan saat hujan. Preview: `lewat_preview.png`.
+
+## Yang lewat khas kota
+
+`characters/lewat/` (dari `tools/sprites/lewat_kota.py`, preview `lewat_kota_preview.png`), semua dirakit
+dari kit NPC + elemen tambahan, frame `jalan1-n`:
+`ondel_ngamen` (ondel-ondel + pengamen kecrek, Jakarta), `bajaj` (sopir + asap knalpot, Jakarta),
+`delman` (kuda berjambul + kusir ber-iket, Bandung), `angklung_ngamen` (Bandung), `gebogan` (dua ibu
+berkebaya menjunjung gebogan, Bali), `monyet` (bawa kacamata curian, Bali), `becak` (tukang becak bercaping
++ penumpang, Surabaya), `kerupuk` (sepeda onthel + plastik kerupuk raksasa, Surabaya), `bakso` (semua kota).
+Tidak ada teks di sprite supaya aman dibalik untuk arah kiri.
+
+## Hari besar (event)
+
+`events/` dari `tools/sprites/events.py`, preview `events_preview.png`. Per event:
+`untai1-2.png` (224×44, untaian selebar layar, 2 frame goyang/kedip), `tiang*.png` (bendera berkibar 4 frame,
+penjor, atau pohon natal), `ikon.png` (24×24), `selempang.png` (overlay 32×40 untuk tokoh utama),
+`pelanggan/<nama>/` (9 frame animasi pelanggan dengan kostum event). Event: kemerdekaan (dipakai juga
+Hari Pahlawan), batik, lebaran, imlek, natal, tahun_baru, kartini, galungan (khusus Bali).
+Topi baru di kit: `ikat_mp` (ikat kepala merah putih), `santa`, `pesta`; plus bunga rambut (Kartini).
+Pejalan khusus event: `characters/lewat/balap_karung` (17-an) dan `barongsai` (Imlek).
+Tanggal dicek di game; Lebaran, Imlek dan Galungan memakai tabel karena bergeser tiap tahun.

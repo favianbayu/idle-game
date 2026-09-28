@@ -12,6 +12,8 @@ from PIL import Image
 from .buildings import STAGES as BSTAGES
 from .cities import CITIES, CITY_ORDER
 from .core import ASSETS
+from .events import EVENTS
+from .lewat_kota import CITY_WALKERS as _CW
 
 ROOT = ASSETS.parent
 OUT = ROOT.parent / "prototype"
@@ -20,6 +22,7 @@ TODS = ["pagi", "siang", "sore", "malam"]
 HERO_FRAMES = ["idle1", "idle2", "tap", "masak1", "masak2", "masak3", "masak4"]
 CUST_FRAMES = ["jalan1", "jalan2", "jalan3", "jalan4", "tunggu1", "tunggu2", "senang1", "senang2",
                "senang3"]
+CITY_WALKERS = list(_CW)
 CUSTOMERS = ["pelanggan_01", "pelanggan_02", "pelanggan_03", "pelanggan_04", "bu_yanti"]
 
 
@@ -53,6 +56,23 @@ def _collect():
     for m in ("tukang_sayur", "tukang_sayur_hujan"):
         for n in ("jalan1", "jalan2", "jalan3", "jalan4"):
             add(f"lewat:{m}:{n}", lw / m / f"{n}.png")
+    for d in sorted(lw.iterdir()):                                  # pejalan khas kota + event
+        if d.is_dir() and d.name in CITY_WALKERS + ["balap_karung", "barongsai"]:
+            for f in sorted(d.glob("jalan[0-9].png")):
+                add(f"lewat:{d.name}:{f.stem}", f)
+    evdir = ROOT / "events"
+    evmeta = json.loads((evdir / "events.json").read_text())["events"]
+    for ev in EVENTS:
+        d = evdir / ev
+        for f in (1, 2):
+            add(f"ev:{ev}:untai{f}", d / f"untai{f}.png")
+        for f in sorted(d.glob("tiang*.png")):
+            add(f"ev:{ev}:{f.stem}", f)
+        add(f"ev:{ev}:ikon", d / "ikon.png")
+        add(f"evhero:{ev}", d / "selempang.png")
+        for c in CUSTOMERS:
+            for fr in CUST_FRAMES:
+                add(f"cust:{c}@{ev}:{fr}", d / "pelanggan" / c / f"{fr}.png")
     for c in ("merah", "biru", "kuning", "hijau"):
         add(f"payung:{c}", lw / f"payung_{c}.png")
     for fr in ("float1", "float2", "senang"):
@@ -83,7 +103,7 @@ def _collect():
     for n in ["awan_besar", "awan_sedang", "awan_kecil", "burung1", "burung2", "burung3", "hujan1",
               "hujan2", "hujan3", "hujan4", "kunang1", "kunang2"]:
         add(f"fx:{n}", ef / f"{n}.png")
-    return items, menu, eggs
+    return items, menu, eggs, evmeta
 
 
 def _pack(items):
@@ -114,7 +134,7 @@ def _pack(items):
 
 def generate():
     OUT.mkdir(parents=True, exist_ok=True)
-    items, menu, eggs = _collect()
+    items, menu, eggs, evmeta = _collect()
     sheets, mapping = _pack(items)
     for i, sh in enumerate(sheets):
         sh.save(OUT / f"atlas{i}.png", optimize=True)
@@ -136,6 +156,7 @@ def generate():
         "customers": CUSTOMERS,
         "tint": waktu["tint_latar_depan"],
         "tods": TODS,
+        "events": evmeta,
     }
     kit = OUT / "kit"
     kit.mkdir(exist_ok=True)
