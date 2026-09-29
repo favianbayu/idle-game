@@ -1,0 +1,132 @@
+{
+  "catatan": "Tanggal dicek di game. Lebaran/Imlek/Galungan memakai tabel per tahun.",
+  "events": {
+    "kemerdekaan": {
+      "name": "HUT Kemerdekaan RI",
+      "pesan": "Dirgahayu Republik Indonesia! Merdeka!",
+      "tanggal": "1-31 Agustus",
+      "tiang": 4,
+      "kota": null,
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ]
+    },
+    "batik": {
+      "name": "Hari Batik Nasional",
+      "pesan": "Semua pakai batik hari ini.",
+      "tanggal": "1-4 Oktober",
+      "tiang": 0,
+      "kota": null,
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ]
+    },
+    "lebaran": {
+      "name": "Idul Fitri",
+      "pesan": "Minal aidin wal faizin, mohon maaf lahir batin.",
+      "tanggal": "H-7 s/d H+7 Lebaran (tabel)",
+      "tiang": 0,
+      "kota": null,
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ]
+    },
+    "imlek": {
+      "name": "Tahun Baru Imlek",
+      "pesan": "Gong xi fa cai! Semoga rezeki melimpah.",
+      "tanggal": "H-3 s/d Cap Go Meh (tabel)",
+      "tiang": 0,
+      "kota": null,
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ]
+    },
+    "natal": {
+      "name": "Natal",
+      "pesan": "Selamat Natal, damai di bumi.",
+      "tanggal": "20-27 Desember",
+      "tiang": 2,
+      "kota": null,
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ]
+    },
+    "tahun_baru": {
+      "name": "Tahun Baru",
+      "pesan": "Selamat tahun baru! Kembang api tiap malam.",
+      "tanggal": "28 Desember - 2 Januari",
+      "tiang": 0,
+      "kota": null,
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ]
+    },
+    "kartini": {
+      "name": "Hari Kartini",
+      "pesan": "Habis gelap terbitlah terang. Kebaya day!",
+      "tanggal": "19-23 April",
+      "tiang": 0,
+      "kota": null,
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ]
+    },
+    "galungan": {
+      "name": "Galungan & Kuningan",
+      "pesan": "Rahajeng Galungan! Penjor berjajar di jalan.",
+      "tanggal": "Galungan s/d Kuningan (tiap 210 hari, hanya Bali)",
+      "tiang": 1,
+      "kota": "bali",
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ]
+    },
+    "pahlawan": {
+      "name": "Hari Pahlawan",
+      "pesan": "Selamat Hari Pahlawan, arek-arek Suroboyo!",
+      "tanggal": "8-12 November",
+      "tiang": 4,
+      "kota": null,
+      "pelanggan": [
+        "pelanggan_01",
+        "pelanggan_02",
+        "pelanggan_03",
+        "pelanggan_04",
+        "bu_yanti"
+      ],
+      "pakai": "kemerdekaan"
+    }
+  }
+}

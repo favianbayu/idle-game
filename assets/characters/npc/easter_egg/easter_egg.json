@@ -1,0 +1,69 @@
+{
+  "catatan": "chance = peluang muncul per pelanggan baru; reward = pengali bayaran. Semua karakter original (homage arketipe), bukan tiruan karakter/tokoh tertentu.",
+  "npc": [
+    {
+      "id": "pendekar_jabrik",
+      "name": "Pendekar Jabrik",
+      "homage": "petarung shonen berambut jabrik dengan aura emas",
+      "chance": 0.002,
+      "reward": 10,
+      "quote": "Kekuatan... NASI GORENG ini... melebihi 9000 rasa!"
+    },
+    {
+      "id": "gadis_penyihir",
+      "name": "Gadis Penyihir Rasa",
+      "homage": "magical girl dengan tongkat bintang",
+      "chance": 0.003,
+      "reward": 8,
+      "quote": "Atas nama bulan, aku pesan seporsi lagi!"
+    },
+    {
+      "id": "pilot_mecha",
+      "name": "Pilot Robot Raksasa",
+      "homage": "pilot mecha dengan setelan tempur",
+      "chance": 0.003,
+      "reward": 8,
+      "quote": "Aku tidak boleh lari... dari antrean ini."
+    },
+    {
+      "id": "samurai_pengembara",
+      "name": "Samurai Pengembara",
+      "homage": "ronin bertopi caping",
+      "chance": 0.002,
+      "reward": 10,
+      "quote": "Pedangku sudah pensiun. Sekarang aku berburu sambal."
+    },
+    {
+      "id": "detektif_bertopi",
+      "name": "Detektif Bertopi",
+      "homage": "detektif klasik dengan kaca pembesar",
+      "chance": 0.004,
+      "reward": 6,
+      "quote": "Hmm... ada rahasia di balik kuah ini. Elementer!"
+    },
+    {
+      "id": "food_vlogger",
+      "name": "Food Vlogger Viral",
+      "homage": "kreator kuliner yang selalu merekam",
+      "chance": 0.006,
+      "reward": 5,
+      "quote": "Guys, ini enak banget sih, jujur! Jangan lupa subscribe."
+    },
+    {
+      "id": "raja_dangdut",
+      "name": "Raja Panggung Dangdut",
+      "homage": "bintang dangdut berkumis dengan gitar",
+      "chance": 0.003,
+      "reward": 8,
+      "quote": "Terlalu! Masakan ini terlalu enak!"
+    },
+    {
+      "id": "legenda_bulutangkis",
+      "name": "Legenda Bulutangkis",
+      "homage": "atlet bulutangkis juara dunia",
+      "chance": 0.004,
+      "reward": 6,
+      "quote": "Smash! Satu porsi lagi buat tenaga final!"
+    }
+  ]
+}

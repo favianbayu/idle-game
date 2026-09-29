@@ -1,0 +1,1108 @@
+{
+  "stage_rules": {
+    "1": "1 makanan + 1 minuman terbuka; 1 minuman terkunci (koin)",
+    "2": "+1 makanan; 1 makanan terkunci",
+    "3": "+2 makanan; terkunci: 1 menu spesial + 1 minuman",
+    "4": "+2 makanan + 1 minuman; terkunci: 1 menu spesial + 1 dessert",
+    "5": "+2 makanan; terkunci: 2 menu legendaris"
+  },
+  "cities": {
+    "jakarta": {
+      "name": "Jakarta",
+      "menu": [
+        {
+          "id": "kerak_telor",
+          "name": "Kerak Telor",
+          "kind": "makanan",
+          "stage": 1,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 10,
+          "cook_seconds": 3.5,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/kerak_telor.png",
+          "icon_locked": "food/jakarta/kerak_telor_locked.png"
+        },
+        {
+          "id": "es_teh_manis",
+          "name": "Es Teh Manis",
+          "kind": "minuman",
+          "stage": 1,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 6,
+          "cook_seconds": 3.5,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/es_teh_manis.png",
+          "icon_locked": "food/jakarta/es_teh_manis_locked.png"
+        },
+        {
+          "id": "bir_pletok",
+          "name": "Bir Pletok",
+          "kind": "minuman",
+          "stage": 1,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 6,
+          "cook_seconds": 3.5,
+          "unlock_cost": 360,
+          "icon": "food/jakarta/bir_pletok.png",
+          "icon_locked": "food/jakarta/bir_pletok_locked.png"
+        },
+        {
+          "id": "ketoprak",
+          "name": "Ketoprak",
+          "kind": "makanan",
+          "stage": 2,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 40,
+          "cook_seconds": 5.0,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/ketoprak.png",
+          "icon_locked": "food/jakarta/ketoprak_locked.png"
+        },
+        {
+          "id": "gado_gado",
+          "name": "Gado-gado",
+          "kind": "makanan",
+          "stage": 2,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 40,
+          "cook_seconds": 5.0,
+          "unlock_cost": 2400,
+          "icon": "food/jakarta/gado_gado.png",
+          "icon_locked": "food/jakarta/gado_gado_locked.png"
+        },
+        {
+          "id": "soto_betawi",
+          "name": "Soto Betawi",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 160,
+          "cook_seconds": 6.5,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/soto_betawi.png",
+          "icon_locked": "food/jakarta/soto_betawi_locked.png"
+        },
+        {
+          "id": "nasi_uduk",
+          "name": "Nasi Uduk",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 160,
+          "cook_seconds": 6.5,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/nasi_uduk.png",
+          "icon_locked": "food/jakarta/nasi_uduk_locked.png"
+        },
+        {
+          "id": "nasi_uduk_komplit",
+          "name": "Nasi Uduk Komplit",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "coins",
+          "tier": "spesial",
+          "price": 400,
+          "cook_seconds": 9.5,
+          "unlock_cost": 24000,
+          "icon": "food/jakarta/nasi_uduk_komplit.png",
+          "icon_locked": "food/jakarta/nasi_uduk_komplit_locked.png"
+        },
+        {
+          "id": "es_selendang_mayang",
+          "name": "Es Selendang Mayang",
+          "kind": "minuman",
+          "stage": 3,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 96,
+          "cook_seconds": 6.5,
+          "unlock_cost": 5760,
+          "icon": "food/jakarta/es_selendang_mayang.png",
+          "icon_locked": "food/jakarta/es_selendang_mayang_locked.png"
+        },
+        {
+          "id": "asinan_betawi",
+          "name": "Asinan Betawi",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 640,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/asinan_betawi.png",
+          "icon_locked": "food/jakarta/asinan_betawi_locked.png"
+        },
+        {
+          "id": "gabus_pucung",
+          "name": "Gabus Pucung",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 640,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/gabus_pucung.png",
+          "icon_locked": "food/jakarta/gabus_pucung_locked.png"
+        },
+        {
+          "id": "es_kopi_susu",
+          "name": "Es Kopi Susu",
+          "kind": "minuman",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 384,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/es_kopi_susu.png",
+          "icon_locked": "food/jakarta/es_kopi_susu_locked.png"
+        },
+        {
+          "id": "soto_betawi_iga",
+          "name": "Soto Betawi Iga",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "coins",
+          "tier": "spesial",
+          "price": 1600,
+          "cook_seconds": 11.0,
+          "unlock_cost": 96000,
+          "icon": "food/jakarta/soto_betawi_iga.png",
+          "icon_locked": "food/jakarta/soto_betawi_iga_locked.png"
+        },
+        {
+          "id": "kue_rangi",
+          "name": "Kue Rangi",
+          "kind": "dessert",
+          "stage": 4,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 832,
+          "cook_seconds": 8.0,
+          "unlock_cost": 49920,
+          "icon": "food/jakarta/kue_rangi.png",
+          "icon_locked": "food/jakarta/kue_rangi_locked.png"
+        },
+        {
+          "id": "laksa_betawi",
+          "name": "Laksa Betawi",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 2560,
+          "cook_seconds": 9.5,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/laksa_betawi.png",
+          "icon_locked": "food/jakarta/laksa_betawi_locked.png"
+        },
+        {
+          "id": "sayur_babanci",
+          "name": "Sayur Babanci",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 2560,
+          "cook_seconds": 9.5,
+          "unlock_cost": 0,
+          "icon": "food/jakarta/sayur_babanci.png",
+          "icon_locked": "food/jakarta/sayur_babanci_locked.png"
+        },
+        {
+          "id": "kerak_telor_legenda",
+          "name": "Kerak Telor Api Legenda",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "coins",
+          "tier": "legendaris",
+          "price": 20480,
+          "cook_seconds": 12.5,
+          "unlock_cost": 1228800,
+          "icon": "food/jakarta/kerak_telor_legenda.png",
+          "icon_locked": "food/jakarta/kerak_telor_legenda_locked.png"
+        },
+        {
+          "id": "dodol_betawi_emas",
+          "name": "Dodol Betawi Emas",
+          "kind": "dessert",
+          "stage": 5,
+          "unlock": "coins",
+          "tier": "legendaris",
+          "price": 26624,
+          "cook_seconds": 12.5,
+          "unlock_cost": 1597440,
+          "icon": "food/jakarta/dodol_betawi_emas.png",
+          "icon_locked": "food/jakarta/dodol_betawi_emas_locked.png"
+        }
+      ],
+      "combos": [
+        {
+          "name": "Paket Ngopi Betawi",
+          "items": [
+            "kerak_telor",
+            "bir_pletok"
+          ],
+          "bonus": 1.15
+        },
+        {
+          "name": "Sarapan Jakarte",
+          "items": [
+            "nasi_uduk",
+            "es_teh_manis"
+          ],
+          "bonus": 1.2
+        },
+        {
+          "name": "Soto Seger",
+          "items": [
+            "soto_betawi",
+            "es_selendang_mayang"
+          ],
+          "bonus": 1.25
+        },
+        {
+          "name": "Pesta Palang Pintu",
+          "items": [
+            "soto_betawi_iga",
+            "asinan_betawi",
+            "kue_rangi"
+          ],
+          "bonus": 1.4
+        }
+      ]
+    },
+    "bandung": {
+      "name": "Bandung",
+      "menu": [
+        {
+          "id": "batagor",
+          "name": "Batagor",
+          "kind": "makanan",
+          "stage": 1,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 100,
+          "cook_seconds": 3.5,
+          "unlock_cost": 0,
+          "icon": "food/bandung/batagor.png",
+          "icon_locked": "food/bandung/batagor_locked.png"
+        },
+        {
+          "id": "es_cendol",
+          "name": "Es Cendol",
+          "kind": "minuman",
+          "stage": 1,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 60,
+          "cook_seconds": 3.5,
+          "unlock_cost": 0,
+          "icon": "food/bandung/es_cendol.png",
+          "icon_locked": "food/bandung/es_cendol_locked.png"
+        },
+        {
+          "id": "bajigur",
+          "name": "Bajigur",
+          "kind": "minuman",
+          "stage": 1,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 60,
+          "cook_seconds": 3.5,
+          "unlock_cost": 3600,
+          "icon": "food/bandung/bajigur.png",
+          "icon_locked": "food/bandung/bajigur_locked.png"
+        },
+        {
+          "id": "cireng",
+          "name": "Cireng",
+          "kind": "makanan",
+          "stage": 2,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 400,
+          "cook_seconds": 5.0,
+          "unlock_cost": 0,
+          "icon": "food/bandung/cireng.png",
+          "icon_locked": "food/bandung/cireng_locked.png"
+        },
+        {
+          "id": "cilok",
+          "name": "Cilok",
+          "kind": "makanan",
+          "stage": 2,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 400,
+          "cook_seconds": 5.0,
+          "unlock_cost": 24000,
+          "icon": "food/bandung/cilok.png",
+          "icon_locked": "food/bandung/cilok_locked.png"
+        },
+        {
+          "id": "seblak",
+          "name": "Seblak",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 1600,
+          "cook_seconds": 6.5,
+          "unlock_cost": 0,
+          "icon": "food/bandung/seblak.png",
+          "icon_locked": "food/bandung/seblak_locked.png"
+        },
+        {
+          "id": "mie_kocok",
+          "name": "Mie Kocok",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 1600,
+          "cook_seconds": 6.5,
+          "unlock_cost": 0,
+          "icon": "food/bandung/mie_kocok.png",
+          "icon_locked": "food/bandung/mie_kocok_locked.png"
+        },
+        {
+          "id": "seblak_komplit",
+          "name": "Seblak Komplit",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "coins",
+          "tier": "spesial",
+          "price": 4000,
+          "cook_seconds": 9.5,
+          "unlock_cost": 240000,
+          "icon": "food/bandung/seblak_komplit.png",
+          "icon_locked": "food/bandung/seblak_komplit_locked.png"
+        },
+        {
+          "id": "bandrek",
+          "name": "Bandrek",
+          "kind": "minuman",
+          "stage": 3,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 960,
+          "cook_seconds": 6.5,
+          "unlock_cost": 57600,
+          "icon": "food/bandung/bandrek.png",
+          "icon_locked": "food/bandung/bandrek_locked.png"
+        },
+        {
+          "id": "surabi",
+          "name": "Surabi",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 6400,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/bandung/surabi.png",
+          "icon_locked": "food/bandung/surabi_locked.png"
+        },
+        {
+          "id": "nasi_timbel",
+          "name": "Nasi Timbel",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 6400,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/bandung/nasi_timbel.png",
+          "icon_locked": "food/bandung/nasi_timbel_locked.png"
+        },
+        {
+          "id": "es_goyobod",
+          "name": "Es Goyobod",
+          "kind": "minuman",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 3840,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/bandung/es_goyobod.png",
+          "icon_locked": "food/bandung/es_goyobod_locked.png"
+        },
+        {
+          "id": "timbel_komplit",
+          "name": "Nasi Timbel Komplit",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "coins",
+          "tier": "spesial",
+          "price": 16000,
+          "cook_seconds": 11.0,
+          "unlock_cost": 960000,
+          "icon": "food/bandung/timbel_komplit.png",
+          "icon_locked": "food/bandung/timbel_komplit_locked.png"
+        },
+        {
+          "id": "colenak",
+          "name": "Colenak",
+          "kind": "dessert",
+          "stage": 4,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 8320,
+          "cook_seconds": 8.0,
+          "unlock_cost": 499200,
+          "icon": "food/bandung/colenak.png",
+          "icon_locked": "food/bandung/colenak_locked.png"
+        },
+        {
+          "id": "karedok",
+          "name": "Karedok",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 25600,
+          "cook_seconds": 9.5,
+          "unlock_cost": 0,
+          "icon": "food/bandung/karedok.png",
+          "icon_locked": "food/bandung/karedok_locked.png"
+        },
+        {
+          "id": "mie_kocok_kikil",
+          "name": "Mie Kocok Kikil",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 25600,
+          "cook_seconds": 9.5,
+          "unlock_cost": 0,
+          "icon": "food/bandung/mie_kocok_kikil.png",
+          "icon_locked": "food/bandung/mie_kocok_kikil_locked.png"
+        },
+        {
+          "id": "batagor_kristal",
+          "name": "Batagor Kristal Tangkuban",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "coins",
+          "tier": "legendaris",
+          "price": 204800,
+          "cook_seconds": 12.5,
+          "unlock_cost": 12288000,
+          "icon": "food/bandung/batagor_kristal.png",
+          "icon_locked": "food/bandung/batagor_kristal_locked.png"
+        },
+        {
+          "id": "surabi_bulan_emas",
+          "name": "Surabi Bulan Emas",
+          "kind": "dessert",
+          "stage": 5,
+          "unlock": "coins",
+          "tier": "legendaris",
+          "price": 266240,
+          "cook_seconds": 12.5,
+          "unlock_cost": 15974400,
+          "icon": "food/bandung/surabi_bulan_emas.png",
+          "icon_locked": "food/bandung/surabi_bulan_emas_locked.png"
+        }
+      ],
+      "combos": [
+        {
+          "name": "Jajan Pasar Baru",
+          "items": [
+            "batagor",
+            "es_cendol"
+          ],
+          "bonus": 1.15
+        },
+        {
+          "name": "Anget Lembang",
+          "items": [
+            "surabi",
+            "bajigur"
+          ],
+          "bonus": 1.2
+        },
+        {
+          "name": "Pedes Nampol",
+          "items": [
+            "seblak",
+            "es_goyobod"
+          ],
+          "bonus": 1.25
+        },
+        {
+          "name": "Botram Sunda",
+          "items": [
+            "timbel_komplit",
+            "karedok",
+            "colenak"
+          ],
+          "bonus": 1.4
+        }
+      ]
+    },
+    "bali": {
+      "name": "Bali",
+      "menu": [
+        {
+          "id": "sate_lilit",
+          "name": "Sate Lilit",
+          "kind": "makanan",
+          "stage": 1,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 1000,
+          "cook_seconds": 3.5,
+          "unlock_cost": 0,
+          "icon": "food/bali/sate_lilit.png",
+          "icon_locked": "food/bali/sate_lilit_locked.png"
+        },
+        {
+          "id": "es_kelapa_muda",
+          "name": "Es Kelapa Muda",
+          "kind": "minuman",
+          "stage": 1,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 600,
+          "cook_seconds": 3.5,
+          "unlock_cost": 0,
+          "icon": "food/bali/es_kelapa_muda.png",
+          "icon_locked": "food/bali/es_kelapa_muda_locked.png"
+        },
+        {
+          "id": "loloh_cemcem",
+          "name": "Loloh Cemcem",
+          "kind": "minuman",
+          "stage": 1,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 600,
+          "cook_seconds": 3.5,
+          "unlock_cost": 36000,
+          "icon": "food/bali/loloh_cemcem.png",
+          "icon_locked": "food/bali/loloh_cemcem_locked.png"
+        },
+        {
+          "id": "tipat_cantok",
+          "name": "Tipat Cantok",
+          "kind": "makanan",
+          "stage": 2,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 4000,
+          "cook_seconds": 5.0,
+          "unlock_cost": 0,
+          "icon": "food/bali/tipat_cantok.png",
+          "icon_locked": "food/bali/tipat_cantok_locked.png"
+        },
+        {
+          "id": "nasi_jinggo",
+          "name": "Nasi Jinggo",
+          "kind": "makanan",
+          "stage": 2,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 4000,
+          "cook_seconds": 5.0,
+          "unlock_cost": 240000,
+          "icon": "food/bali/nasi_jinggo.png",
+          "icon_locked": "food/bali/nasi_jinggo_locked.png"
+        },
+        {
+          "id": "ayam_betutu",
+          "name": "Ayam Betutu",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 16000,
+          "cook_seconds": 6.5,
+          "unlock_cost": 0,
+          "icon": "food/bali/ayam_betutu.png",
+          "icon_locked": "food/bali/ayam_betutu_locked.png"
+        },
+        {
+          "id": "lawar",
+          "name": "Lawar",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 16000,
+          "cook_seconds": 6.5,
+          "unlock_cost": 0,
+          "icon": "food/bali/lawar.png",
+          "icon_locked": "food/bali/lawar_locked.png"
+        },
+        {
+          "id": "nasi_campur_bali",
+          "name": "Nasi Campur Bali",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "coins",
+          "tier": "spesial",
+          "price": 40000,
+          "cook_seconds": 9.5,
+          "unlock_cost": 2400000,
+          "icon": "food/bali/nasi_campur_bali.png",
+          "icon_locked": "food/bali/nasi_campur_bali_locked.png"
+        },
+        {
+          "id": "es_daluman",
+          "name": "Es Daluman",
+          "kind": "minuman",
+          "stage": 3,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 9600,
+          "cook_seconds": 6.5,
+          "unlock_cost": 576000,
+          "icon": "food/bali/es_daluman.png",
+          "icon_locked": "food/bali/es_daluman_locked.png"
+        },
+        {
+          "id": "bebek_betutu",
+          "name": "Bebek Betutu",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 64000,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/bali/bebek_betutu.png",
+          "icon_locked": "food/bali/bebek_betutu_locked.png"
+        },
+        {
+          "id": "serombotan",
+          "name": "Serombotan",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 64000,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/bali/serombotan.png",
+          "icon_locked": "food/bali/serombotan_locked.png"
+        },
+        {
+          "id": "es_kopi_kintamani",
+          "name": "Es Kopi Kintamani",
+          "kind": "minuman",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 38400,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/bali/es_kopi_kintamani.png",
+          "icon_locked": "food/bali/es_kopi_kintamani_locked.png"
+        },
+        {
+          "id": "betutu_utuh",
+          "name": "Ayam Betutu Utuh",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "coins",
+          "tier": "spesial",
+          "price": 160000,
+          "cook_seconds": 11.0,
+          "unlock_cost": 9600000,
+          "icon": "food/bali/betutu_utuh.png",
+          "icon_locked": "food/bali/betutu_utuh_locked.png"
+        },
+        {
+          "id": "jaje_laklak",
+          "name": "Jaje Laklak",
+          "kind": "dessert",
+          "stage": 4,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 83200,
+          "cook_seconds": 8.0,
+          "unlock_cost": 4992000,
+          "icon": "food/bali/jaje_laklak.png",
+          "icon_locked": "food/bali/jaje_laklak_locked.png"
+        },
+        {
+          "id": "sate_plecing",
+          "name": "Sate Plecing",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 256000,
+          "cook_seconds": 9.5,
+          "unlock_cost": 0,
+          "icon": "food/bali/sate_plecing.png",
+          "icon_locked": "food/bali/sate_plecing_locked.png"
+        },
+        {
+          "id": "tum_ayam",
+          "name": "Tum Ayam",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 256000,
+          "cook_seconds": 9.5,
+          "unlock_cost": 0,
+          "icon": "food/bali/tum_ayam.png",
+          "icon_locked": "food/bali/tum_ayam_locked.png"
+        },
+        {
+          "id": "betutu_api_dewata",
+          "name": "Betutu Api Dewata",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "coins",
+          "tier": "legendaris",
+          "price": 2048000,
+          "cook_seconds": 12.5,
+          "unlock_cost": 122880000,
+          "icon": "food/bali/betutu_api_dewata.png",
+          "icon_locked": "food/bali/betutu_api_dewata_locked.png"
+        },
+        {
+          "id": "bubuh_injin_pelangi",
+          "name": "Bubuh Injin Pelangi",
+          "kind": "dessert",
+          "stage": 5,
+          "unlock": "coins",
+          "tier": "legendaris",
+          "price": 2662400,
+          "cook_seconds": 12.5,
+          "unlock_cost": 159744000,
+          "icon": "food/bali/bubuh_injin_pelangi.png",
+          "icon_locked": "food/bali/bubuh_injin_pelangi_locked.png"
+        }
+      ],
+      "combos": [
+        {
+          "name": "Sore di Pantai",
+          "items": [
+            "sate_lilit",
+            "es_kelapa_muda"
+          ],
+          "bonus": 1.15
+        },
+        {
+          "name": "Megibung",
+          "items": [
+            "ayam_betutu",
+            "lawar",
+            "loloh_cemcem"
+          ],
+          "bonus": 1.3
+        },
+        {
+          "name": "Manis Sanur",
+          "items": [
+            "jaje_laklak",
+            "es_kopi_kintamani"
+          ],
+          "bonus": 1.2
+        },
+        {
+          "name": "Upacara Agung",
+          "items": [
+            "betutu_utuh",
+            "serombotan",
+            "es_daluman"
+          ],
+          "bonus": 1.4
+        }
+      ]
+    },
+    "surabaya": {
+      "name": "Surabaya",
+      "menu": [
+        {
+          "id": "rawon",
+          "name": "Rawon",
+          "kind": "makanan",
+          "stage": 1,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 10000,
+          "cook_seconds": 3.5,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/rawon.png",
+          "icon_locked": "food/surabaya/rawon_locked.png"
+        },
+        {
+          "id": "es_degan",
+          "name": "Es Degan",
+          "kind": "minuman",
+          "stage": 1,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 6000,
+          "cook_seconds": 3.5,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/es_degan.png",
+          "icon_locked": "food/surabaya/es_degan_locked.png"
+        },
+        {
+          "id": "es_dawet",
+          "name": "Es Dawet",
+          "kind": "minuman",
+          "stage": 1,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 6000,
+          "cook_seconds": 3.5,
+          "unlock_cost": 360000,
+          "icon": "food/surabaya/es_dawet.png",
+          "icon_locked": "food/surabaya/es_dawet_locked.png"
+        },
+        {
+          "id": "tahu_tek",
+          "name": "Tahu Tek",
+          "kind": "makanan",
+          "stage": 2,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 40000,
+          "cook_seconds": 5.0,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/tahu_tek.png",
+          "icon_locked": "food/surabaya/tahu_tek_locked.png"
+        },
+        {
+          "id": "tahu_campur",
+          "name": "Tahu Campur",
+          "kind": "makanan",
+          "stage": 2,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 40000,
+          "cook_seconds": 5.0,
+          "unlock_cost": 2400000,
+          "icon": "food/surabaya/tahu_campur.png",
+          "icon_locked": "food/surabaya/tahu_campur_locked.png"
+        },
+        {
+          "id": "lontong_balap",
+          "name": "Lontong Balap",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 160000,
+          "cook_seconds": 6.5,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/lontong_balap.png",
+          "icon_locked": "food/surabaya/lontong_balap_locked.png"
+        },
+        {
+          "id": "rujak_cingur",
+          "name": "Rujak Cingur",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 160000,
+          "cook_seconds": 6.5,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/rujak_cingur.png",
+          "icon_locked": "food/surabaya/rujak_cingur_locked.png"
+        },
+        {
+          "id": "rawon_setan",
+          "name": "Rawon Setan",
+          "kind": "makanan",
+          "stage": 3,
+          "unlock": "coins",
+          "tier": "spesial",
+          "price": 400000,
+          "cook_seconds": 9.5,
+          "unlock_cost": 24000000,
+          "icon": "food/surabaya/rawon_setan.png",
+          "icon_locked": "food/surabaya/rawon_setan_locked.png"
+        },
+        {
+          "id": "es_sinom",
+          "name": "Es Sinom",
+          "kind": "minuman",
+          "stage": 3,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 96000,
+          "cook_seconds": 6.5,
+          "unlock_cost": 5760000,
+          "icon": "food/surabaya/es_sinom.png",
+          "icon_locked": "food/surabaya/es_sinom_locked.png"
+        },
+        {
+          "id": "sate_klopo",
+          "name": "Sate Klopo",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 640000,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/sate_klopo.png",
+          "icon_locked": "food/surabaya/sate_klopo_locked.png"
+        },
+        {
+          "id": "lontong_kupang",
+          "name": "Lontong Kupang",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 640000,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/lontong_kupang.png",
+          "icon_locked": "food/surabaya/lontong_kupang_locked.png"
+        },
+        {
+          "id": "es_kopi_tubruk",
+          "name": "Es Kopi Tubruk",
+          "kind": "minuman",
+          "stage": 4,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 384000,
+          "cook_seconds": 8.0,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/es_kopi_tubruk.png",
+          "icon_locked": "food/surabaya/es_kopi_tubruk_locked.png"
+        },
+        {
+          "id": "rawon_iga",
+          "name": "Rawon Iga Komplit",
+          "kind": "makanan",
+          "stage": 4,
+          "unlock": "coins",
+          "tier": "spesial",
+          "price": 1600000,
+          "cook_seconds": 11.0,
+          "unlock_cost": 96000000,
+          "icon": "food/surabaya/rawon_iga.png",
+          "icon_locked": "food/surabaya/rawon_iga_locked.png"
+        },
+        {
+          "id": "lapis_surabaya",
+          "name": "Lapis Surabaya",
+          "kind": "dessert",
+          "stage": 4,
+          "unlock": "coins",
+          "tier": "biasa",
+          "price": 832000,
+          "cook_seconds": 8.0,
+          "unlock_cost": 49920000,
+          "icon": "food/surabaya/lapis_surabaya.png",
+          "icon_locked": "food/surabaya/lapis_surabaya_locked.png"
+        },
+        {
+          "id": "nasi_cumi_hitam",
+          "name": "Nasi Cumi Hitam",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 2560000,
+          "cook_seconds": 9.5,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/nasi_cumi_hitam.png",
+          "icon_locked": "food/surabaya/nasi_cumi_hitam_locked.png"
+        },
+        {
+          "id": "pecel_semanggi",
+          "name": "Pecel Semanggi",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "stage",
+          "tier": "biasa",
+          "price": 2560000,
+          "cook_seconds": 9.5,
+          "unlock_cost": 0,
+          "icon": "food/surabaya/pecel_semanggi.png",
+          "icon_locked": "food/surabaya/pecel_semanggi_locked.png"
+        },
+        {
+          "id": "rawon_api_legenda",
+          "name": "Rawon Api Legenda",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "coins",
+          "tier": "legendaris",
+          "price": 20480000,
+          "cook_seconds": 12.5,
+          "unlock_cost": 1228800000,
+          "icon": "food/surabaya/rawon_api_legenda.png",
+          "icon_locked": "food/surabaya/rawon_api_legenda_locked.png"
+        },
+        {
+          "id": "rujak_cingur_mahkota",
+          "name": "Rujak Cingur Mahkota",
+          "kind": "makanan",
+          "stage": 5,
+          "unlock": "coins",
+          "tier": "legendaris",
+          "price": 20480000,
+          "cook_seconds": 12.5,
+          "unlock_cost": 1228800000,
+          "icon": "food/surabaya/rujak_cingur_mahkota.png",
+          "icon_locked": "food/surabaya/rujak_cingur_mahkota_locked.png"
+        }
+      ],
+      "combos": [
+        {
+          "name": "Arek Suroboyo",
+          "items": [
+            "rawon",
+            "es_degan"
+          ],
+          "bonus": 1.15
+        },
+        {
+          "name": "Cangkruk Malam",
+          "items": [
+            "tahu_tek",
+            "es_dawet"
+          ],
+          "bonus": 1.2
+        },
+        {
+          "name": "Pedes Setan",
+          "items": [
+            "rawon_setan",
+            "es_sinom"
+          ],
+          "bonus": 1.3
+        },
+        {
+          "name": "Jamuan Tunjungan",
+          "items": [
+            "rawon_iga",
+            "sate_klopo",
+            "lapis_surabaya"
+          ],
+          "bonus": 1.4
+        }
+      ]
+    }
+  }
+}

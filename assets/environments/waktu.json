@@ -1,0 +1,48 @@
+{
+  "waktu": [
+    "pagi",
+    "siang",
+    "sore",
+    "malam"
+  ],
+  "urutan_siklus": [
+    "pagi",
+    "siang",
+    "sore",
+    "malam"
+  ],
+  "saran_durasi_menit": {
+    "pagi": 3,
+    "siang": 5,
+    "sore": 3,
+    "malam": 5
+  },
+  "tint_latar_depan": {
+    "pagi": [
+      255,
+      248,
+      240
+    ],
+    "siang": [
+      255,
+      255,
+      255
+    ],
+    "sore": [
+      255,
+      225,
+      200
+    ],
+    "malam": [
+      165,
+      170,
+      215
+    ]
+  },
+  "lampu_menyala": {
+    "pagi": false,
+    "siang": false,
+    "sore": true,
+    "malam": true
+  }
+}

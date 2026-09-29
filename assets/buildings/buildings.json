@@ -1,0 +1,270 @@
+{
+  "jakarta": {
+    "stage1": {
+      "folder": "jakarta/stage1_gerobak",
+      "size": [
+        80,
+        64
+      ],
+      "ground_y": 63,
+      "vendor_spot": [
+        86,
+        63
+      ],
+      "frame_ms": 500
+    },
+    "stage2": {
+      "folder": "jakarta/stage2_warung_tenda",
+      "size": [
+        160,
+        112
+      ],
+      "ground_y": 111,
+      "vendor_spot": [
+        70,
+        111
+      ],
+      "frame_ms": 500
+    },
+    "stage3": {
+      "folder": "jakarta/stage3_ruko",
+      "size": [
+        144,
+        176
+      ],
+      "ground_y": 175,
+      "vendor_spot": [
+        104,
+        175
+      ],
+      "frame_ms": 500
+    },
+    "stage4": {
+      "folder": "jakarta/stage4_resto_modern",
+      "size": [
+        176,
+        192
+      ],
+      "ground_y": 191,
+      "vendor_spot": [
+        130,
+        191
+      ],
+      "frame_ms": 500
+    },
+    "stage5": {
+      "folder": "jakarta/stage5_istana_rasa",
+      "size": [
+        208,
+        224
+      ],
+      "ground_y": 223,
+      "vendor_spot": [
+        128,
+        162
+      ],
+      "frame_ms": 500
+    }
+  },
+  "bandung": {
+    "stage1": {
+      "folder": "bandung/stage1_gerobak",
+      "size": [
+        80,
+        64
+      ],
+      "ground_y": 63,
+      "vendor_spot": [
+        86,
+        63
+      ],
+      "frame_ms": 500
+    },
+    "stage2": {
+      "folder": "bandung/stage2_warung_tenda",
+      "size": [
+        160,
+        112
+      ],
+      "ground_y": 111,
+      "vendor_spot": [
+        70,
+        111
+      ],
+      "frame_ms": 500
+    },
+    "stage3": {
+      "folder": "bandung/stage3_ruko",
+      "size": [
+        144,
+        176
+      ],
+      "ground_y": 175,
+      "vendor_spot": [
+        104,
+        175
+      ],
+      "frame_ms": 500
+    },
+    "stage4": {
+      "folder": "bandung/stage4_resto_modern",
+      "size": [
+        176,
+        192
+      ],
+      "ground_y": 191,
+      "vendor_spot": [
+        130,
+        191
+      ],
+      "frame_ms": 500
+    },
+    "stage5": {
+      "folder": "bandung/stage5_istana_rasa",
+      "size": [
+        208,
+        224
+      ],
+      "ground_y": 223,
+      "vendor_spot": [
+        128,
+        162
+      ],
+      "frame_ms": 500
+    }
+  },
+  "bali": {
+    "stage1": {
+      "folder": "bali/stage1_gerobak",
+      "size": [
+        80,
+        64
+      ],
+      "ground_y": 63,
+      "vendor_spot": [
+        86,
+        63
+      ],
+      "frame_ms": 500
+    },
+    "stage2": {
+      "folder": "bali/stage2_warung_tenda",
+      "size": [
+        160,
+        112
+      ],
+      "ground_y": 111,
+      "vendor_spot": [
+        70,
+        111
+      ],
+      "frame_ms": 500
+    },
+    "stage3": {
+      "folder": "bali/stage3_ruko",
+      "size": [
+        144,
+        176
+      ],
+      "ground_y": 175,
+      "vendor_spot": [
+        104,
+        175
+      ],
+      "frame_ms": 500
+    },
+    "stage4": {
+      "folder": "bali/stage4_resto_modern",
+      "size": [
+        176,
+        192
+      ],
+      "ground_y": 191,
+      "vendor_spot": [
+        130,
+        191
+      ],
+      "frame_ms": 500
+    },
+    "stage5": {
+      "folder": "bali/stage5_istana_rasa",
+      "size": [
+        208,
+        224
+      ],
+      "ground_y": 223,
+      "vendor_spot": [
+        128,
+        162
+      ],
+      "frame_ms": 500
+    }
+  },
+  "surabaya": {
+    "stage1": {
+      "folder": "surabaya/stage1_gerobak",
+      "size": [
+        80,
+        64
+      ],
+      "ground_y": 63,
+      "vendor_spot": [
+        86,
+        63
+      ],
+      "frame_ms": 500
+    },
+    "stage2": {
+      "folder": "surabaya/stage2_warung_tenda",
+      "size": [
+        160,
+        112
+      ],
+      "ground_y": 111,
+      "vendor_spot": [
+        70,
+        111
+      ],
+      "frame_ms": 500
+    },
+    "stage3": {
+      "folder": "surabaya/stage3_ruko",
+      "size": [
+        144,
+        176
+      ],
+      "ground_y": 175,
+      "vendor_spot": [
+        104,
+        175
+      ],
+      "frame_ms": 500
+    },
+    "stage4": {
+      "folder": "surabaya/stage4_resto_modern",
+      "size": [
+        176,
+        192
+      ],
+      "ground_y": 191,
+      "vendor_spot": [
+        130,
+        191
+      ],
+      "frame_ms": 500
+    },
+    "stage5": {
+      "folder": "surabaya/stage5_istana_rasa",
+      "size": [
+        208,
+        224
+      ],
+      "ground_y": 223,
+      "vendor_spot": [
+        128,
+        162
+      ],
+      "frame_ms": 500
+    }
+  }
+}

@@ -1,0 +1,204 @@
+<title>Gerobak Empire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Silkscreen:wght@400;700&display=swap">
+<style>
+  [hidden] { display: none !important; }
+  :root {
+    color-scheme: dark;
+    --px: 2px;                     /* ukuran 1 pixel kit */
+    --ink: #2a1418;
+    --paper: #f4e4bf;
+    --paper-2: #fbf0d8;
+    --paper-line: #c9a86a;
+    --wood: #8a4a2b;
+    --wood-dark: #5a3222;
+    --red: #c9361f;
+    --gold: #f2c94c;
+    --gold-hi: #fff2a8;
+    --cream: #fbf0d8;
+    --muted: #7a5a44;
+    --bg: #24141e;
+    --head: "Silkscreen", "Courier New", monospace;
+    --body: "Pixelify Sans", "Trebuchet MS", system-ui, sans-serif;
+    --outline: -2px 0 0 #2a1418, 2px 0 0 #2a1418, 0 -2px 0 #2a1418, 0 2px 0 #2a1418, 2px 2px 0 #2a1418, -2px 2px 0 #2a1418, 2px -2px 0 #2a1418, -2px -2px 0 #2a1418, 0 4px 0 #2a1418;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg) url(kit/latar_pola.png) 0 0 / calc(16 * var(--px)) repeat;
+    image-rendering: pixelated;
+    color: var(--ink);
+    font: 16px/1.2 var(--body);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+  img, .ic, canvas { image-rendering: pixelated; }
+
+  /* ---------- 9-slice kit ---------- */
+  .k-frame { border: solid calc(9 * var(--px)); border-image: url(kit/frame_kayu.png) 9 fill / calc(9 * var(--px)) stretch; }
+  .k-card { border: solid calc(6 * var(--px)); border-image: url(kit/kartu.png) 6 fill / calc(6 * var(--px)) stretch; }
+  .k-plate { border: solid calc(4 * var(--px)); border-image: url(kit/plat_nama.png) 4 fill / calc(4 * var(--px)) stretch; }
+  .k-portrait { border: solid calc(3 * var(--px)); border-image: url(kit/potret.png) 3 fill / calc(3 * var(--px)) repeat; }
+  .k-paper { border: solid calc(6 * var(--px)); border-image: url(kit/kertas.png) 6 fill / calc(6 * var(--px)) stretch; }
+  .k-tip { border: solid calc(7 * var(--px)); border-image: url(kit/tooltip.png) 7 fill / calc(7 * var(--px)) stretch; }
+  .k-strip { border: solid calc(4 * var(--px)); border-image: url(kit/strip.png) 4 fill / calc(4 * var(--px)) stretch; }
+  .k-window { border: solid calc(11 * var(--px)) calc(3 * var(--px)) calc(3 * var(--px)); border-image: url(kit/jendela.png) 11 3 3 fill / calc(11 * var(--px)) calc(3 * var(--px)) calc(3 * var(--px)) stretch; }
+  .k-slot { border: solid calc(3 * var(--px)); border-image: url(kit/slot_ikon.png) 3 fill / calc(3 * var(--px)) stretch; line-height: 0; display: inline-flex; }
+  .k-pill { border: solid calc(5 * var(--px)); border-image: url(kit/pill_harga.png) 5 fill / calc(5 * var(--px)) stretch; }
+  .k-ribbon { border: solid calc(4 * var(--px)) calc(12 * var(--px)) calc(5 * var(--px)); border-image: url(kit/pita.png) 4 12 5 fill / calc(4 * var(--px)) calc(12 * var(--px)) calc(5 * var(--px)) stretch; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    min-height: calc(22 * var(--px)); padding: 0 2px; cursor: pointer;
+    border: solid calc(6 * var(--px)); border-image: url(kit/tombol_hijau.png) 6 fill / calc(6 * var(--px)) stretch;
+    font: 700 17px/1 var(--head); color: #fff; text-shadow: var(--outline);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .btn:active:not([disabled]) { border-image-source: url(kit/tombol_hijau_tekan.png); transform: translateY(1px); }
+  .btn.gold { border-image-source: url(kit/tombol_emas.png); }
+  .btn.gold:active:not([disabled]) { border-image-source: url(kit/tombol_emas_tekan.png); }
+  .btn.purple { border-image-source: url(kit/tombol_ungu.png); }
+  .btn.purple:active:not([disabled]) { border-image-source: url(kit/tombol_ungu_tekan.png); }
+  .btn.blue { border-image-source: url(kit/tombol_biru.png); }
+  .btn.blue:active:not([disabled]) { border-image-source: url(kit/tombol_biru_tekan.png); }
+  .btn.red { border-image-source: url(kit/tombol_merah.png); }
+  .btn.red:active:not([disabled]) { border-image-source: url(kit/tombol_merah_tekan.png); }
+  .btn.orange { border-image-source: url(kit/tombol_oranye.png); }
+  .btn[disabled], .btn.off { border-image-source: url(kit/tombol_abu.png); cursor: default; color: #eceef0; }
+  .btn:focus-visible, .tab:focus-visible, .sq:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+  .btn.wide { width: 100%; min-height: calc(26 * var(--px)); font-size: 20px; }
+
+  .h-title { font: 700 18px/1 var(--head); color: #fff; text-shadow: var(--outline); letter-spacing: .02em; }
+  .ic { display: inline-block; background-repeat: no-repeat; flex: 0 0 auto; }
+
+  /* ---------- layout ---------- */
+  .app { height: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; position: relative; }
+  .stage-wrap { position: relative; flex: 0 0 auto; display: flex; justify-content: center; background: #0d0b10; overflow: hidden; border-bottom: 3px solid var(--ink); }
+  #scene { display: block; touch-action: manipulation; cursor: pointer; }
+  .hud { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; gap: 6px; padding: 8px; }
+  .hud-row { display: flex; gap: 6px; align-items: center; }
+  .hud .spacer { flex: 1; }
+  .res {
+    display: inline-flex; align-items: center; gap: 2px; min-width: 88px; padding-right: 2px;
+    font: 700 16px/1 var(--head); color: #fff; text-shadow: var(--outline); font-variant-numeric: tabular-nums;
+  }
+  .res .ic { margin: -8px 4px -8px -12px; }
+  .res.small { min-width: 0; font-size: 13px; color: #b8f0a0; }
+  .sq { pointer-events: auto; cursor: pointer; line-height: 0; border: solid calc(6 * var(--px)); border-image: url(kit/tombol_biru.png) 6 fill / calc(6 * var(--px)) stretch; padding: 0; }
+  .sq:active { border-image-source: url(kit/tombol_biru_tekan.png); }
+  .city { align-self: center; margin-top: 2px; }
+  .city .h-title { font-size: 15px; padding: 0 4px; display: block; transform: translateY(-1px); }
+  .boost { position: absolute; right: 8px; bottom: 10px; pointer-events: auto; flex-direction: column; min-width: 64px; font-size: 13px; }
+  .toast {
+    position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: min(92%, 380px);
+    display: flex; gap: 8px; align-items: center; font-size: 15px; pointer-events: none; z-index: 4;
+  }
+  .toast b { font: 700 14px/1.1 var(--head); color: var(--red); display: block; margin-bottom: 2px; }
+
+  .panel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 4px 4px 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 3px; align-items: end; padding: 0 6px; margin-bottom: -3px; position: relative; z-index: 1; }
+  .tab {
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px;
+    border: solid calc(6 * var(--px)) calc(6 * var(--px)) calc(2 * var(--px)); border-image: url(kit/tab_pasif.png) 6 6 2 fill / calc(6 * var(--px)) calc(6 * var(--px)) calc(2 * var(--px)) stretch;
+    font: 700 11px/1 var(--head); color: #f4d8b8; text-shadow: var(--outline); padding-top: 2px;
+  }
+  .tab[aria-selected="true"] { border-image-source: url(kit/tab_aktif.png); color: #fff; transform: translateY(-3px); }
+  .tab .dot { position: absolute; margin: -10px 0 0 34px; width: 12px; height: 12px; background: var(--red); border: 2px solid var(--ink); border-radius: 50%; }
+  .board { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .board-head { display: flex; justify-content: center; margin: -2px 0 6px; }
+  .board-head .k-ribbon { min-width: 60%; text-align: center; }
+  .board-sub { text-align: center; color: var(--muted); font-size: 14px; margin: -2px 0 6px; }
+  .list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 2px 2px 10px; overscroll-behavior: contain; }
+
+  /* menu / staff card */
+  .card { display: grid; grid-template-columns: 112px 1fr; gap: 8px; position: relative; }
+  .card .left { display: flex; flex-direction: column; align-items: stretch; gap: 0; position: relative; }
+  .card .k-portrait { height: 84px; display: flex; align-items: center; justify-content: center; }
+  .card .lv { position: absolute; top: -8px; left: -6px; font: 700 13px/1 var(--head); color: #fff; text-shadow: var(--outline); display: inline-flex; gap: 3px; align-items: center; }
+  .card .left .btn { margin-top: -12px; position: relative; font-size: 15px; }
+  .card .right { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .card .k-plate { text-align: center; padding: 1px 0; }
+  .card .name { font: 700 15px/1.05 var(--head); color: var(--red); text-wrap: balance; }
+  .card .sub { font: 600 13px/1.1 var(--body); color: var(--wood-dark); }
+  .tier-spesial .name { color: #b8791a; }
+  .tier-legendaris .name { color: #8e4ab0; }
+  .card.dim { filter: saturate(.55); }
+  .stat { display: grid; grid-template-columns: auto 1fr; gap: 4px; align-items: center; }
+  .meter { position: relative; height: calc(8 * var(--px)); border: solid calc(3 * var(--px)); border-image: url(kit/bar_track.png) 3 fill / calc(3 * var(--px)) stretch; }
+  .meter i { position: absolute; left: calc(-3 * var(--px)); top: calc(-3 * var(--px)); bottom: calc(-3 * var(--px)); min-width: calc(6 * var(--px)); border: solid calc(3 * var(--px)); border-image: url(kit/bar_biru.png) 3 fill / calc(3 * var(--px)) stretch; }
+  .meter.green i { border-image-source: url(kit/bar_hijau.png); }
+  .meter.orange i { border-image-source: url(kit/bar_oranye.png); }
+  .meter.purple i { border-image-source: url(kit/bar_ungu.png); }
+  .meter.gold i { border-image-source: url(kit/bar_emas.png); }
+  .meter b { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); font: 700 12px/1 var(--head); color: #fff; text-shadow: var(--outline); z-index: 1; }
+
+  .row-card { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+  .row-card .name { font: 700 14px/1.1 var(--head); color: var(--red); }
+  .row-card .sub { font-size: 14px; color: var(--wood-dark); }
+  .section { display: flex; justify-content: center; margin: 4px 0 -2px; }
+  .section .k-ribbon .h-title { font-size: 13px; }
+  .note { font-size: 14px; color: var(--muted); text-align: center; padding: 0 8px; }
+  .track { display: flex; justify-content: space-between; gap: 2px; }
+  .track .st { display: flex; flex-direction: column; align-items: center; gap: 4px; font: 700 10px/1 var(--head); color: var(--muted); flex: 1; }
+  .track .st.on { color: var(--red); }
+  .track .st.off .k-slot { filter: grayscale(1) brightness(.7); }
+  .req { display: grid; grid-template-columns: 1fr; gap: 3px; font-size: 15px; }
+  .req .lab { display: flex; justify-content: space-between; font-weight: 600; }
+  .album { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .album > div { text-align: center; font: 700 10px/1.1 var(--head); color: var(--muted); padding: 2px; }
+  .album > div.found { color: var(--red); }
+
+  /* modal */
+  .modal { position: absolute; inset: 0; background: rgba(20, 8, 14, .7); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 5; }
+  .modal-box { width: 100%; max-width: 380px; max-height: 94%; display: flex; flex-direction: column; }
+  .modal-box .bar-title { font: 700 14px/1 var(--head); text-align: center; margin-top: calc(-9 * var(--px)); height: calc(8 * var(--px)); display: flex; align-items: center; justify-content: center; position: relative; }
+  .modal-box .bar-title .x { position: absolute; right: -2px; top: -2px; cursor: pointer; line-height: 0; }
+  .modal-body { overflow-y: auto; padding: 12px 8px 8px; display: flex; flex-direction: column; gap: 10px; }
+  .modal-body .ribbon-wrap { display: flex; justify-content: center; }
+  .modal-body .ribbon-wrap .h-title { font-size: 20px; padding: 0 6px; }
+  .modal-body p { margin: 0; text-align: center; color: var(--wood-dark); }
+  .big { font: 700 30px/1 var(--head); color: var(--gold); text-shadow: var(--outline); text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .switch { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 15px; }
+  .switch input { width: 22px; height: 22px; accent-color: #4fae5a; }
+  .switch select { font: 600 15px var(--body); padding: 4px; background: var(--paper-2); color: var(--ink); border: 2px solid var(--wood-dark); }
+  .k-card .switch + .switch { margin-top: 8px; }
+  .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 700 16px var(--head); color: var(--gold); text-shadow: var(--outline); background: var(--bg); z-index: 9; }
+  @media (min-width: 440px) { :root { --px: 2px; } }
+  @media (prefers-reduced-motion: reduce) { .tab[aria-selected="true"], .btn:active { transform: none; } }
+</style>
+
+<div class="app" id="app">
+  <div class="stage-wrap" id="stageWrap">
+    <canvas id="scene" width="448" height="512" aria-label="Adegan toko. Tap untuk memasak."></canvas>
+    <div class="hud">
+      <div class="hud-row">
+        <span class="res k-strip" id="hudCoins"></span>
+        <span class="res k-strip" id="hudGems"></span>
+        <span class="spacer"></span>
+        <button class="sq" id="btnSound" aria-label="Suara nyala/mati"></button>
+        <button class="sq" id="btnMap" aria-label="Peta ekspansi kota"></button>
+        <button class="sq" id="btnSettings" aria-label="Pengaturan"></button>
+      </div>
+      <div class="city k-ribbon"><span class="h-title" id="hudCity"></span></div>
+      <div class="hud-row"><span class="res small k-strip" id="hudRate"></span>
+        <button class="sq" id="btnEvent" aria-label="Info hari besar" hidden></button></div>
+    </div>
+    <button class="btn orange boost" id="btnBoost" aria-label="Boost Rempi"></button>
+    <div class="toast k-tip" id="toast" hidden></div>
+  </div>
+  <div class="panel">
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+    <div class="board k-frame">
+      <div class="board-head"><div class="k-ribbon"><span class="h-title" id="panelTitle"></span></div></div>
+      <div class="board-sub" id="panelSub"></div>
+      <div class="list" id="list"></div>
+    </div>
+  </div>
+  <div class="modal" id="modal" hidden><div class="modal-box k-window" id="modalBox"></div></div>
+  <div class="loading" id="loading">MEMUAT...</div>
+</div>
+
+<script src="game.js"></script>

@@ -1,0 +1,24 @@
+{
+  "urutan": [
+    {
+      "efek": "ledakan1-4",
+      "mulai_ms": 0,
+      "durasi_ms": 240,
+      "posisi": "titik tap"
+    },
+    {
+      "efek": "koin_putar1-4 (loop 80ms)",
+      "mulai_ms": 0,
+      "durasi_ms": 700,
+      "gerak": "naik 40px, geser acak \u00b18px, pudar di 60% terakhir",
+      "teks": "+jumlah koin"
+    },
+    {
+      "efek": "lingkar_makanan + ikon menu yang dimasak",
+      "mulai_ms": 80,
+      "durasi_ms": 900,
+      "gerak": "muncul skala 0.5 -> 1.1 -> 1.0, naik 28px melengkung, pudar di akhir"
+    }
+  ],
+  "catatan": "Ikon makanan = ikon menu yang barusan terjual (food/<kota>/<id>.png)."
+}
