@@ -113,7 +113,16 @@
   const activeItems = () => menuOf().filter(isUnlocked);
   const upgradeCost = (it) => Math.round(it.price * 10 * Math.pow(level(it), 1.6));
   const staffCost = (k) => Math.round(STAFF[k].base * Math.pow(3, S.staff[k]) * Math.pow(10, cityIdx()));
-  const stageReq = (s) => Math.round(400 * Math.pow(6, s - 1) * Math.pow(10, cityIdx()));
+  // Naik kelas: syarat pendapatan di kota ini + bayar koin + total level menu aktif.
+  // Tiap stage x10, tiap kota x10 (harga menu juga x10) ditambah +50% per kota supaya
+  // kota berikutnya tidak jadi terlalu cepat karena Bintang Rasa.
+  const cityHard = () => Math.pow(10, cityIdx()) * (1 + cityIdx() * 0.5);
+  const stageReq = (s) => Math.round(5000 * Math.pow(10, s - 1) * cityHard());
+  const stageCost = (s) => Math.round(3000 * Math.pow(10, s - 1) * cityHard());
+  const STAGE_LV = [0, 6, 14, 26, 44];
+  const totalLevel = () => activeItems().reduce((a, it) => a + level(it), 0);
+  const canStageUp = (s) => C().earned >= stageReq(s) && activeItems().length >= s + 1 &&
+    totalLevel() >= STAGE_LV[s] && S.coins >= stageCost(s);
 
   function comboMult() {
     let m = 1;
@@ -282,7 +291,7 @@
     const scale = m.t === "earned" ? Math.pow(10, cityIdx()) * Math.pow(4, C().stage - 1) : Math.ceil(C().stage / 2);
     const target = Math.round(m.base * scale);
     const gem = Math.random() < 0.3;
-    return { t: m.t, target, start: S.stats[m.t], reward: gem ? { gems: 1 + C().stage } : { coins: Math.round(stageReq(C().stage) * 0.15) } };
+    return { t: m.t, target, start: S.stats[m.t], reward: gem ? { gems: 1 + C().stage } : { coins: Math.round(stageCost(C().stage) * 0.1) } };
   }
   function ensureMissions() {
     while (S.missions.length < 3) S.missions.push(newMission(S.missions.map((m) => m.t)));
@@ -802,15 +811,21 @@
       if (stage >= 5) {
         L.innerHTML = track + `<div class="note">Istana Rasa sudah berdiri di ${D.cities[S.city].name}! Buka kota berikutnya lewat peta.</div>`;
       } else {
-        const cnt = stage + 1, need = stageReq(stage);
+        const cnt = stage + 1, cost = stageCost(stage), lvNeed = STAGE_LV[stage];
+        const bar = (f) => `style="width:calc(${Math.min(100, f * 100)}% + 6px)"`;
         L.innerHTML = track + section(`MENUJU ${STAGE_LABEL[stage + 1]}`) + `<div class="k-card"><div class="req">
           <div class="lab"><span>Pendapatan di ${D.cities[S.city].name}</span></div>
           <div class="meter gold"><i data-bind="earnedBar"></i><b data-bind="earned"></b></div>
           <div class="lab"><span>Menu aktif</span></div>
-          <div class="meter green"><i style="width:calc(${Math.min(100, activeItems().length / cnt * 100)}% + 6px)"></i><b>${activeItems().length}/${cnt}</b></div>
+          <div class="meter green"><i ${bar(activeItems().length / cnt)}></i><b>${activeItems().length}/${cnt}</b></div>
+          <div class="lab"><span>Total level menu aktif</span></div>
+          <div class="meter purple"><i ${bar(totalLevel() / lvNeed)}></i><b>LV ${totalLevel()}/${lvNeed}</b></div>
+          <div class="lab"><span>Biaya renovasi</span></div>
+          <div class="meter orange"><i data-bind="costBar"></i><b data-bind="cost"></b></div>
           <div class="lab"><span>Hadiah</span><span>${icon("ui:bintang_rasa", 1)} +${stage * 2} Bintang Rasa</span></div></div></div>
-          <button class="btn purple wide" data-act="stageup" data-cost="${need}" data-menu="${cnt}">NAIK KELAS!</button>
-          <div class="note">Tiap Bintang Rasa menambah pendapatan +2% di semua kota.</div>`;
+          <button class="btn purple wide" data-act="stageup" data-cost="${cost}">NAIK KELAS! ${fmt(cost)}${icon("ui:koin", 1)}</button>
+          <div class="note">Biaya renovasi dibayar pakai koin. Upgrade menu untuk menambah total level.
+          Tiap Bintang Rasa menambah pendapatan +2% di semua kota.</div>`;
       }
     } else {
       $("#panelTitle").textContent = "MISI";
@@ -837,7 +852,7 @@
     $("#hudCity").textContent = `${D.cities[S.city].name} \u00b7 ${STAGE_LABEL[C().stage]}`;
     document.querySelectorAll("[data-cost]").forEach((b) => {
       let ok = S.coins >= +b.dataset.cost;
-      if (b.dataset.act === "stageup") ok = C().earned >= +b.dataset.cost && activeItems().length >= +b.dataset.menu;
+      if (b.dataset.act === "stageup") ok = canStageUp(C().stage);
       b.disabled = !ok;
     });
     document.querySelectorAll("[data-mission]").forEach((b) => { b.disabled = missionProg(S.missions[+b.dataset.mission]) < 1; });
@@ -846,6 +861,8 @@
     if (stage < 5) {
       bind("earned", (el) => { el.textContent = `${fmt(C().earned)}/${fmt(stageReq(stage))}`; });
       bind("earnedBar", (el) => { el.style.width = `calc(${Math.min(100, C().earned / stageReq(stage) * 100)}% + 6px)`; });
+      bind("cost", (el) => { el.textContent = `${fmt(S.coins)}/${fmt(stageCost(stage))}`; });
+      bind("costBar", (el) => { el.style.width = `calc(${Math.min(100, S.coins / stageCost(stage) * 100)}% + 6px)`; });
     }
     S.missions.forEach((m, i) => {
       bind(`mtext${i}`, (el) => { el.textContent = `${fmt(Math.min(m.target, S.stats[m.t] - m.start))}/${fmt(m.target)}`; });
@@ -963,7 +980,8 @@
       Sfx.play("buy");
     } else if (a === "stageup") {
       const s = C().stage;
-      if (C().earned < stageReq(s) || activeItems().length < s + 1) return;
+      if (!canStageUp(s)) return;
+      S.coins -= stageCost(s);
       C().stage = s + 1; S.gems += s * 2; customers = []; walkers = []; cooking = null;
       Sfx.play("stage");
       showToast(`ui:${STAGE_BADGE[s + 1]}`, `Naik kelas: ${STAGE_LABEL[s + 1]}!`, ` +${s * 2} Bintang Rasa. Menu baru terbuka.`);

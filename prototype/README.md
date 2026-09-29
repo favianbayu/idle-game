@@ -17,8 +17,10 @@ Isi folder:
   selesai, senang lalu bayar. Kalau kelamaan menunggu, mereka kesal dan pergi tanpa bayar.
 - **Racikan:** upgrade level menu, buka menu terkunci pakai koin (spesial/legendaris ungu), lihat kombo aktif.
 - **Karyawan:** Juru Masak (masak lebih cepat), Kasir (pelanggan lebih sering), Pelayan (tap otomatis).
-- **Naik Kelas:** syarat pendapatan di kota itu + jumlah menu aktif → gedung, kostum dan menu berubah,
-  dapat Bintang Rasa (+2% pendapatan per bintang).
+- **Naik Kelas:** 4 syarat: pendapatan di kota itu, jumlah menu aktif, total level menu aktif
+  (6 / 14 / 26 / 44), dan biaya renovasi yang dibayar pakai koin. Syarat naik x10 tiap stage dan
+  x10 tiap kota (+50% per kota). Estimasi (simulasi): satu kota ±70 menit kalau aktif nge-tap,
+  ±2 jam kalau dibiarkan. Hadiah: gedung, kostum dan menu berubah + Bintang Rasa (+2% pendapatan per bintang).
 - **Misi:** 3 misi bergilir dengan hadiah koin/Bintang Rasa + album pelanggan langka.
 - **Peta:** buka dan pindah ke Bandung, Bali, Surabaya (tiap kota mulai dari gerobak dengan menu khasnya).
 - **Boost Rempi** (mulai stage 2): pendapatan ×2 selama 30 detik.
