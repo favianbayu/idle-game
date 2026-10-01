@@ -1,0 +1,45 @@
+{
+  "character": "Arya Prasetya",
+  "frame": {
+    "w": 96,
+    "h": 128
+  },
+  "pivot": {
+    "x": 48,
+    "y": 116
+  },
+  "height_px": 90,
+  "rows": [
+    "SE",
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N",
+    "NE",
+    "E"
+  ],
+  "animations": {
+    "walk": {
+      "file": "arya_sprite_8dir.png",
+      "frames": 6,
+      "fps": 9,
+      "loop": true,
+      "phases": [
+        "contact A",
+        "down A",
+        "passing A",
+        "contact B",
+        "down B",
+        "passing B"
+      ]
+    },
+    "idle": {
+      "file": "arya_idle_8dir.png",
+      "frames": 1,
+      "layout": "1 column x 8 rows (same row order)"
+    }
+  },
+  "palette_size": 32,
+  "source": "tools/arya_sprite.py (procedural, no AI reference yet)"
+}
