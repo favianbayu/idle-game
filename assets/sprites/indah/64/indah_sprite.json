@@ -1,5 +1,6 @@
 {
-  "character": "Indah Wulandari",
+  "character": "indah",
+  "source": "indah_ai_walk_atlas.png",
   "frame": {
     "w": 96,
     "h": 128
@@ -18,20 +19,23 @@
     "NE",
     "E"
   ],
+  "target_height_px": 64,
+  "front_row_heights_px": [
+    64,
+    64,
+    65,
+    64,
+    64,
+    64
+  ],
   "animations": {
     "walk": {
       "file": "indah_sprite_8dir.png",
       "frames": 6,
       "fps": 9,
       "loop": true
-    },
-    "idle": {
-      "file": "indah_idle_8dir.png",
-      "frames": 4,
-      "fps": 4,
-      "loop": true,
-      "note": "frames 0-2 breathe (0,1,0,1...), frame 3 is a blink; play it now and then"
     }
   },
-  "palette_size": 24
+  "palette_size": 32,
+  "scale_from_source": 0.381
 }

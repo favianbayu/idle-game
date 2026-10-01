@@ -1,0 +1,41 @@
+{
+  "character": "indah",
+  "source": "indah_ai_walk_atlas.png",
+  "frame": {
+    "w": 96,
+    "h": 128
+  },
+  "pivot": {
+    "x": 48,
+    "y": 116
+  },
+  "rows": [
+    "SE",
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N",
+    "NE",
+    "E"
+  ],
+  "target_height_px": 84,
+  "front_row_heights_px": [
+    84,
+    84,
+    85,
+    84,
+    84,
+    84
+  ],
+  "animations": {
+    "walk": {
+      "file": "indah_sprite_8dir.png",
+      "frames": 6,
+      "fps": 9,
+      "loop": true
+    }
+  },
+  "palette_size": 32,
+  "scale_from_source": 0.5
+}
