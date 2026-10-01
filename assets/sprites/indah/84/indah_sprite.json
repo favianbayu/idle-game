@@ -1,6 +1,5 @@
 {
-  "character": "indah",
-  "source": "indah_ai_walk_atlas.png",
+  "character": "Indah Wulandari",
   "frame": {
     "w": 96,
     "h": 128
@@ -8,6 +7,17 @@
   "pivot": {
     "x": 48,
     "y": 116
+  },
+  "height_px": 84,
+  "idle_heights_px": {
+    "SE": 83,
+    "S": 85,
+    "SW": 83,
+    "W": 88,
+    "NW": 83,
+    "N": 83,
+    "NE": 83,
+    "E": 89
   },
   "rows": [
     "SE",
@@ -19,23 +29,30 @@
     "NE",
     "E"
   ],
-  "target_height_px": 84,
-  "front_row_heights_px": [
-    84,
-    84,
-    85,
-    84,
-    84,
-    84
-  ],
   "animations": {
     "walk": {
       "file": "indah_sprite_8dir.png",
       "frames": 6,
       "fps": 9,
-      "loop": true
+      "loop": true,
+      "phases": [
+        "contact A",
+        "down A",
+        "passing A",
+        "contact B",
+        "down B",
+        "passing B"
+      ]
+    },
+    "idle": {
+      "file": "indah_idle_8dir.png",
+      "frames": 1,
+      "layout": "1 column x 8 rows (same row order)"
     }
   },
-  "palette_size": 32,
-  "scale_from_source": 0.5
+  "palette_size": 31,
+  "pipeline": [
+    "python3 tools/pixelfit.py assets/sprites/indah/reference/indah_ai_walk_atlas.png --height 84 --eyes --out <tmp>",
+    "python3 tools/walkfix.py <tmp>/indah_sprite_8dir.png --out assets/sprites/indah/84/indah_sprite_8dir.png --idle assets/sprites/indah/84/indah_idle_8dir.png"
+  ]
 }
