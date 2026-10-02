@@ -64,7 +64,7 @@ PALETTES = {
 
 # Per-character conversion rules. "paint_only" ramps are never matched from
 # the source: the AI paints Arya's satchel in the same browns as his eyes and
-# his glasses in skin tones, so those are painted afterwards (tools/arya_walk.py).
+# his glasses in skin tones, so those are left to be painted afterwards.
 # "height_from": "head" measures --height from the crown, not from a cowlick.
 STYLE = {
     "arya": {"paint_only": ("eye", "glasses", "pen"), "height_from": "head"},

@@ -7,8 +7,7 @@ posed with the walk phase table, raymarched with the isometric camera, toon
 shaded in the character's palette and mode-filtered to pixels. The knee bends,
 the swing foot lifts and the sandals are rounded instead of flat stamps.
 
-stride_pose() is the phase table itself; arya_walk.py uses it to step Arya's
-cut-out legs.
+stride_pose() is the phase table itself.
 """
 import math
 

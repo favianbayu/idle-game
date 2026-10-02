@@ -9,16 +9,16 @@
     "y": 116
   },
   "height_px": 83,
-  "height_note": "crown to soles (front view); the cowlick sticks out above it",
+  "height_note": "crown to soles (front view); the cowlick loop rises above it",
   "idle_heights_px": {
-    "SE": 88,
-    "S": 86,
+    "SE": 92,
+    "S": 91,
     "SW": 92,
-    "W": 87,
-    "NW": 91,
-    "N": 87,
-    "NE": 91,
-    "E": 93
+    "W": 92,
+    "NW": 92,
+    "N": 90,
+    "NE": 92,
+    "E": 92
   },
   "rows": [
     "SE",
@@ -51,9 +51,9 @@
       "layout": "1 column x 8 rows (same row order)"
     }
   },
-  "palette_size": 28,
+  "palette_size": 31,
   "pipeline": [
-    "python3 tools/pixelfit.py assets/sprites/arya/reference/arya_ai_walk_atlas.webp --height 74 --palette arya --name arya --out <tmp>",
-    "python3 tools/arya_walk.py <tmp>/arya_sprite_8dir.png --out-dir assets/sprites/arya/90"
-  ]
+    "python3 tools/arya_build.py --out-dir assets/sprites/arya/90"
+  ],
+  "reference": "assets/sprites/arya/reference/arya_ai_*.webp (drawn after, nothing cut from it)"
 }
