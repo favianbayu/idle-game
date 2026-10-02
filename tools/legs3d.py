@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """3D-rendered legs for sprites whose upper body comes from a master frame.
 
-walkfix.py (Indah) and arya_walk.py (Arya) keep the AI master above the hem
-or the hips; below it this module renders real legs: a small signed distance
-model (thigh, knee, shin, foot) posed with the walk phase table, raymarched
-with the isometric camera, toon shaded in the character's palette and
-mode-filtered to pixels. The knee bends, the swing foot lifts and the feet are
-rounded instead of flat stamps.
+walkfix.py keeps Indah's AI master above the skirt hem; below it this module
+renders real legs: a small signed distance model (thigh, knee, shin, sandal)
+posed with the walk phase table, raymarched with the isometric camera, toon
+shaded in the character's palette and mode-filtered to pixels. The knee bends,
+the swing foot lifts and the sandals are rounded instead of flat stamps.
 
-  style "sandals"   bare legs under a skirt, leather sandals (Indah)
-  style "sneakers"  straight chinos from a pelvis, white sneakers (Arya)
+stride_pose() is the phase table itself; arya_walk.py uses it to step Arya's
+cut-out legs.
 """
 import math
 
@@ -22,7 +21,6 @@ SS = 2
 LIGHT = np.array([-0.55, 0.72, 0.42])
 LIGHT /= np.linalg.norm(LIGHT)
 SKIN, SANDAL, STRAP, SOLE = 1, 2, 3, 4
-PANTS, SHOE = 5, 6
 
 
 def length(v):
@@ -44,17 +42,6 @@ def sd_capsule(p, a, b, r1, r2=None):
     pa, ba = p - a, b - a
     h = np.clip((pa @ ba) / (ba @ ba), 0.0, 1.0)
     return length(pa - h[:, None] * ba) - (r1 + (r2 - r1) * h)
-
-
-def sd_box(p, c, half, rad=0.0):
-    q = np.abs(p - np.asarray(c, float)) - (np.asarray(half, float) - rad)
-    return length(np.maximum(q, 0.0)) + np.minimum(q.max(-1), 0.0) - rad
-
-
-def smin(a, b, k):
-    """Smooth minimum: the two surfaces melt into each other over about k."""
-    h = np.clip(0.5 + 0.5 * (b - a) / k, 0.0, 1.0)
-    return b + (a - b) * h - k * h * (1.0 - h)
 
 
 def rot_y(v, deg):
@@ -118,56 +105,12 @@ class Legs:
         return m
 
 
-class PantsLegs:
-    """Two legs in straight chinos and sneakers, hanging from a pelvis at hip_y.
-
-    thigh and shin are (top, bottom) radii; shoe is the sneaker's half size
-    (across, up, along); the knee sits halfway down the leg.
-    """
-
-    def __init__(self, k=None, hip_x=3.6, hip_y=20.0, stride=6.0, lift=3.0,
-                 thigh=(3.9, 3.6), shin=(3.6, 3.3), shoe=(3.6, 2.6, 5.6)):
-        self.legs = {}
-        for sgn in (+1, -1):
-            fwd, up = stride_pose(k, sgn)
-            za = stride * fwd
-            base = lift * up
-            ankle = np.array([sgn * hip_x, 3.4 + base, za])
-            knee = np.array([sgn * (hip_x + 0.1), 0.5 * (hip_y + 3.4) + 0.6 * base, 0.5 * za + 0.8 * base])
-            hip = np.array([sgn * hip_x, hip_y, 0.0])
-            self.legs[sgn] = (hip, knee, ankle, base)
-        self.pelvis = ((0.0, hip_y + 1.5, 0.0), (hip_x + thigh[0], 4.5, 5.0))
-        self.thigh, self.shin, self.shoe = thigh, shin, shoe
-
-    def parts(self, p):
-        pants = sd_ellipsoid(p, *self.pelvis)
-        shoe = np.full(len(p), 1e9)
-        for hip, knee, ankle, base in self.legs.values():
-            pants = np.minimum(pants, sd_capsule(p, hip, knee, *self.thigh))
-            pants = np.minimum(pants, sd_capsule(p, knee, ankle, *self.shin))
-            f = sd_ellipsoid(p, (ankle[0], base + self.shoe[1] - 0.4, ankle[2] + 1.2), self.shoe)
-            shoe = np.minimum(shoe, np.maximum(f, base - p[:, 1]))
-        return pants, shoe
-
-    def dist(self, p):
-        a, b = self.parts(p)
-        return np.minimum(a, b)
-
-    def materials(self, p):
-        pants, shoe = self.parts(p)
-        m = np.where(pants < shoe - 0.15, PANTS, SHOE)
-        for hip, knee, ankle, base in self.legs.values():
-            near = (np.abs(p[:, 0] - ankle[0]) < self.shoe[0] + 1.0) & (m == SHOE)
-            m = np.where(near & (p[:, 1] < base + 1.0), SOLE, m)
-        return m
-
-
 def raymarch(model, yaw, y0=70):
-    """Raymarch a model (dist, materials, optional part) with the isometric camera.
+    """Raymarch a model (dist, materials) with the isometric camera.
 
     SS x SS rays per pixel for frame rows y0 and below, reduced per pixel to
-    the majority material, its majority toon tone (1-3), its nearest depth
-    and, when the model labels parts, its majority part. Arrays are (FH - y0, FW).
+    the majority material, its majority toon tone (1-3) and its nearest
+    depth. Arrays are (FH - y0, FW).
     """
     e = ELEV
     right = np.array([1.0, 0.0, 0.0])
@@ -215,22 +158,13 @@ def raymarch(model, yaw, y0=70):
     def blocks(a):
         return a.reshape(FH - y0, SS, FW, SS).swapaxes(1, 2).reshape(FH - y0, FW, SS * SS)
     mb, tb, db = blocks(M.reshape(H, W)), blocks(T.reshape(H, W)), blocks(D.reshape(H, W))
-    n_mat = int(M.max()) + 1
-    cnt = np.stack([(mb == i).sum(-1) for i in range(max(n_mat, 7))], -1)
+    cnt = np.stack([(mb == i).sum(-1) for i in range(int(M.max()) + 1)], -1)
     cnt[..., 0] = np.where(cnt[..., 0] > SS * SS // 2, 99, 0)
     mat = cnt.argmax(-1)
     same = mb == mat[..., None]
     tn = np.stack([((tb == i) & same).sum(-1) for i in range(4)], -1).argmax(-1)
     depth = np.where(same, db, 1e6).min(-1)
-    part = None
-    if hasattr(model, "part"):
-        P = np.zeros(n, np.int32)
-        P[idx] = model.part(p)
-        pb = blocks(P.reshape(H, W))
-        n_part = int(P.max()) + 1
-        part = np.stack([((pb == i) & same).sum(-1) for i in range(n_part)], -1).argmax(-1)
-        part[mat == 0] = 0
-    return mat, tn, depth, part
+    return mat, tn, depth
 
 
 def paint(mat, tn, depth, ramp, outline_hex, y0=70, line_gap=2.0):
@@ -251,21 +185,14 @@ def paint(mat, tn, depth, ramp, outline_hex, y0=70, line_gap=2.0):
     return layer
 
 
-def render_legs(yaw, k, palette, style="sandals", **kw):
+def render_legs(yaw, k, palette):
     """RGBA layer (FH x FW) of the legs for facing yaw (degrees) and walk frame k (None = standing)."""
-    model = Legs(k) if style == "sandals" else PantsLegs(k, **kw)
     y0 = 70                                              # the legs never reach above this row
-    mat, tn, depth, _ = raymarch(model, yaw, y0)
+    mat, tn, depth = raymarch(Legs(k), yaw, y0)
     pal = PALETTES[palette]
-    if style == "sandals":
-        skin, leather = pal["skin"], pal["leather"]
-        ramp = {SKIN: [skin[1], skin[1], skin[2], skin[3]],
-                SANDAL: [leather[1], leather[1], leather[2], leather[3]],
-                STRAP: [leather[2], leather[2], leather[3], leather[3]],
-                SOLE: [leather[0]] * 4}
-    else:
-        pants, shoe = pal["chinos"], pal["shirt"]
-        ramp = {PANTS: [pants[1], pants[1], pants[2], pants[3]],
-                SHOE: [shoe[1], shoe[1], shoe[2], shoe[3]],
-                SOLE: [pal["sole"][0]] * 4}
+    skin, leather = pal["skin"], pal["leather"]
+    ramp = {SKIN: [skin[1], skin[1], skin[2], skin[3]],
+            SANDAL: [leather[1], leather[1], leather[2], leather[3]],
+            STRAP: [leather[2], leather[2], leather[3], leather[3]],
+            SOLE: [leather[0]] * 4}
     return paint(mat, tn, depth, ramp, pal["outline"][0], y0)
