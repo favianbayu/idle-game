@@ -49,16 +49,17 @@ STYLE = Style(OUTLINE, RAMP, PARTS)
 code = STYLE.code
 
 # ---------------------------------------------------------------- the figure
-# heights in px above the ground, at the final scale (soles on row 115)
-HIP_Y = 33.0            # hip joints, standing (under the skirt)
+# heights in px above the ground, at the final scale (soles on row 115); her
+# shoulders sit at Arya's height, so she stands a little shorter than him
+NECK = 45.6             # top of the blouse: Arya's shoulder line
+WAIST = NECK - 13.0     # where the blouse goes into the skirt
+HIP_Y = 26.0            # hip joints, standing (under the skirt)
 HIP_X = 3.6
-THIGH, SHIN = 15.8, 14.8
+THIGH, SHIN = 12.4, 11.4
 ANKLE_Y = 2.6           # ankle above the sole
 HEEL, TOE = 1.8, 4.4    # heel behind and toe ahead of the ankle
-WAIST = 39.6            # where the blouse goes into the skirt
-NECK = 52.6             # top of the blouse
-HEM = 16.6              # skirt hem, standing
-SHOULDER = np.array([9.0, 49.4, -0.2])
+HEM = 17.0              # skirt hem, standing
+SHOULDER = np.array([9.0, NECK - 3.2, -0.2])
 UPPER, FORE = 7.4, 6.6
 
 
@@ -66,13 +67,13 @@ def blouse_half(y):
     """Half width and half depth of the blouse at height y (waist to the neck)."""
     if y < WAIST - 1.5 or y > NECK:
         return 0, 0
-    if y < 44.0:
-        t = (y - WAIST + 1.5) / (44.0 - WAIST + 1.5)
+    if y < NECK - 8.6:
+        t = (y - WAIST + 1.5) / (NECK - 8.6 - WAIST + 1.5)
         return 7.6 + 1.0 * t, 6.0 + 0.6 * t
-    if y < 48.0:
-        t = (y - 44.0) / 4.0
+    if y < NECK - 4.6:
+        t = (y - NECK + 8.6) / 4.0
         return 8.6 + 0.3 * t, 6.6 + 0.1 * t
-    t = (y - 48.0) / (NECK - 48.0)                         # the shoulders round off into the neck
+    t = (y - NECK + 4.6) / 4.6                             # the shoulders round off into the neck
     k = math.sqrt(max(0.0, 1 - t * t))
     return 3.4 + 5.5 * k, 3.2 + 3.5 * k
 
@@ -82,14 +83,14 @@ def blouse_paint(P, N):
     x, y, z = P[:, 0], P[:, 1], P[:, 2]
     m = np.full(len(P), code("blouse"))
     front = z > 1.0
-    v = 0.8 * (y - 46.6)
-    neck = front & (y > 46.6) & (np.abs(x) < v)
-    edge = front & (y > 46.0) & (np.abs(x) >= v) & (np.abs(x) < v + 1.0)
+    v = 0.8 * (y - NECK + 6.0)
+    neck = front & (y > NECK - 6.0) & (np.abs(x) < v)
+    edge = front & (y > NECK - 6.6) & (np.abs(x) >= v) & (np.abs(x) < v + 1.0)
     dots = edge & (np.floor(y * 1.0) % 2 == 0)
     # the cord runs from the sides of the neck to the pendant
-    cord = front & (y > 45.6) & (y < NECK) & (np.abs(np.abs(x) - 0.55 * (y - 45.6)) < 0.45)
-    pendant = front & (np.hypot(x, y - 45.0) < 1.5)
-    sprig = front & (y > 43.0) & (y < NECK) & (np.abs(x) >= v + 1.6) & (np.abs(x) < v + 3.4) & \
+    cord = front & (y > NECK - 7.0) & (y < NECK) & (np.abs(np.abs(x) - 0.55 * (y - NECK + 7.0)) < 0.45)
+    pendant = front & (np.hypot(x, y - NECK + 7.6) < 1.5)
+    sprig = front & (y > NECK - 9.6) & (y < NECK) & (np.abs(x) >= v + 1.6) & (np.abs(x) < v + 3.4) & \
         ((np.floor(y) + np.floor(np.abs(x))) % 3 == 0)
     m[edge] = code("blouse", 1)
     m[dots] = code("jasmine", 0)
@@ -97,7 +98,7 @@ def blouse_paint(P, N):
     m[neck] = code("skin", 2)
     m[cord & neck] = code("cord")
     m[pendant] = code("wood")
-    m[pendant & (x < 0.2) & (y > 45.2)] = code("wood", 3)
+    m[pendant & (x < 0.2) & (y > NECK - 7.4)] = code("wood", 3)
     return m
 
 
@@ -117,7 +118,7 @@ def skirt_shapes(pose, yaw):
 
     def half(y):
         t = frac(y) ** 1.35                                  # a bell: it flares most toward the hem
-        return 8.0 + 8.0 * t, 6.4 + 5.8 * t
+        return 8.0 + 7.0 * t, 6.4 + 5.0 * t
 
     def centre(y):
         t = frac(y) ** 2
@@ -234,6 +235,11 @@ def head(direction, variant):
     return _heads[r * FH:(r + 1) * FH, variant * FW:(variant + 1) * FW]
 
 
+# the head masters were drawn over shoulders 7 px higher: they come down with
+# them; seen from the side the head sits back over the body (px toward her back)
+HEAD_DROP = 7
+HEAD_BACK = {"W": 3, "E": 3, "SW": 1, "SE": 1, "NW": 1, "NE": 1}
+
 # rows of the head masters below which the long hair hangs free of the head
 NAPE = {"SE": 64, "S": 63, "SW": 64, "W": 64, "NW": 64, "N": 64, "NE": 64, "E": 64}
 FRONT = ("SE", "S", "SW")               # the hair falls behind her
@@ -243,8 +249,12 @@ BACK = ("NW", "N", "NE")                # the hair covers her back
 def frame(direction, k):
     buf, pose, yaw = render(direction, k)
     body = outline(shade(buf, STYLE), buf, STYLE)
-    dy = -int(round(pose.lift))
+    dy = -int(round(pose.lift)) + HEAD_DROP
     h = head(direction, 1 if k is None else HAIR_SEQ[k])
+    back = HEAD_BACK.get(direction, 0)
+    if back:                                           # toward her back: against the facing on screen
+        dx = -back if math.sin(math.radians(YAW[direction])) > 0 else back
+        h = np.roll(h, dx, axis=1)
     # where the long hair may land: facing us only where there is no body,
     # from the side over the torso but under the near arm, from behind over all
     a = body[..., 3] > 0
