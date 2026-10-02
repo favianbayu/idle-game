@@ -8,16 +8,16 @@
     "x": 48,
     "y": 116
   },
-  "height_px": 84,
+  "height_px": 85,
   "idle_heights_px": {
-    "SE": 83,
-    "S": 85,
-    "SW": 83,
-    "W": 88,
-    "NW": 83,
-    "N": 83,
+    "SE": 85,
+    "S": 87,
+    "SW": 85,
+    "W": 89,
+    "NW": 84,
+    "N": 84,
     "NE": 83,
-    "E": 89
+    "E": 90
   },
   "rows": [
     "SE",
@@ -50,9 +50,10 @@
       "layout": "1 column x 8 rows (same row order)"
     }
   },
-  "palette_size": 31,
+  "palette_size": 30,
   "pipeline": [
-    "python3 tools/pixelfit.py assets/sprites/indah/reference/indah_ai_walk_atlas.png --height 84 --eyes --out <tmp>",
-    "python3 tools/walkfix.py <tmp>/indah_sprite_8dir.png --out assets/sprites/indah/84/indah_sprite_8dir.png --idle assets/sprites/indah/84/indah_idle_8dir.png"
-  ]
+    "python3 tools/indah_build.py --out-dir assets/sprites/indah/84"
+  ],
+  "head_masters": "assets/sprites/indah/src/indah_heads_8dir.png (8 directions x 3 hair sways, cleaned from her AI reference)",
+  "reference": "assets/sprites/indah/reference/indah_ai_walk_atlas.png"
 }
