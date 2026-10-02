@@ -4,16 +4,21 @@
 The AI walk atlas redraws Arya in every frame, so his face, glasses and bag
 shift around, his legs barely step and his arms hang still; it also gives
 him a big head on short legs and a torso that is only a sliver from the side.
-So only the head (with the collar), the satchel and its strap come from ONE
-master frame per direction; the body is a single small 3D model, raymarched
-like the legs in tools/legs3d.py and toon shaded in Arya's palette:
+So only the head (with the collar) and the satchel come from ONE master
+frame per direction; the body is a single small 3D model, raymarched like the
+legs in tools/legs3d.py and toon shaded in Arya's palette:
 
   * Indah's proportions: the reference is converted small enough that his
     head matches Indah's (--height 74) and the head sits on a body with
     longer legs, putting his crown about level with the top of her hair
     (the cowlick sticks out above it);
-  * a shirt torso with real depth, so he has a body from the side too; its
-    hem covers the top of the trousers, so body and legs are one piece;
+  * a sturdy shirt torso as wide as the AI anchor drawing has it (shoulders
+    about 0.7 of his hair), with real depth so he has a body from the side
+    too: a rounded chest whose top slopes from the neck to the shoulders,
+    melted into a shirt cut straight at the hem, which covers the top of the
+    trousers so body and legs are one piece; the chest pocket with its pen
+    and the satchel strap (a band right round him, from his right shoulder
+    to his left hip) are drawn on it;
   * arms melted into the shoulders (a smooth union of sleeve and torso), so
     the line runs from the shoulder down the arm without a break: a rolled
     sleeve, a forearm and a fist that swing from the shoulder against the
@@ -40,7 +45,7 @@ import os
 import numpy as np
 from PIL import Image
 
-from legs3d import PANTS, SHOE, SOLE, PantsLegs, paint, raymarch, sd_box, sd_capsule, smin
+from legs3d import PANTS, SHOE, SOLE, PantsLegs, paint, raymarch, sd_capsule, sd_ellipsoid, smin
 from pixelfit import DIRS, EYE_KEYS, FH, FW, PALETTES, PIVOT, components, hex2rgb, hull_mask
 from walkfix import BOB, ELEV, YAW, colour_set, despike, grow, mask_of, outline
 
@@ -88,18 +93,22 @@ EYES = {
 }
 CROTCH = 100            # crotch row of the masters
 LEG = 25                # crotch to soles on the new body
-LEGS = dict(hip_x=3.9, thigh=(4.4, 4.0), shin=(4.0, 3.7), shoe=(3.9, 2.8, 5.8), stride=6.5, lift=3.2)
-TORSO = (7.6, 7.8)      # half width and half depth of the shirt torso at the chest (model units, ~px)
-WAIST = 0.9             # the torso narrows to this at the hem
-SHOULDER_X = 8.8        # shoulder joints, half the shoulder width
+# Widths follow the AI anchor drawing of Arya (shoulders about 0.7 of the
+# width of his hair), so he is as sturdy as Indah looks in her blouse and skirt.
+LEGS = dict(hip_x=4.6, thigh=(5.0, 4.6), shin=(4.6, 4.3), shoe=(4.8, 3.0, 6.2), stride=6.5, lift=3.2)
+CHEST = (10.0, 8.0)     # half width and half depth of the chest (model units, ~px)
+BELLY = (9.0, 7.6)      # ... and of the shirt below it, down to a straight hem
+SHOULDER_X = 10.4       # shoulder joints, half the shoulder width
 SLEEVE = 0.7            # the rolled sleeve ends this far down the upper arm
 UPPER, FORE = 9.5, 10.5  # shoulder to elbow, elbow to the middle of the fist
-R_SLEEVE, R_FORE, R_FIST = 3.1, 2.1, 2.6
+R_SLEEVE, R_FORE, R_FIST = 3.6, 2.5, 3.0
 MELT = 2.2              # how far sleeve and torso melt into each other at the shoulder
+WIDER = 1.2             # how much wider the new body is than the AI's, for placing the satchel
+COLLAR = 7.5            # half width of the collar kept from the master under the chin
 SWING = 18              # degrees each way, against the legs
 BEND = 6                # elbow bend, degrees (a little more on the forward swing)
 # materials beyond legs3d's, and the parts of the body
-SHIRT, CUFF, FOLD, ARM = 7, 8, 9, 10
+SHIRT, CUFF, FOLD, ARM, POCKET, PEN, STRAP = 7, 8, 9, 10, 11, 12, 13
 TORSO_PART, ARM_L, ARM_R, LEG_PART = 1, 2, 3, 4
 
 
@@ -198,7 +207,7 @@ def arm_joints(sgn, swing, shoulder_y):
     """Shoulder, elbow and fist (model space) of the arm on side sgn (+1 = his left)."""
     t = math.radians(swing)
     t2 = t + math.radians(BEND + max(0.0, swing) * 0.25)
-    abd = math.radians(2.5)                            # arms hang close to the body
+    abd = math.radians(4.0)                            # arms hang close to the body
     sh = np.array([sgn * SHOULDER_X, shoulder_y, 0.0])
     el = sh + UPPER * np.array([sgn * math.sin(abd), -math.cos(t) * math.cos(abd), math.sin(t) * math.cos(abd)])
     fi = el + FORE * np.array([sgn * math.sin(abd), -math.cos(t2) * math.cos(abd), math.sin(t2) * math.cos(abd)])
@@ -218,17 +227,25 @@ class Body:
 
     def __init__(self, k, hip_y, shoulder_y):
         self.legs = PantsLegs(k, hip_y=hip_y, **LEGS)
-        waist, top = hip_y - 1.0, shoulder_y + 1.6           # the shirt hangs over the top of the trousers
-        self.waist, self.top = waist, top
-        self.torso = ((0.0, (waist + top) / 2, 0.0), (TORSO[0], (top - waist) / 2, TORSO[1]))
+        hem, top = hip_y - 1.0, shoulder_y + 1.6             # the shirt hangs over the top of the trousers
+        h = top - hem
+        self.hem, self.top, self.h = hem, top, h
+        # a rounded chest (its top makes the slope from the neck to the
+        # shoulders) melted into the shirt below it, cut straight at the hem
+        self.chest = ((0.0, top - 0.38 * h, 0.0), (CHEST[0], 0.42 * h, CHEST[1]))
+        self.belly = ((0.0, hem + 0.32 * h, 0.2), (BELLY[0], 0.42 * h, BELLY[1]))
         self.neck = ((0.0, top - 2.0, -0.3), (0.0, top + 4.0, -0.3))
         self.arms = {sgn: arm_joints(sgn, swing_of(sgn, k), shoulder_y) for sgn in (+1, -1)}
+        # the satchel strap: a band around the body from his right shoulder to his left hip
+        a = np.array([-CHEST[0] * 0.5, top - 0.5, 0.0])
+        b = np.array([CHEST[0] * 0.55, hem + 1.0, 0.0])
+        d = (b - a) / np.linalg.norm(b - a)
+        self.strap = (a, np.array([-d[1], d[0], 0.0]))
 
     def pieces(self, p):
-        # a chest that narrows a little toward the hem
-        f = np.clip((p[:, 1] - self.waist) / (self.top - self.waist), 0, 1)
-        q = p / np.stack([WAIST + (1 - WAIST) * f, np.ones(len(p)), WAIST + (1 - WAIST) * f], -1)
-        torso = sd_box(q, *self.torso, rad=3.5) * WAIST
+        chest = sd_ellipsoid(p, *self.chest)
+        belly = np.maximum(sd_ellipsoid(p, *self.belly), (self.hem - 0.6) - p[:, 1])
+        torso = smin(chest, belly, 3.0)
         neck = sd_capsule(p, *self.neck, 2.4)
         arms = {}
         for sgn, (sh, el, fi) in self.arms.items():
@@ -269,7 +286,18 @@ class Body:
             t = ((p - sh) @ ax) / (ax @ ax)
             sleeve = near == 4 + 3 * i
             m = np.where(sleeve, np.where(t > 0.78, CUFF, np.where(t > 0.62, FOLD, SHIRT)), m)
-        return m
+        # on the shirt front: the chest pocket on his left with a pen in it ...
+        x, y, z = p[:, 0], p[:, 1], p[:, 2]
+        top, h = self.top, self.h
+        front = (near == 0) & (z > 1.0)
+        pocket = front & (x > 3.0) & (x < 7.8) & (y > top - 0.42 * h) & (y < top - 0.18 * h)
+        pen = front & (x > 4.0) & (x < 5.8) & (y > top - 0.26 * h) & (y < top - 0.08 * h)
+        m = np.where(pocket, POCKET, m)
+        m = np.where(pen, PEN, m)
+        # ... and the strap over it, all the way round
+        a, n = self.strap
+        band = (near == 0) & (np.abs((p - a) @ n) < 0.9)
+        return np.where(band, STRAP, m)
 
     def part(self, p):
         near = self._nearest(p)
@@ -312,6 +340,14 @@ class Master:
         face = grow(mask_of(head, colour_set(PAL, "skin", "hair")), 1)
         line[: row - 7] = False
         head[line & ~face] = 0
+        strap = mask_of(head, colour_set(PAL, "leather"))     # the 3D body has its own strap
+        strap[: row - 7] = False
+        head[strap] = 0
+        # under the chin only the collar: the AI's own shoulders would stick out of the new torso
+        gx = np.arange(FW)[None, :]
+        wide = np.zeros(head.shape[:2], bool)
+        wide[row - 7:] = np.abs(gx + 0.5 - (PIVOT[0] + self.dx)) > COLLAR
+        head[wide & ~mask_of(head, colour_set(PAL, "hair", "skin"))] = 0
         # the satchel: the leather below the chest with everything inside its
         # outline (its highlights share the skin's colours) ...
         leather = mask_of(img, colour_set(PAL, "leather"))
@@ -325,22 +361,22 @@ class Master:
                 bag |= hull_mask(lab == i)
         bag &= (img[..., 3] > 0) & ~mask_of(img, colour_set(PAL, "shirt", "chinos"))
         bag |= grow(bag, 1) & mask_of(img, colour_set(PAL, "outline"))
-        # ... and the strap across the shirt
-        strap = leather & ~bag
-        strap |= grow(strap, 1) & mask_of(img, colour_set(PAL, "outline")) & ~bag
-        strap[: row - 2] = False
+        # the new body is sturdier than the AI's, so the satchel moves out with its hip
+        xs = np.nonzero(bag)[1]
+        shift = int(round((xs.mean() - (PIVOT[0] + self.dx)) * (WIDER - 1))) if len(xs) else 0
+        self.bag_side = 1 if len(xs) and xs.mean() > PIVOT[0] + self.dx else -1
 
         def up(a):
             a = np.roll(a, -lift, axis=0)
             a[FH - lift:] = 0
             return a
         self.head = up(head)
-        self.bag = up(np.where(bag[..., None], img, 0).astype(np.uint8))
-        self.strap = up(np.where(strap[..., None], img, 0).astype(np.uint8))
+        self.bag = np.roll(up(np.where(bag[..., None], img, 0).astype(np.uint8)), shift, axis=1)
         self.shoulder_y = (PIVOT[1] - (row - lift)) / math.cos(ELEV)
         # the satchel hangs on his left hip: in front of the body unless that side is away from us
         z_left = -SHOULDER_X * math.sin(math.radians(YAW[direction]))
         self.bag_in_front = z_left >= -2
+        self.bag_shift = None if not self.bag_in_front else 0     # behind: set against the body edge
 
 
 def frame(m, direction, k, geo):
@@ -358,8 +394,17 @@ def frame(m, direction, k, geo):
             ARM: [skin[1], skin[1], skin[2], skin[3]],
             PANTS: [pants[1], pants[1], pants[2], pants[3]],
             SHOE: [shoe[1], shoe[1], shoe[2], shoe[3]],
-            SOLE: [pal["sole"][0]] * 4}
+            SOLE: [pal["sole"][0]] * 4,
+            POCKET: [shirt[1], shirt[1], shirt[2], shirt[3]],
+            PEN: [pal["pen"][0]] * 4,
+            STRAP: [pal["leather"][1], pal["leather"][1], pal["leather"][2], pal["leather"][3]]}
     layer = paint(mat, tn, depth, ramp, pal["outline"][0], y0)
+    # the pocket is stitched on: a line round it
+    pocket = mat == POCKET
+    edge = np.zeros(pocket.shape, bool)
+    for sh, ax in ((1, 0), (-1, 0), (1, 1), (-1, 1)):
+        edge |= pocket & ~np.isin(np.roll(mat, sh, ax), [POCKET, PEN])
+    layer[y0:][edge, :3] = hex2rgb(shirt[1])
     # below the armpits an arm and the body are told apart by a fold line on
     # the nearer of the two; above them the sleeve flows into the shoulder
     arm = (part == ARM_L) | (part == ARM_R)
@@ -381,10 +426,20 @@ def frame(m, direction, k, geo):
     # the near arms (both, seen from the front or back) pass in front of the satchel
     near = [arm for arm, sgn in ((ARM_L, +1), (ARM_R, -1))
             if -sgn * SHOULDER_X * math.sin(math.radians(yaw)) >= -2]
-    strap = np.roll(m.strap, bob, axis=0)
-    sel = (strap[..., 3] > 0) & (parts == TORSO_PART)
-    canvas[sel] = strap[sel]
-    bag = np.roll(m.bag, bob, axis=0)
+    if m.bag_shift is None:
+        # a satchel behind the body hangs against its edge: move it so it tucks
+        # 2 px behind the hip in the rows where it hangs (found on the idle pose)
+        rows = np.nonzero((m.bag[..., 3] > 0).any(1))[0]
+        body = np.isin(parts, [TORSO_PART, LEG_PART])
+        edges, inner = [], []
+        for r in rows:
+            xs_b = np.nonzero(body[r])[0]
+            xs_s = np.nonzero(m.bag[r, :, 3] > 0)[0]
+            if len(xs_b) and len(xs_s):
+                edges.append(xs_b.max() if m.bag_side > 0 else xs_b.min())
+                inner.append(xs_s.min() if m.bag_side > 0 else xs_s.max())
+        m.bag_shift = int(np.median(edges) - np.median(inner) - 2 * m.bag_side) if edges else 0
+    bag = np.roll(np.roll(m.bag, bob, axis=0), m.bag_shift, axis=1)
     sel = (bag[..., 3] > 0) & ~np.isin(parts, near)
     if not m.bag_in_front:
         sel &= ~np.isin(parts, [TORSO_PART, ARM_L, ARM_R])    # behind the body: only where it shows
@@ -407,8 +462,8 @@ def main():
     for r, d in enumerate(DIRS):
         c = MASTERS[d]
         m = Master(src[r * FH:(r + 1) * FH, c * FW:(c + 1) * FW], d, geo)
+        still = frame(m, d, None, geo)                  # first: it places the satchel for the walk too
         rows.append(np.concatenate([frame(m, d, k, geo) for k in range(6)], 1))
-        still = frame(m, d, None, geo)
         idle.append(still)
         ys = np.nonzero((still[..., 3] > 0).any(1))[0]
         heights[d] = int(ys.max() - ys.min() + 1)

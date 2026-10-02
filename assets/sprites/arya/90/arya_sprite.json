@@ -15,9 +15,9 @@
     "S": 91,
     "SW": 97,
     "W": 91,
-    "NW": 95,
+    "NW": 96,
     "N": 91,
-    "NE": 95,
+    "NE": 96,
     "E": 97
   },
   "rows": [
@@ -51,7 +51,7 @@
       "layout": "1 column x 8 rows (same row order)"
     }
   },
-  "palette_size": 28,
+  "palette_size": 29,
   "pipeline": [
     "python3 tools/pixelfit.py assets/sprites/arya/reference/arya_ai_walk_atlas.webp --height 74 --palette arya --name arya --out <tmp>",
     "python3 tools/arya_walk.py <tmp>/arya_sprite_8dir.png --out-dir assets/sprites/arya/90"
