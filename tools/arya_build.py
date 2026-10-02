@@ -516,42 +516,14 @@ HEAD_DY = {"NW": 4, "N": 1, "NE": 1}
 
 
 def put_head(img, direction, dy):
-    """The head over the body, moved with it by whole pixels; where the back of
-    the hair stops short of the shoulders, it carries on down to them."""
+    """The head over the body, moved with it by whole pixels."""
     h = head(direction)
     dy += HEAD_DY.get(direction, 0)
     out = img.copy()
     src = h[max(0, -dy):FH - max(0, dy)]
     sel = src[..., 3] > 0
     region = out[max(0, dy):FH - max(0, -dy)]
-    body = region[..., 3] > 0
     region[sel] = src[sel]
-    head_a = np.zeros((FH, FW), bool)
-    head_a[max(0, dy):FH - max(0, -dy)] = sel
-    body_a = np.zeros((FH, FW), bool)
-    body_a[max(0, dy):FH - max(0, -dy)] = body
-    line = np.array(hexrgb(OUTLINE))
-    filled = np.zeros((FH, FW), bool)
-    for x in range(FW):
-        hy = np.nonzero(head_a[:, x])[0]
-        if not len(hy):
-            continue
-        y0 = hy.max()
-        below = np.nonzero(body_a[y0 + 1:, x])[0]
-        if not len(below) or below[0] == 0 or below[0] > 6:
-            continue
-        # the colour just above the head's bottom edge, under its outline
-        c = out[y0, x, :3]
-        for yy in range(y0, max(y0 - 4, 0), -1):
-            if (out[yy, x, :3] != line).any():
-                c = out[yy, x, :3]
-                break
-        out[y0:y0 + below[0] + 1, x, :3] = c
-        out[y0 + 1:y0 + below[0] + 1, x, 3] = 255
-        filled[y0:y0 + below[0] + 1, x] = True
-    a = out[..., 3] > 0
-    edge = a & ~(np.roll(a, 1, 1) & np.roll(a, -1, 1) & np.roll(a, 1, 0) & np.roll(a, -1, 0))
-    out[filled & edge, :3] = line
     return out
 
 
