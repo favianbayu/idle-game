@@ -6,18 +6,17 @@ accessories shift from frame to frame, and the feet barely move. This tool
 keeps ONE master frame per direction for everything above the skirt hem and
 redraws only what a walk cycle needs:
 
-  * the feet and shins, placed with the Prompt Sprite phase table
-    (contact A, down A, passing A, contact B, down B, passing B): the feet
-    swap sides, the swing foot lifts, front views put the forward foot lower
-    on screen and side views spread the stride horizontally;
+  * real legs below the hem, rendered in 3D like Arya's (tools/legs3d.py):
+    the knee bends, the swing foot lifts, feet swap sides with the Prompt
+    Sprite phase table (contact A, down A, passing A, contact B, down B,
+    passing B) and the sandals are rounded with straps and toes;
+  * a skirt that moves: its lower part swings with the steps and the hem
+    rides up on one side and drops on the other;
   * a 1 px body bob (lowest on the "down" frames, highest on "passing");
   * three hair masters per direction (neutral, swung left, swung right) that
     swing more toward the tips, so the long hair sways instead of hanging stiff;
   * arms that swing against the legs: the master's hands are lifted out,
     moved along the swing arc and reconnected to the sleeve with a forearm.
-
-The sandals are drawn pixel by pixel in the reference's leather and skin
-tones, with a pattern per view (front, back, side, front and back 3/4).
 
 Usage:
   python3 tools/walkfix.py IN_ATLAS.png --out OUT_ATLAS.png [--masters 5,2,4,1,4,2,3,5]
@@ -28,6 +27,7 @@ import math
 import numpy as np
 from PIL import Image
 
+from legs3d import render_legs
 from pixelfit import DIRS, FH, FW, PALETTES, PIVOT, components, hex2rgb
 
 ELEV = math.radians(24)
@@ -35,6 +35,8 @@ YAW = {"S": 0, "SE": 45, "E": 90, "NE": 135, "N": 180, "NW": -135, "W": -90, "SW
 BOB = [0, 1, -1, 0, 1, -1]            # screen px, + is down: lowest on "down", highest on "passing"
 HAIR_SEQ = [-1, 0, 1, 1, 0, -1]       # which of the 3 hair masters each walk frame uses (a slow pendulum)
 HAIR_AMP = {"S": 1.5, "N": 1.5, "SE": 2.0, "SW": 2.0, "NE": 2.0, "NW": 2.0, "E": 2.5, "W": 2.5}
+SKIRT_AMP = {"S": 1.5, "N": 1.5, "SE": 2.0, "SW": 2.0, "NE": 2.0, "NW": 2.0, "E": 2.5, "W": 2.5}
+SKIRT_TILT = 1.5                      # px the hem rides up on one side and drops on the other
 ARM_SWING = 22                        # degrees each way
 ARM_LEN = 12.0                        # shoulder to fist, art px
 
@@ -90,103 +92,6 @@ def split_master(img, palette):
     return upper, smooth, hem_top
 
 
-# Sandals drawn pixel by pixel in the reference's leather tones.
-# K outline, D dark leather, L leather, H light leather, s skin, z skin shadow
-SANDALS = {
-    "front": ["..KKKKK..",
-              ".KDHHHDK.",
-              "KsHHDHHsK",
-              "KssHHHssK",
-              "KszsssszK",
-              "KDDDDDDDK",
-              ".KKKKKKK."],
-    "back": ["..KKKKK..",
-             ".KzsssszK",
-             "KDHHHHHDK",
-             "KsszzzssK",
-             "KLHHHHHLK",
-             "KDDDDDDDK",
-             ".KKKKKKK."],
-    "side": ["..KKKK....",
-             ".KDHHDKK..",
-             "KsHHDHssK.",
-             "KsHHHHsszK",
-             "KDDDDDDDDK",
-             ".KKKKKKKK."],
-    "front34": ["..KKKKK...",
-                ".KDHHHDKK.",
-                "KsHHDHHssK",
-                "KssHHHsszK",
-                "KszssssszK",
-                "KDDDDDDDDK",
-                ".KKKKKKKK."],
-    "back34": ["..KKKKK..",
-               ".KDHHHDK.",
-               "KzsHHHHsK",
-               "KssLHHHHK",
-               "KLLLLLLLK",
-               "KDDDDDDDK",
-               ".KKKKKKK."],
-}
-SANDAL_KEYS = {"K": ("outline", 0), "D": ("leather", 1), "L": ("leather", 2), "H": ("leather", 3),
-               "s": ("skin", 2), "z": ("skin", 1)}
-
-
-def sandal_for(direction):
-    """Sandal pattern for a facing direction (toes point the way she walks)."""
-    if direction == "S":
-        return SANDALS["front"]
-    if direction == "N":
-        return SANDALS["back"]
-    if direction in ("E", "W"):
-        p = SANDALS["side"]
-        return p if direction == "E" else [r[::-1] for r in p]
-    if direction in ("SE", "SW"):
-        p = SANDALS["front34"]
-        return [r[::-1] for r in p] if direction == "SE" else p
-    p = SANDALS["back34"]
-    return [r[::-1] for r in p] if direction == "NW" else p
-
-
-def draw_pattern(canvas, pat, x0, y0, palette, keys):
-    for j, row in enumerate(pat):
-        for i, ch in enumerate(row):
-            Y, X = y0 + j, x0 + i
-            if ch == "." or not (0 <= Y < FH and 0 <= X < FW):
-                continue
-            key, r = keys[ch]
-            canvas[Y, X, :3] = hex2rgb(PALETTES[palette][key][r])
-            canvas[Y, X, 3] = 255
-
-
-def foot_positions(direction, k, hip=3.8, stride=6.0, lift=3.0):
-    """Screen offsets (dx, dy, depth) of the left and right foot for frame k."""
-    ph = 2 * math.pi * k / 6
-    s = math.cos(ph)
-    feet = []
-    for sgn, z, up in ((+1, stride * s, lift * max(0.0, -math.sin(ph))),
-                       (-1, -stride * s, lift * max(0.0, math.sin(ph)))):
-        a = math.radians(YAW[direction])
-        x0 = sgn * hip
-        wx = x0 * math.cos(a) + z * math.sin(a)
-        wz = -x0 * math.sin(a) + z * math.cos(a)
-        dy = -(up * math.cos(ELEV) - wz * math.sin(ELEV))
-        feet.append((wx, dy, wz, up))
-    return feet
-
-
-def shin(canvas, x, y_top, y_bot, palette):
-    out = hex2rgb(PALETTES[palette]["outline"][0])
-    skin = PALETTES[palette]["skin"]
-    cols = [out, hex2rgb(skin[3]), hex2rgb(skin[2]), hex2rgb(skin[1]), out]
-    for y in range(max(0, y_top), min(FH, y_bot)):
-        for i, c in enumerate(cols):
-            xx = x - 2 + i
-            if 0 <= xx < FW and canvas[y, xx, 3] == 0:
-                canvas[y, xx, :3] = c
-                canvas[y, xx, 3] = 255
-
-
 def outline(img, palette):
     a = img[..., 3] > 0
     edge = np.zeros_like(a)
@@ -220,19 +125,7 @@ def standing(frames, direction, master, palette, hide_clip=False):
     if hide_clip:
         m = erase_clip(m, palette)
     upper, hem, hem_top = split_master(m, palette)
-    pat = sandal_for(direction)
-    ph, pw = len(pat), len(pat[0])
-    canvas = np.zeros((FH, FW, 4), np.uint8)
-    a = math.radians(YAW[direction])
-    feet = sorted(((sgn * 3.8 * math.cos(a), -sgn * 3.8 * math.sin(a)) for sgn in (1, -1)),
-                  key=lambda f: f[1])
-    for wx, wz in feet:
-        fx = PIVOT[0] + wx
-        sole = int(round(PIVOT[1] - 1 + wz * math.sin(ELEV)))
-        sx = int(round(fx))
-        top = hem[sx] if 0 <= sx < FW and hem[sx] >= 0 else sole - ph + 2
-        shin(canvas, sx, top, sole - ph + 2, palette)
-        draw_pattern(canvas, pat, int(round(fx - pw / 2)), sole - ph + 1, palette, SANDAL_KEYS)
+    canvas = render_legs(YAW[direction], None, palette)
     mask = upper[..., 3] > 0
     canvas[mask] = upper[mask]
     return outline(despike(canvas), palette)
@@ -397,29 +290,57 @@ def draw_hand(canvas, hand, dx, dy, palette):
     canvas[limb, 3] = 255
 
 
+def split_skirt(body, palette):
+    """Separate the skirt (with its outline) from the rest of the body."""
+    sk = mask_of(body, colour_set(palette, "skirt"))
+    ys = np.nonzero((body[..., 3] > 0).any(1))[0]
+    lower = np.zeros(sk.shape, bool)
+    lower[(ys.min() + ys.max()) // 2:] = True
+    sk &= lower
+    layer = sk | (grow(sk, 1) & mask_of(body, colour_set(palette, "outline")) & lower)
+    hem = np.array([np.nonzero(layer[:, x])[0].max() if layer[:, x].any() else -1 for x in range(FW)])
+    y_top = int(np.nonzero(sk.any(1))[0].min())
+    skirt = np.where(layer[..., None], body, 0).astype(np.uint8)
+    rest = np.where(layer[..., None], 0, body).astype(np.uint8)
+    return rest, skirt, y_top, hem
+
+
+def warp_skirt(skirt, y_top, hem, direction, k):
+    """Swing the lower skirt with the steps and tilt the hem (front and rear views)."""
+    ph = 2 * math.pi * k / 6
+    swing = math.sin(ph + math.pi / 6)
+    tilt = 0.0 if direction in ("E", "W") else -math.cos(ph)
+    cols = np.nonzero(hem >= 0)[0]
+    cx, hw = cols.mean(), max(1.0, (cols.max() - cols.min()) / 2)
+    bottom = hem[cols].max()
+    yo, xo = np.mgrid[0:FH, 0:FW]
+    w = np.clip((yo - y_top) / max(1, bottom - y_top), 0, 1) ** 1.6
+    xs = xo - np.rint(SKIRT_AMP[direction] * swing * w).astype(int)
+    ok = (xs >= 0) & (xs < FW)
+    xs = np.clip(xs, 0, FW - 1)
+    h = hem[xs]
+    ok &= h >= 0
+    new_h = h + np.rint(SKIRT_TILT * tilt * (xs - cx) / hw)
+    mid = y_top + 0.55 * (h - y_top)
+    ys = np.where(yo <= mid, yo, mid + (yo - mid) * (h - mid) / np.maximum(new_h - mid, 1))
+    ys = np.rint(ys).astype(int)
+    ok &= (ys >= 0) & (ys <= h) & (yo <= new_h)
+    out = np.zeros_like(skirt)
+    out[ok] = skirt[ys[ok], xs[ok]]
+    return out
+
+
 def build_row(frames, direction, master, palette, hide_clip=False):
     m = frames[master]
     if hide_clip:
         m = erase_clip(m, palette)
     upper, hem, hem_top = split_master(m, palette)
     body, hands = split_hands(upper, palette, hem_top)
-    hair = hair_variants(body, direction, palette)
-    pat = sandal_for(direction)
-    ph, pw = len(pat), len(pat[0])
+    rest, skirt, skirt_top, skirt_hem = split_skirt(body, palette)
+    hair = hair_variants(rest, direction, palette)
     out = []
     for k in range(6):
-        canvas = np.zeros((FH, FW, 4), np.uint8)
-        feet = foot_positions(direction, k)
-        near = max(range(2), key=lambda i: feet[i][2])
-        body_k = np.roll(hair[HAIR_SEQ[k]], BOB[k], axis=0)
-        layers = []
-        for i in (1 - near, near):                                   # far foot first
-            wx, dy, wz, up = feet[i]
-            fx = PIVOT[0] + wx
-            sole = int(round(PIVOT[1] - 1 + dy))                      # bottom row of the sole
-            sx = int(round(fx))
-            top = hem[sx] + BOB[k] if 0 <= sx < FW and hem[sx] >= 0 else sole - ph + 2
-            layers.append((sx, top, sole, int(round(fx - pw / 2))))
+        canvas = render_legs(YAW[direction], k, palette)
         offs = hand_offsets(direction, k)
         placed = []
         for h, sgn in assign_hands(hands, offs):
@@ -428,27 +349,23 @@ def build_row(frames, direction, master, palette, hide_clip=False):
                          fist=(h["fist"][0], h["fist"][1] + BOB[k]))
             placed.append((depth, moved, int(round(dx)), int(round(dy))))
         placed.sort(key=lambda p: p[0])
-        # far foot, shins and the hand swinging back go under the body
-        for sx, top, sole, x0 in layers:
-            shin(canvas, sx, top, sole - ph + 2, palette)
-        sx, top, sole, x0 = layers[0]
-        draw_pattern(canvas, pat, x0, sole - ph + 1, palette, SANDAL_KEYS)
+        # bottom to top: legs, the hand swinging back, skirt, upper body, the hand in front
         for depth, h, dx, dy in placed:
             if depth < 0:
                 draw_hand(canvas, h, dx, dy, palette)
-        mask = body_k[..., 3] > 0
-        canvas[mask] = body_k[mask]
+        for layer in (warp_skirt(skirt, skirt_top, skirt_hem, direction, k), hair[HAIR_SEQ[k]]):
+            layer = np.roll(layer, BOB[k], axis=0)
+            mask = layer[..., 3] > 0
+            canvas[mask] = layer[mask]
         for depth, h, dx, dy in placed:
             if depth >= 0:
                 draw_hand(canvas, h, dx, dy, palette)
-        sx, top, sole, x0 = layers[1]
-        draw_pattern(canvas, pat, x0, sole - ph + 1, palette, SANDAL_KEYS)
         out.append(outline(despike(canvas), palette))
     return out
 
 
 def despike(img):
-    """Drop 1 px wide vertical slivers left under the hem."""
+    """Drop 1 px wide vertical slivers under the hem and pixels left floating on their own."""
     a = img[..., 3] > 0
     for _ in range(3):
         lone = a & ~np.roll(a, 1, 1) & ~np.roll(a, -1, 1)
@@ -457,6 +374,10 @@ def despike(img):
             break
         img[lone] = 0
         a = img[..., 3] > 0
+    p = np.pad(a, 1)
+    neighbours = sum(p[1 + dy:FH + 1 + dy, 1 + dx:FW + 1 + dx]
+                     for dy in (-1, 0, 1) for dx in (-1, 0, 1) if dy or dx)
+    img[a & (neighbours == 0)] = 0
     return img
 
 
