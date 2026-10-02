@@ -46,6 +46,17 @@ def sd_capsule(p, a, b, r1, r2=None):
     return length(pa - h[:, None] * ba) - (r1 + (r2 - r1) * h)
 
 
+def sd_box(p, c, half, rad=0.0):
+    q = np.abs(p - np.asarray(c, float)) - (np.asarray(half, float) - rad)
+    return length(np.maximum(q, 0.0)) + np.minimum(q.max(-1), 0.0) - rad
+
+
+def smin(a, b, k):
+    """Smooth minimum: the two surfaces melt into each other over about k."""
+    h = np.clip(0.5 + 0.5 * (b - a) / k, 0.0, 1.0)
+    return b + (a - b) * h - k * h * (1.0 - h)
+
+
 def rot_y(v, deg):
     a = math.radians(deg)
     c, s = math.cos(a), math.sin(a)
@@ -151,14 +162,17 @@ class PantsLegs:
         return m
 
 
-def render_legs(yaw, k, palette, style="sandals", **kw):
-    """RGBA layer (FH x FW) of the legs for facing yaw (degrees) and walk frame k (None = standing)."""
-    model = Legs(k) if style == "sandals" else PantsLegs(k, **kw)
+def raymarch(model, yaw, y0=70):
+    """Raymarch a model (dist, materials, optional part) with the isometric camera.
+
+    SS x SS rays per pixel for frame rows y0 and below, reduced per pixel to
+    the majority material, its majority toon tone (1-3), its nearest depth
+    and, when the model labels parts, its majority part. Arrays are (FH - y0, FW).
+    """
     e = ELEV
     right = np.array([1.0, 0.0, 0.0])
     up = np.array([0.0, math.cos(e), -math.sin(e)])
     view = np.array([0.0, -math.sin(e), -math.cos(e)])
-    y0 = 70                                              # the legs never reach above this row
     W, H = FW * SS, (FH - y0) * SS
     ys, xs = np.mgrid[0:H, 0:W]
     sx = (xs + 0.5) / SS - PIVOT[0]
@@ -201,12 +215,47 @@ def render_legs(yaw, k, palette, style="sandals", **kw):
     def blocks(a):
         return a.reshape(FH - y0, SS, FW, SS).swapaxes(1, 2).reshape(FH - y0, FW, SS * SS)
     mb, tb, db = blocks(M.reshape(H, W)), blocks(T.reshape(H, W)), blocks(D.reshape(H, W))
-    cnt = np.stack([(mb == i).sum(-1) for i in range(7)], -1)
+    n_mat = int(M.max()) + 1
+    cnt = np.stack([(mb == i).sum(-1) for i in range(max(n_mat, 7))], -1)
     cnt[..., 0] = np.where(cnt[..., 0] > SS * SS // 2, 99, 0)
     mat = cnt.argmax(-1)
     same = mb == mat[..., None]
     tn = np.stack([((tb == i) & same).sum(-1) for i in range(4)], -1).argmax(-1)
     depth = np.where(same, db, 1e6).min(-1)
+    part = None
+    if hasattr(model, "part"):
+        P = np.zeros(n, np.int32)
+        P[idx] = model.part(p)
+        pb = blocks(P.reshape(H, W))
+        n_part = int(P.max()) + 1
+        part = np.stack([((pb == i) & same).sum(-1) for i in range(n_part)], -1).argmax(-1)
+        part[mat == 0] = 0
+    return mat, tn, depth, part
+
+
+def paint(mat, tn, depth, ramp, outline_hex, y0=70, line_gap=2.0):
+    """RGBA frame layer from raymarch() output: ramp maps material -> 4 colours
+    (by tone), and a dark line runs where a nearer surface passes in front of a
+    farther one."""
+    layer = np.zeros((FH, FW, 4), np.uint8)
+    sub = layer[y0:]
+    for mi, cols in ramp.items():
+        for ti in range(1, 4):
+            sel = (mat == mi) & (tn == ti)
+            sub[sel, :3] = hex2rgb(cols[ti])
+            sub[sel, 3] = 255
+    line = np.zeros(mat.shape, bool)
+    for s, ax in ((1, 0), (-1, 0), (1, 1), (-1, 1)):
+        line |= (mat > 0) & (np.roll(mat, s, ax) > 0) & (np.roll(depth, s, ax) - depth > line_gap)
+    sub[line, :3] = hex2rgb(outline_hex)
+    return layer
+
+
+def render_legs(yaw, k, palette, style="sandals", **kw):
+    """RGBA layer (FH x FW) of the legs for facing yaw (degrees) and walk frame k (None = standing)."""
+    model = Legs(k) if style == "sandals" else PantsLegs(k, **kw)
+    y0 = 70                                              # the legs never reach above this row
+    mat, tn, depth, _ = raymarch(model, yaw, y0)
     pal = PALETTES[palette]
     if style == "sandals":
         skin, leather = pal["skin"], pal["leather"]
@@ -219,16 +268,4 @@ def render_legs(yaw, k, palette, style="sandals", **kw):
         ramp = {PANTS: [pants[1], pants[1], pants[2], pants[3]],
                 SHOE: [shoe[1], shoe[1], shoe[2], shoe[3]],
                 SOLE: [pal["sole"][0]] * 4}
-    layer = np.zeros((FH, FW, 4), np.uint8)
-    sub = layer[y0:]
-    for mi, cols in ramp.items():
-        for ti in range(1, 4):
-            sel = (mat == mi) & (tn == ti)
-            sub[sel, :3] = hex2rgb(cols[ti])
-            sub[sel, 3] = 255
-    # a dark line where the near leg passes in front of the far one
-    line = np.zeros(mat.shape, bool)
-    for s, ax in ((1, 0), (-1, 0), (1, 1), (-1, 1)):
-        line |= (mat > 0) & (np.roll(mat, s, ax) > 0) & (np.roll(depth, s, ax) - depth > 2.0)
-    sub[line, :3] = hex2rgb(pal["outline"][0])
-    return layer
+    return paint(mat, tn, depth, ramp, pal["outline"][0], y0)
