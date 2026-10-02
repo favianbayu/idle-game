@@ -11,14 +11,14 @@
   "height_px": 83,
   "height_note": "crown to soles (front view); the cowlick loop rises above it",
   "idle_heights_px": {
-    "SE": 92,
-    "S": 91,
-    "SW": 92,
-    "W": 92,
-    "NW": 92,
-    "N": 90,
+    "SE": 90,
+    "S": 89,
+    "SW": 94,
+    "W": 89,
+    "NW": 88,
+    "N": 88,
     "NE": 92,
-    "E": 92
+    "E": 91
   },
   "rows": [
     "SE",
@@ -55,5 +55,6 @@
   "pipeline": [
     "python3 tools/arya_build.py --out-dir assets/sprites/arya/90"
   ],
-  "reference": "assets/sprites/arya/reference/arya_ai_*.webp (drawn after, nothing cut from it)"
+  "head_masters": "assets/sprites/arya/src/arya_heads_8dir.png (one per direction, cleaned from his AI reference)",
+  "reference": "assets/sprites/arya/reference/arya_ai_*.webp"
 }

@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
-"""Draw Arya from scratch, frame by frame: walk (6 x 8) and idle (1 x 8).
+"""Build Arya's walk (6 x 8) and idle (1 x 8): his head as drawn, his body drawn
+anew in every frame.
 
-Nothing is cut out of the AI reference. Every frame is drawn anew from a small
-3D skeleton posed for that frame, after the AI reference (arya_ai_*.webp) and
-the Prompt Sprite script in the Character Bible:
-
-  * body: rounded shapes (curls, face, torso, sleeves, forearms, fists,
-    trouser legs, sneakers, satchel) are sampled densely on their surfaces,
-    projected to the 96 x 128 frame and kept per pixel by depth, so arms and
-    legs always grow out of the body: one silhouette, one outline;
-  * shading: light from the top left, each material on its own 4-tone ramp,
+  * head: one master per direction (hair, face, glasses, ears) in
+    assets/sprites/arya/src/arya_heads_8dir.png, cleaned pixel art taken from
+    his AI reference; it rides on the body and bobs with it, whole pixels only;
+  * body: chunky chibi shapes (shirt, short sleeves with rolled cuffs,
+    forearms and fists, chinos, white sneakers, the satchel with books) are
+    sampled on their surfaces, projected to the 96 x 128 frame and kept per
+    pixel by depth, so arms and legs grow out of the body: one silhouette,
+    one outline, drawn again for every frame;
+  * shading: light from the top left on 4-tone ramps (the head's palette),
     then a 1 px dark outline round the silhouette and wherever a nearer part
     overlaps a farther one (an arm in front of the shirt), never at a joint;
-  * details drawn on the shapes: rolled sleeve cuffs, the chest pocket with
-    its blue pen, placket and buttons, the strap over his right shoulder down
-    to the satchel on his left hip, books in the satchel, sneaker soles;
-  * face: round 6 x 6 px brown eyes behind round gold glasses, brows, the
-    mole above his left brow, nose and a small smile, placed where the head
-    turns them (in 3/4 a little less than the head, so both eyes show);
+  * details: placket and buttons, the chest pocket with its blue pen, the
+    strap over his right shoulder to the satchel on his left hip;
   * walk: the Prompt Sprite phase table (contact A, down A, passing A,
     contact B, down B, passing B): heel strike and toe-off, knees bending,
     the swing foot lifted, body bob 0/+1/-1, arms swinging against the legs
-    with the elbows bending as they come forward; the cowlick lags the bob.
+    with the elbows bending as they come forward.
 
 Usage:
   python3 tools/arya_build.py --out-dir assets/sprites/arya/90
@@ -51,24 +48,22 @@ def hexrgb(h):
 
 
 OUTLINE = "#1E0C05"
-# 4-tone ramps, dark to light, after the AI reference
+# 4-tone ramps, dark to light: the heads' own palette, so head and body match
 RAMP = {
-    "hair": ["#2E1A10", "#4A2C1B", "#6A4127", "#8E5E37"],
-    "skin": ["#A55A2A", "#D27A3C", "#EE9A55", "#F8B677"],
-    "shirt": ["#B59A80", "#DCC7AE", "#F0E5D3", "#FCF7EE"],
-    "chinos": ["#8A6844", "#B38A5E", "#D0AA7C", "#E5C797"],
-    "shoe": ["#DCC7AE", "#F0E5D3", "#FCF7EE", "#FFFFFF"],       # white sneakers: the shirt's lights
-    "sole": ["#8F7663", "#8F7663", "#A88E78", "#A88E78"],
-    "leather": ["#4A220C", "#6B3416", "#8E4D22", "#AE6830"],
-    "pen": ["#34508A", "#34508A", "#4D6FB0", "#4D6FB0"],
+    "skin": ["#8D4F26", "#C37031", "#F09C50", "#F7B676"],
+    "shirt": ["#A08268", "#CDAB90", "#EAD9C2", "#FAF1E2"],
+    "chinos": ["#8A6844", "#B38A5E", "#D3AC7E", "#E7C899"],
+    "shoe": ["#CDAB90", "#EAD9C2", "#FAF1E2", "#FFFFFF"],       # white sneakers: the shirt's lights
+    "sole": ["#B59A82", "#B59A82", "#B59A82", "#B59A82"],
+    "leather": ["#3B1A09", "#5C2C11", "#85471C", "#A95F2E"],
+    "pen": ["#34508A", "#34508A", "#34508A", "#34508A"],
     "gold": ["#B98238", "#B98238", "#E7B864", "#E7B864"],
-    "book1": ["#8E3B2E", "#8E3B2E", "#B5503C", "#B5503C"],
-    "book2": ["#3E5A7A", "#3E5A7A", "#557597", "#557597"],
+    "book1": ["#8E3B2E", "#8E3B2E", "#8E3B2E", "#8E3B2E"],
+    "book2": ["#3E5A7A", "#3E5A7A", "#3E5A7A", "#3E5A7A"],
 }
-LIPS = RAMP["book1"][2]
 MAT = {m: i + 1 for i, m in enumerate(RAMP)}          # 0 = empty
 # parts: what counts as one piece for internal lines (the joints inside a piece never get one)
-PARTS = ["hair", "head", "torso", "arm_r", "arm_l", "leg_r", "leg_l", "bag"]
+PARTS = ["torso", "arm_r", "arm_l", "leg_r", "leg_l", "bag"]
 PART = {p: i + 1 for i, p in enumerate(PARTS)}
 
 
@@ -110,9 +105,6 @@ class Shape:
         self.P, self.N = P, N
         self.mat = np.full(len(P), code(mat)) if isinstance(mat, str) else mat
         self.part = PART[part]
-        # the head is drawn nearly face-on, as chibi sprites are: depth moves it
-        # down the screen less than the body
-        self.tilt = HEAD_TILT if part in ("hair", "head") else math.sin(ELEV)
 
 
 def ellipsoid(c, r, part, mat, R=np.eye(3), paint=None):
@@ -213,15 +205,12 @@ def superbox(c, half, R, part, mat, power=4.0, paint=None):
 # ---------------------------------------------------------------- the figure
 # heights in px above the ground, at the final scale (soles on row 115)
 HIP_Y = 23.4            # hip joints, standing
-HIP_X = 4.6
+HIP_X = 5.0
 THIGH, SHIN = 10.6, 10.0
 ANKLE_Y = 2.9           # ankle above the sole
 HEM = 21.8              # shirt hem
-SHOULDER = np.array([11.6, 41.0, -0.2])
+SHOULDER = np.array([11.4, 39.6, -0.2])
 UPPER, FORE = 6.8, 5.4
-HEAD = np.array([0.0, 59.6, 0.6])
-HAIR_SEED = 7
-HEAD_TILT = 0.16        # screen px down per px toward us, for the head (the body uses sin 24 deg)
 
 
 def torso_half(y):
@@ -230,14 +219,14 @@ def torso_half(y):
         return 0, 0
     if y < 27.0:
         t = (y - HEM) / (27.0 - HEM)
-        return 10.2 - 0.4 * t, 8.6 - 0.2 * t
-    if y < 38.5:
-        t = (y - 27.0) / 11.5
-        return 9.8 + 0.8 * t, 8.4 + 0.6 * t
-    if y < 45.6:                                           # the shoulders round off into the neck
-        t = (y - 38.5) / 7.1
+        return 10.2 - 0.3 * t, 9.4 - 0.2 * t
+    if y < 37.0:
+        t = (y - 27.0) / 10.0
+        return 9.9 + 0.2 * t, 9.2 + 0.3 * t
+    if y < 45.6:                                           # the shoulders slope round into the neck
+        t = (y - 37.0) / 8.6
         k = math.sqrt(max(0.0, 1 - t * t))
-        return 4.0 + 6.6 * k, 4.0 + 5.0 * k
+        return 4.2 + 5.9 * k, 4.2 + 5.3 * k
     return 0, 0
 
 
@@ -323,7 +312,7 @@ STEPS = [
     (-4.8, 2.4, -40.0),     # down B: lifting off
     (1.0, 3.2, -10.0),      # passing B: swinging through, lifted
 ]
-WALK_DIP = 1.2          # the hips ride this much lower walking than standing
+WALK_DIP = 1            # the hips ride this much lower walking than standing (whole px: the head follows)
 HEEL, TOE = 2.2, 5.2    # heel behind and toe ahead of the ankle
 
 
@@ -355,8 +344,8 @@ def leg_shapes(pose, side):
         ankle = hip + u * (THIGH + SHIN)
     part = "leg_l" if side > 0 else "leg_r"
     shapes = []
-    shapes += tube(hip, knee, 4.9, 4.4, part, "chinos")
-    shapes += tube(knee, ankle + np.array([0, 0.9, 0]), 4.4, 4.3, part, "chinos")
+    shapes += tube(hip, knee, 5.2, 4.8, part, "chinos")
+    shapes += tube(knee, ankle + np.array([0, 1.0, 0]), 4.8, 4.7, part, "chinos")
     # sneaker in the foot's own frame: x across, y up, z toward the toe
     R = rot_x(-pr)
 
@@ -365,7 +354,7 @@ def leg_shapes(pose, side):
         m[local[:, 1] < -1.1] = code("sole")
         return m
     centre = ankle + R @ np.array([0.0, -0.6, (TOE - HEEL) / 2])
-    shapes.append(superbox(centre, (4.0, 2.7, (TOE + HEEL) / 2 + 0.5), R, part, "shoe", power=2.6,
+    shapes.append(superbox(centre, (4.6, 3.1, (TOE + HEEL) / 2 + 0.9), R, part, "shoe", power=2.6,
                            paint=shoe_paint))
     return shapes
 
@@ -385,69 +374,12 @@ def arm_shapes(pose, side):
     shapes = []
     # short sleeve, a little bell-shaped, ending in a rolled cuff
     end = sh + R_up @ np.array([0, -UPPER * 0.78, 0])
-    shapes += tube(sh + np.array([0, 0.4, 0]), end, 3.9, 4.2, part, "shirt", caps=(True, False))
+    shapes += tube(sh + np.array([0, 0.4, 0]), end, 4.0, 4.6, part, "shirt", caps=(True, False))
     cuff_a = sh + R_up @ np.array([0, -UPPER * 0.62, 0])
-    shapes += tube(cuff_a, end, 4.35, 4.35, part, "shirt", caps=(False, False),
+    shapes += tube(cuff_a, end, 4.85, 4.85, part, "shirt", caps=(False, False),
                    paint=lambda t, ang: np.where(t < 0.3, code("shirt", 1), code("shirt", 2)))
-    shapes += tube(end, wrist, 3.0, 2.8, part, "skin", caps=(False, True))
-    shapes.append(ellipsoid(fist, (3.3, 3.5, 3.3), part, "skin", R=R_fore))
-    return shapes
-
-
-def head_shapes(pose):
-    H = HEAD + np.array([0, pose.lift, 0])
-    shapes = [ellipsoid(H, (13.8, 13.8, 11.6), "head", "skin")]
-    for side in (+1, -1):
-        shapes.append(ellipsoid(H + np.array([side * 13.2, -1.6, -1.4]), (2.2, 3.2, 2.4), "head", "skin"))
-    shapes.append(ellipsoid(H + np.array([0, -3.4, 10.6]), (1.3, 1.7, 2.0), "head", "skin"))   # nose
-    shapes += hair_shapes(H, pose)
-    shapes.append(ellipsoid(np.array([0, 45.2 + pose.lift, -0.6]), (4.2, 3.0, 3.8), "torso", "skin"))  # neck
-    return shapes
-
-
-def hair_shapes(H, pose):
-    """Curly hair: a mass of round curls over the skull, the face left open, bangs to one side."""
-    rng = np.random.default_rng(HAIR_SEED)
-    centre = H + np.array([0, 3.0, -3.6])
-    rad = np.array([19.4, 18.4, 16.4])
-    n = 140
-    i = np.arange(n) + 0.5
-    phi = np.arccos(1 - 2 * i / n)
-    theta = math.pi * (1 + 5 ** 0.5) * i
-    u = np.stack([np.sin(phi) * np.cos(theta), np.cos(phi), np.sin(phi) * np.sin(theta)], 1)
-    shapes = []
-    for k in range(n):
-        p = centre + u[k] * rad * 0.84 + rng.normal(0.0, 0.7, 3)
-        x, y, z = p - H
-        r = 4.4 + rng.uniform(-0.8, 0.8)
-        if y < -11.5:
-            continue                                        # no hair under the nape
-        hairline = 5.4 - 0.022 * x * x                      # the forehead's top edge
-        bangs = -9.5 < x < -2.5 and z > 7.0 and y > 2.0
-        front = z > 3.0 and y - 0.8 * r < max(hairline, 4.4)       # forehead and temples
-        side = -2.0 < z <= 3.0 and y - 0.8 * r < 2.0               # cheeks, in front of the ears
-        ear = abs(x) > 10.0 and z > -4.5 and -6.5 < y < 1.5        # the ears themselves
-        if bangs and front:
-            r = min(r, 2.8)
-            p = p + np.array([0.0, max(0.0, 4.4 - y), 0.0])  # bangs end above the brows
-        elif front or side or ear:
-            continue                                        # the face, ears and cheeks stay open
-        shapes.append(ellipsoid(p, (r, r, r), "hair", "hair"))
-    # the cowlick: a thick strand rising from the crown and arching over in a
-    # loop, as in the reference; it lags the bob a frame
-    lag = 0.0 if pose.k is None else 0.7 * BOB[(pose.k - 1) % 6]
-    keys = np.array([[0.0, 0.0, 0.0], [-1.6, 5.0, 0.4], [0.4, 8.6, 0.8], [3.6, 8.4, 0.8],
-                     [5.2, 5.6, 0.6], [4.8, 3.2, 0.4]])
-    t = np.linspace(0, len(keys) - 1, 60)
-    curve = np.stack([np.interp(t, np.arange(len(keys)), keys[:, j]) for j in range(3)], 1)
-    # smooth the polyline a little
-    for _ in range(4):
-        curve[1:-1] = (curve[:-2] + 2 * curve[1:-1] + curve[2:]) / 4
-    base = H + np.array([-0.5, 19.0, -2.5])
-    for j, q in enumerate(curve):
-        f = j / (len(curve) - 1)
-        rr = 1.5 - 0.6 * f
-        shapes.append(ellipsoid(base + q + np.array([0, lag * f, 0]), (rr, rr, rr), "hair", "hair"))
+    shapes += tube(end, wrist, 3.5, 3.3, part, "skin", caps=(False, True))
+    shapes.append(ellipsoid(fist, (3.9, 4.1, 3.9), part, "skin", R=R_fore))
     return shapes
 
 
@@ -455,14 +387,15 @@ def torso_shapes(pose):
     lift = pose.lift
     shapes = [loft(HEM + lift, 45.6 + lift, lambda y: torso_half(y - lift), "torso", "shirt",
                    paint=lambda P, N: shirt_paint(P - np.array([0, lift, 0]), N))]
+    shapes.append(ellipsoid(np.array([0, 45.2 + lift, -0.6]), (4.4, 3.2, 4.0), "torso", "skin"))   # neck
     # hips under the shirt, joining the legs
     shapes.append(ellipsoid(np.array([0, HIP_Y + 0.8 + lift, 0]), (8.0, 3.0, 5.6), "torso", "chinos"))
     # satchel on his left hip, its flap toward the front left, books inside
-    R = rot_y(math.radians(24))
-    c = np.array([12.4, 20.6 + lift, -1.8])
-    shapes.append(superbox(c, (2.5, 5.4, 5.8), R, "bag", "leather", power=3.0, paint=bag_paint))
+    R = rot_y(math.radians(30))
+    c = np.array([15.2, 20.2 + lift, -4.0])
+    shapes.append(superbox(c, (3.2, 7.0, 7.4), R, "bag", "leather", power=3.0, paint=bag_paint))
     for dz, mat in ((-1.8, "book1"), (0.9, "book2")):
-        shapes.append(superbox(c + R @ np.array([-0.2, 5.0, dz]), (1.6, 1.8, 1.3), R, "bag", mat, power=6.0))
+        shapes.append(superbox(c + R @ np.array([-0.2, 6.4, dz]), (1.9, 2.0, 1.5), R, "bag", mat, power=6.0))
     return shapes
 
 
@@ -472,7 +405,6 @@ def render(direction, k):
     pose = Pose(k)
     shapes = []
     shapes += torso_shapes(pose)
-    shapes += head_shapes(pose)
     for side in (+1, -1):
         shapes += leg_shapes(pose, side)
         shapes += arm_shapes(pose, side)
@@ -481,14 +413,13 @@ def render(direction, k):
     M = np.concatenate([s.mat for s in shapes])
     Q = np.concatenate([np.full(len(s.P), s.part) for s in shapes])
     SID = np.concatenate([np.full(len(sh.P), i + 1) for i, sh in enumerate(shapes)])
-    D = np.concatenate([np.full(len(s.P), s.tilt) for s in shapes])
     c, s = math.cos(yaw), math.sin(yaw)
     wx = P[:, 0] * c + P[:, 2] * s
     wz = -P[:, 0] * s + P[:, 2] * c
     nx = N[:, 0] * c + N[:, 2] * s
     nz = -N[:, 0] * s + N[:, 2] * c
     sx = PIVOT[0] + wx
-    sy = PIVOT[1] - P[:, 1] + wz * D
+    sy = PIVOT[1] - P[:, 1] + wz * math.sin(ELEV)
     depth = wz * math.cos(ELEV) + P[:, 1] * math.sin(ELEV)
     # how much each point faces the camera, which looks down at 24 degrees
     vnz = nz * math.cos(ELEV) + N[:, 1] * math.sin(ELEV)
@@ -544,18 +475,14 @@ def shade(buf):
 
 
 def outline(img, buf):
-    """1 px outline round the silhouette and where a nearer piece overlaps a farther one;
-    between curls of hair a darker line where one curl sits in front of another."""
+    """1 px outline round the silhouette and where a nearer piece overlaps a farther one."""
     a = img[..., 3] > 0
-    depth, part, sid, facing = buf["depth"], buf["part"], buf["sid"], buf["facing"]
-    hair = part == PART["hair"]
+    depth, part, facing = buf["depth"], buf["part"], buf["facing"]
     line = np.zeros_like(a)
-    curl = np.zeros_like(a)
     for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)):
         na = np.roll(np.roll(a, dy, 0), dx, 1)
         nd = np.roll(np.roll(depth, dy, 0), dx, 1)
         npart = np.roll(np.roll(part, dy, 0), dx, 1)
-        nsid = np.roll(np.roll(sid, dy, 0), dx, 1)
         nface = np.roll(np.roll(facing, dy, 0), dx, 1)
         line |= a & ~na
         other = a & na & (npart != part)
@@ -565,150 +492,74 @@ def outline(img, buf):
         # shirt, the hem over the trousers); where they grow into each other
         # (shoulder into sleeve) both face us and no line is drawn
         line |= other & (nd >= depth - 0.3) & (np.minimum(facing, nface) < 0.32)
-        curl |= hair & na & (npart == part) & (nsid != sid) & (nd > depth + 1.0)
-    img[curl & ~line, :3] = hexrgb(RAMP["hair"][0])
     img[line, :3] = hexrgb(OUTLINE)
     return img
 
 
-# eyes, 6 x 6, round and brown as in the reference (K lid line, D dark iris,
-# M iris, L warm lower iris, W highlight); "narrow" (4 x 6) is the far eye of a
-# 3/4 view and the eye in profile
-EYES_PX = {"full_l": [".KKKK.",
-                      "KDDDDK",
-                      "DWWDMD",
-                      "DWDMMD",
-                      "DDMLLD",
-                      ".DLLD."],
-           "full_r": [".KKKK.",
-                      "KDDDDK",
-                      "DMDWWD",
-                      "DMMDWD",
-                      "DLLMDD",
-                      ".DLLD."],
-           "narrow_l": [".KK.",
-                        "KDDK",
-                        "DWMD",
-                        "DDMD",
-                        "DMLD",
-                        ".LL."],
-           "narrow_r": [".KK.",
-                        "KDDK",
-                        "DMWD",
-                        "DMDD",
-                        "DLMD",
-                        ".LL."]}
-EYE_COL = {"K": OUTLINE, "D": RAMP["hair"][0], "M": RAMP["hair"][2], "L": RAMP["leather"][3],
-           "W": "#FFFFFF"}
+HEADS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "sprites", "arya", "src",
+                     "arya_heads_8dir.png")
+_heads = None
 
 
-def head_point(rel, pose, yaw):
-    """Screen position, depth and facing of a point on the face (rel to the head centre)."""
-    H = HEAD + np.array([0, pose.lift, 0])
-    r = np.array([13.8, 13.8, 11.6])
-    x, y = rel
-    zz = 1 - (x / r[0]) ** 2 - (y / r[1]) ** 2
-    z = r[2] * math.sqrt(max(zz, 0.0))
-    p = H + np.array([x, y, z])
-    n = np.array([x / r[0] ** 2, y / r[1] ** 2, z / r[2] ** 2])
-    n /= np.linalg.norm(n)
-    c, s = math.cos(yaw), math.sin(yaw)
-    wx, wz = p[0] * c + p[2] * s, -p[0] * s + p[2] * c
-    nz = -n[0] * s + n[2] * c
-    nx = n[0] * c + n[2] * s
-    return (PIVOT[0] + wx, PIVOT[1] - p[1] + wz * HEAD_TILT,
-            wz * math.cos(ELEV) + p[1] * math.sin(ELEV), nz, nx)
+def head(direction):
+    """The head master for a direction: a full 96 x 128 frame, pivot at 48,116."""
+    global _heads
+    if _heads is None:
+        _heads = np.array(Image.open(HEADS).convert("RGBA"))
+    r = DIRS.index(direction)
+    return _heads[r * FH:(r + 1) * FH]
 
 
-def paint_face(img, buf, pose, yaw):
-    """Eyes, glasses, brows, mole and mouth, where the turned head shows them."""
-    def visible(x, y, d):
-        return 0 <= x < FW and 0 <= y < FH and buf["part"][y, x] == PART["head"] and buf["depth"][y, x] < d + 5.0
+# the head masters come from different reference frames: these sit a little
+# high on the shoulders and are seated lower, so his height holds as he turns
+HEAD_DY = {"NW": 4, "N": 1, "NE": 1}
 
-    def put(x, y, col, d):
-        x, y = int(round(x)), int(round(y))
-        if visible(x, y, d):
-            img[y, x, :3] = hexrgb(col)
-    profile = abs(math.sin(yaw)) > 0.95
-    # in the 3/4 views the features turn a little less than the head, so the
-    # far eye and its lens stay on the face, as chibi sprites draw them
-    yaw = yaw if profile else yaw * 0.8
-    eyes = []
-    for side in (+1, -1):                                  # his left eye, his right eye
-        sx, sy, d, face, nx = head_point((side * 5.2, -0.8), pose, yaw)
-        if face < 0.3:
+
+def put_head(img, direction, dy):
+    """The head over the body, moved with it by whole pixels; where the back of
+    the hair stops short of the shoulders, it carries on down to them."""
+    h = head(direction)
+    dy += HEAD_DY.get(direction, 0)
+    out = img.copy()
+    src = h[max(0, -dy):FH - max(0, dy)]
+    sel = src[..., 3] > 0
+    region = out[max(0, dy):FH - max(0, -dy)]
+    body = region[..., 3] > 0
+    region[sel] = src[sel]
+    head_a = np.zeros((FH, FW), bool)
+    head_a[max(0, dy):FH - max(0, -dy)] = sel
+    body_a = np.zeros((FH, FW), bool)
+    body_a[max(0, dy):FH - max(0, -dy)] = body
+    line = np.array(hexrgb(OUTLINE))
+    filled = np.zeros((FH, FW), bool)
+    for x in range(FW):
+        hy = np.nonzero(head_a[:, x])[0]
+        if not len(hy):
             continue
-        if profile:                                        # in profile the eye sits back from the brow
-            sx, sy, d, face, nx = head_point((side * 6.6, -0.8), pose, yaw)
-        eyes.append((side, sx, sy, d, face, nx))
-    for side, sx, sy, d, face, nx in eyes:
-        full = face > 0.82
-        key = ("full_" if full else "narrow_") + ("l" if side > 0 else "r")
-        if not full:
-            key = "narrow_" + ("l" if nx < 0 else "r")          # look the way the face turns
-        pat = EYES_PX[key]
-        w = len(pat[0])
-        x0, y0 = int(round(sx - w / 2)), int(round(sy - 3))
-        for j, row in enumerate(pat):
-            for i, ch in enumerate(row):
-                if ch != ".":
-                    put(x0 + i, y0 + j, EYE_COL[ch], d)
-        # brow: a short dark line, raised a little at its outer end
-        bx, by, bd, _, _ = head_point((side * 5.0, 4.0), pose, yaw)
-        for i in range(-2, 2 if full else 1):
-            put(bx + i, by - (1 if i * side * (1 if nx >= 0 else -1) > 0 else 0), RAMP["hair"][1], bd)
-        # glasses: a round gold rim around the eye, lit at its top left; in
-        # profile the lens is seen edge on, a short upright line before the eye
-        rx, ry = (4.6 if full else max(1.6, 4.6 * face)), 4.4
-        cx, cy = x0 + w / 2 - 0.5, y0 + 2.6
-        if profile:
-            fwd = 1 if nx > 0 else -1
-            lx = int(round(cx + fwd * (w / 2 + 0.5)))
-            for yy in range(int(round(cy - 3)), int(round(cy + 3))):
-                put(lx, yy, RAMP["gold"][3] if yy < cy - 1 else RAMP["gold"][1], d + 3)
-        else:
-            for yy in range(int(cy - ry - 1), int(cy + ry + 2)):
-                for xx in range(int(cx - rx - 1), int(cx + rx + 2)):
-                    e = math.hypot((xx - cx) / rx, (yy - cy) / ry)
-                    if abs(e - 1) < 0.5 / min(rx, ry) + 0.06:
-                        lit = (xx - cx) + (yy - cy) < -1.5
-                        put(xx, yy, RAMP["gold"][3] if lit else RAMP["gold"][1], d)
-        if not full:
-            # the temple arm runs back to the ear
-            ex, ey, ed, _, _ = head_point((side * 12.0, -0.6), pose, yaw)
-            back = 1 if ex > cx else -1
-            start = cx + back * (rx + 1)
-            for xx in range(int(round(start)), int(round(ex)) + back, back):
-                put(xx, cy - 1, RAMP["gold"][1], max(d, ed) + 6)
-    if len(eyes) == 2:                                     # the bridge over the nose
-        (_, ax, ay, ad, af, _), (_, bx2, by2, bd2, bf, _) = eyes
-        lo, hi = sorted([ax, bx2])
-        ra, rb = (4.6 if f > 0.82 else max(1.6, 4.6 * f) for f in (af, bf))
-        rl, rr = (ra, rb) if ax < bx2 else (rb, ra)
-        for xx in range(int(round(lo + rl)) + 1, int(round(hi - rr))):
-            put(xx, round(min(ay, by2)) - 1, RAMP["gold"][1], max(ad, bd2))
-    # the mole above his left brow
-    mx, my, md, mf, _ = head_point((7.2, 6.0), pose, yaw)
-    if mf > 0.25:
-        put(mx, my, RAMP["hair"][0], md)
-    # nose shade and a small smile
-    nx_, ny_, nd, nf, _ = head_point((0.0, -4.6), pose, yaw)
-    if nf > 0.2:
-        put(nx_ + 1, ny_, RAMP["skin"][1], nd)
-    qx, qy, qd, qf, _ = head_point((0.0, -8.2), pose, yaw)
-    if qf > 0.2:
-        width = 2 if qf > 0.7 else 1
-        for i in range(-width, width + 1):
-            put(qx + i, qy - (1 if abs(i) == width and width > 1 else 0), LIPS, qd)
-    return img
+        y0 = hy.max()
+        below = np.nonzero(body_a[y0 + 1:, x])[0]
+        if not len(below) or below[0] == 0 or below[0] > 6:
+            continue
+        # the colour just above the head's bottom edge, under its outline
+        c = out[y0, x, :3]
+        for yy in range(y0, max(y0 - 4, 0), -1):
+            if (out[yy, x, :3] != line).any():
+                c = out[yy, x, :3]
+                break
+        out[y0:y0 + below[0] + 1, x, :3] = c
+        out[y0 + 1:y0 + below[0] + 1, x, 3] = 255
+        filled[y0:y0 + below[0] + 1, x] = True
+    a = out[..., 3] > 0
+    edge = a & ~(np.roll(a, 1, 1) & np.roll(a, -1, 1) & np.roll(a, 1, 0) & np.roll(a, -1, 0))
+    out[filled & edge, :3] = line
+    return out
 
 
 def frame(direction, k):
     buf, pose, yaw = render(direction, k)
     img = shade(buf)
     img = outline(img, buf)
-    img = paint_face(img, buf, pose, yaw)
-    return img
+    return put_head(img, direction, -int(round(pose.lift)))
 
 
 def main():
@@ -746,7 +597,8 @@ def main():
         },
         "palette_size": len(used),
         "pipeline": ["python3 tools/arya_build.py --out-dir assets/sprites/arya/90"],
-        "reference": "assets/sprites/arya/reference/arya_ai_*.webp (drawn after, nothing cut from it)",
+        "head_masters": "assets/sprites/arya/src/arya_heads_8dir.png (one per direction, cleaned from his AI reference)",
+        "reference": "assets/sprites/arya/reference/arya_ai_*.webp",
     }
     with open(os.path.join(a.out_dir, "arya_sprite.json"), "w") as fh:
         json.dump(meta, fh, indent=2)
