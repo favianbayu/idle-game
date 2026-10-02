@@ -108,27 +108,33 @@ class Legs:
 
 
 class PantsLegs:
-    """Two legs in straight chinos and sneakers, hanging from a pelvis at hip_y."""
+    """Two legs in straight chinos and sneakers, hanging from a pelvis at hip_y.
 
-    def __init__(self, k=None, hip_x=4.4, hip_y=20.0, stride=6.0, lift=3.0):
+    thigh and shin are (top, bottom) radii; shoe is the sneaker's half size
+    (across, up, along); the knee sits halfway down the leg.
+    """
+
+    def __init__(self, k=None, hip_x=3.6, hip_y=20.0, stride=6.0, lift=3.0,
+                 thigh=(3.9, 3.6), shin=(3.6, 3.3), shoe=(3.6, 2.6, 5.6)):
         self.legs = {}
         for sgn in (+1, -1):
             fwd, up = stride_pose(k, sgn)
             za = stride * fwd
             base = lift * up
             ankle = np.array([sgn * hip_x, 3.4 + base, za])
-            knee = np.array([sgn * (hip_x + 0.1), 10.5 + 0.6 * base, 0.5 * za + 0.8 * base])
+            knee = np.array([sgn * (hip_x + 0.1), 0.5 * (hip_y + 3.4) + 0.6 * base, 0.5 * za + 0.8 * base])
             hip = np.array([sgn * hip_x, hip_y, 0.0])
             self.legs[sgn] = (hip, knee, ankle, base)
-        self.pelvis = ((0.0, hip_y + 1.5, 0.0), (hip_x + 4.9, 5.0, 5.6))
+        self.pelvis = ((0.0, hip_y + 1.5, 0.0), (hip_x + thigh[0], 4.5, 5.0))
+        self.thigh, self.shin, self.shoe = thigh, shin, shoe
 
     def parts(self, p):
         pants = sd_ellipsoid(p, *self.pelvis)
         shoe = np.full(len(p), 1e9)
         for hip, knee, ankle, base in self.legs.values():
-            pants = np.minimum(pants, sd_capsule(p, hip, knee, 4.9, 4.6))
-            pants = np.minimum(pants, sd_capsule(p, knee, ankle, 4.6, 4.3))
-            f = sd_ellipsoid(p, (ankle[0], base + 2.6, ankle[2] + 1.4), (4.6, 3.1, 6.4))
+            pants = np.minimum(pants, sd_capsule(p, hip, knee, *self.thigh))
+            pants = np.minimum(pants, sd_capsule(p, knee, ankle, *self.shin))
+            f = sd_ellipsoid(p, (ankle[0], base + self.shoe[1] - 0.4, ankle[2] + 1.2), self.shoe)
             shoe = np.minimum(shoe, np.maximum(f, base - p[:, 1]))
         return pants, shoe
 
@@ -140,7 +146,7 @@ class PantsLegs:
         pants, shoe = self.parts(p)
         m = np.where(pants < shoe - 0.15, PANTS, SHOE)
         for hip, knee, ankle, base in self.legs.values():
-            near = (np.abs(p[:, 0] - ankle[0]) < 5.0) & (m == SHOE)
+            near = (np.abs(p[:, 0] - ankle[0]) < self.shoe[0] + 1.0) & (m == SHOE)
             m = np.where(near & (p[:, 1] < base + 1.0), SOLE, m)
         return m
 

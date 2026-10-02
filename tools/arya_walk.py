@@ -6,6 +6,11 @@ shift around, his legs barely step and his arms hang still. Like walkfix.py
 does for Indah, this keeps ONE master frame per direction for the head, the
 torso and the satchel and redraws what a walk cycle needs:
 
+  * Indah's proportions: the AI draws Arya with a big head on short legs, so
+    the reference is converted small enough that his head matches Indah's
+    (--height 74), and the head, shirt and satchel are lifted onto longer
+    legs, putting his crown about level with the top of her hair (the
+    cowlick sticks out above it);
   * legs in 3D (tools/legs3d.py, style "sneakers"): straight chinos from the
     pelvis, white sneakers, the knee bends and the swing foot lifts with the
     Prompt Sprite phase table (contact A, down A, passing A, contact B, down B,
@@ -15,7 +20,8 @@ torso and the satchel and redraws what a walk cycle needs:
     a forearm and a fist, rotated about the shoulder in 3D and projected with
     the isometric camera, so they swing sideways in the side views and toward
     or away from the camera in the front and back views; the arm on the far
-    side passes behind the body;
+    side passes behind the body; the sleeve grows out of the shoulder with no
+    outline between them, so the arm stays part of the body;
   * a 1 px body bob (lowest on "down", highest on "passing");
   * crisp 7 x 6 eyes behind round gold glasses, painted at fixed positions on
     the masters (the converted eyes are brown smudges and the thin AI rims
@@ -23,7 +29,7 @@ torso and the satchel and redraws what a walk cycle needs:
 
 Usage:
   python3 tools/pixelfit.py assets/sprites/arya/reference/arya_ai_walk_atlas.webp \\
-      --height 90 --palette arya --name arya --out <tmp>
+      --height 74 --palette arya --name arya --out <tmp>
   python3 tools/arya_walk.py <tmp>/arya_sprite_8dir.png --out-dir assets/sprites/arya/90
 """
 import argparse
@@ -35,7 +41,7 @@ import numpy as np
 from PIL import Image
 
 from legs3d import render_legs
-from pixelfit import DIRS, EYE_KEYS, FH, FW, PALETTES, PIVOT, components, hex2rgb
+from pixelfit import DIRS, EYE_KEYS, FH, FW, PALETTES, PIVOT, components, hex2rgb, hull_mask
 from walkfix import BOB, ELEV, YAW, colour_set, despike, fill_holes, grow, mask_of, outline
 
 PAL = "arya"
@@ -67,8 +73,12 @@ EYES_PX = {"full_l": [".KKKKK.",
                         "SMMDD",
                         ".LLM."]}
 MASTERS = {"SE": 0, "S": 2, "SW": 0, "W": 0, "NW": 5, "N": 0, "NE": 1, "E": 3}
-# eye centres on each master: (x, y, near) - the near eye is drawn full, the
-# far one (or the only one, in profile) narrow
+# Positions on the masters as converted at REF_SCALE (pixelfit --height 90);
+# they are rescaled to the scale the atlas was actually converted at (read
+# from pixelfit's json), around the pivot like pixelfit places the frames.
+REF_SCALE = 0.5233
+# eye centres: (x, y, near) - the near eye is drawn full, the far one (or the
+# only one, in profile) narrow
 EYES = {
     "SE": [(47, 58, True), (64, 58, False)],
     "S": [(38, 58, True), (55, 58, True)],
@@ -76,15 +86,39 @@ EYES = {
     "W": [(34, 59, False)],
     "E": [(61, 57, False)],
 }
-CUT = 100               # the master is kept down to the crotch; the legs below are 3D
-HIP_Y = 20.0            # hip joints above the ground (model units)
-SHOULDER_X = 14.0       # shoulder joints, half the shoulder width
-SHOULDER_Y = 40.5
-UPPER, FORE = 8.8, 8.8  # shoulder to elbow, elbow to the middle of the fist
-R_SLEEVE, R_FORE, R_FIST = 3.8, 2.6, 3.4
-SWING = 22              # degrees each way, against the legs
-BEND = 8                # elbow bend, degrees (a little more on the forward swing)
+CROTCH = 100            # crotch row of the masters; the legs below it are 3D
+LEG = 25                # crotch to soles after the head and torso are lifted onto longer legs
+LEGS = dict(hip_x=3.9, thigh=(4.4, 4.0), shin=(4.0, 3.7), shoe=(3.9, 2.8, 5.8), stride=6.5, lift=3.2)
+TORSO = (9.5, 6.0)      # half width and half depth of the torso under the shoulders
+SHOULDER_X = 11.0       # shoulder joints, half the shoulder width
+SHOULDER_Y = 34.0
+UPPER, FORE = 9.5, 10.5  # shoulder to elbow, elbow to the middle of the fist
+R_SLEEVE, R_FORE, R_FIST = 3.0, 2.1, 2.7
+SWING = 18              # degrees each way, against the legs
+BEND = 6                # elbow bend, degrees (a little more on the forward swing)
 LIGHT2 = np.array([-0.6, -0.8])
+
+
+class Geo:
+    """Where things are on the masters, at the scale the atlas was converted at."""
+
+    def __init__(self, scale):
+        self.k = scale / REF_SCALE
+        self.cut = self.y(CROTCH)
+        self.lift = LEG - (PIVOT[1] - self.cut)
+        self.hip_y = (PIVOT[1] - (self.cut - self.lift - 1)) / math.cos(ELEV)
+
+    def x(self, v):
+        return int(round(PIVOT[0] + (v - PIVOT[0]) * self.k))
+
+    def y(self, v):
+        return int(round(PIVOT[1] - (PIVOT[1] - v) * self.k))
+
+    def px(self, n):
+        return int(round(n * self.k))
+
+    def eyes(self, direction):
+        return [(self.x(x), self.y(y), near) for x, y, near in EYES.get(direction, [])]
 
 
 def rgb(key, i):
@@ -167,7 +201,7 @@ def project(p, yaw, dx, bob):
 def arm_joints(sgn, swing):
     """Shoulder, elbow and fist (model space) of the arm on side sgn (+1 = his left)."""
     t = math.radians(swing)
-    t2 = t + math.radians(BEND + max(0.0, swing) * 0.3)
+    t2 = t + math.radians(BEND + max(0.0, swing) * 0.25)
     abd = math.radians(5)
     sh = np.array([sgn * SHOULDER_X, SHOULDER_Y, 0.0])
     el = sh + UPPER * np.array([sgn * math.sin(abd), -math.cos(t) * math.cos(abd), math.sin(t) * math.cos(abd)])
@@ -184,20 +218,24 @@ def swing_of(sgn, k):
 
 
 def segment(gx, gy, a, b):
+    """Distance to segment a-b, position along it (0-1, and unclamped) and the offset from it."""
     vx, vy = b[0] - a[0], b[1] - a[1]
-    t = np.clip(((gx - a[0]) * vx + (gy - a[1]) * vy) / max(vx * vx + vy * vy, 1e-6), 0, 1)
+    raw = ((gx - a[0]) * vx + (gy - a[1]) * vy) / max(vx * vx + vy * vy, 1e-6)
+    t = np.clip(raw, 0, 1)
     px, py = a[0] + t * vx, a[1] + t * vy
-    return np.hypot(gx - px, gy - py), t, gx - px, gy - py
+    return np.hypot(gx - px, gy - py), t, raw, gx - px, gy - py
 
 
 def draw_arm(canvas, joints):
     """Rolled-sleeve upper arm, forearm and fist between projected joints, toon shaded."""
     (sx, sy), (ex, ey), (fx, fy) = joints
     gy, gx = np.mgrid[0:FH, 0:FW] + 0.5                 # pixel centres
-    d_s, t_s, ox_s, oy_s = segment(gx, gy, (sx, sy), (ex, ey))
-    d_f, _, ox_f, oy_f = segment(gx, gy, (ex, ey), (fx, fy))
+    d_s, t_s, raw_s, ox_s, oy_s = segment(gx, gy, (sx, sy), (ex, ey))
+    d_f, _, _, ox_f, oy_f = segment(gx, gy, (ex, ey), (fx, fy))
     d_h = np.hypot(gx - fx, gy - fy)
-    sleeve = d_s <= R_SLEEVE
+    # the sleeve starts at the shoulder joint (no round cap sticking up out of
+    # the shoulder) and is a little fuller at the top, where it meets the body
+    sleeve = (d_s <= R_SLEEVE + 0.6 * (1 - t_s)) & (raw_s >= 0)
     fore = (d_f <= R_FORE) & ~sleeve
     fist = (d_h <= R_FIST) & ~sleeve
     limb = sleeve | fore | fist
@@ -207,12 +245,16 @@ def draw_arm(canvas, joints):
         return np.where(d < 0.8, 2, np.where(n > 0.45, 3, np.where(n < -0.35, 1, 2)))
     # outline where the arm stands against the background; over the body a
     # shading line in the arm's own colour, so it does not cut the shirt in two
+    # outline where the arm stands against the background; over the body the
+    # upper sleeve simply joins the shirt, the lower arm gets a soft fold line
     ring = grow(limb, 1) & ~limb
     behind = canvas[..., 3] > 0
+    lower = grow((sleeve & (t_s >= 0.5)) | fore | fist, 1)
     canvas[ring & ~behind, :3] = rgb("outline", 0)
-    canvas[ring & behind & grow(sleeve, 1), :3] = rgb("shirt", 0)
-    canvas[ring & behind & ~grow(sleeve, 1), :3] = rgb("skin", 0)
-    canvas[ring, 3] = 255
+    canvas[ring & ~behind, 3] = 255
+    fold = ring & behind & lower
+    canvas[fold & grow(sleeve & (t_s >= 0.5), 1), :3] = rgb("shirt", 1)
+    canvas[fold & ~grow(sleeve, 1), :3] = rgb("skin", 0)
     t_skin = np.where(fist, tone(gx - fx, gy - fy, d_h), tone(ox_f, oy_f, d_f))
     for i in (1, 2, 3):
         sel = (fore | fist) & (t_skin == i)
@@ -226,81 +268,92 @@ def draw_arm(canvas, joints):
     canvas[limb, 3] = 255
 
 
-def torso_dx(img):
+def torso_dx(img, geo):
     """Horizontal offset of the torso from the pivot, from the shirt between the shoulders and the hem."""
     shirt = mask_of(img, colour_set(PAL, "shirt"))
-    shirt[: CUT - 28] = False
-    shirt[CUT - 12:] = False
+    shirt[: geo.cut - geo.px(28)] = False
+    shirt[geo.cut - geo.px(12):] = False
     xs = np.nonzero(shirt)[1]
     return int(round(np.median(xs) + 0.5 - PIVOT[0])) if len(xs) else 0
 
 
-def find_hands(img):
+def find_hands(img, geo):
     """Forearm-and-fist skin blobs of the master: list of (mask, elbow (x, y))."""
     lab, n = components(mask_of(img, colour_set(PAL, "skin")))
     hands = []
     for i in range(1, n + 1):
         comp = lab == i
         yy, xx = np.nonzero(comp)
-        if len(yy) >= 25 and yy.min() > CUT - 22:
+        if len(yy) >= geo.px(25) and yy.min() > geo.cut - geo.px(22):
             top = yy <= yy.min() + 1
             hands.append((comp, (float(xx[top].mean()) + 0.5, float(yy.min()))))
     return sorted(hands, key=lambda h: h[1][0])
 
 
-def shoulders(hands, yaw, dx):
-    """Screen shoulder of each arm: at the model's shoulder height, and right
-    above the master's elbow where that arm shows.
-    Returns {sgn: ((x, y), depth, shows in the master)}."""
+def shoulder_row(img, geo):
+    """Row of the shoulder joints on a master: a few rows under the top of the shirt."""
+    shirt = mask_of(img, colour_set(PAL, "shirt"))
+    top = geo.cut - geo.px(30)
+    rows = np.nonzero(shirt[top:geo.cut].sum(1) >= 6)[0]
+    return top + int(rows.min()) + 3 if len(rows) else geo.cut - geo.px(19)
+
+
+def shoulders(yaw, dx, row):
+    """Screen shoulder of each arm, hung on the body by the 3D model: on the
+    master's shoulder row, lower for the shoulder nearer the camera.
+    Returns {sgn: ((x, y), depth toward the camera)}."""
+    level = PIVOT[1] - SHOULDER_Y * math.cos(ELEV)
     out = {}
     for sgn in (+1, -1):
-        sh, el, _ = arm_joints(sgn, 0.0)
-        sx, sy, z = project(sh, yaw, dx, 0)
-        ex, ey, _ = project(el, yaw, dx, 0)
-        out[sgn] = [(sx, sy), z, (ex, ey)]
-    order = sorted(out, key=lambda sgn: out[sgn][2][0])           # screen left to right
-    if len(hands) >= 2:
-        pairs = zip(order, (hands[0], hands[-1]))
-    elif hands:
-        best = min(out, key=lambda sgn: abs(out[sgn][2][0] - hands[0][1][0]))
-        pairs = [(best, hands[0])]
-    else:
-        pairs = []
-    seen = set()
-    for sgn, (_, (ex, ey)) in pairs:
-        (sx, sy), z, (mx, my) = out[sgn]
-        out[sgn][0] = (ex + (sx - mx), sy)          # the master decides how far out the arm hangs
-        seen.add(sgn)
-    return {sgn: (tuple(v[0]), v[1], sgn in seen) for sgn, v in out.items()}
+        sx, sy, z = project(arm_joints(sgn, 0.0)[0], yaw, dx, 0)
+        out[sgn] = ((sx, row + sy - level), z)
+    return out
 
 
-def prepare(master, direction):
+def prepare(master, direction, geo):
     """Master -> (body layer without arms or legs, torso offset, shoulders)."""
     img = drop_islands(master)
     if direction in EYES:
-        img = paint_eyes(img, EYES[direction])
-    dx = torso_dx(img)
+        img = paint_eyes(img, geo.eyes(direction))
+    dx = torso_dx(img, geo)
     yaw = YAW[direction]
-    hands = find_hands(img)
-    sh = shoulders(hands, yaw, dx)
-    # lift out the forearms and fists, with the outline and the dark shading
-    # the resampling left around them ...
+    row = shoulder_row(img, geo)
+    sh = shoulders(yaw, dx, row)
+    # lift out the master's arms, wherever the AI swung them: the forearms and
+    # fists with the outline and dark shading the resampling left around them,
+    # and the sleeve above each one, up to the shoulder ...
     dark = mask_of(img, colour_set(PAL, "outline", "lips")) | mask_of(img, {tuple(rgb("hair", 0))})
     lab, n = components(mask_of(img, colour_set(PAL, "leather")))
     sizes = np.bincount(lab.ravel())
     dark |= (lab > 0) & (sizes[lab] < 30)           # dark leather specks, but not the satchel
-    hole = np.zeros(img.shape[:2], bool)
-    for comp, _ in hands:
-        hole |= comp | (grow(comp, 2) & dark)
-    # ... and the sleeves: of the near arms, and of any arm whose hand shows
     gy, gx = np.mgrid[0:FH, 0:FW] + 0.5
     cloth = mask_of(img, colour_set(PAL, "shirt", "outline", "skin"))
-    for sgn, ((sx, sy), z, seen) in sh.items():
-        if z < -2 and not seen:
+    hole = np.zeros(img.shape[:2], bool)
+    for comp, (ex, ey) in find_hands(img, geo):
+        hole |= comp | (grow(comp, 2) & dark)
+        d, t, _, _, _ = segment(gx, gy, (ex, row), (ex, ey))
+        hole |= (d <= R_SLEEVE + 0.5) & (t > 0.3) & cloth
+    # ... and whatever lies where the new arms hang, on the near side
+    for sgn, ((sx, sy), z) in sh.items():
+        if z < -2:
             continue
         ex, ey = joints_at((sx, sy), sgn, yaw, 0.0)[1]
-        d, t, _, _ = segment(gx, gy, (sx, sy), (ex, ey))
-        hole |= (d <= R_SLEEVE + 0.5) & (t > 0.25) & cloth
+        d, t, _, _, _ = segment(gx, gy, (sx, sy), (ex, ey))
+        hole |= (d <= R_SLEEVE + 0.5) & (t > 0.3) & cloth
+    # ... and anything left of them sticking out of the torso: only the satchel
+    # may hang outside it
+    a = math.radians(yaw)
+    half = math.hypot(TORSO[0] * math.cos(a), TORSO[1] * math.sin(a)) + 1.5
+    off = np.abs(gx - (PIVOT[0] + dx))
+    rows = np.zeros(hole.shape, bool)
+    rows[row - 3:geo.cut + 1] = True
+    side = np.where(gy < row + 1, off > half + 3, off > half)     # a little wider over the shoulders
+    lab, n = components(mask_of(img, colour_set(PAL, "leather")) & rows)
+    satchel = np.zeros(hole.shape, bool)
+    for i in range(1, n + 1):
+        if (lab == i).sum() >= 30:
+            satchel |= hull_mask(lab == i)          # with its highlights, which share the skin's colours
+    hole |= side & rows & (img[..., 3] > 0) & ~grow(satchel, 1)
     # what was arm outside the body becomes background; only pixels with body
     # on both sides of them in their row are filled in from their neighbours
     body = img.copy()
@@ -322,7 +375,7 @@ def prepare(master, direction):
     for i in range(1, n + 1):
         comp = lab == i
         yy = np.nonzero(comp)[0]
-        if len(yy) >= 25 and yy.max() >= CUT - 6:        # not the beige shading inside the shirt
+        if len(yy) >= 25 and yy.max() >= geo.cut - geo.px(6):   # not the beige shading inside the shirt
             body[comp] = 0
     line = mask_of(body, colour_set(PAL, "outline"))
     kept = (body[..., 3] > 0) & ~line
@@ -330,11 +383,11 @@ def prepare(master, direction):
     # below the crotch only the satchel stays: the leather (with its highlights)
     # that hangs down from above the cut, and its outline
     low = np.zeros(hole.shape, bool)
-    low[CUT + 1:] = True
+    low[geo.cut + 1:] = True
     near_cut = np.zeros(hole.shape, bool)
-    near_cut[CUT - 4:CUT + 1] = True
+    near_cut[geo.cut - geo.px(4):geo.cut + 1] = True
     leather = mask_of(body, colour_set(PAL, "leather", "skin", "hair"))
-    leather[: CUT - 14] = False
+    leather[: geo.cut - geo.px(14)] = False
     lab, n = components(leather)
     bag = np.zeros(hole.shape, bool)
     for i in range(1, n + 1):
@@ -344,7 +397,11 @@ def prepare(master, direction):
     bag &= low
     bag |= grow(bag, 1) & mask_of(body, colour_set(PAL, "outline")) & low
     body[low & ~bag] = 0
-    return drop_islands(body), dx, sh
+    # onto the longer legs
+    body = np.roll(drop_islands(body), -geo.lift, axis=0)
+    body[FH - geo.lift:] = 0
+    sh = {sgn: ((x, y - geo.lift), z) for sgn, ((x, y), z) in sh.items()}
+    return body, dx, sh
 
 
 def joints_at(shoulder, sgn, yaw, swing, bob=0):
@@ -354,13 +411,13 @@ def joints_at(shoulder, sgn, yaw, swing, bob=0):
     return [(x + ox, y + oy) for x, y, _ in pts]
 
 
-def frame(body, dx, sh, direction, k):
+def frame(body, dx, sh, direction, k, geo):
     """One frame: k = walk frame 0-5, or None for the standing (idle) pose."""
     bob = BOB[k] if k is not None else 0
     yaw = YAW[direction]
-    legs = render_legs(yaw, k, PAL, style="sneakers", hip_y=HIP_Y - bob / math.cos(ELEV))
+    legs = render_legs(yaw, k, PAL, style="sneakers", hip_y=geo.hip_y - bob / math.cos(ELEV), **LEGS)
     canvas = np.roll(legs, dx, axis=1)
-    arms = [(z, joints_at(s, sgn, yaw, swing_of(sgn, k), bob)) for sgn, (s, z, _) in sh.items()]
+    arms = [(z, joints_at(s, sgn, yaw, swing_of(sgn, k), bob)) for sgn, (s, z) in sh.items()]
     for z, joints in arms:
         if z < -2:
             draw_arm(canvas, joints)                     # the far arm passes behind the body
@@ -379,16 +436,20 @@ def main():
     ap.add_argument("--out-dir", required=True)
     a = ap.parse_args()
     src = np.array(Image.open(a.atlas).convert("RGBA"))
+    with open(os.path.join(os.path.dirname(a.atlas), "arya_sprite.json")) as fh:
+        geo = Geo(json.load(fh)["scale_from_source"])
     rows, idle, heights = [], [], {}
     for r, d in enumerate(DIRS):
         c = MASTERS[d]
-        body, dx, sh = prepare(src[r * FH:(r + 1) * FH, c * FW:(c + 1) * FW], d)
-        rows.append(np.concatenate([frame(body, dx, sh, d, k) for k in range(6)], 1))
-        still = frame(body, dx, sh, d, None)
+        body, dx, sh = prepare(src[r * FH:(r + 1) * FH, c * FW:(c + 1) * FW], d, geo)
+        rows.append(np.concatenate([frame(body, dx, sh, d, k, geo) for k in range(6)], 1))
+        still = frame(body, dx, sh, d, None, geo)
         idle.append(still)
         ys = np.nonzero((still[..., 3] > 0).any(1))[0]
         heights[d] = int(ys.max() - ys.min() + 1)
     walk = np.concatenate(rows, 0)
+    width = (idle[1][..., 3] > 0).sum(1)
+    crown = int(PIVOT[1] - np.argmax(width >= 0.3 * width.max()))     # the dome, not the cowlick
     idle = np.concatenate(idle, 0)
     os.makedirs(a.out_dir, exist_ok=True)
     Image.fromarray(walk).save(os.path.join(a.out_dir, "arya_sprite_8dir.png"), optimize=True)
@@ -399,8 +460,9 @@ def main():
         "character": "Arya Prasetya",
         "frame": {"w": FW, "h": FH},
         "pivot": {"x": PIVOT[0], "y": PIVOT[1]},
-        "height_px": 90,
-        "height_note": "crown to soles; the cowlick sticks out above it",
+        "height_px": crown,
+        "height_note": "crown to soles (front view), about level with the top of Indah's hair; "
+                       "the cowlick sticks out above it",
         "idle_heights_px": heights,
         "rows": DIRS,
         "animations": {
@@ -411,7 +473,7 @@ def main():
         "palette_size": len(used),
         "pipeline": [
             "python3 tools/pixelfit.py assets/sprites/arya/reference/arya_ai_walk_atlas.webp "
-            "--height 90 --palette arya --name arya --out <tmp>",
+            "--height 74 --palette arya --name arya --out <tmp>",
             "python3 tools/arya_walk.py <tmp>/arya_sprite_8dir.png --out-dir assets/sprites/arya/90",
         ],
     }
