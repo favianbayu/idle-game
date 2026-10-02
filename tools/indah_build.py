@@ -238,10 +238,10 @@ def head(direction, variant):
 # the head masters were drawn over shoulders 7 px higher: they come down with
 # them; seen from the side the head sits back over the body (px toward her back)
 HEAD_DROP = 7
-HEAD_BACK = {"W": 5, "E": 5, "SW": 3, "SE": 3, "NW": 3, "NE": 3}
+HEAD_BACK = {"W": 5, "E": 5}
 
 # rows of the head masters below which the long hair hangs free of the head
-NAPE = {"SE": 64, "S": 63, "SW": 64, "W": 64, "NW": 64, "N": 64, "NE": 64, "E": 64}
+NAPE = {"SE": 63, "S": 63, "SW": 63, "W": 64, "NW": 64, "N": 64, "NE": 63, "E": 64}
 FRONT = ("SE", "S", "SW")               # the hair falls behind her
 BACK = ("NW", "N", "NE")                # the hair covers her back
 
