@@ -50,7 +50,7 @@
       "layout": "1 column x 8 rows (same row order)"
     }
   },
-  "palette_size": 30,
+  "palette_size": 32,
   "pipeline": [
     "python3 tools/indah_build.py --out-dir assets/sprites/indah/84"
   ],
