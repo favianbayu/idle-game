@@ -5,7 +5,8 @@ Image generators draw "pixel art" without a real pixel grid: soft edges, tens of
 thousands of colours and a light fringe left by background removal. This tool:
 
   1. cuts the atlas into its 48 sprites (connected components, so sprites that
-     overlap a neighbour's cell are kept whole),
+     overlap a neighbour's cell are kept whole; sprites that touch, like a
+     cowlick against the shoes above it, are split where they touch),
   2. maps every source pixel to a fixed palette (sampled from the reference),
   3. scales all sprites with ONE factor so the front-facing row is exactly
      --height art pixels tall, and resamples with a mode filter (majority colour
@@ -46,6 +47,27 @@ PALETTES = {
         "wood": ["#B77741", "#E6A452"],
         "cord": ["#7A3424"],
     },
+    "arya": {
+        "outline": ["#1E0C05"],
+        "hair": ["#2D1910", "#39241A", "#4A2C1D", "#62402F"],
+        "skin": ["#8D4F26", "#C37031", "#F09C50", "#F7B676"],
+        "lips": ["#A84A26"],
+        "eye": ["#4E220C", "#86461C", "#FFFFFF"],
+        "glasses": ["#B98238", "#E7B864"],
+        "shirt": ["#A08268", "#CDAB90", "#EAD9C2", "#FAF1E2"],
+        "chinos": ["#8A6844", "#B38A5E", "#D3AC7E", "#E7C899"],
+        "leather": ["#3B1A09", "#5C2C11", "#85471C", "#A95F2E"],
+        "sole": ["#B59A82"],
+        "pen": ["#34508A"],
+    },
+}
+
+# Per-character conversion rules. "paint_only" ramps are never matched from
+# the source: the AI paints Arya's satchel in the same browns as his eyes and
+# his glasses in skin tones, so those are painted afterwards (tools/arya_walk.py).
+# "height_from": "head" measures --height from the crown, not from a cowlick.
+STYLE = {
+    "arya": {"paint_only": ("eye", "glasses", "pen"), "height_from": "head"},
 }
 
 
@@ -64,14 +86,16 @@ def to_lab(rgb):
 
 
 def build_palette(name):
-    cols = []
-    for ramp in PALETTES[name].values():
+    cols, mappable = [], []
+    skip = STYLE.get(name, {}).get("paint_only", ())
+    for key, ramp in PALETTES[name].items():
         cols += ramp
+        mappable += [key not in skip] * len(ramp)
     rgb = np.array([hex2rgb(c) for c in cols])
-    return cols, rgb, to_lab(rgb)
+    return cols, rgb, to_lab(rgb), np.array(mappable)
 
 
-def cut_sprites(alpha, cols=6, rows=8):
+def cut_sprites(alpha, cols=6, rows=8, solid=None, rgb=None):
     """Assign every opaque pixel to one of the cols x rows sprites."""
     h, w = alpha.shape
     lab, n = components(alpha, conn8=False)
@@ -91,9 +115,11 @@ def cut_sprites(alpha, cols=6, rows=8):
         sel = lab == i
         c = min(cols - 1, int(cx[i] / cw))
         if ymax[i] - ymin[i] > ch * 1.15:
-            # a sprite that touches the one below it: split at the row line
-            r_each = np.clip((np.nonzero(sel)[0] / ch).astype(int), 0, rows - 1)
+            # two sprites that touch (a cowlick against the shoes above it):
+            # split them where they touch, so neither one loses its tip
             yy, xx = np.nonzero(sel)
+            r_each = split_touching(sel, ch, rows, alpha if solid is None else solid,
+                                    np.zeros(alpha.shape + (3,)) if rgb is None else rgb)
             owner[yy, xx] = r_each * cols + c
         else:
             r = min(rows - 1, int(cy[i] / ch))
@@ -101,14 +127,77 @@ def cut_sprites(alpha, cols=6, rows=8):
     return owner
 
 
+def split_touching(sel, ch, rows, solid, rgb):
+    """Row of every pixel of a component that spans several sprites.
+
+    The fully opaque pixels (solid), shrunk by 2 px so narrow contacts break,
+    fall apart into cores; each core belongs to the row its centre is in, and
+    every other pixel joins a neighbouring core, small colour steps first. If
+    a core still spans two sprites, the mask is eroded further; failing that,
+    the row lines split that core.
+    """
+    yy, xx = np.nonzero(sel)
+    y0, x0 = yy.min(), xx.min()
+    m = sel[y0:yy.max() + 1, x0:xx.max() + 1]
+    row_of_y = np.clip((np.arange(m.shape[0]) + y0) / ch, 0, rows - 1).astype(int)
+
+    def shrink(a):
+        p = np.pad(a, 1)
+        return a & p[:-2, 1:-1] & p[2:, 1:-1] & p[1:-1, :-2] & p[1:-1, 2:]
+    # two px of erosion break the narrow necks where shoes rest on a cowlick;
+    # cores that still span two sprites are eroded further, the others are kept
+    label = np.full(m.shape, -1)
+    core = shrink(shrink(m & solid[y0:yy.max() + 1, x0:xx.max() + 1]))
+    for _ in range(16):
+        lab, n = components(core, conn8=False)
+        still = np.zeros(m.shape, bool)
+        for b in range(1, n + 1):
+            sel_b = lab == b
+            ys = np.nonzero(sel_b.any(1))[0]
+            if sel_b.sum() < 30:
+                continue
+            if ys.max() - ys.min() > 1.15 * ch:
+                still |= sel_b
+            else:
+                label[sel_b] = row_of_y[int(np.nonzero(sel_b)[0].mean())]
+        if not still.any():
+            break
+        core = shrink(still)
+    else:
+        label[still] = np.broadcast_to(row_of_y[:, None], m.shape)[still]   # the row lines split it
+    # grow in waves; a pixel joins the labelled neighbour closest in colour,
+    # so the pale sole edge goes with its shoe, not with the dark cowlick it touches
+    col = to_lab(rgb[y0:yy.max() + 1, x0:xx.max() + 1])
+    h, w = m.shape
+    col_p = np.pad(col, ((1, 1), (1, 1), (0, 0)))
+    for limit in (100.0, 400.0, 1600.0, np.inf):          # small colour steps first
+        while (label[m] < 0).any():
+            best = np.full(m.shape, limit)
+            grown = label.copy()
+            lab_p = np.pad(label, 1, constant_values=-1)
+            for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nb = lab_p[1 + dy:h + 1 + dy, 1 + dx:w + 1 + dx]
+                dist = ((col - col_p[1 + dy:h + 1 + dy, 1 + dx:w + 1 + dx]) ** 2).sum(-1)
+                take = (label < 0) & (nb >= 0) & m & (dist < best)
+                grown[take] = nb[take]
+                best[take] = dist[take]
+            if (grown == label).all():
+                break
+            label = grown
+    out = label[yy - y0, xx - x0]
+    fallback = np.clip((yy / ch).astype(int), 0, rows - 1)
+    return np.where(out >= 0, out, fallback)
+
+
 def fit_atlas(path, height, palette, alpha_cut=150):
     src = np.array(Image.open(path).convert("RGBA"))
-    names, prgb, plab = build_palette(palette)
+    names, prgb, plab, mappable = build_palette(palette)
     alpha = src[..., 3] >= alpha_cut
-    owner = cut_sprites(alpha)
+    owner = cut_sprites(alpha, solid=src[..., 3] >= 250, rgb=src[..., :3])
     # palette index per source pixel (0 = transparent)
     lab = to_lab(src[..., :3])
     d = ((lab[..., None, :] - plab[None, None]) ** 2).sum(-1)
+    d[..., ~mappable] = np.inf
     pidx = d.argmin(-1) + 1
     pidx[~alpha] = 0
     # one global scale: the front-facing row (S) sets the height
@@ -118,7 +207,12 @@ def fit_atlas(path, height, palette, alpha_cut=150):
         yy, xx = np.nonzero(owner == k)
         boxes[k] = (yy, xx)
         if k // 6 == 1 and len(yy):
-            heights.append(yy.max() - yy.min() + 1)
+            top = yy.min()
+            if STYLE.get(palette, {}).get("height_from") == "head":
+                # measure from the crown, not from a thin cowlick sticking out of it
+                width = np.bincount(yy - top)
+                top += int(np.argmax(width >= 0.3 * width.max()))
+            heights.append(yy.max() - top + 1)
     s = height / float(np.median(heights))
     frames = []
     for k in range(48):
@@ -362,7 +456,7 @@ def render(frames, prgb, names, outline, palette=None, size_class=None):
     tiles = []
     for k, f in enumerate(frames):
         f = clean(f, names, outline)
-        if size_class and k // 6 in (0, 1, 2, 3, 7):
+        if palette and size_class and k // 6 in (0, 1, 2, 3, 7):
             f = repaint_eyes(f, palette, names, size_class, front_facing=k // 6 in (0, 1, 2))
         img = np.zeros((FH, FW, 4), np.uint8)
         m = f > 0
