@@ -15,6 +15,13 @@ in the reference's own pixels:
     with the Prompt Sprite phase table (contact A, down A, passing A,
     contact B, down B, passing B) and the swing foot lifts; in the front and
     back views the feet move up and down instead;
+  * idle: the AI drew no standing pose, so (except facing us or away, where
+    its legs already stand) both legs are set straight under the hips with
+    the flattest foot it drew, side by side on the ground, and the hips are
+    narrowed to them;
+  * seams: the dark line where a limb was cut off the body is painted over
+    with the limb's own colours, and the notches a turned limb opens at the
+    shoulder or hip are filled with the colours around them;
   * arms: each arm (sleeve, forearm and fist) is cut out and swung from the
     shoulder against the legs; in profile, where the AI drew the arm across
     the chest, the forearm swings from the elbow; the far arm passes behind
@@ -73,6 +80,8 @@ EYES_PX = {"full_l": [".KKKKK.",
                         "SMMDD",
                         ".LLM."]}
 MASTERS = {"SE": 0, "S": 2, "SW": 0, "W": 0, "NW": 5, "N": 0, "NE": 1, "E": 3}
+# standing: the AI frame and leg (0 = screen left) whose foot is drawn flattest
+STAND = {"SE": (1, 1), "SW": (0, 0), "W": (0, 0), "NW": (5, 1), "NE": (1, 0), "E": (1, 0)}
 # Positions on the masters as converted at REF_SCALE (pixelfit --height 90);
 # they are rescaled to the scale the atlas was actually converted at (read
 # from pixelfit's json), around the pivot like pixelfit places the frames.
@@ -94,6 +103,8 @@ LEGS_X = 4.6
 ARM_R = 3.5             # how far around the line from shoulder to elbow the sleeve is cut out
 STRIDE, LIFT = 5.5, 3.0  # how far a foot travels forward or back, and how high the swing foot lifts
 SWING = 18              # degrees each arm swings each way, against the legs
+STANCE_X = 6.0          # standing: half the distance between the hips, facing us
+TOE = 1.5               # standing in profile: how far the shoe sits ahead of the hip
 
 
 class Geo:
@@ -234,6 +245,51 @@ def rotate(sprite, angle, pivot):
     return out
 
 
+def paint_in(img, todo, rounds=6):
+    """Give each pixel in todo the most common colour of its opaque neighbours, growing inward.
+
+    Outline neighbours only count where nothing else is next to the pixel, so
+    seams and gaps fill with cloth and skin rather than with more outline."""
+    out = img.copy()
+    todo = todo.copy()
+    line = tuple(rgb("outline", 0)) + (255,)
+    for _ in range(rounds):
+        if not todo.any():
+            break
+        known = (out[..., 3] > 0) & ~todo
+        votes = {}
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                if dy or dx:
+                    nb = np.roll(np.roll(out, dy, 0), dx, 1)
+                    ok = np.roll(np.roll(known, dy, 0), dx, 1) & todo
+                    for y, x in zip(*np.nonzero(ok)):
+                        votes.setdefault((y, x), []).append(tuple(int(v) for v in nb[y, x]))
+        for (y, x), cols in votes.items():
+            fill = [c for c in cols if c != line] or cols
+            out[y, x] = max(set(fill), key=fill.count)
+            todo[y, x] = False
+    return out
+
+
+def heal(sprite, where):
+    """Paint over the dark seam a cut-out limb carries where it was cut off the body."""
+    dark = mask_of(sprite, colour_set(PAL, "outline", "hair")) | \
+        mask_of(sprite, {tuple(rgb("leather", 0)), tuple(rgb("leather", 1))})
+    return paint_in(sprite, dark & where)
+
+
+def close_joints(canvas, joints, radius=6, region=None):
+    """Fill the notches a turned limb opens at its joint (and in region) with the colours around them."""
+    a = canvas[..., 3] > 0
+    closed = ~grow(~grow(a, 2), 2)
+    gy, gx = np.mgrid[0:FH, 0:FW] + 0.5
+    near = np.zeros(a.shape, bool) if region is None else region.copy()
+    for x, y in joints:
+        near |= np.hypot(gx - x, gy - y) < radius
+    return paint_in(canvas, closed & ~a & near)
+
+
 def shift(sprite, dx, dy):
     out = np.zeros_like(sprite)
     h, w = sprite.shape[:2]
@@ -256,7 +312,7 @@ def pose(sprite, joint, end, target):
 class Master:
     """One direction cut out of its master frame: body, two legs and the arms that show."""
 
-    def __init__(self, master, direction, geo):
+    def __init__(self, master, direction, geo, stand_leg=None):
         yaw = math.radians(YAW[direction])
         img = drop_islands(master)
         if direction in EYES:
@@ -328,8 +384,10 @@ class Master:
             mask &= ~taken
             taken |= mask
             z = -sgn * SHOULDER_X * math.sin(yaw)
-            self.arms.append(dict(sgn=sgn, sprite=np.where(mask[..., None], img, 0).astype(np.uint8),
-                                  joint=shoulder, end=hand, near=z >= -2))
+            sprite = np.where(mask[..., None], img, 0).astype(np.uint8)
+            # the armhole line where the arm was cut from the body is a seam, not an outline
+            sprite = heal(sprite, np.hypot(gx - shoulder[0], gy - shoulder[1]) < 5)
+            self.arms.append(dict(sgn=sgn, sprite=sprite, joint=shoulder, end=hand, near=z >= -2))
         # legs: everything below the crotch except the satchel, one sprite per
         # leg, reaching a few rows up under the shirt so turning leaves no gap
         below = alpha & ~grow(bag, 1) & ~taken
@@ -360,39 +418,117 @@ class Master:
                 for y in range(crotch - 4, y_top):
                     if alpha[y, x] or bag[y, x]:
                         sprite[y, x] = img[y_top, x] if not bag[y_top, x] else sprite[y_top, x]
+            sprite = heal(sprite, gy < crotch + 3)           # the crotch line was a seam, not an outline
             yy, xx = np.nonzero(sprite[..., 3] > 0)
             joint = (xx[yy <= yy.min() + 1].mean() + 0.5, float(crotch))
             foot = (xx[yy >= yy.max() - 2].mean() + 0.5, float(yy.max()))
             z = -sgn * LEGS_X * math.sin(yaw)
             self.legs.append(dict(sgn=sgn, sprite=sprite, joint=joint, end=foot, near=z >= -0.5))
+        # which leg the AI drew stepping forward: its foot is planted flat, the
+        # other one pushes off on its toes
+        ahead = np.array([math.sin(yaw), math.cos(yaw) * math.sin(ELEV)])
+        reach = [np.dot(np.subtract(leg["end"], leg["joint"]), ahead) for leg in self.legs]
+        self.planted = self.legs[int(np.argmax(reach))]
+        self.pushing = self.legs[int(np.argmin(reach))]
+        # ... worn by whichever leg is ahead or behind, unless the satchel hides
+        # much of one of them (then each leg keeps its own)
+        areas = [(leg["sprite"][..., 3] > 0).sum() for leg in self.legs]
+        self.swap = min(areas) >= 0.85 * max(areas)
+        self.front_view = abs(math.cos(yaw)) > 0.9
+        # the body keeps the hips down to the crotch; the dark lines the AI drew
+        # between the thighs there are painted over, so the legs join it cleanly
+        self.crotch = crotch
         # the body: what is left, with the torso filled in behind the arms
         body = img.copy()
         gone = taken | below
         body[gone] = 0
         low = np.zeros(alpha.shape, bool)
         low[crotch:] = True                                  # below the crotch only the satchel stays
-        body[low & ~(bag | (grow(bag, 1) & mask_of(img, colour_set(PAL, "outline"))))] = 0
+        satchel = bag | (grow(bag, 1) & mask_of(img, colour_set(PAL, "outline")))
+        body[low & ~satchel] = 0
         solid = body[..., 3] > 0
         inside = taken & np.maximum.accumulate(solid, axis=1) & np.maximum.accumulate(solid[:, ::-1], axis=1)[:, ::-1]
         body = fill_holes(body, inside)
         plain = mask_of(img, colour_set(PAL, "shirt")) & ~taken
         tones = [(mask_of(img, {tuple(rgb("shirt", i))}) & plain).sum() for i in range(4)]
         body[inside & mask_of(body, colour_set(PAL, "shirt")), :3] = rgb("shirt", int(np.argmax(tones)))
+        band = np.zeros(alpha.shape, bool)
+        band[crotch - 4:crotch] = True
+        inner = band & ~grow(~(body[..., 3] > 0), 1) & ~grow(bag, 1)   # inside the silhouette, not the satchel
+        body = heal(body, inner)
         self.body = drop_islands(body)                   # specks of outline the arms left behind
+        self.satchel = satchel
         self.yaw = yaw
+        self.stand = None if self.front_view else self.standing(geo, stand_leg or self.planted)
+
+    def standing(self, geo, src):
+        """The idle pose for the views that are not straight on: the AI drew
+        every frame mid-stride, so both legs are set straight under the hips,
+        wearing the flattest foot the AI drew (src), feet side by side on the
+        ground, and the hips are narrowed to them row by row from the hem down."""
+        yaw, crotch = self.yaw, self.crotch
+        hx = float(np.mean([leg["joint"][0] for leg in self.legs]))
+        half = geo.k * STANCE_X * abs(math.cos(yaw))
+        ground = max(leg["end"][1] for leg in self.legs)
+        legs, tops = [], []
+        for j, leg in enumerate(self.legs):              # screen left, then right
+            depth = -leg["sgn"] * LEGS_X * geo.k * math.sin(yaw)           # + = toward us
+            x = hx + (j * 2 - 1) * half
+            dx = int(round(x - src["joint"][0]))
+            joint = (src["joint"][0] + dx, src["joint"][1])
+            end = (src["end"][0] + dx, src["end"][1])
+            # straight down, the toe a little ahead, the sole on the ground
+            target = (TOE * geo.k * math.sin(yaw), ground + depth * math.sin(ELEV) - joint[1])
+            legs.append((leg["near"], drop_islands(pose(shift(src["sprite"], dx, 0), joint, end, target), 40)))
+            tops.append(x - leg["joint"][0])             # how far this side's hip moves in
+        body = self.body.copy()
+        hips = (body[..., 3] > 0) & ~self.satchel
+        band_top = crotch - geo.px(12)
+        gx = np.arange(FW) + 0.5
+        order = sorted((0, 1), key=lambda j: self.legs[j]["near"])        # the near side on top
+        for y in range(band_top, crotch):
+            t = (y - band_top + 1) / (crotch - band_top)
+            row = np.where(hips[y][:, None], body[y], 0)
+            body[y][hips[y]] = 0
+            for j in order:
+                side = (gx < hx) if j == 0 else (gx >= hx)
+                part = np.where(side[:, None], row, 0)
+                part = shift(part[None], int(round(t * tops[j])), 0)[0]
+                sel = (part[:, 3] > 0) & ~self.satchel[y]
+                body[y][sel] = part[sel]
+        region = np.zeros(hips.shape, bool)
+        region[band_top:crotch + 2] = True
+        return legs, body, region
 
 
 def frame(m, direction, k, geo):
     """One frame: k = walk frame 0-5, or None for the standing (idle) pose."""
     bob = BOB[k] if k is not None else 0
     a = m.yaw
-    legs = []
-    for leg in m.legs:
+    legs, joints = [], []
+    body, region = m.body, None
+    if k is None and m.stand:
+        legs, body, region = m.stand
+    for leg in (m.legs if not (k is None and m.stand) else []):
         fwd, up = stride_pose(k, leg["sgn"])
         z, lift = STRIDE * fwd, LIFT * up
-        length = math.dist(leg["joint"], leg["end"])
+        joints.append(leg["joint"])
+        if m.front_view:
+            # facing us or away: the AI's own standing legs; the feet only rise,
+            # and come toward us or go away (down and up on screen)
+            dy = int(round(-lift * math.cos(ELEV) + z * math.cos(a) * math.sin(ELEV)))
+            legs.append((leg["near"], shift(leg["sprite"], 0, dy)))
+            continue
+        # the leg ahead wears the planted foot, the one pushing off behind wears
+        # the foot on its toes (where both are drawn whole); it hangs from this leg's hip
+        src = (m.pushing if (k is not None and fwd < 0 and up == 0) else m.planted) if m.swap else leg
+        dx, dy = (int(round(v)) for v in np.subtract(leg["joint"], src["joint"]))
+        sprite = shift(src["sprite"], dx, dy)
+        joint = (src["joint"][0] + dx, src["joint"][1] + dy)
+        end = (src["end"][0] + dx, src["end"][1] + dy)
+        length = math.dist(joint, end)
         target = (z * math.sin(a), length - lift * math.cos(ELEV) + z * math.cos(a) * math.sin(ELEV))
-        legs.append((leg["near"], drop_islands(pose(leg["sprite"], leg["joint"], leg["end"], target), 40)))
+        legs.append((leg["near"], drop_islands(pose(sprite, joint, end, target), 40)))
     arms = []
     for arm in m.arms:
         t = math.radians(swing_of(arm["sgn"], k))
@@ -401,13 +537,14 @@ def frame(m, direction, k, geo):
                   length * math.cos(t) * math.cos(ELEV) + length * math.sin(t) * math.cos(a) * math.sin(ELEV))
         limb = drop_islands(pose(arm["sprite"], arm["joint"], arm["end"], target), 40)
         arms.append((arm["near"], shift(limb, 0, bob)))
+        joints.append((arm["joint"][0], arm["joint"][1] + bob))
     canvas = np.zeros((FH, FW, 4), np.uint8)
     layers = [s for near, s in arms if not near] + [s for near, s in legs if not near] + \
-        [s for near, s in legs if near] + [shift(m.body, 0, bob)] + [s for near, s in arms if near]
+        [s for near, s in legs if near] + [shift(body, 0, bob)] + [s for near, s in arms if near]
     for layer in layers:
         sel = layer[..., 3] > 0
         canvas[sel] = layer[sel]
-    return outline(despike(canvas), PAL)
+    return outline(despike(close_joints(canvas, joints, region=region)), PAL)
 
 
 def main():
@@ -421,7 +558,11 @@ def main():
     rows, idle, heights = [], [], {}
     for r, d in enumerate(DIRS):
         c = MASTERS[d]
-        m = Master(src[r * FH:(r + 1) * FH, c * FW:(c + 1) * FW], d, geo)
+        stand = None
+        if d in STAND:
+            f, j = STAND[d]
+            stand = Master(src[r * FH:(r + 1) * FH, f * FW:(f + 1) * FW], d, geo).legs[j]
+        m = Master(src[r * FH:(r + 1) * FH, c * FW:(c + 1) * FW], d, geo, stand)
         rows.append(np.concatenate([frame(m, d, k, geo) for k in range(6)], 1))
         still = frame(m, d, None, geo)
         idle.append(still)

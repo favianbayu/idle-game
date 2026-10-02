@@ -11,14 +11,14 @@
   "height_px": 83,
   "height_note": "crown to soles (front view); the cowlick sticks out above it",
   "idle_heights_px": {
-    "SE": 87,
+    "SE": 88,
     "S": 86,
-    "SW": 91,
-    "W": 85,
-    "NW": 90,
-    "N": 88,
-    "NE": 90,
-    "E": 92
+    "SW": 92,
+    "W": 87,
+    "NW": 91,
+    "N": 87,
+    "NE": 91,
+    "E": 93
   },
   "rows": [
     "SE",
