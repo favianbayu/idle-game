@@ -14,10 +14,10 @@
     "S": 80,
     "SW": 82,
     "W": 82,
-    "NW": 80,
-    "N": 77,
-    "NE": 80,
-    "E": 83
+    "NW": 81,
+    "N": 80,
+    "NE": 81,
+    "E": 82
   },
   "rows": [
     "SE",
@@ -54,6 +54,6 @@
   "pipeline": [
     "python3 tools/indah_build.py --out-dir assets/sprites/indah/84"
   ],
-  "head_masters": "assets/sprites/indah/src/indah_heads_8dir.png (8 directions x 3 hair sways, cleaned from her AI reference)",
+  "head_master": "assets/sprites/indah/src/indah_head_S.png (facing us, 3 hair sways; every other facing is drawn from it)",
   "reference": "assets/sprites/indah/reference/indah_ai_walk_atlas.png"
 }

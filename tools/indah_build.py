@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""Build Indah's walk (6 x 8) and idle (1 x 8): her head and hair as drawn, her
-body drawn anew in every frame.
+"""Build Indah's walk (6 x 8) and idle (1 x 8). Facing us (S) her head and hair
+are the master she was designed from; every other facing is drawn anew from
+it, head, hair and body together, in every frame.
 
-  * head and hair: one master per direction in three sways (left, still,
-    right) in assets/sprites/indah/src/indah_heads_8dir.png, cleaned pixel art
-    from her AI reference; facing us the long hair falls behind her body,
-    from behind it covers her back, from the side it lies on her back under
-    the near arm; it rides on the body by whole pixels and sways on the walk;
+  * facing us: the S master in three sways (left, still, right) in
+    assets/sprites/indah/src/indah_head_S.png; its long hair falls behind her
+    body; it rides on the body by whole pixels and sways on the walk;
+  * every other facing: her head as the S master shapes it, turned in 3D with
+    the body: the round head and face, the hair parted in the middle with the
+    fringe sweeping over the temples to the outer corners of the eyes, the
+    wavy volume by the cheeks, the long hair in wavy locks to the waist that
+    curl out at the tips and swing on the walk, the wooden clip on her left;
+    her eyes, brows, blush and mouth are the S master's own pixels, laid on
+    the turned face (narrowed as it turns away, one eye from the side);
   * body: chunky chibi shapes drawn for every frame (blouse with puffed
     sleeves, forearms and hands, the A-line skirt, legs and strap sandals),
     one silhouette and one outline, so arms and legs grow out of the body
@@ -29,8 +35,8 @@ import os
 import numpy as np
 from PIL import Image
 
-from spritebody import (DIRS, FH, FW, PIVOT, YAW, Pose, Shape, Style, ellipsoid, leg_joints, loft, outline,
-                        paste, render as draw, rot_x, rot_z, shade, superbox, tube)
+from spritebody import (DIRS, ELEV, FH, FW, PIVOT, STEP, YAW, Pose, Shape, Style, ellipsoid, hexrgb, leg_joints,
+                        loft, outline, paste, render as draw, rot_x, rot_z, shade, superbox, tube)
 
 OUTLINE = "#120B0D"
 # 4-tone ramps, dark to light: the heads' own palette, so head and body match
@@ -43,9 +49,14 @@ RAMP = {
     "leather": ["#2C1B10", "#5B331C", "#8D4F27", "#B86E3A"],
     "wood": ["#B77741", "#B77741", "#E6A452", "#E6A452"],
     "cord": ["#7A3424", "#7A3424", "#7A3424", "#7A3424"],
+    # the turned head: the face keeps the master's mid tone, shaded on the turn
+    "face": ["#94522E", "#CD864F", "#E79E61", "#E79E61"],
+    "hair": ["#1A1215", "#241B1F", "#241B1F", "#2F2528"],
+    "hair_dk": ["#1A1215", "#1A1215", "#1A1215", "#241B1F"],
+    "hair_lt": ["#241B1F", "#241B1F", "#2F2528", "#43353A"],
 }
-PARTS = ["torso", "skirt", "arm_r", "arm_l", "leg_r", "leg_l"]
-STYLE = Style(OUTLINE, RAMP, PARTS)
+PARTS = ["torso", "skirt", "arm_r", "arm_l", "leg_r", "leg_l", "head", "hair_cap", "lock_a", "lock_b"]
+STYLE = Style(OUTLINE, RAMP, PARTS, lit=("skin", "face"))
 code = STYLE.code
 
 # ---------------------------------------------------------------- the figure
@@ -207,8 +218,205 @@ def torso_shapes(pose):
     return shapes
 
 
+# ---------------------------------------------------------------- the head
+# sizes in px from the head's centre, fitted to the S master
+HC = np.array([0.0, 61.0, 0.5])                         # head centre over the ground
+HR = np.array([12.0, 13.5, 11.5])                       # head radii
+NOSE = np.array([0.0, -4.2, 11.0])
+CHEEK, CHEEK_R = np.array([0.0, -5.0, 3.0]), np.array([10.4, 7.0, 8.4])
+CAP_C, CAP_R = np.array([0.0, 0.8, -1.2]), HR + np.array([2.4, 2.0, 2.4])
+PUFF, PUFF_R = np.array([14.6, -6.0, -4.4]), np.array([6.0, 9.0, 5.0])
+LONG = [(66, 15.0), (56, 20.5), (48, 22.0), (40, 21.0), (31, 19.5)]   # long hair: height, half width
+LOCKS = 11
+THICK = 2.6                                             # a lock's thickness
+
+
+def strands(P, ang, n=20.0):
+    """Hair in strands of three tones running down it."""
+    s = np.floor(ang * n / math.pi + 0.35 * np.sin(P[:, 1] * 0.35) + 0.2 * np.sin(ang * 23))
+    m = np.full(len(P), code("hair"))
+    m[(s % 5) == 1] = code("hair_dk")
+    m[(s % 5) == 3] = code("hair_lt")
+    return m
+
+
+def head_shapes(pose):
+    """Head, face and hair: the cap parted in the middle and open over the face,
+    the volume by the cheeks, the long hair in wavy locks swinging on the walk."""
+    lift = pose.lift
+    if pose.k is None:
+        swing_x = swing_z = 0.0
+    else:
+        ph = 2 * math.pi * pose.k / 6
+        swing_x = 1.4 * math.sin(ph - math.pi / 6)          # side to side, behind the hips
+        swing_z = -1.2 + 0.6 * math.cos(ph)                 # trailing behind her
+    c = HC + np.array([0, lift, 0])
+    shapes = [ellipsoid(c, HR, "head", "face"),
+              ellipsoid(c + NOSE, (1.3, 1.1, 1.0), "head", "face"),
+              ellipsoid(c + CHEEK, CHEEK_R, "head", "face")]
+    # the cap; the opening's half width by height: the parting, a strip of
+    # forehead, the fringe over the brows out to the outer corners of the eyes,
+    # the whole face below them
+    cc = c + CAP_C
+    cap = ellipsoid(cc, CAP_R, "hair_cap", "hair")
+    u = (cap.P - cc) / CAP_R
+    w = np.interp(u[:, 1], [-1.0, 0.12, 0.30, 0.45, 0.62, 0.72], [0.72, 0.72, 0.40, 0.36, 0.22, 0.0])
+    keep = ~(((u[:, 2] > 0.05) & (np.abs(u[:, 0]) < w)) | ((u[:, 1] < 0.12) & (u[:, 2] > 0.02)))
+    shapes.append(Shape(cap.P[keep], cap.N[keep], strands(cap.P[keep], np.arctan2(u[keep, 0], -u[keep, 2]), 9.0),
+                        "hair_cap"))
+    # the volume by the cheeks, behind the face
+    for side in (-1, 1):
+        pc = c + PUFF * np.array([side, 1, 1])
+        puff = ellipsoid(pc, PUFF_R, "lock_a", "hair")
+        lp = puff.P - pc
+        bump = 1.0 + 0.10 * np.sin(5 * np.arctan2(lp[:, 2], lp[:, 0] * side) + 0.5 * lp[:, 1])
+        P = pc + lp * np.stack([bump, np.ones_like(bump), bump], 1)
+        shapes.append(Shape(P, puff.N, strands(P, np.arctan2(P[:, 0], -P[:, 2] - 2.5)), "lock_a"))
+    # the long hair: a wide shallow fan behind the shoulders, in locks that
+    # overlap their neighbours, snake as they fall and curl out at the tips;
+    # longest at the sides, shorter down the middle of the back
+    top = c[1] + 4.0
+
+    def width(y):
+        return float(np.interp(y - lift, [h for h, _ in LONG[::-1]], [w for _, w in LONG[::-1]]))
+
+    for i in range(LOCKS):
+        p0 = -math.pi / 2 + math.pi * i / LOCKS
+        p1 = p0 + math.pi / LOCKS + 0.05
+        pm = (p0 + p1) / 2
+        out = 2.6 if i % 2 else 0.0
+        bot = 31.0 + 4.5 * math.cos(pm) ** 2 + 1.8 * math.sin(3.1 * i + 0.5) + lift
+        pts, nrm = [], []
+        for y in np.arange(bot - 3, top, STEP * 0.8):
+            t = min(max((top - y) / (top - 31.0 - lift), 0.0), 1.0)
+            near_tip = max(0.0, 1.0 - (y - bot) / 5.0)
+            bulge = 1.0 * math.sin(0.32 * y + 2.1 * i) * t + 2.2 * near_tip ** 2
+            a = width(y) + out + bulge
+            b = 11.0 + out + bulge
+            cx = swing_x * t * t
+            cz = -1.0 - 3.0 * t + swing_z * t * t
+            wave = 1.8 * math.sin(0.42 * y + 1.3 * i) * t ** 0.8
+            ang = np.linspace(p0, p1, max(4, int((p1 - p0) * max(a, b) / STEP))) + wave / a
+            ok = y > bot + 1.2 * np.sin(13 * ang + i)
+            n = np.stack([np.sin(ang) / a, np.zeros_like(ang), -np.cos(ang) / b], 1)
+            n = (n / np.linalg.norm(n, axis=1, keepdims=True))[ok]
+            P0 = np.stack([cx + a * np.sin(ang), np.full_like(ang, y), cz - b * np.cos(ang)], 1)[ok]
+            # the lock's outside, its body and its inside (seen beside her from the front)
+            for d in np.arange(0.0, THICK + 1e-6, STEP * 2):
+                pts.append(P0 - n * d)
+                nrm.append(n if d < THICK - STEP * 2 else -n)
+        P = np.concatenate(pts)
+        shapes.append(Shape(P, np.concatenate(nrm), strands(P, np.arctan2(P[:, 0], -(P[:, 2] + 2.5))),
+                            "lock_b" if i % 2 else "lock_a"))
+    return shapes
+
+
+# ---------------------------------------------------------------- the face
+HEAD_S = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "sprites", "indah", "src",
+                      "indah_head_S.png")
+HAIR_SEQ = [0, 1, 2, 2, 1, 0]           # the S master each walk frame wears: swung, still, swung back
+_heads = None
+
+
+def head_s(variant):
+    """The S master in one of its three sways: a full 96 x 128 frame."""
+    global _heads
+    if _heads is None:
+        _heads = np.array(Image.open(HEAD_S).convert("RGBA"))
+    return _heads[:, variant * FW:(variant + 1) * FW]
+
+
+def piece(x0, x1, y0, y1, keep=None):
+    """A piece of the still S master (rows y0..y1, columns x0..x1): its skin goes
+    clear, or only the colours in keep stay."""
+    b = head_s(1)[y0:y1 + 1, x0:x1 + 1].copy()
+    rgb = b[..., :3]
+    if keep is not None:
+        on = np.zeros(b.shape[:2], bool)
+        for h in keep:
+            on |= (rgb == hexrgb(h)).all(-1)
+        b[~on] = 0
+    else:
+        for h in RAMP["skin"]:
+            b[(rgb == hexrgb(h)).all(-1)] = 0
+    return b
+
+
+PIECES = {}
+
+
+def pieces():
+    if not PIECES:
+        eye_r, eye_l = piece(38, 44, 49, 55), piece(51, 57, 49, 55)
+        PIECES.update({
+            "eye_r": eye_r, "eye_l": eye_l,
+            "eye_l5": eye_l[:, :5],                      # the far eye, turned away
+            "eye_p": eye_r[:, 2:7],                      # the eye from the side
+            "brow_r": piece(41, 44, 48, 48), "brow_l2": piece(53, 54, 47, 48), "brow_p": piece(42, 44, 48, 48),
+            "clip": piece(60, 63, 43, 47, keep=["#593120", "#8A5230"]),
+        })
+    return PIECES
+
+
+BLUSH, LIPS, NOSE_SHADE = hexrgb("#E88A68"), hexrgb("#B8604A"), hexrgb("#CD864F")
+# what goes where on the turned face, from the head centre's pixel: a piece
+# (left column, top row) or a colour (column, row, pixels); SW and W mirror
+LAYOUT = {
+    "SE": [("eye_r", -4, 1), ("eye_l5", 6, 1), ("brow_r", -1, 0), ("brow_l2", 7, -1),
+           ("blush", -1, 9, 2), ("blush", 8, 9, 1), ("nose", 5, 8, 1), ("mouth", 3, 11, 2)],
+    "E": [("eye_p", 4, 1), ("brow_p", 5, 0), ("blush", 6, 9, 1), ("mouth", 10, 11, 1)],
+}
+MIRROR = {"SW": "SE", "W": "E"}
+CLIP_AT = np.array([12.6, 6.0, 3.4])    # the clip on the hair over her left temple, from the head centre
+
+
+def project(p, yaw):
+    c, s = math.cos(yaw), math.sin(yaw)
+    wz = -p[0] * s + p[2] * c
+    return PIVOT[0] + p[0] * c + p[2] * s, PIVOT[1] - p[1] + wz * math.sin(ELEV)
+
+
+def features(img, buf, direction, lift):
+    """The S master's eyes, brows, blush and mouth on the turned face, and the clip."""
+    head = buf["part"] == STYLE.part["head"]
+    cap = buf["part"] == STYLE.part["hair_cap"]
+    yaw = math.radians(YAW[direction])
+    cx, cy = (int(math.floor(v)) for v in project(HC + np.array([0, lift, 0]), yaw))
+    flip = direction in MIRROR
+    for item in LAYOUT.get(MIRROR.get(direction, direction), []):
+        name, dx, dy = item[:3]
+        if name in ("blush", "nose", "mouth"):
+            col = {"blush": BLUSH, "nose": NOSE_SHADE, "mouth": LIPS}[name]
+            for k in range(item[3]):
+                x = cx + (-(dx + k) - 1 if flip else dx + k)
+                if head[cy + dy, x]:
+                    img[cy + dy, x, :3] = col
+            continue
+        b = pieces()[name][:, ::-1] if flip else pieces()[name]
+        h, w = b.shape[:2]
+        x0 = cx - dx - w if flip else cx + dx
+        for yy, xx in zip(*np.nonzero(b[..., 3])):
+            X, Y = x0 + xx, cy + dy + yy
+            if head[Y, X] or cap[Y, X]:
+                img[Y, X] = b[yy, xx]
+    # the clip, where her left temple faces us
+    p = HC + np.array([0, lift, 0]) + CLIP_AT
+    n = (CLIP_AT - CAP_C) / CAP_R ** 2
+    n /= np.linalg.norm(n)
+    if -n[0] * math.sin(yaw) + n[2] * math.cos(yaw) > 0.05:
+        sx, sy = project(p, yaw)
+        X, Y = int(math.floor(sx)), int(math.floor(sy))
+        if cap[Y, X]:
+            b = pieces()["clip"]
+            h, w = b.shape[:2]
+            for yy, xx in zip(*np.nonzero(b[..., 3])):
+                if cap[Y - h // 2 + yy, X - w // 2 + xx]:
+                    img[Y - h // 2 + yy, X - w // 2 + xx] = b[yy, xx]
+    return img
+
+
 # ---------------------------------------------------------------- drawing
-def render(direction, k):
+def render(direction, k, with_head):
     yaw = math.radians(YAW[direction])
     pose = Pose(k)
     shapes = []
@@ -217,57 +425,29 @@ def render(direction, k):
     for side in (+1, -1):
         shapes += leg_shapes(pose, side)
         shapes += arm_shapes(pose, side)
-    return draw(shapes, yaw, STYLE), pose, yaw
+    if with_head:
+        shapes += head_shapes(pose)
+    return draw(shapes, yaw, STYLE), pose
 
 
-HEADS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "sprites", "indah", "src",
-                     "indah_heads_8dir.png")
-HAIR_SEQ = [0, 1, 2, 2, 1, 0]           # the hair master each walk frame wears: swung, still, swung back
-_heads = None
-
-
-def head(direction, variant):
-    """Head and hair for a direction in one of three sways: a full 96 x 128 frame."""
-    global _heads
-    if _heads is None:
-        _heads = np.array(Image.open(HEADS).convert("RGBA"))
-    r = DIRS.index(direction)
-    return _heads[r * FH:(r + 1) * FH, variant * FW:(variant + 1) * FW]
-
-
-# the head masters were drawn over shoulders 7 px higher: they come down with
-# them; seen from the side the head sits back over the body (px toward her back)
+# the S master was drawn over shoulders 7 px higher: it comes down with them;
+# below its nape row the long hair falls behind her body
 HEAD_DROP = 7
-HEAD_BACK = {"W": 5, "E": 5}
-
-# rows of the head masters below which the long hair hangs free of the head
-NAPE = {"SE": 63, "S": 63, "SW": 63, "W": 64, "NW": 64, "N": 64, "NE": 63, "E": 64}
-FRONT = ("SE", "S", "SW")               # the hair falls behind her
-BACK = ("NW", "N", "NE")                # the hair covers her back
+NAPE = 63
 
 
 def frame(direction, k):
-    buf, pose, yaw = render(direction, k)
+    if direction != "S":
+        buf, pose = render(direction, k, True)
+        img = outline(shade(buf, STYLE), buf, STYLE)
+        return features(img, buf, direction, pose.lift)
+    buf, pose = render(direction, k, False)
     body = outline(shade(buf, STYLE), buf, STYLE)
     dy = -int(round(pose.lift)) + HEAD_DROP
-    h = head(direction, 1 if k is None else HAIR_SEQ[k])
-    back = HEAD_BACK.get(direction, 0)
-    if back:                                           # toward her back: against the facing on screen
-        dx = -back if math.sin(math.radians(YAW[direction])) > 0 else back
-        h = np.roll(h, dx, axis=1)
-    # where the long hair may land: facing us only where there is no body,
-    # from the side over the torso but under the near arm, from behind over all
-    a = body[..., 3] > 0
-    if direction in FRONT:
-        free = ~a
-    elif direction in BACK:
-        free = np.ones_like(a)
-    else:
-        near_arm = STYLE.part["arm_r" if YAW[direction] > 0 else "arm_l"]
-        free = buf["part"] != near_arm
+    h = head_s(1 if k is None else HAIR_SEQ[k])
     rows = np.arange(FH)[:, None] - dy
-    long_hair = np.broadcast_to(rows > NAPE[direction], a.shape)
-    img = paste(body, h, dy, where=long_hair & free)
+    long_hair = np.broadcast_to(rows > NAPE, body.shape[:2])
+    img = paste(body, h, dy, where=long_hair & (body[..., 3] == 0))
     return paste(img, h, dy, where=~long_hair)
 
 
@@ -305,8 +485,8 @@ def main():
         },
         "palette_size": len(used),
         "pipeline": ["python3 tools/indah_build.py --out-dir assets/sprites/indah/84"],
-        "head_masters": "assets/sprites/indah/src/indah_heads_8dir.png (8 directions x 3 hair sways, "
-                        "cleaned from her AI reference)",
+        "head_master": "assets/sprites/indah/src/indah_head_S.png (facing us, 3 hair sways; every other "
+                       "facing is drawn from it)",
         "reference": "assets/sprites/indah/reference/indah_ai_walk_atlas.png",
     }
     with open(os.path.join(a.out_dir, "indah_sprite.json"), "w") as fh:
