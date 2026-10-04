@@ -15,7 +15,7 @@ import math
 
 import numpy as np
 
-from iso import IsoScene, planks_h, bricks, stones, solid
+from iso import IsoScene, planks_h, bricks, stones, solid, LW, EV, FS
 from pix import ramp, Canvas
 
 LX, LY = 240, 192          # footprint (5 x 4 tiles)
@@ -56,7 +56,7 @@ def wall_tex(length, height, openings=(), porch_shade=0, side=False):
 
     openings: list of (u0, u1, v0, v1, fn) drawn instead of the wall there.
     """
-    boards = planks_h("plank", base=4, gap=7, seed=3 if side else 1)
+    boards = planks_h("plank", base=4, gap=7 * FS(), seed=3 if side else 1)
     post_every = 72
 
     def f(u, v):
@@ -91,29 +91,31 @@ def wall_tex(length, height, openings=(), porch_shade=0, side=False):
 
 def window_fn(shutters=True):
     """A window opening: green frame, 2 x 2 glass panes, lit sill."""
+    lw, lou = LW(1.5), EV(4 * FS())
+
     def f(u, v, W, H):
-        fr = 3
+        fr = 3 if lw < 2 else 4
         sw = 14 if shutters else 0
         # shutters (krepyak), fixed open against the wall on both sides
         if u < sw or u >= W - sw:
             uu = u if u < sw else u - (W - sw)
             if v < 4 or v > H - 3:
                 return None
-            if uu < 1.5 or uu > sw - 1.5:
+            if uu < lw or uu > sw - lw:
                 return ("paint_green", 2)
-            k = v % 4
-            return ("paint_green", 4 if k < 1.4 else (2 if k > 3 else 3))
+            k = v % lou
+            return ("paint_green", 4 if k < LW(1.4) else (2 if k > lou - LW(1.0) else 3))
         u -= sw
         Wg = W - 2 * sw
         if v < 4:
             return ("plaster", 6) if v > 2.5 else ("plaster", 3)     # sill
         if u < fr or u >= Wg - fr or v >= H - fr or v < 4 + fr:
-            t = 4 if (u < 1.5 or v >= H - 1.5) else 3
-            if u >= Wg - 1.5 or v < 4 + 1.5:
+            t = 4 if (u < lw or v >= H - lw) else 3
+            if u >= Wg - lw or v < 4 + lw:
                 t = 2
             return ("paint_green", t)
         # mullions
-        if abs(u - Wg / 2) < 1.2 or abs(v - (4 + fr + (H - 4 - 2 * fr) / 2)) < 1.0:
+        if abs(u - Wg / 2) < LW(1.2) or abs(v - (4 + fr + (H - 4 - 2 * fr) / 2)) < LW(1.0):
             return ("paint_green", 4)
         # glass: dark with a diagonal reflection and a curtain on top
         gx, gy = u, v
@@ -130,24 +132,26 @@ def window_fn(shutters=True):
 
 def door_fn():
     """Double wooden door with raised panels, a green frame and a lattice vent above."""
+    lwd, lat = LW(1.5), EV(6 * FS())
+
     def f(u, v, W, H):
         fr = 4
         door_h = H - 16
         # carved vent (lubang angin) above the door
         if v >= door_h + 2:
-            if v < door_h + 4 or v >= H - 1.5 or u < 2 or u >= W - 2:
+            if v < door_h + 4 or v >= H - lwd or u < 2 or u >= W - 2:
                 return ("paint_green", 3)
-            a = (u + v) % 6
-            b = (u - v) % 6
-            if a < 1.5 or b < 1.5:
+            a = (u + v) % lat
+            b = (u - v) % lat
+            if a < lwd or b < lwd:
                 return ("teak", 4)
             return ("teak", 0)
         if v >= door_h - fr or u < fr or u >= W - fr:
-            t = 4 if (u < 1.5 or v > door_h - 1.5) else 3
-            if u >= W - 1.5:
+            t = 4 if (u < lwd or v > door_h - lwd) else 3
+            if u >= W - lwd:
                 t = 2
             return ("paint_green", t)
-        if v < 1.5:
+        if v < lwd:
             return ("teak", 1)
         # two leaves
         uu = u - fr
@@ -155,15 +159,15 @@ def door_fn():
         leaf = 0 if uu < Wi / 2 else 1
         lu = uu - leaf * Wi / 2
         lw = Wi / 2
-        if lu < 1 or lu >= lw - 0.8:
+        if lu < LW(1) or lu >= lw - LW(0.8):
             return ("teak", 1)
         # raised panels: two per leaf
         pv = [(8, 36), (42, door_h - fr - 7)]
         for (a, b) in pv:
             if 3 <= lu < lw - 3 and a <= v < b:
-                if lu < 4 or v >= b - 1:
+                if lu < 4 or v >= b - LW(1):
                     return ("teak", 5)     # lit bevel
-                if lu >= lw - 4 or v < a + 1:
+                if lu >= lw - 4 or v < a + LW(1):
                     return ("teak", 2)     # shadow bevel
                 return ("teak", 4)
         # handles
@@ -175,7 +179,8 @@ def door_fn():
 
 def roof_tiles(eave_len, slope_len, inset_per_v, *, ridge_cap=True, hip=True):
     """Genteng rows on a hip-roof plane (a trapezoid)."""
-    row_h, tile_w = 8.0, 11.0
+    row_h, tile_w = float(EV(8 * FS())), float(EV(11 * FS()))
+    l1, l2, cap = LW(1.2), LW(1.6), EV(6 * FS())
 
     def f(u, v):
         b = v / slope_len
@@ -186,14 +191,14 @@ def roof_tiles(eave_len, slope_len, inset_per_v, *, ridge_cap=True, hip=True):
         # hip caps along the slanted edges, ridge cap along the top
         de = min(u - left, right - u) / max(0.3, math.hypot(1, inset_per_v)) if hip else 99
         if hip and de < 4:
-            k = (v % 6)
-            return ("clay", (2 if k < 1.2 else 5) - (1 if de > 3 else 0))
+            k = (v % cap)
+            return ("clay", (2 if k < l1 else 5) - (1 if de > 3 else 0))
         if ridge_cap and slope_len - v < 5:
-            k = (u % 9)
-            return ("clay", 2 if k < 1.2 else (5 if slope_len - v > 2.5 else 4))
+            k = (u % EV(9 * FS()))
+            return ("clay", 2 if k < l1 else (5 if slope_len - v > 2.5 else 4))
         # eave edge
         if v < 3:
-            return ("clay", 1 if v < 1.5 else 3)
+            return ("clay", 1 if v < LW(1.5) else 3)
         row = int((v - 3) // row_h)
         k = (v - 3) - row * row_h
         uu = u + (tile_w / 2 if row % 2 else 0)
@@ -204,15 +209,15 @@ def roof_tiles(eave_len, slope_len, inset_per_v, *, ridge_cap=True, hip=True):
             t -= 1                   # an older, darker tile
         if ti % 17 == 0:
             t += 1
-        if k < 1.6:
+        if k < l2:
             return ("clay", 1)       # shadow under the row above
-        if k > row_h - 1.2:
-            return ("clay", t + 2)   # lit lower lip of the row above... top of this row
-        if m < 1.2:
+        if k > row_h - l1:
+            return ("clay", t + 2)   # lit top of this row
+        if m < l1:
             return ("clay", 2)
-        if m < 4:
+        if m < 4 * FS():
             return ("clay", t + 1)
-        if m > 8.5:
+        if m > tile_w - 2.5 * FS():
             return ("clay", t - 1)
         return ("clay", t)
     return f
@@ -229,7 +234,7 @@ def build(door="SW"):
     sc.ox = W / 2 - (cxw if not swap else -cxw)
     sc.oy = H - 4 - (LX + LY) / 2 - 18
 
-    stone = stones("stone_warm", base=4, size=10, seed=5, mortar="stone_warm", mt=1)
+    stone = stones("stone_warm", base=4, size=10 * FS(), seed=5, mortar="stone_warm", mt=1)
     # --- plinth (batur)
     ms.box(4, 4, 0, LX - 4, LY - 4, PL,
            top=lambda u, v: ("plaster", 3) if v < WALL_Y1 - 4 else porch_floor(u, v - (WALL_Y1 - 4)),
@@ -237,7 +242,7 @@ def build(door="SW"):
     # steps to the door
     dx0, dx1 = 98, 142
     ms.box(dx0 - 4, LY - 4, 0, dx1 + 4, LY + 8, 7, top=solid("stone_warm", 5),
-           sw=stones("stone_warm", base=4, size=8, seed=8, mortar="stone_warm", mt=1),
+           sw=stones("stone_warm", base=4, size=8 * FS(), seed=8, mortar="stone_warm", mt=1),
            se=solid("stone_warm", 2))
     # --- walls
     wall_h = EAVE - PL
@@ -309,24 +314,24 @@ def post_tex(shade=0):
 
 def beam_tex():
     def f(u, v):
-        if v < 1.2:
+        if v < LW(1.2):
             return ("teak", 1)
-        if v > 6.5:
+        if v > 8 - LW(1.5):
             return ("teak", 5)
         # simple carved notches every 24 units
-        if (u % 24) < 1.5 and 2 < v < 6:
+        if (u % 24) < LW(1.5) and 2 < v < 6:
             return ("teak", 1)
         return ("teak", 3)
     return f
 
 
 def fascia(u, v):
-    if v > 4.8:
+    if v > 6 - LW(1.2):
         return ("paint_green", 5)
-    if v < 1.2:
+    if v < LW(1.2):
         return ("paint_green", 1)
     # scalloped edge pattern
-    return ("paint_green", 3 if (u % 8) > 1 else 2)
+    return ("paint_green", 3 if (u % EV(8 * FS())) > LW(1) else 2)
 
 
 def crown_tex(u, v):
@@ -342,14 +347,15 @@ def crown_tex(u, v):
 
 def porch_floor(u, v):
     """Tegel kunci: patterned cement floor tiles, 12 x 12."""
-    s = 12
+    f = FS()
+    s = EV(12 * f)
     a, b = u % s, v % s
-    if a < 1 or b < 1:
+    if a < LW(1) or b < LW(1):
         return ("plaster", 2)
     ca, cb = abs(a - s / 2), abs(b - s / 2)
-    if ca + cb < 1.6:
+    if ca + cb < 1.6 * f:
         return ("clay", 5)
-    if abs(ca - cb) < 0.7 and 2 < ca < 4.5:
+    if abs(ca - cb) < LW(0.7) / (1 if f == 1 else 2) and 2 * f < ca < 4.5 * f:
         return ("plaster", 4)
     return ("plaster", 5 if (int(u // s) + int(v // s)) % 2 == 0 else 4)
 
@@ -359,25 +365,28 @@ def bench(ms, x0, y0, x1, y1):
     seat_z = PL + 16
     for (lx, ly) in ((x0 + 1, y0 + 1), (x1 - 3, y0 + 1), (x0 + 1, y1 - 3), (x1 - 3, y1 - 3)):
         ms.box(lx, ly, PL, lx + 2, ly + 2, seat_z, top=solid(bam, 4), sw=solid(bam, 4), se=solid(bam, 2))
-    slat = lambda u, v: (bam, 5 if (v % 4) > 1 else 2)
+    sl = EV(4 * FS())
+    slat = lambda u, v: (bam, 5 if (v % sl) > LW(1) else 2)
     ms.box(x0, y0, seat_z, x1, y1, seat_z + 2, top=slat, sw=lambda u, v: (bam, 4 if int(u) % 6 else 2),
            se=solid(bam, 3))
     # back rest against the wall
     ms.box(x0, y0, seat_z + 2, x1, y0 + 2, seat_z + 14, top=solid(bam, 5),
-           sw=lambda u, v: (bam, 4 if (v % 4) > 1.3 else 1), se=solid(bam, 3))
+           sw=lambda u, v: (bam, 4 if (v % sl) > LW(1.3) else 1), se=solid(bam, 3))
 
 
 def log_ends():
     """Stacked firewood seen end-on: round cut ends with rings, bark in between."""
+    k = FS()
+
     def f(u, v):
-        r = 4.2
-        row = int(v // 7.5)
-        uu = u + (4.5 if row % 2 else 0)
-        cu = (uu // 9) * 9 + 4.5
-        cvv = row * 7.5 + 3.75
+        r = 4.2 * k
+        row = int(v // (7.5 * k))
+        uu = u + (4.5 * k if row % 2 else 0)
+        cu = (uu // (9 * k)) * 9 * k + 4.5 * k
+        cvv = row * 7.5 * k + 3.75 * k
         d = math.hypot(uu - cu, (v - cvv) * 1.1)
         if d < r:
-            if d > r - 1.1:
+            if d > r - LW(1.1):
                 return ("bark", 3)
             return ("wood_cut", 3 if int(d * 1.6) % 2 else 2)
         return ("bark", 1)
@@ -385,11 +394,11 @@ def log_ends():
 
 
 def log_side():
-    return lambda u, v: ("bark", 3 if (v % 7.5) > 1.5 else 1)
+    return lambda u, v: ("bark", 3 if (v % (7.5 * FS())) > LW(1.5) else 1)
 
 
 def log_top():
-    return lambda u, v: ("bark", 4 if (u % 9) > 1.5 else 2)
+    return lambda u, v: ("bark", 4 if (u % (9 * FS())) > LW(1.5) else 2)
 
 
 def details(cv, ms, dx0, dx1):

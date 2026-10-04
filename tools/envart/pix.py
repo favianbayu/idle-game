@@ -102,6 +102,7 @@ BAYER4 = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 
 
 def bayer(x, y):
+    x, y = int(x) // PIXEL, int(y) // PIXEL
     return BAYER4[y & 3, x & 3]
 
 
@@ -135,6 +136,13 @@ class Noise:
         return v / tot
 
 
+# Art pixel size in screen pixels. With PIXEL = 2 every sprite keeps its size
+# but is drawn with 2 x 2 blocks: shapes are drawn as usual, then each 2 x 2
+# block takes the colour most of its pixels have, and the outline is drawn
+# around the blocks (see Canvas.outline / Canvas.chunky).
+PIXEL = 1
+TIE_DARK = True     # a 2-2 tie in a block goes to the darker colour, so seams and creases survive
+
 LIGHT3 = np.array([-0.55, -0.62, 0.56])   # screen x right, y down, z toward viewer
 LIGHT3 = LIGHT3 / np.linalg.norm(LIGHT3)
 
@@ -154,6 +162,16 @@ class Canvas:
     def put(self, x, y, c, depth=None):
         x, y = int(x), int(y)
         if not self.inside(x, y):
+            return
+        if PIXEL > 1:
+            # draw the whole art pixel (block) this screen pixel falls in
+            x, y = x - x % PIXEL, y - y % PIXEL
+            if depth is not None:
+                if depth < self.depth[y, x]:
+                    return
+                self.depth[y:y + PIXEL, x:x + PIXEL] = depth
+            self.rgb[y:y + PIXEL, x:x + PIXEL] = c
+            self.a[y:y + PIXEL, x:x + PIXEL] = True
             return
         if depth is not None:
             if depth < self.depth[y, x]:
@@ -244,8 +262,8 @@ class Canvas:
             t = int(max(lo, min(hi, math.floor(t))))
             if rim:
                 # shadow-side rim
-                ex = (x + 1, y) not in mask
-                ey = (x, y + 1) not in mask
+                ex = (x + PIXEL, y) not in mask
+                ey = (x, y + PIXEL) not in mask
                 if (ex or ey) and dx + dy > -0.2:
                     t = max(lo, min(t, lo + 1) - (1 if dy > 0.3 else 0))
             d = None if depth is None else depth + nz * min(rx, ry)
@@ -253,12 +271,57 @@ class Canvas:
         return mask
 
     # -- finishing --------------------------------------------------------
+    def downsample(self, n, min_cover=2):
+        """One pixel per n x n block: kept if at least min_cover of its pixels
+        are drawn, coloured with the colour most of them have."""
+        sw, sh = (self.w + n - 1) // n, (self.h + n - 1) // n
+        small = Canvas(sw, sh)
+        for by in range(sh):
+            for bx in range(sw):
+                counts = {}
+                for y in range(by * n, min(self.h, by * n + n)):
+                    for x in range(bx * n, min(self.w, bx * n + n)):
+                        if self.a[y, x]:
+                            c = tuple(int(v) for v in self.rgb[y, x])
+                            counts[c] = counts.get(c, 0) + 1
+                tot = sum(counts.values())
+                if tot < min_cover:
+                    continue
+                best = max(counts.items(), key=lambda kv: (kv[1], -sum(kv[0]) if TIE_DARK else sum(kv[0])))
+                small.rgb[by, bx] = best[0]
+                small.a[by, bx] = True
+                small.noline[by, bx] = any(
+                    self.noline[y, x] for y in range(by * n, min(self.h, by * n + n))
+                    for x in range(bx * n, min(self.w, bx * n + n)))
+        return small
+
+    def take_upscaled(self, small, n):
+        big_rgb = np.repeat(np.repeat(small.rgb, n, axis=0), n, axis=1)[: self.h, : self.w]
+        big_a = np.repeat(np.repeat(small.a, n, axis=0), n, axis=1)[: self.h, : self.w]
+        self.rgb = np.ascontiguousarray(big_rgb)
+        self.a = np.ascontiguousarray(big_a)
+        self.noline = np.repeat(np.repeat(small.noline, n, axis=0), n, axis=1)[: self.h, : self.w].copy()
+
+    def chunky(self, min_cover=2):
+        """Redraw the canvas in PIXEL x PIXEL blocks (no-op when PIXEL is 1)."""
+        if PIXEL > 1:
+            self.take_upscaled(self.downsample(PIXEL, min_cover), PIXEL)
+
     def outline(self, f=0.42, lit_f=0.62, color=None):
         """1 px outline outside the silhouette, coloured from the pixel it wraps.
 
         Lit side (the outline pixel lies up/left of its sprite pixel) is lighter
-        than the shadow side, like hand-placed selective outlines.
+        than the shadow side, like hand-placed selective outlines. With PIXEL > 1
+        the canvas is first turned into blocks and the outline is one block wide.
         """
+        if PIXEL > 1:
+            small = self.downsample(PIXEL)
+            small._outline1(f, lit_f, color)
+            self.take_upscaled(small, PIXEL)
+            return
+        self._outline1(f, lit_f, color)
+
+    def _outline1(self, f, lit_f, color):
         a = self.a
         h, w = a.shape
         new_rgb = self.rgb.copy()

@@ -4,6 +4,7 @@ import random
 
 import numpy as np
 
+import pix
 from pix import Canvas, Noise, ramp, LIGHT3, bayer
 
 CROP_W, CROP_H = 64, 80
@@ -114,6 +115,8 @@ def crop_padi(stage, seed=1):
         return cv
     # a clump of blades: each is a 2 px ribbon that rises and bends over
     n = [0, 6, 11, 16, 16][stage]
+    if pix.PIXEL > 1:
+        n = (n + 1) // pix.PIXEL + 1     # fewer, clearer blades with chunkier pixels
     H = [0, 12, 26, 40, 38][stage]
     gold = stage == 4
     rmp = st if gold else g
@@ -136,12 +139,12 @@ def crop_padi(stage, seed=1):
             py += math.sin(aa)
             tone = 1 + int(t * (hi - 2)) + (1 if bend < 0 else 0)
             cv.put(int(px), int(py), rmp[min(hi, tone)])
-            if t < 0.7:
+            if t < 0.7 and pix.PIXEL == 1:
                 cv.put(int(px) + 1, int(py), rmp[max(0, min(hi, tone) - 2)])
     if stage >= 3:
         # panicles: grain heads arching over and hanging, heavier when ripe
         gr = st if gold else ramp("corn_husk")
-        heads = 7 if gold else 5
+        heads = (7 if gold else 5) if pix.PIXEL == 1 else (5 if gold else 3)
         for k in range(heads):
             side = (k - (heads - 1) / 2) / ((heads - 1) / 2)
             x, y = bx + side * 3, by - H * 0.55
@@ -155,7 +158,7 @@ def crop_padi(stage, seed=1):
                 px += math.cos(aa)
                 py += math.sin(aa)
                 cv.put(int(px), int(py), gr[3])
-                if t > 0.35 and i % 2 == 0:
+                if t > 0.35 and i % (2 * pix.PIXEL) == 0:
                     # grains on both sides of the stalk
                     cv.put(int(px) - 1, int(py), gr[5 if gold else 4])
                     cv.put(int(px) + 1, int(py) + 1, gr[2])
@@ -398,7 +401,7 @@ def crop_semangka(stage, seed=6):
                     v = 0.42 + 0.6 * float(n @ LIGHT3)
                     t = int(max(1, min(len(mel) - 1, math.floor(v * len(mel)))))
                     # wavy dark stripes around the melon
-                    band = math.sin((dx * 5.2 + math.sin(dy * 4) * 0.5) * math.pi / 2 * 1.6)
+                    band = math.sin((dx * (5.2 if pix.PIXEL == 1 else 3.4) + math.sin(dy * 4) * 0.5) * math.pi / 2 * 1.6)
                     if band > 0.55:
                         t = max(0, min(len(stripe) - 1, t // 2))
                         c = stripe[t]

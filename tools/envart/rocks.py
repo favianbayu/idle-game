@@ -2,6 +2,7 @@
 import math
 import random
 
+import pix
 from pix import Canvas, Noise, ramp, LIGHT3
 import numpy as np
 
@@ -59,15 +60,16 @@ def facet_rock(cv, cx, cy, rx, ry, rmp, seed, *, facets=5, height=1.0, lo=1, hi=
             v -= (dy - 0.3) * 0.9
         t = int(max(lo, min(hi, math.floor(lo + v * (hi - lo + 0.999)))))
         tone[(x, y)] = t
+    P = pix.PIXEL
     for (x, y), t in list(tone.items()):
         c = cellof[(x, y)]
         # facet borders: lit lip on the upper-left side of a facet, shadow line on the lower-right
-        if cellof.get((x - 1, y), c) != c or cellof.get((x, y - 1), c) != c:
+        if cellof.get((x - P, y), c) != c or cellof.get((x, y - P), c) != c:
             t = min(hi, t + 1)
         dx, dy = pts[(x, y)]
-        if ((x + 1, y) not in pts or (x, y + 1) not in pts) and dx + dy > 0:
+        if ((x + P, y) not in pts or (x, y + P) not in pts) and dx + dy > 0:
             t = lo
-        elif ((x - 1, y) not in pts or (x, y - 1) not in pts) and dx + dy < -0.3:
+        elif ((x - P, y) not in pts or (x, y - P) not in pts) and dx + dy < -0.3:
             t = min(hi, t + 1)
         tone[(x, y)] = t
         cv.put(x, y, rmp[t])

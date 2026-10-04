@@ -17,11 +17,28 @@ import math
 
 import numpy as np
 
+import pix
 from pix import Canvas, RAMPS, darker
 
 LIGHT_W = np.array([-0.5, 0.45, 1.0])
 LIGHT_W = LIGHT_W / np.linalg.norm(LIGHT_W)
 VIEW = np.array([1.0, 1.0, 1.0]) / math.sqrt(3)
+
+
+def LW(w=1.0):
+    """A line width in world units that stays at least one art pixel wide."""
+    return w if pix.PIXEL == 1 else max(w, float(pix.PIXEL))
+
+
+def EV(n):
+    """A repeat length rounded up to whole art pixels (unchanged at PIXEL 1)."""
+    p = pix.PIXEL
+    return n if p == 1 else int(math.ceil(n / p) * p)
+
+
+def FS():
+    """How much bigger repeating texture features get per art pixel size."""
+    return 1 + 0.5 * (pix.PIXEL - 1)
 
 
 def S(p):
@@ -80,9 +97,12 @@ class IsoScene:
         Lu, Lv = np.linalg.norm(U), np.linalg.norm(V)
         qid = self.nq
         self.nq += 1
-        for py in range(max(0, y0), min(self.h, y1)):
-            for px in range(max(0, x0), min(self.w, x1)):
-                d = np.array([px + 0.5 - s0[0], py + 0.5 - s0[1]])
+        st = pix.PIXEL                  # one sample per art pixel, at its centre
+        y0, x0 = max(0, y0), max(0, x0)
+        y0, x0 = y0 - y0 % st, x0 - x0 % st
+        for py in range(y0, min(self.h, y1), st):
+            for px in range(x0, min(self.w, x1), st):
+                d = np.array([px + st / 2 - s0[0], py + st / 2 - s0[1]])
                 a, b = inv @ d
                 if a < -1e-6 or a > 1 + 1e-6 or b < -1e-6 or b > 1 + 1e-6:
                     continue
@@ -93,13 +113,14 @@ class IsoScene:
                 r = tex(a * Lu, b * Lv)
                 if r is None:
                     continue
-                self.depth[py, px] = dep
-                self.ramp[py, px] = r[0]
                 fixed = len(r) > 2 and r[2]
-                self.tone[py, px] = r[1] + (0 if fixed else off)
-                self.fixed[py, px] = fixed
-                self.qid[py, px] = qid
-                self.edge_ok[py, px] = edges
+                blk = (slice(py, py + st), slice(px, px + st))
+                self.depth[blk] = dep
+                self.ramp[blk] = r[0]
+                self.tone[blk] = r[1] + (0 if fixed else off)
+                self.fixed[blk] = fixed
+                self.qid[blk] = qid
+                self.edge_ok[blk] = edges
         return qid
 
     def box(self, x0, y0, z0, x1, y1, z1, top=None, sw=None, se=None, **kw):
@@ -128,12 +149,13 @@ class IsoScene:
         # occlusion edges: a nearer surface gets a dark border where it lies
         # over something well behind it
         rgb = cv.rgb.copy()
-        for y in range(1, self.h - 1):
-            for x in range(1, self.w - 1):
+        P = pix.PIXEL
+        for y in range(P, self.h - P):
+            for x in range(P, self.w - P):
                 if self.ramp[y, x] is None or not self.edge_ok[y, x]:
                     continue
                 d = self.depth[y, x]
-                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                for dx, dy in ((P, 0), (-P, 0), (0, P), (0, -P)):
                     q = self.qid[y + dy, x + dx]
                     if q == -1:
                         continue
@@ -153,17 +175,18 @@ def solid(rmp, tone):
 
 def planks_h(rmp, base=4, gap=8, seed=0, knots=True):
     """Horizontal boards: a dark seam under each board, lit top lip, grain."""
+    gap, lw = EV(gap), LW()
     def f(u, v):
         row = int(v // gap)
         k = v - row * gap
         h = (row * 92821 + seed * 31) % 7
         t = base + (h % 3 == 0) - (h % 5 == 0)
-        if k < 1:
+        if k < lw:
             return (rmp, base - 2)
-        if k >= gap - 1:
+        if k >= gap - lw:
             return (rmp, t + 1)
         # board ends (butt joints) staggered per row
-        if int((u + h * 13) % 70) == 0:
+        if ((u + h * 13) % 70) < lw:
             return (rmp, base - 2)
         g = math.sin(u * 0.35 + row * 2.1 + math.sin(u * 0.07 + row) * 2)
         if g > 0.93:
@@ -175,28 +198,30 @@ def planks_h(rmp, base=4, gap=8, seed=0, knots=True):
 
 
 def planks_v(rmp, base=4, gap=7, seed=0):
+    gap, lw = EV(gap), LW()
     def f(u, v):
         col = int(u // gap)
         k = u - col * gap
         h = (col * 7919 + seed) % 5
         t = base + (h == 0) - (h == 3)
-        if k < 1:
+        if k < lw:
             return (rmp, base - 2)
-        if k >= gap - 1:
+        if k >= gap - lw:
             return (rmp, t + 1)
         return (rmp, t)
     return f
 
 
 def bricks(rmp, base=4, bw=14, bh=6, mortar="plaster", mt=3):
+    bw, bh, lw = EV(bw), EV(bh), LW()
     def f(u, v):
         row = int(v // bh)
         uu = u + (bw / 2 if row % 2 else 0)
-        if v - row * bh < 1 or (uu % bw) < 1:
+        if v - row * bh < lw or (uu % bw) < lw:
             return (mortar, mt)
         h = (int(uu // bw) * 31 + row * 17) % 5
         t = base + (h == 0) - (h == 4)
-        if v - row * bh >= bh - 1:
+        if v - row * bh >= bh - lw:
             t += 1
         return (rmp, t)
     return f

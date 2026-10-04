@@ -6,8 +6,9 @@ import random
 
 import numpy as np
 
+import pix
 from pix import Canvas, Noise, ramp, LIGHT3, bayer, darker
-from iso import IsoScene, planks_h, bricks, solid, stones
+from iso import IsoScene, planks_h, bricks, solid, stones, LW, EV, FS
 from plants import leaf, flower, ball
 from trees import canopy
 
@@ -184,9 +185,9 @@ def fern_frond(cv, x0, y0, a, L, rmp, rnd):
         aa = a + (0.9 if math.cos(a) > 0 else -0.9) * t * t
         x += math.cos(aa)
         y += math.sin(aa) + t * 0.3
-        cv.put(int(x), int(y), rmp[3])
+        cv.put(int(x), int(y), rmp[3] if pix.PIXEL == 1 else rmp[2])
         ln = 6 * math.sin(min(1, t * 1.2 + 0.1) * math.pi)
-        if i % 2 == 0:
+        if i % (2 * pix.PIXEL) == 0:
             for side in (-1, 1):
                 for k in range(int(ln)):
                     lx = x + (-math.sin(aa)) * side * k + math.cos(aa) * k * 0.4
@@ -255,20 +256,21 @@ def peti(seed, broken=False):
     """Wooden crate, 28 units a side; broken: top boards gone, a side board kicked in."""
     sc = IsoScene(72, 72, 36, 44)
     s = 28
+    fr, lw, bp, tp = (3 if pix.PIXEL == 1 else 4), LW(1), EV(6 * FS()), EV(7 * FS())
     def side(u, v, broken_side=False):
-        if u < 3 or u > s - 3 or v < 3 or v > s - 3:
+        if u < fr or u > s - fr or v < fr or v > s - fr:
             return ("plank", 3)
-        if abs(u - v) < 2 or abs(u - (s - v)) < 0 and False:
+        if abs(u - v) < LW(2):
             return ("plank", 2)
         if broken_side and 8 < u < 20 and 6 < v < 20:
             return ("plank", 0)
-        k = v % 6
-        return ("plank", 4 if k > 1 else 2)
+        k = v % bp
+        return ("plank", 4 if k > lw else 2)
     def top(u, v):
         if broken and 4 < u < s - 4 and 6 < v < s - 4:
             return ("plank", 0)
-        k = u % 7
-        return ("plank", 5 if k > 1 else 3)
+        k = u % tp
+        return ("plank", 5 if k > lw else 3)
     sc.box(0, 0, 0, s, s, s, top=top, sw=lambda u, v: side(u, v, broken), se=side)
     cv = sc.render(outline=False)
     if broken:
@@ -287,8 +289,7 @@ def papan_patah(seed):
     pl = "plank_old"
     pieces = [(-20, 4, 0, 40, 8, 3), (-6, -10, 3, 8, 34, 3), (4, -4, 6, 34, 7, 3), (-16, -14, 0, 7, 30, 3)]
     for (x, y, z, lx, ly, lz) in pieces:
-        tex = lambda u, v: (pl, 4 if (u + v) % 9 > 1 else 2)
-        sc.box(x, y, z, x + lx, y + ly, z + lz, top=lambda u, v: (pl, 5 if int(u) % 13 else 3),
+        sc.box(x, y, z, x + lx, y + ly, z + lz, top=lambda u, v: (pl, 5 if (u % 13) >= LW(1) else 3),
                sw=solid(pl, 3), se=solid(pl, 2))
     # one board leaning up on the pile
     sc.quad((14, 10, 0), (-20, 0, 18), (0, 7, 0), lambda u, v: (pl, 5 if u % 11 > 1 else 3))

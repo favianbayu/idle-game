@@ -26,6 +26,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import pix  # noqa: E402
 import debris  # noqa: E402
 import house  # noqa: E402
 import plants  # noqa: E402
@@ -52,14 +53,26 @@ def finish(cv, pivot, shadow=None, outline=True, margin=2):
                     dx, dy = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
                     if dx * dx + dy * dy <= 1:
                         px[x, y] = SHADOW_RGBA
+        sh = chunky_image(sh)
         sh.alpha_composite(img)
         img = sh
     a = np.array(img)[..., 3]
     ys, xs = np.nonzero(a)
     x0, y0 = max(0, xs.min() - margin), max(0, ys.min() - margin)
+    x0, y0 = x0 - x0 % pix.PIXEL, y0 - y0 % pix.PIXEL     # keep the block grid
     x1, y1 = min(img.width, xs.max() + 1 + margin), min(img.height, ys.max() + 1 + margin)
     img = img.crop((x0, y0, x1, y1))
     return img, (int(pivot[0] - x0), int(pivot[1] - y0))
+
+
+def chunky_image(img):
+    """A soft layer (shadow) drawn in PIXEL x PIXEL blocks."""
+    n = pix.PIXEL
+    if n == 1:
+        return img
+    w, h = img.size
+    small = img.resize(((w + n - 1) // n, (h + n - 1) // n), Image.NEAREST)
+    return small.resize((small.width * n, small.height * n), Image.NEAREST).crop((0, 0, w, h))
 
 
 def iso_shadow(cv_img, ms_scr, lx, ly, pad=6):
@@ -70,12 +83,14 @@ def iso_shadow(cv_img, ms_scr, lx, ly, pad=6):
     pts = [(x + 8, y + 4) for x, y in pts]
     from PIL import ImageDraw
     ImageDraw.Draw(sh).polygon(pts, fill=SHADOW_RGBA)
+    sh = chunky_image(sh)
     sh.alpha_composite(cv_img)
     return sh
 
 
 def build_all(out, char=None):
     manifest = {"tile": {"w": tiles.TW, "h": tiles.TH, "note": "isometric 2:1, Iso.TILE_W x TILE_H"},
+                "pixel": pix.PIXEL,
                 "light": "top left", "assets": {}}
 
     def save(cat, name, img, pivot, **meta):
@@ -180,6 +195,7 @@ def build_all(out, char=None):
         ("tanah_olah", tiles.soil(2)), ("tanah_olah_basah", tiles.soil(2, wet=True)),
         ("jalan_tanah", tiles.path(3)), ("jalan_batu", tiles.path(3, "batu")),
     ]:
+        cv.chunky(min_cover=1)
         img = cv.image()
         save("tanah", name, img, (tiles.TW // 2, tiles.TH // 2), note="diamond tile; pivot = tile centre")
         placed[f"tanah/{name}"] = (img, (tiles.TW // 2, tiles.TH // 2))
@@ -191,6 +207,7 @@ def build_all(out, char=None):
         a = np.array(img)[..., 3]
         ys, xs = np.nonzero(a)
         x0, y0 = xs.min() - 2, ys.min() - 2
+        x0, y0 = x0 - x0 % pix.PIXEL, y0 - y0 % pix.PIXEL
         img = img.crop((x0, y0, xs.max() + 3, ys.max() + 3))
         ox, oy = ms.scr((0, 0, 0))
         door_px = ms.scr(((98 + 142) / 2, house.LY + 8, 0))
@@ -320,6 +337,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="assets/environment")
     ap.add_argument("--char", default=None, help="a character frame (96 x 128, feet at 48,116) shown for scale")
+    ap.add_argument("--pixel", type=int, default=1, help="art pixel size: 2 draws every sprite in 2 x 2 blocks, same sprite size")
     a = ap.parse_args()
+    pix.PIXEL = a.pixel
     m = build_all(a.out, a.char)
     print(f"{len(m['assets'])} assets -> {a.out}")

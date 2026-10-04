@@ -10,6 +10,7 @@ import random
 
 import numpy as np
 
+import pix
 from pix import Canvas, Noise, ramp, LIGHT3, bayer
 
 
@@ -21,6 +22,10 @@ def canopy(cv, cx, cy, rx, ry, rmp, seed, *, clump=(6, 10), density=1.0, lo=0, h
            depth_base=0.0, sparkle=0.02, flat_bottom=0.0, fruit=None, fruit_n=0, bias=0.0):
     rnd = random.Random(seed)
     hi = len(rmp) - 1 if hi is None else hi
+    if pix.PIXEL > 1:
+        # bigger leaf puffs so each still reads with chunkier pixels
+        k = 1 + 0.6 * (pix.PIXEL - 1)
+        clump = (clump[0] * k, clump[1] * k)
     n_clumps = int(density * (rx * ry) / (clump[0] * clump[1]) * 3.2)
     clumps = []
     for i in range(n_clumps):
@@ -62,7 +67,8 @@ def canopy(cv, cx, cy, rx, ry, rmp, seed, *, clump=(6, 10), density=1.0, lo=0, h
             val += (bayer(x, y) - 0.5) * 0.03
             t = int(max(lo, min(hi, math.floor(lo + val * (hi - lo + 0.999)))))
             # shadow rim on each clump's lower right: separates the puffs
-            if ((x + 1, y + 1) not in pset or (x, y + 1) not in pset) and dx + dy > 0.1:
+            P = pix.PIXEL
+            if ((x + P, y + P) not in pset or (x, y + P) not in pset) and dx + dy > 0.1:
                 t = max(lo, t - 2)
             if rnd.random() < sparkle and t >= hi - 2 and dx + dy < -0.3:
                 t = hi
@@ -121,14 +127,14 @@ def trunk(cv, base_x, base_y, height, w_base, w_top, rmp, seed, *, lean=0.0, fla
             l = float(n @ LIGHT3)
             v = 0.45 + 0.55 * l
             # bark grooves: vertical streaks that wander a little
-            g = nz(x * 0.55 + 0.0, y * 0.06)
+            g = nz(x * 0.55 / pix.PIXEL, y * 0.06 / pix.PIXEL)
             if g < 0.32:
                 v -= 0.22
             elif g > 0.78:
                 v += 0.10
             v += (bayer(x, y) - 0.5) * 0.08
             tt = int(max(lo, min(hi, math.floor(lo + v * (hi - lo + 0.999)))))
-            if x == x1:
+            if x > x1 - pix.PIXEL:
                 tt = lo
             cv.put(x, y, rmp[tt], depth)
     return
@@ -244,7 +250,7 @@ def palm(seed, w=190, h=240, coconuts=True):
             l = float(np.array([s, 0, math.sqrt(max(0, 1 - s * s))]) @ LIGHT3)
             v = 0.42 + 0.55 * l + (-0.2 if ring else 0.0) + (bayer(xx, int(y)) - 0.5) * 0.08
             tt = int(max(0, min(len(br) - 1, math.floor(v * len(br)))))
-            if xx == x1:
+            if xx > x1 - pix.PIXEL:
                 tt = 0
             if ring and (i % 7) == 1 and s < 0.3:
                 tt = min(len(br) - 1, tt + 2)   # lit lip under each ring
