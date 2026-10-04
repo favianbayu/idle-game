@@ -188,8 +188,6 @@ def planks_h(rmp, base=4, gap=8, seed=0, knots=True):
         # board ends (butt joints) staggered per row
         if ((u + h * 13) % 70) < lw:
             return (rmp, base - 2)
-        if pix.STYLE == "chibi":
-            return (rmp, t)              # clean boards, no grain
         g = math.sin(u * 0.35 + row * 2.1 + math.sin(u * 0.07 + row) * 2)
         if g > 0.93:
             return (rmp, t - 1)

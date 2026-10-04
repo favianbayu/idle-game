@@ -1,273 +1,342 @@
 """Debris and ground clutter (twigs, logs, weeds, rubble, broken fences, crates)
-plus bushes and flowers. Ruined pieces lean toward the farm's broken barn,
-greenhouse and granary (Kebun Warisan starts in ruins)."""
+plus bushes and flowers, in a Stardew-Valley-like style. Ruined pieces lean
+toward the farm's broken barn, greenhouse and granary (Kebun Warisan starts in
+ruins).
+
+The flat (2D) pieces are drawn at art resolution with sv.asset; the iso pieces
+are built in world space with IsoScene like the house.
+"""
 import math
 import random
 
-import numpy as np
-
 import pix
-from pix import Canvas, Noise, ramp, toon
+from pix import Canvas, Noise, ramp
 from iso import IsoScene, bricks, solid, LW, EV, FS, LIGHT_W
-from plants import leaf, strap, spine_path, flower, stalk
-import toon as T
-from toon import DEEP, SHADOW, MID, LIGHT, HI
+import sv
+from sv import PAL, clamp
+from plants import leaf, spine_path, flower
 
 
-# ------------------------------------------------------------ 2D clutter
-def stick(cv, x0, y0, x1, y1, pal, rnd, fork=True, w=1):
-    """A chunky twig: lit top edge, shaded underside, a light cut end."""
-    P = pix.PIXEL
+# ------------------------------------------------------------ 2D clutter (art px)
+def stick(cv, x0, y0, x1, y1, pal_, rnd, fork=True, w=2, depth=None):
+    """A twig: lit top edge, shaded underside, a pale cut end, maybe a fork."""
     L = max(1, int(math.hypot(x1 - x0, y1 - y0)))
     dx, dy = (x1 - x0) / L, (y1 - y0) / L
-    for i in range(0, L + 1):
-        x, y = x0 + dx * i, y0 + dy * i
-        cv.put(x, y - P * w, pal[LIGHT])
-        if w > 1:
-            cv.put(x, y, pal[MID])
-        cv.put(x, y + P * (w > 1), pal[SHADOW])
+    for i in range(L + 1):
+        x, y = int(round(x0 + dx * i)), int(round(y0 + dy * i))
+        tones = (6 if i % 6 == 2 else 5, 3, 2)[:w] if w > 1 else (4,)
+        for k, t in enumerate(tones):
+            cv.put(x, y - (w - 1) + k, pal_[t], depth)
     if fork:
-        i = int(L * rnd.uniform(0.35, 0.65))
-        fx, fy = x0 + dx * i, y0 + dy * i
-        a = math.atan2(dy, dx) + rnd.choice([-0.8, 0.8])
-        l2 = L * 0.32
-        for k in range(int(l2)):
-            cv.put(fx + math.cos(a) * k, fy + math.sin(a) * k - P, pal[MID])
-    cv.put(x1, y1 - P * (w > 1), toon("wood_cut")[LIGHT])
+        i = int(L * rnd.uniform(0.35, 0.6))
+        fx, fy = x0 + dx * i, y0 + dy * i - (w - 1)
+        a = math.atan2(dy, dx) + rnd.choice([-0.75, 0.75]) + (math.pi if rnd.random() < 0.5 else 0)
+        for k in range(1, int(L * 0.3)):
+            cv.put(int(round(fx + math.cos(a) * k)), int(round(fy + math.sin(a) * k * 0.7)) - 1, pal_[4], depth)
+    wc = PAL["wood_cut"]
+    for k in range(w):
+        cv.put(int(round(x1)), int(round(y1)) - (w - 1) + k, wc[6 - 2 * k], depth)
 
 
-def ranting(seed):
-    cv = Canvas(64, 40)
-    rnd = random.Random(seed)
-    bp = toon("bark")
-    for k in range(3):
-        a = rnd.uniform(-0.45, 0.45) + (0 if k % 2 else math.pi * 0.9)
-        cx, cy = 32 + rnd.uniform(-6, 6), 24 + rnd.uniform(-3, 3)
-        L = rnd.uniform(28, 36)
-        stick(cv, cx - math.cos(a) * L / 2, cy - math.sin(a) * L / 2 * 0.6,
-              cx + math.cos(a) * L / 2, cy + math.sin(a) * L / 2 * 0.6, bp, rnd, w=2)
-    for k in range(3):     # a few dry leaves
-        dry_leaf(cv, 32 + rnd.randint(-18, 18), 27 + rnd.randint(-5, 5), rnd)
-    return cv, (32, 32)
-
-
-def dry_leaf(cv, x, y, rnd, L=10):
-    pal = toon(rnd.choice(["orange", "straw", "leaf_yellow", "dirt"]))
+def dry_leaf(cv, x, y, rnd, L=5):
+    pal_ = PAL[rnd.choice(["leaf_autumn", "orange", "straw", "mango", "leaf_autumn"])]
     a = rnd.uniform(0, math.pi * 2)
-    T.outlined(cv, lambda c: leaf(c, x, y, a, L, 3.4, pal, rib=True))
+    sv.outlined(cv, lambda c: leaf(c, x, y, a, L, 1.5, pal_, base=4))
 
 
-def daun_kering(seed):
-    cv = Canvas(80, 44)
+@sv.asset
+def ranting(seed):
+    cv = Canvas(32, 20)
     rnd = random.Random(seed)
-    for k in range(11):
-        dry_leaf(cv, rnd.randint(14, 66), rnd.randint(12, 32), rnd, L=rnd.randint(9, 12))
-    return cv, (40, 30)
+    bp = PAL["bark"]
+    for k, a0 in enumerate((0.4, -0.5, 0.05)):
+        a = a0 + rnd.uniform(-0.08, 0.08)
+        cx, cy = 16 + rnd.uniform(-2, 2), 11 + (k - 1) * 2
+        L = rnd.uniform(19, 24) - k * 3
+        stick(cv, cx - math.cos(a) * L / 2, cy - math.sin(a) * L / 2 * 0.6,
+              cx + math.cos(a) * L / 2, cy + math.sin(a) * L / 2 * 0.6, bp, rnd, w=3 if k == 0 else 2, depth=k)
+    for k in range(1):
+        dry_leaf(cv, 16 + rnd.randint(-9, 9), 13 + rnd.randint(-2, 3), rnd)
+    return cv, (16, 16)
 
 
-def kayu_tumbang(seed, w=124, h=80):
+@sv.asset
+def daun_kering(seed):
+    cv = Canvas(40, 22)
+    rnd = random.Random(seed)
+    for k in range(12):
+        dry_leaf(cv, rnd.randint(7, 33), rnd.randint(6, 16), rnd, L=rnd.randint(5, 6))
+    return cv, (20, 15)
+
+
+@sv.asset
+def kayu_tumbang(seed):
     """A fallen log lying along the grid's X axis (screen down-right), cut end toward us.
 
-    The log is swept as round cross-sections from the far end to the near end,
-    each shaded from its world normal, then capped with a ringed cut face."""
-    P = pix.PIXEL
-    cv = Canvas(w, h)
+    Swept as round cross-sections from the far end to the near end, each shaded
+    from its world normal, with long bark streaks, a moss patch on top and a
+    ringed cut face."""
+    cv = Canvas(62, 40)
     rnd = random.Random(seed)
-    bp, wp, mp = toon("bark"), toon("wood_cut"), toon("mossy")
-    rw = 11.0                       # radius in world units
-    L = 64
-    ox, oy = 26, 30                 # screen point of the far end's axis
+    bp, wp, mp = PAL["bark"], PAL["wood_cut"], PAL["moss"]
+    rw, L = 5.6, 32
+    ox, oy = 13, 15
+
     def scr(X, Y, Z):
         return ox + X - Y, oy + (X + Y) / 2 - Z
-    lines = [rnd.uniform(-2.4, 2.4) for _ in range(3)]
-    for X in np.arange(0, L, 0.5):
-        for ang in np.arange(0, 2 * math.pi, 0.05):
+
+    streaks = [(rnd.uniform(0.2, 3.0), rnd.uniform(0, L * 0.6), rnd.uniform(6, 16), rnd.choice((1, -1, -2)))
+               for _ in range(9)]
+    for X in [i * 0.25 for i in range(int(L / 0.25))]:
+        for k in range(160):
+            ang = k / 160 * 2 * math.pi
             ny, nz = math.cos(ang), math.sin(ang)
-            n = np.array([0.0, ny, nz])
             x, y = scr(X, ny * rw, nz * rw + rw)
-            l = float(n @ LIGHT_W)
-            b = LIGHT if l > 0.55 else (MID if l > -0.05 else SHADOW)
-            if any(abs(ang - la) < 0.09 and (X // 6) % 3 != 1 for la in lines) and b > SHADOW:
-                b -= 1          # bark lines along the log
-            col = bp[b]
-            if l > 0.62 and (X - 29) ** 2 / 100 + (ang - 1.9) ** 2 / 0.5 < 1:
-                col = mp[LIGHT if l > 0.8 else MID]     # a moss patch on top
-            cv.put(x, y, col, X + ny * rw)
+            l = float(LIGHT_W @ [0.0, ny, nz])
+            t = 1 + (l + 0.55) / 1.45 * 5.2
+            for (sa, s0, sl, d) in streaks:
+                if abs(ang - sa) < 0.12 and s0 <= X <= s0 + sl:
+                    t += d
+                    break
+            col = bp[clamp(round(t), 1, 6)]
+            if l > 0.55 and (X - 15) ** 2 / 30 + (ang - 1.9) ** 2 / 0.35 < 1:
+                col = mp[clamp(round(t), 3, 6)]        # a moss patch on top
+            cv.put(int(x), int(y), col, X + ny * rw)
     # the near cut end: a disc in the YZ plane at X = L
     cx, cy = scr(L, 0, rw)
-    for yy in T.blocks(cy - rw * 1.6, cy + rw * 1.6):
-        for xx in T.blocks(cx - rw * 1.4, cx + rw * 1.4):
-            dx, dy = xx + P / 2 - cx, yy + P / 2 - cy
-            a = -dx / rw                      # Y component
-            b_ = (0.5 * a * rw - dy) / rw     # Z component
+    for yy in range(int(cy - rw * 1.7), int(cy + rw * 1.7) + 1):
+        for xx in range(int(cx - rw * 1.4), int(cx + rw * 1.4) + 1):
+            dx, dy = xx + 0.5 - cx, yy + 0.5 - cy
+            a = -dx / rw
+            b_ = (0.5 * a * rw - dy) / rw
             r = math.hypot(a, b_)
             if r <= 1.0:
-                b = (HI, LIGHT)[int(r * 3.2) % 2]
-                if r > 0.82:
-                    b = MID if b_ > 0 else SHADOW
-                cv.put(xx, yy, wp[b], 1e6)
-    # a branch stub on top and a pair of mushrooms at its foot
-    sx, sy = scr(22, -2, rw * 2)
-    for k in range(4):
-        cv.put(sx + k, sy - k * P, bp[MID], 1e6)
-        cv.put(sx + k + P, sy - k * P, bp[SHADOW], 1e6)
-    cv.put(sx + 4, sy - 4 * P, wp[LIGHT], 1e6)
-    mx, my = scr(44, rw + 3, 0)
-    mush(cv, mx, my)
-    mush(cv, mx + 7, my + 3, small=True)
+                col = wp[(6, 5)[int(r * 3.4) % 2]]
+                if r < 0.18:
+                    col = wp[3]
+                if r > 0.8:
+                    col = bp[4 if b_ > 0 else 2]
+                cv.put(xx, yy, col, 1e6)
+    # a branch stub on top and mushrooms at its foot
+    sx, sy = scr(11, -1, rw * 2)
+    for k in range(3):
+        cv.put(int(sx) + k, int(sy) - k, bp[5], 1e6)
+        cv.put(int(sx) + k + 1, int(sy) - k, bp[2], 1e6)
+    cv.put(int(sx) + 3, int(sy) - 3, wp[6], 1e6)
+    mx, my = scr(22, rw + 2, 0)
+    mush(cv, int(mx), int(my))
+    mush(cv, int(mx) + 4, int(my) + 2, small=True)
     ax, ay = scr(L / 2, 0, 0)
-    return cv, (int(ax), int(ay + 4))
+    return cv, (int(ax), int(ay + 2))
 
 
-def mush(cv, x, y, small=False):
-    """A little red-capped mushroom with white dots."""
-    P = pix.PIXEL
-    rp, wp = toon("red"), toon("white")
-    r = 4 if small else 6
-    for k in range(2 if small else 3):
-        cv.put(x, y - k * P, wp[MID if k == 0 else LIGHT], 1e7)
-    cells = T.ellipse_cells(x, y - (2 if small else 3) * P, r, r * 0.7)
-    for (xx, yy), (dx, dy) in cells.items():
-        if dy > 0.25:
-            continue
-        b = LIGHT if dx + dy < -0.3 else (MID if dx < 0.4 else SHADOW)
-        cv.put(xx, yy, rp[b], 1e7)
+def mush(cv, x, y, small=False, depth=1e7):
+    """A little red-capped mushroom with white spots."""
+    rp, wp = PAL["red"], PAL["white"]
+    h = 1 if small else 2
+    for k in range(h):
+        cv.put(x, y - k, wp[5], depth)
+        cv.put(x + 1, y - k, wp[3], depth)
+    r = 2.0 if small else 3.2
+    cx, top = x + 0.5, y - h
+    rows = 2 if small else 3
+    for j in range(rows):
+        w = r * math.sqrt(1 - ((rows - 1 - j) / rows) ** 2) if j < rows - 1 else r
+        for xx in range(int(math.floor(cx - w)), int(math.ceil(cx + w))):
+            s = (xx + 0.5 - cx) / w
+            t = 6 if s < -0.3 else (5 if s < 0.35 else 3)
+            if j == rows - 1:
+                t = 2 if s > 0 else 3
+            cv.put(xx, top - rows + j + 1, rp[t], depth)
     if not small:
-        cv.put(x - 2, y - 4 * P, wp[HI], 1e7)
-        cv.put(x + 2, y - 3 * P, wp[HI], 1e7)
+        cv.put(x - 1, top - 1, wp[7], depth + 1)
+        cv.put(x + 1, top - 2, wp[6], depth + 1)
 
 
-def rumput(seed, kind="tuft"):
-    """Weeds: 'tuft' grass clump, 'leafy' broad weed, 'pakis' fern, 'alang' tall grass."""
-    rnd = random.Random(seed)
-    if kind == "alang":
-        cv = Canvas(72, 84)
-        bx, by = 36, 78
-    else:
-        cv = Canvas(64, 52)
-        bx, by = 32, 46
-    g = toon("grass")
-    if kind in ("tuft", "alang"):
-        n = 7 if kind == "tuft" else 9
-        H = 26 if kind == "tuft" else 50
-        blades = []
-        for i in range(n):
-            side = (i - (n - 1) / 2) / ((n - 1) / 2)
-            a = -math.pi / 2 + side * 0.7 + rnd.uniform(-0.08, 0.08)
-            blades.append((abs(side), a, H * rnd.uniform(0.75, 1.0) * (1 - 0.3 * abs(side)), side))
-        blades.sort(key=lambda b: -b[0])
-        for _, a, L, side in blades:
-            strap(cv, bx + side * 6, by, a, L, 2.6, g, bend=side * 0.8, dim=-1 if abs(side) > 0.7 else 0)
-        if kind == "alang":
-            wp = toon("white")
-            for k in range(3):     # fluffy white seed heads on thin stalks
-                x, y = bx + (k - 1) * 11, by - 58 - (k == 1) * 8
-                for yy in T.blocks(y + 8, by - 10):
-                    cv.put(bx + (k - 1) * 3 + (x - bx - (k - 1) * 3) * (by - 10 - yy) / max(1, by - 18 - y),
-                           yy, g[MID], -1)
-                T.ball(cv, x, y, 3.2, 7, wp, spot=False, depth=10)
-    elif kind == "leafy":
-        for k, a in enumerate((-2.65, -0.5, -2.15, -1.0, -1.57)):
-            leaf(cv, bx, by, a + rnd.uniform(-0.06, 0.06), 17 + rnd.randint(0, 3), 5.5, g,
-                 droop=0.12, dim=-1 if k < 2 else 0)
-        flower(cv, bx - 2, by - 24, toon("yellow"))
-    elif kind == "pakis":
-        for k, a in enumerate((-2.55, -0.6, -2.05, -1.1, -1.6)):
-            fern_frond(cv, bx, by, a, 28 + rnd.randint(-2, 3), g, dim=-1 if k < 2 else 0)
-    return cv, (bx, by)
+def tuft(cv, bx, by, w, H, pal_, rnd, *, lean=0.25, density=0.8, tips=0.55, depth=None):
+    """A grass clump: 1-px blades, dark at the root and bright at the tips; back
+    blades darker and taller, front blades shorter and lighter, some tips bent."""
+    for layer, (dark, hf, wf) in enumerate(((-1, 1.0, 1.0), (0, 0.82, 0.85), (1, 0.55, 0.65))):
+        ww = w * wf
+        for x in range(-int(ww), int(ww) + 1):
+            if rnd.random() > density:
+                continue
+            env = math.sqrt(max(0.0, 1 - (x / (ww + 1)) ** 2))
+            h = H * hf * env * rnd.uniform(0.7, 1.05)
+            if h < 2:
+                continue
+            n = int(h)
+            sl = lean * x / max(1, w) + rnd.uniform(-0.08, 0.08)
+            par = -1 if (x + layer) % 2 else 0
+            last = None
+            for i in range(n):
+                t = i / max(1, n - 1)
+                xx = int(round(bx + x + sl * i))
+                tone = 1 + t * 5.2 + dark + par
+                last = (xx, by - i, tone)
+                cv.put(xx, by - i, pal_[clamp(round(tone), 1, 7)], depth)
+            if last and h > H * 0.45 and rnd.random() < tips:
+                d = 1 if (x > 0 or (x == 0 and rnd.random() < 0.5)) else -1
+                cv.put(last[0] + d, last[1], pal_[clamp(round(last[2]), 1, 7)], depth)
 
 
-def fern_frond(cv, x0, y0, a, L, pal, dim=0):
-    """A fern frond: a tapering blade with a notched (leaflet) edge."""
-    pts = spine_path(x0, y0, a, L, bend=(0.9 if math.cos(a) > 0 else -0.9) * min(1, abs(math.cos(a)) * 2), droop=0.08)
+def fern_frond(cv, x0, y0, a, L, pal_, dim=0):
+    """A fern frond: a tapering strap with a notched (leaflet) edge and a pale rib."""
+    side = 1 if math.cos(a) > 0 else -1
+    pts = spine_path(x0, y0, a, L, bend=side * 0.5 * min(1, abs(math.cos(a)) * 2.5), droop=0.05)
     for j in range(len(pts) - 1):
         x, y, t = pts[j]
         nx, ny = pts[j + 1][0] - x, pts[j + 1][1] - y
         d = math.hypot(nx, ny) or 1
         nx, ny = nx / d, ny / d
         px, py = -ny, nx
-        w = 6.5 * math.sin(min(1.0, t * 1.05 + 0.05) * math.pi) * (0.5 if (j // 4) % 2 else 1.0) + 0.5
+        w = 2.7 * math.sin(min(1.0, t * 1.02 + 0.06) * math.pi) ** 0.7 * (0.5 if (j // 3) % 2 else 1.0) + 0.3
         s = -w
-        while s <= w:
+        while s <= w + 0.01:
             upper = (py * s) < 0
-            b = LIGHT if upper else MID
-            if abs(s) > w - 1.3:
-                b = MID if upper else SHADOW
-            cv.put(x + px * s, y + py * s, pal[max(DEEP, b + dim)])
+            b = 5 if upper else 3
+            if abs(s) > w - 0.7:
+                b = 4 if upper else 2
+            cv.put(int(round(x + px * s)), int(round(y + py * s)), pal_[clamp(b + dim, 1, 7)])
             s += 0.5
-        if t < 0.85:
-            cv.put(x, y, pal[max(DEEP, SHADOW + dim)])
+        if 0.1 < t < 0.85:
+            cv.put(int(round(x)), int(round(y)), pal_[clamp(6 + dim, 1, 7)])
 
 
+@sv.asset
+def rumput(seed, kind="tuft"):
+    """Weeds: 'tuft' grass clump, 'leafy' broad weed, 'pakis' fern, 'alang' tall grass."""
+    rnd = random.Random(seed)
+    if kind in ("alang", "pakis"):
+        cv = Canvas(36, 42)
+        bx, by = 18, 39
+    else:
+        cv = Canvas(32, 26)
+        bx, by = 16, 23
+    g = PAL["grass"]
+    if kind == "tuft":
+        tuft(cv, bx, by, 10, 17, g, rnd, density=0.9)
+        for (dx, dy) in ((-4, -12), (3, -10)):
+            flower(cv, bx + dx, by + dy, PAL["pink"])
+    elif kind == "alang":
+        wp = PAL["white"]
+        heads = [(-6, -33), (1, -37), (7, -31)]
+        for (hx, hy) in heads:     # thin stalks up to fluffy white plumes
+            x0, y0 = bx + hx * 0.3, by - 10
+            n = y0 - (by + hy)
+            for i in range(int(n)):
+                cv.put(int(round(x0 + (bx + hx - x0) * i / n)), int(y0 - i), g[3 if i % 3 else 4])
+        tuft(cv, bx, by, 9, 22, g, rnd, lean=0.35)
+        for k, (hx, hy) in enumerate(heads):
+            cx, cy = bx + hx, by + hy
+            for yy in range(-4, 5):
+                ww = 1.8 * math.sqrt(max(0, 1 - (yy / 4.6) ** 2))
+                for xx in range(int(math.floor(-ww)), int(math.ceil(ww))):
+                    t = 6 if xx < 0 and yy < 1 else (5 if xx <= 0 else 3)
+                    if yy > 2:
+                        t -= 1
+                    cv.put(cx + xx, cy + yy, wp[t], 100 + k)
+            cv.put(cx - 1, cy - 2, wp[7], 101 + k)
+    elif kind == "leafy":
+        for k, a in enumerate((-2.55, -0.6, -2.1, -1.05, -1.85, -1.3)):
+            sv.outlined(cv, lambda c, k=k, a=a + rnd.uniform(-0.06, 0.06), L=12 + rnd.randint(0, 2):
+                        leaf(c, bx + (k % 2) * 2 - 1, by, a, L, 2.5, g, droop=0.08, base=3 if k < 2 else 4))
+        tuft(cv, bx, by, 4, 6, g, rnd, density=0.6, tips=0.2)
+        flower(cv, bx - 1, by - 11, PAL["yellow"])
+    elif kind == "pakis":
+        fp = PAL["leaf_dark"]
+        for k, a in enumerate((-2.65, -0.5, -2.3, -0.85, -2.0, -1.15, -1.75, -1.4)):
+            sv.outlined(cv, lambda c, k=k, a=a + rnd.uniform(-0.05, 0.05), L=(14 if k < 2 else 21) + rnd.randint(-1, 2):
+                        fern_frond(c, bx, by, a, L, fp, dim=-1 if k < 2 else (0 if k < 6 else 1)))
+    return cv, (bx, by)
+
+
+def berry(cv, x, y, pal_, depth=100):
+    for (dx, dy, t) in ((0, 0, 6), (1, 0, 4), (0, 1, 4), (1, 1, 2), (-1, 0, 4), (0, -1, 5)):
+        cv.put(x + dx, y + dy, pal_[t], depth)
+    cv.put(x, y, pal_[7], depth + 1)
+
+
+def hibiscus(cv, x, y):
+    """Kembang sepatu: a round red five-petal flower with a dark heart and a yellow stamen."""
+    rp = PAL["red"]
+    for yy in range(-3, 4):
+        for xx in range(-3, 4):
+            a = math.atan2(yy, xx)
+            lim = 2.6 + 0.9 * abs(math.cos(a * 2.5 + 0.4))
+            if xx * xx + yy * yy <= lim * lim * 0.85:
+                t = 6 if xx + yy < -2 else (5 if xx + yy < 1 else 3)
+                cv.put(x + xx, y + yy, rp[t], 200)
+    cv.put(x, y, rp[1], 201)
+    cv.put(x + 1, y - 1, PAL["yellow"][6], 202)
+    cv.put(x + 2, y - 2, PAL["yellow"][7], 202)
+
+
+@sv.asset
 def semak(seed, kind="hijau"):
     """Bushes: 'hijau' plain, 'buah' berry bush, 'sepatu' hibiscus, 'melati' jasmine."""
-    P = pix.PIXEL
-    cv = Canvas(76, 64)
+    cv = Canvas(38, 32)
     rnd = random.Random(seed)
-    lp = toon("leaf_dark" if kind in ("sepatu", "melati") else "leaf")
-    bx, by = 38, 56
-    items = [(bx - 16, by - 16, 15, 0), (bx + 16, by - 16, 15, 0), (bx, by - 28, 17, 1),
-             (bx - 7, by - 12, 14, 2), (bx + 9, by - 11, 13, 2)]
-    T.puffs(cv, items, lp, center=(bx, by - 20), radii=(32, 22), seed=seed, depth=0)
+    lp = PAL["leaf_dark" if kind in ("sepatu", "melati") else "leaf"]
+    bx, by = 19, 29
+    blobs = [(bx, by - 11, 14, 10), (bx - 8, by - 7, 7, 6.5), (bx + 8, by - 7, 7.5, 6.5),
+             (bx - 5, by - 18, 7, 5.5), (bx + 5, by - 19, 7.5, 5.5), (bx, by - 21, 6, 4)]
+    bp = PAL["bark"]
+
+    def twigs(c, mask):
+        for (ex, ey) in ((bx - 9, by - 15), (bx + 8, by - 16), (bx - 2, by - 20), (bx + 3, by - 9)):
+            sv.branch(c, [(bx, by - 1), ((bx + ex) / 2, (by + ey) / 2 + 2), (ex, ey)], 1.6, 1, bp, clip=mask)
+
+    mask = sv.crown(cv, blobs, lp, seed, leaf="oak", spacing=(4, 3), jitter=1.0, before_leaves=twigs)
     spots = []
-    for _ in range(300):
-        x, y = bx + rnd.uniform(-26, 26), by - rnd.uniform(6, 40)
-        q = (int(x) - int(x) % P, int(y) - int(y) % P)
-        if not cv.a[q[1], q[0]]:
+    for _ in range(400):
+        x, y = bx + rnd.randint(-12, 12), by - rnd.randint(4, 24)
+        if (x, y) not in mask or mask[(x, y)] < -0.2:
             continue
-        if any(math.hypot(x - a, y - b) < (8 if kind != "melati" else 6) for a, b in spots):
+        if any(abs(x - a) + abs(y - b) < (5 if kind != "melati" else 4) for a, b in spots):
             continue
         spots.append((x, y))
     if kind == "buah":
-        for x, y in spots[:9]:
-            T.ball(cv, x, y, 3.2, 3.2, toon("red"), depth=100)
+        for x, y in spots[:11]:
+            berry(cv, x, y, PAL["red"])
     elif kind == "sepatu":
         for x, y in spots[:5]:
             hibiscus(cv, x, y)
     elif kind == "melati":
-        for x, y in spots[:10]:
-            flower(cv, x, y, toon("white"))
+        for x, y in spots[:12]:
+            flower(cv, x, y, PAL["white"])
     return cv, (bx, by)
 
 
-def hibiscus(cv, x, y):
-    """Kembang sepatu: a big round red flower with a yellow stamen."""
-    P = pix.PIXEL
-    rp = toon("red")
-    cells = T.ellipse_cells(x, y, 6, 5, edge=lambda a: 0.85 + 0.15 * abs(math.cos(a * 2.5)))
-    for (xx, yy), (dx, dy) in cells.items():
-        b = LIGHT if dx + dy < -0.2 else MID
-        if T.lower_right_edge(cells, xx, yy) and dx + dy > 0:
-            b = SHADOW
-        cv.put(xx, yy, rp[b], 200)
-    cv.put(x, y, rp[DEEP], 201)
-    cv.put(x + P, y - P, toon("yellow")[HI], 201)
+def big_flower(cv, x, y, pal_):
+    """A round five-petal wild flower with a yellow (or orange) eye."""
+    for yy in range(-2, 3):
+        for xx in range(-2, 3):
+            if abs(xx) == 2 and abs(yy) == 2:
+                continue
+            t = 6 if xx + yy < -1 else (5 if xx + yy < 2 else 3)
+            cv.put(x + xx, y + yy, pal_[t], 200)
+    eye = PAL["orange"] if pal_ is PAL["yellow"] else PAL["yellow"]
+    cv.put(x, y, eye[5], 201)
+    cv.put(x - 1, y - 1, pal_[7], 201)
 
 
-def big_flower(cv, x, y, pal):
-    """A round 5-petal wild flower with a yellow eye."""
-    cells = T.ellipse_cells(x, y, 5, 4.6, edge=lambda a: 0.82 + 0.18 * abs(math.cos(a * 2.5 + 0.3)))
-    for (xx, yy), (dx, dy) in cells.items():
-        b = HI if dx + dy < -0.6 else (LIGHT if dx + dy < 0.2 else MID)
-        cv.put(xx, yy, pal[b], 200)
-    yp = toon("yellow") if pal is not toon("yellow") else toon("orange")
-    cv.put(x, y, yp[MID], 201)
-
-
+@sv.asset
 def bunga_liar(seed, color="yellow"):
-    P = pix.PIXEL
-    cv = Canvas(64, 52)
+    cv = Canvas(32, 26)
     rnd = random.Random(seed)
-    g = toon("grass")
-    spots = sorted([(32 + dx + rnd.randint(-2, 2), 44 + dy) for dx, dy in ((-16, -2), (0, -4), (14, -1), (-6, 2), (8, 3))],
+    g = PAL["grass"]
+    tuft(cv, 16, 23, 7, 7, g, rnd, density=0.7, tips=0.3)
+    spots = sorted([(16 + dx + rnd.randint(-1, 1), 22 + dy) for dx, dy in ((-8, -1), (0, -2), (7, 0), (-3, 1), (4, 1))],
                    key=lambda p: p[1])
     for (x, y) in spots:
-        h = rnd.randint(12, 18)
-        stalk(cv, x, y, y - h, g, w=1)
-        leaf(cv, x, y - 1, -2.6, 8, 2.6, g, rib=False)
-        leaf(cv, x + P, y - 3, -0.55, 8, 2.6, g, rib=False, dim=-1)
-        big_flower(cv, x, y - h - 2, toon(color))
-    return cv, (32, 44)
+        h = rnd.randint(7, 10)
+        for i in range(h):
+            cv.put(x, y - i, g[4 if i % 3 else 3])
+        leaf(cv, x, y - 2, -2.6, 4, 1.3, g, rib=False, base=4)
+        leaf(cv, x + 1, y - 3, -0.55, 4, 1.3, g, rib=False, base=3)
+        big_flower(cv, x, y - h - 1, PAL[color])
+    return cv, (16, 22)
 
 
 # ------------------------------------------------------------ iso pieces
@@ -298,9 +367,11 @@ def peti(seed, broken=False):
     cv = sc.render(outline=False)
     if broken:
         rnd = random.Random(seed)
-        br = toon("plank")
-        stick(cv, 14, 66 - 8, 30, 62 - 8, br, rnd, fork=False)
-        stick(cv, 40, 64, 56, 58, br, rnd, fork=False)
+
+        def boards(c, P):   # two loose boards on the ground beside it
+            stick(c, 14 // P, 58 // P, 30 // P, 54 // P, PAL["plank"], rnd, fork=False)
+            stick(c, 40 // P, 64 // P, 56 // P, 58 // P, PAL["plank"], rnd, fork=False)
+        sv.overlay(cv, boards)
     cv.outline()
     return cv, (36, 44 + int(s))
 
@@ -435,14 +506,17 @@ def tiang_lapuk(seed):
     sc.quad((4, -4, 0), (0, 8, 0), (6, 0, 80), lambda u, v: ("plank_old", 2) if v <= 78 + nz(u * 0.5, 0) * 10 else None)
     cv = sc.render(outline=False)
     # a vine creeping up
-    g = toon("leaf")
-    x, y = 26, 92
     rnd = random.Random(seed)
-    for i in range(40):
-        x += math.sin(i * 0.4) * 0.8
-        y -= 1.4
-        cv.put(int(x), int(y), g[SHADOW])
-        if i % 7 == 0:
-            leaf(cv, x, y, rnd.choice([-2.6, -0.5]), 7, 2.8, g, rib=False)
+
+    def vine(c, P):
+        g = PAL["leaf"]
+        x, y = 26 / P, 92 / P
+        for i in range(30):
+            x += math.sin(i * 0.4) * 0.4
+            y -= 0.95
+            c.put(int(round(x)), int(round(y)), g[3])
+            if i % 6 == 2:
+                sv.outlined(c, lambda cc, x=x, y=y: leaf(cc, x, y, rnd.choice([-2.6, -0.5]), 4, 1.5, g, base=4))
+    sv.overlay(cv, vine)
     cv.outline()
     return cv, (24, 96)

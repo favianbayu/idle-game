@@ -10,12 +10,12 @@
     "pohon/mangga": {
       "file": "pohon/mangga.png",
       "size": [
-        134,
-        138
+        112,
+        158
       ],
       "pivot": [
-        68,
-        130
+        55,
+        151
       ],
       "footprint": [
         1,
@@ -25,12 +25,12 @@
     "pohon/mangga_berbuah": {
       "file": "pohon/mangga_berbuah.png",
       "size": [
-        130,
-        136
+        112,
+        158
       ],
       "pivot": [
-        66,
-        128
+        57,
+        151
       ],
       "footprint": [
         1,
@@ -40,12 +40,12 @@
     "pohon/pohon_hutan": {
       "file": "pohon/pohon_hutan.png",
       "size": [
-        150,
-        148
+        126,
+        174
       ],
       "pivot": [
-        76,
-        140
+        63,
+        167
       ],
       "footprint": [
         1,
@@ -55,12 +55,12 @@
     "pohon/jati": {
       "file": "pohon/jati.png",
       "size": [
-        108,
-        174
+        104,
+        190
       ],
       "pivot": [
-        54,
-        166
+        49,
+        183
       ],
       "footprint": [
         1,
@@ -70,12 +70,12 @@
     "pohon/pohon_kemarau": {
       "file": "pohon/pohon_kemarau.png",
       "size": [
-        126,
-        138
+        110,
+        154
       ],
       "pivot": [
-        62,
-        130
+        55,
+        147
       ],
       "footprint": [
         1,
@@ -85,12 +85,12 @@
     "pohon/kelapa": {
       "file": "pohon/kelapa.png",
       "size": [
-        134,
-        154
+        124,
+        170
       ],
       "pivot": [
-        42,
-        146
+        37,
+        163
       ],
       "footprint": [
         1,
@@ -100,12 +100,12 @@
     "pohon/pisang": {
       "file": "pohon/pisang.png",
       "size": [
-        98,
-        110
+        110,
+        116
       ],
       "pivot": [
-        48,
-        102
+        55,
+        109
       ],
       "footprint": [
         1,
@@ -115,12 +115,12 @@
     "pohon/bibit_0": {
       "file": "pohon/bibit_0.png",
       "size": [
-        32,
+        26,
         26
       ],
       "pivot": [
-        16,
-        20
+        13,
+        21
       ],
       "footprint": [
         1,
@@ -130,12 +130,12 @@
     "pohon/bibit_1": {
       "file": "pohon/bibit_1.png",
       "size": [
-        40,
-        62
+        48,
+        68
       ],
       "pivot": [
-        20,
-        56
+        25,
+        63
       ],
       "footprint": [
         1,
@@ -145,12 +145,12 @@
     "pohon/bibit_2": {
       "file": "pohon/bibit_2.png",
       "size": [
-        68,
-        106
+        86,
+        120
       ],
       "pivot": [
-        34,
-        100
+        43,
+        115
       ],
       "footprint": [
         1,
@@ -160,12 +160,12 @@
     "pohon/tunggul": {
       "file": "pohon/tunggul.png",
       "size": [
-        48,
-        30
+        46,
+        28
       ],
       "pivot": [
-        24,
-        22
+        23,
+        23
       ],
       "footprint": [
         1,
@@ -175,12 +175,12 @@
     "pohon/tunggul_besar": {
       "file": "pohon/tunggul_besar.png",
       "size": [
-        60,
-        40
+        62,
+        38
       ],
       "pivot": [
-        30,
-        32
+        31,
+        33
       ],
       "footprint": [
         1,
@@ -194,8 +194,8 @@
         38
       ],
       "pivot": [
-        24,
-        34
+        25,
+        35
       ],
       "footprint": [
         1,
@@ -209,8 +209,8 @@
         36
       ],
       "pivot": [
-        22,
-        32
+        23,
+        33
       ],
       "footprint": [
         1,
@@ -224,8 +224,8 @@
         40
       ],
       "pivot": [
-        22,
-        36
+        23,
+        37
       ],
       "footprint": [
         1,
@@ -235,12 +235,12 @@
     "batu/batu_besar": {
       "file": "batu/batu_besar.png",
       "size": [
-        94,
+        96,
         68
       ],
       "pivot": [
-        46,
-        64
+        47,
+        65
       ],
       "footprint": [
         2,
@@ -254,8 +254,8 @@
         46
       ],
       "pivot": [
-        26,
-        42
+        27,
+        43
       ],
       "footprint": [
         1,
@@ -269,8 +269,8 @@
         46
       ],
       "pivot": [
-        26,
-        42
+        27,
+        43
       ],
       "footprint": [
         1,
@@ -280,12 +280,12 @@
     "batu/bijih_emas": {
       "file": "batu/bijih_emas.png",
       "size": [
-        56,
+        54,
         44
       ],
       "pivot": [
-        28,
-        40
+        27,
+        41
       ],
       "footprint": [
         1,
@@ -299,8 +299,8 @@
         44
       ],
       "pivot": [
-        28,
-        40
+        29,
+        41
       ],
       "footprint": [
         1,
@@ -311,11 +311,11 @@
       "file": "batu/kerikil.png",
       "size": [
         46,
-        28
+        26
       ],
       "pivot": [
-        24,
-        22
+        25,
+        21
       ],
       "footprint": [
         1,
@@ -325,12 +325,12 @@
     "puing/ranting": {
       "file": "puing/ranting.png",
       "size": [
-        44,
+        54,
         30
       ],
       "pivot": [
-        22,
-        24
+        25,
+        27
       ],
       "footprint": [
         1,
@@ -340,12 +340,12 @@
     "puing/daun_kering": {
       "file": "puing/daun_kering.png",
       "size": [
-        60,
-        42
+        70,
+        40
       ],
       "pivot": [
-        32,
-        30
+        31,
+        31
       ],
       "footprint": [
         1,
@@ -359,8 +359,8 @@
         66
       ],
       "pivot": [
-        48,
-        48
+        49,
+        49
       ],
       "footprint": [
         2,
@@ -490,12 +490,12 @@
     "vegetasi/rumput_liar": {
       "file": "vegetasi/rumput_liar.png",
       "size": [
-        44,
-        34
+        54,
+        40
       ],
       "pivot": [
-        22,
-        28
+        27,
+        35
       ],
       "footprint": [
         1,
@@ -505,12 +505,12 @@
     "vegetasi/rumput_daun": {
       "file": "vegetasi/rumput_daun.png",
       "size": [
-        42,
-        36
+        60,
+        34
       ],
       "pivot": [
-        22,
-        30
+        31,
+        29
       ],
       "footprint": [
         1,
@@ -520,12 +520,12 @@
     "vegetasi/pakis": {
       "file": "vegetasi/pakis.png",
       "size": [
-        62,
-        34
+        72,
+        50
       ],
       "pivot": [
-        32,
-        28
+        37,
+        45
       ],
       "footprint": [
         1,
@@ -535,12 +535,12 @@
     "vegetasi/alang_alang": {
       "file": "vegetasi/alang_alang.png",
       "size": [
-        70,
-        82
+        62,
+        84
       ],
       "pivot": [
-        34,
-        76
+        29,
+        79
       ],
       "footprint": [
         1,
@@ -550,12 +550,12 @@
     "vegetasi/semak": {
       "file": "vegetasi/semak.png",
       "size": [
-        68,
-        56
+        72,
+        60
       ],
       "pivot": [
-        34,
-        48
+        37,
+        55
       ],
       "footprint": [
         1,
@@ -565,12 +565,12 @@
     "vegetasi/semak_buah": {
       "file": "vegetasi/semak_buah.png",
       "size": [
-        68,
-        56
+        72,
+        60
       ],
       "pivot": [
-        34,
-        48
+        35,
+        55
       ],
       "footprint": [
         1,
@@ -581,11 +581,11 @@
       "file": "vegetasi/semak_kembang_sepatu.png",
       "size": [
         70,
-        56
+        62
       ],
       "pivot": [
-        34,
-        48
+        35,
+        57
       ],
       "footprint": [
         1,
@@ -595,12 +595,12 @@
     "vegetasi/semak_melati": {
       "file": "vegetasi/semak_melati.png",
       "size": [
-        68,
-        56
+        72,
+        60
       ],
       "pivot": [
-        34,
-        48
+        37,
+        55
       ],
       "footprint": [
         1,
@@ -610,12 +610,12 @@
     "vegetasi/bunga_liar_kuning": {
       "file": "vegetasi/bunga_liar_kuning.png",
       "size": [
-        56,
-        38
+        58,
+        42
       ],
       "pivot": [
-        26,
-        30
+        29,
+        35
       ],
       "footprint": [
         1,
@@ -625,12 +625,12 @@
     "vegetasi/bunga_liar_merah_muda": {
       "file": "vegetasi/bunga_liar_merah_muda.png",
       "size": [
-        54,
+        56,
         40
       ],
       "pivot": [
-        28,
-        32
+        29,
+        33
       ],
       "footprint": [
         1,

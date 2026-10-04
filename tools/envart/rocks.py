@@ -1,166 +1,189 @@
-"""Stones, boulders, ore nodes and pebbles, chibi style.
+"""Stones, boulders, ore nodes and pebbles in a Stardew-Valley-like style.
 
-A stone is a soft rounded lump (a squashed super-ellipse, flatter on top and
-on the ground) shaded in a few bands: a lit top, a mid front, a shadow on the
-lower right and a deep rim, a shine dot, one small crack. Moss sits on top as
-a cap with round drips. Ore shows as big shiny nuggets or crystals.
+Drawn at art resolution (sv.asset). A stone is a rounded lump cut into a few
+flat facets: each facet takes one tone from its own tilted normal (lit from
+the top left), with a dark crease where a facet meets a darker one, a lit lip
+on the top left edge, a dark rim on the lower right, a few specks and a crack.
+Moss sits on top as a leafy cap. Ore shows as shiny nuggets or crystals set
+into the stone.
 """
 import math
 import random
 
-import pix
-from pix import Canvas, Noise, toon
-import toon as T
-from toon import DEEP, SHADOW, MID, LIGHT, HI
+from pix import Canvas
+import sv
+from sv import PAL, clamp
 
 
-def lump_cells(cx, cy, rx, ry, seed, lumps=2, amp=0.07, p=2.6):
-    """Art pixels inside a rounded lump: a super-ellipse with a few soft bumps."""
+def lump(cx, cy, rx, ry, seed, lumps=2, amp=0.07, p=2.4):
+    """{(x, y): (dx, dy, r)} for the art pixels inside a rounded lump that sits flat."""
     rnd = random.Random(seed)
     ph = [rnd.uniform(0, 6.3) for _ in range(lumps)]
-    P = pix.PIXEL
     out = {}
-    for y in T.blocks(cy - ry * 1.2 - P, cy + ry + P):
-        for x in T.blocks(cx - rx * 1.2 - P, cx + rx * 1.2 + P):
-            dx = (x + P / 2 - cx) / rx
-            dy = (y + P / 2 - cy) / ry
+    for y in range(int(cy - ry * 1.2) - 1, int(cy + ry) + 2):
+        for x in range(int(cx - rx * 1.2) - 1, int(cx + rx * 1.2) + 2):
+            dx = (x + 0.5 - cx) / rx
+            dy = (y + 0.5 - cy) / ry
             a = math.atan2(dy, dx)
             lim = 1 + sum(amp * math.sin(a * (2 + k) + ph[k]) for k in range(lumps))
-            if dy > 0.5:
-                lim *= 1 - (dy - 0.5) * 0.3        # sits flat on the ground
+            if dy > 0.45:
+                lim *= 1 - (dy - 0.45) * 0.35        # flat underside on the ground
             r = (abs(dx) ** p + abs(dy) ** p) ** (1 / p)
             if r <= lim:
                 out[(x, y)] = (dx / lim, dy / lim, r / lim)
     return out
 
 
-def stone(cv, cx, cy, rx, ry, pal, seed, *, lumps=2, crack=1, moss=None, depth=None, dots=True):
+def stone(cv, cx, cy, rx, ry, pal_, seed, *, facets=None, crack=1, moss=None, depth=None, specks=True,
+          lo=1, hi=6):
     rnd = random.Random(seed)
-    P = pix.PIXEL
-    cells = lump_cells(cx, cy, rx, ry, seed, lumps)
-    tone = {}
+    cells = lump(cx, cy, rx, ry, seed)
+    # facet seeds spread over the lump, each with a tilted normal
+    n_f = facets or max(4, int(rx * ry / 14))
+    seeds = []
+    while len(seeds) < n_f:
+        u, v = rnd.uniform(-0.95, 0.95), rnd.uniform(-0.95, 0.8)
+        if u * u + v * v < 0.9:
+            nz = math.sqrt(max(0.05, 1 - u * u - v * v))
+            n = sv._n([u * 1.5 + rnd.uniform(-0.35, 0.35), v * 1.4 + 0.1 + rnd.uniform(-0.35, 0.35), nz])
+            seeds.append((u, v, float(n @ sv.LIGHT)))
+    owner, tone = {}, {}
     for (x, y), (dx, dy, r) in cells.items():
-        nz = max(0.0, 1 - min(1.0, r) ** 2.2) ** 0.5
-        n = T._n([dx * 0.9, dy * 0.9 + 0.12, nz + 0.12])
-        l = float(n @ T.LIGHT3)
-        b = T.band(l, hi=0.97, light=0.62, mid=0.2)
-        if dy > 0.55 and b > SHADOW:
-            b -= 1                                   # the underside toward the ground
-        if T.lower_right_edge(cells, x, y) and dx + dy > -0.1:
-            b = DEEP if b <= MID else SHADOW
-        elif ((x - P, y) not in cells or (x, y - P) not in cells) and dx + dy < -0.5:
-            b = max(b, LIGHT)                        # a lit lip on the top left
-        tone[(x, y)] = b
-    for (x, y), b in tone.items():
-        cv.put(x, y, pal[b], depth)
-    # shine
-    sx, sy = cx - rx * 0.45, cy - ry * 0.5
-    for (ox, oy) in ((0, 0), (P, 0), (0, P)) if rx > 14 else ((0, 0),):
-        q = (int(sx + ox) - int(sx + ox) % P, int(sy + oy) - int(sy + oy) % P)
-        if q in cells:
-            cv.put(q[0], q[1], pal[HI], depth)
-    for k in range(crack):
-        # a small crack: a short zigzag with a lit lip under it
-        x = cx + rnd.uniform(0.0, 0.45) * rx
-        y = cy - rnd.uniform(-0.1, 0.3) * ry
-        steps = [(P, P), (0, P), (P, P)] if rx > 14 else [(P, P), (0, P)]
-        for (sx_, sy_) in [(0, 0)] + steps:
-            x += sx_
-            y += sy_
-            q = (int(x) - int(x) % P, int(y) - int(y) % P)
-            if q in cells and (q[0] + P, q[1]) in cells:
-                cv.put(q[0], q[1], pal[DEEP], depth)
-                if (q[0] - P, q[1]) in cells:
-                    cv.put(q[0] - P, q[1], pal[LIGHT], depth)
-    if dots and rx > 14:
-        for _ in range(2):
-            for _try in range(20):
-                x = cx + rnd.uniform(-0.6, 0.6) * rx
-                y = cy + rnd.uniform(-0.2, 0.5) * ry
-                q = (int(x) - int(x) % P, int(y) - int(y) % P)
-                if q in tone and tone[q] == MID:
-                    cv.put(q[0], q[1], pal[SHADOW], depth)
-                    break
+        k = min(range(len(seeds)), key=lambda i: (dx - seeds[i][0]) ** 2 + (dy - seeds[i][1]) ** 2 * 1.3)
+        owner[(x, y)] = k
+        l = seeds[k][2]
+        t = lo + 0.4 + (l + 0.5) / 1.45 * (hi - lo)
+        if dy > 0.6:
+            t -= 1                                     # the underside toward the ground
+        tone[(x, y)] = clamp(round(t), lo, hi)
+    for (x, y) in cells:
+        t = tone[(x, y)]
+        # a crease where this facet meets a lighter one above / to the left
+        for q in ((x - 1, y), (x, y - 1)):
+            if q in owner and owner[q] != owner[(x, y)] and tone[q] > t:
+                t -= 1
+                break
+        lr = (x + 1, y) not in cells or (x, y + 1) not in cells
+        tl = (x - 1, y) not in cells or (x, y - 1) not in cells
+        dx, dy, _ = cells[(x, y)]
+        if lr and dx + dy > -0.2:
+            t = lo
+        elif tl and dx + dy < -0.3:
+            t += 1                                     # lit lip on the top left
+        cv.put(x, y, pal_[clamp(t, lo, hi + 1)], depth)
+    if specks:
+        for _ in range(int(rx * ry / 10)):
+            q = (int(cx + rnd.uniform(-0.75, 0.75) * rx), int(cy + rnd.uniform(-0.6, 0.6) * ry))
+            if q in cells and not ((q[0] + 1, q[1]) not in cells or (q[0], q[1] + 1) not in cells):
+                d = -1 if rnd.random() < 0.65 else 1
+                cv.put(q[0], q[1], pal_[clamp(tone[q] + d, lo, hi + 1)], depth)
+    for _ in range(crack):
+        # a crack: a short zigzag with a lit lip under it
+        x, y = int(cx + rnd.uniform(0.0, 0.45) * rx), int(cy - rnd.uniform(-0.1, 0.4) * ry)
+        for (sx, sy) in [(0, 0), (1, 1), (0, 1), (1, 1)][: 3 if rx < 10 else 4]:
+            x += sx
+            y += sy
+            if (x, y) in cells and (x + 1, y) in cells and (x, y + 1) in cells:
+                cv.put(x, y, pal_[lo], depth)
+                if (x - 1, y) in cells:
+                    cv.put(x - 1, y, pal_[min(hi + 1, tone[(x - 1, y)] + 1)], depth)
     if moss is not None:
-        mp = toon(moss)
-        nz = Noise(seed + 7)
+        mp = PAL[moss]
         for (x, y), (dx, dy, r) in cells.items():
-            # wavy lower edge of the cap, with a couple of round drips
-            edge = -0.18 + 0.1 * math.sin(dx * 6.5 + seed) + 0.3 * max(0, math.cos(dx * 3.1 + seed * 2)) ** 8
+            edge = -0.38 + 0.12 * math.sin(dx * 7 + seed) + 0.3 * max(0, math.cos(dx * 3.3 + seed * 2)) ** 8
             if dy < edge:
-                b = LIGHT if tone[(x, y)] >= LIGHT else MID
-                if (x, y + P) in cells and cells[(x, y + P)][1] >= edge - 0.001:
-                    b = SHADOW
-                if T.lower_right_edge(cells, x, y) and dx + dy > -0.1:
-                    b = DEEP
-                cv.put(x, y, mp[b], depth)
-        sx, sy = cx - rx * 0.4, cy - ry * 0.62
-        q = (int(sx) - int(sx) % P, int(sy) - int(sy) % P)
-        if q in cells:
-            cv.put(q[0], q[1], mp[HI], depth)
+                t = 5 if tone[(x, y)] >= 4 else 4
+                if dx + dy < -0.7:
+                    t = 6
+                h = (x * 7 + y * 13) % 9
+                t += 1 if h == 0 else (-1 if h in (4, 7) else 0)    # leafy speckle
+                below = (x, y + 1)
+                if below in cells and cells[below][1] >= edge - 0.001:
+                    t = 2                              # the cap's lower lip
+                if ((x + 1, y) not in cells or (x, y + 1) not in cells) and dx + dy > -0.2:
+                    t = 1
+                cv.put(x, y, mp[t], depth)
+        for _ in range(int(rx / 2)):
+            q = (int(cx + rnd.uniform(-0.6, 0.3) * rx), int(cy - rnd.uniform(0.5, 0.85) * ry))
+            if q in cells:
+                cv.put(q[0], q[1], mp[7], depth)
     return cells
 
 
-def rock(name, seed, w, h, rx, ry, *, stone_pal="stone", moss=None, cracks=1, big=False, **kw):
+@sv.asset
+def rock(name, seed, w, h, rx, ry, *, stone_pal="stone", moss=None, cracks=1, big=False):
     cv = Canvas(w, h)
-    cx, cy = w / 2, h - ry - 4
-    pal = toon(stone_pal)
+    cx, cy = w / 2, h - ry - 2
+    pal_ = PAL[stone_pal]
     if big:
         # a boulder with a smaller lump leaning on its right side
-        stone(cv, cx + rx * 0.62, cy + ry * 0.32, rx * 0.42, ry * 0.55, pal, seed + 1, crack=0, depth=0)
-        stone(cv, cx - rx * 0.1, cy - ry * 0.02, rx * 0.86, ry * 0.95, pal, seed, crack=cracks, moss=moss, depth=-50)
+        stone(cv, cx + rx * 0.66, cy + ry * 0.36, rx * 0.42, ry * 0.52, pal_, seed + 1, crack=0, depth=0)
+        stone(cv, cx - rx * 0.1, cy, rx * 0.86, ry * 0.95, pal_, seed, crack=cracks, moss=moss, depth=-50)
     else:
-        stone(cv, cx, cy, rx, ry, pal, seed, crack=cracks, moss=moss)
-    return cv, (w // 2, h - 4)
+        stone(cv, cx, cy, rx, ry, pal_, seed, crack=cracks, moss=moss)
+    return cv, (w // 2, h - 2)
 
 
-def ore_rock(seed, ore, w=56, h=54):
+ORE_SPOTS = [(-5, -3), (4, -5), (5, 2), (-2, 3), (-6, 1), (1, -1)]
+
+
+@sv.asset
+def ore_rock(seed, ore, w=28, h=27):
     cv = Canvas(w, h)
-    cx, cy = w / 2, h - 22
-    stone(cv, cx, cy, 22, 18, toon("stone"), seed, crack=0, dots=False)
+    cx, cy = w / 2, h - 11
+    cells = stone(cv, cx, cy, 11, 9, PAL["stone"], seed, crack=0, specks=True)
     rnd = random.Random(seed + 9)
-    op = toon(ore)
-    spots = [(-9, -5), (7, -8), (9, 4), (-4, 5)]
+    op = PAL[ore]
+    spots = ORE_SPOTS[:]
     rnd.shuffle(spots)
-    for i, (ox, oy) in enumerate(spots[:3 if ore != "gem" else 3]):
-        x, y = cx + ox + rnd.uniform(-1, 1), cy + oy + rnd.uniform(-1, 1)
+    for i, (ox, oy) in enumerate(spots[:3 if ore == "gem" else 5]):
+        x, y = int(cx + ox), int(cy + oy)
         if ore == "gem":
-            crystal(cv, x, y, op, tall=4 + (i == 0))
+            sv.outlined(cv, lambda c, x=x, y=y, i=i: crystal(c, x, y, op, tall=4 + (i == 0)))
         else:
-            r = 6 if i == 0 else 4.6
-            T.ball(cv, x, y, r, r * 0.85, op, depth=None)
-    return cv, (w // 2, h - 4)
+            sv.outlined(cv, lambda c, x=x, y=y, i=i: nugget(c, x, y, op, big=i < 2, cells=cells))
+    return cv, (w // 2, h - 2)
 
 
-def crystal(cv, x, y, pal, tall=6):
-    """A chunky gem crystal: a pointed hexagonal prism, lit left face, shaded right."""
-    P = pix.PIXEL
-    x, y = int(x) - int(x) % P, int(y) - int(y) % P
-    wd = 2      # half width in art pixels
-    for j in range(-tall, 2):
+def nugget(cv, x, y, pal_, big=False, cells=None):
+    """An ore lump set into the stone: a little faceted blob with a shine."""
+    shape = ([".hm.", "hhmd", "mmdd", ".dd."] if big else ["hm", "md"])
+    for j, row in enumerate(shape):
+        for i, ch in enumerate(row):
+            if ch == ".":
+                continue
+            if cells is not None and (x + i, y + j) not in cells:
+                continue
+            t = {"h": 6, "m": 4, "d": 2}[ch]
+            cv.put(x + i, y + j, pal_[t])
+    cv.put(x + (1 if big else 0), y + (1 if big else 0), pal_[7])
+
+
+def crystal(cv, x, y, pal_, tall=5):
+    """A gem crystal: a pointed prism, lit left face, shaded right."""
+    wd = 1
+    for j in range(-tall, 1):
         half = min(wd, j + tall)
         for i in range(-half, half + 1):
-            b = LIGHT if i < 0 else (MID if i == 0 else SHADOW)
-            if j <= -tall + 2:
-                b = HI if i < 0 else (LIGHT if i == 0 else MID)
-            if i == half and half > 0:
-                b = DEEP if j > -tall + 2 else SHADOW
-            if j == 1:
-                b = DEEP if i >= 0 else SHADOW
-            cv.put(x + i * P, y + j * P, pal[b])
-    cv.put(x - P, y - (tall - 3) * P, pal[HI])
+            t = 6 if i < 0 else (4 if i == 0 else 2)
+            if j <= -tall + 1:
+                t += 1
+            cv.put(x + i, y + j, pal_[clamp(t, 1, 7)])
+    cv.put(x - 1, y - tall + 2, pal_[7])
 
 
-def pebbles(seed, w=48, h=30):
+@sv.asset
+def pebbles(seed, w=24, h=15):
     cv = Canvas(w, h)
     rnd = random.Random(seed)
     pts = []
     while len(pts) < 5:
-        rx = rnd.uniform(4, 7)
-        cx = rnd.uniform(rx + 3, w - rx - 3)
-        cy = rnd.uniform(rx * 0.75 + 6, h - rx * 0.75 - 4)
+        rx = rnd.uniform(2.0, 3.6)
+        cx = rnd.uniform(rx + 2, w - rx - 2)
+        cy = rnd.uniform(rx * 0.75 + 3, h - rx * 0.75 - 2)
         if all(math.hypot(cx - a, cy - b) > rx + r + 1 for a, b, r in pts):
             pts.append((cx, cy, rx))
-    for cx, cy, rx in sorted(pts, key=lambda p: p[1]):
-        T.ball(cv, cx, cy, rx, rx * 0.8, toon(rnd.choice(["stone", "stone_warm"])), flat=0.15, spot=rx > 5)
-    return cv, (w // 2, h - 6)
+    for k, (cx, cy, rx) in enumerate(sorted(pts, key=lambda p: p[1])):
+        stone(cv, cx, cy, rx, rx * 0.75, PAL[rnd.choice(["stone", "stone_warm"])], seed + k, facets=3, crack=0,
+              specks=False, depth=k)
+    return cv, (w // 2, h - 3)

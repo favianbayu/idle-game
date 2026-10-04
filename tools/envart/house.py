@@ -16,7 +16,9 @@ import math
 import numpy as np
 
 from iso import IsoScene, planks_h, stones, solid, LW, EV, FS
-from pix import ramp, Canvas
+from pix import Canvas
+import sv
+from sv import PAL, clamp
 
 LX, LY = 240, 192          # footprint (5 x 4 tiles)
 EAVE = 142                 # eave height (world px)
@@ -178,8 +180,8 @@ def door_fn():
 
 def roof_tiles(eave_len, slope_len, inset_per_v, *, ridge_cap=True, hip=True):
     """Genteng rows on a hip-roof plane (a trapezoid)."""
-    row_h, tile_w = float(EV(11 * FS())), float(EV(15 * FS()))
-    l1, l2, cap = LW(1.2), LW(1.6), EV(6 * FS())
+    row_h, tile_w = float(EV(9 * FS())), float(EV(13 * FS()))
+    l1, cap = LW(1.2), EV(6 * FS())
 
     def f(u, v):
         left = inset_per_v * v
@@ -199,25 +201,36 @@ def roof_tiles(eave_len, slope_len, inset_per_v, *, ridge_cap=True, hip=True):
         # eave edge
         if v < 3:
             return ("clay", 1 if v < LW(1.5) else 3)
+        # rectangular shingles in staggered rows: a dark shadow line under each
+        # row, a lit top edge, dark gaps between shingles, a few speckles
         row = int((v - 3) // row_h)
         k = (v - 3) - row * row_h
         uu = u + (tile_w / 2 if row % 2 else 0)
         m = uu % tile_w
         ti = int(uu // tile_w) * 7 + row * 13
         t = 4
-        if ti % 11 == 0:
+        if ti % 5 == 0:
             t -= 1                   # an older, darker tile
-        if ti % 17 == 0:
+        elif ti % 7 == 0:
             t += 1
-        c = (2 * m / tile_w - 1) ** 2         # 0 mid-tile .. 1 at its sides
-        if k < l2 + 3 * FS() * c:
-            return ("clay", 1)       # the round lip of each tile over the row below
-        if k > row_h - l1:
-            return ("clay", t + 2)   # lit top of this row
-        if m < 4 * FS() and k > row_h * 0.4:
-            return ("clay", t + 2)   # a shine on each tile
-        if m > tile_w - 3 * FS():
-            return ("clay", t - 2)
+        f = FS()
+        if k < LW(1.5):
+            return ("clay", 1)       # shadow line under the row above
+        if m < LW(1.2):
+            return ("clay", 1 if k < row_h - LW(1) else 2)
+        if k < LW(1.5) + f * 1.5:
+            return ("clay", t - 1)
+        if k > row_h - LW(1.2):
+            return ("clay", t + 2)   # lit top edge
+        if m < LW(1.2) + f * 2.2:
+            return ("clay", t + 1)   # lit left side of the shingle
+        if m > tile_w - f * 2:
+            return ("clay", t - 1)
+        sp = (int(u / f) * 7 + int(v / f) * 13 + ti) % 23
+        if sp == 0:
+            return ("clay", t - 1)   # speckle
+        if sp == 11:
+            return ("clay", t + 1)
         return ("clay", t)
     return f
 
@@ -296,7 +309,7 @@ def build(door="SW"):
     cv = sc.render(outline=False)
     # 2D details placed by their world position
     layer = Canvas(cv.w, cv.h)
-    details(layer, ms, dx0, dx1)
+    sv.overlay(layer, lambda small, P: details(small, P, ms, dx0, dx1))
     layer.outline()
     cv.blit(layer, 0, 0)
     cv.outline()
@@ -325,15 +338,13 @@ def beam_tex():
 
 
 def fascia(u, v):
+    """A plain painted fascia board: lit top edge, dark lower edge, board joints."""
     if v > 9 - LW(1.2):
         return ("paint_green", 5)
-    # a scalloped lower edge: round bumps along the board
-    p = EV(10 * FS())
-    m = (u % p) / p * 2 - 1
-    if v < 3.5 * (1 - math.sqrt(max(0.0, 1 - m * m))):
-        return None
-    if v < LW(1.2) + 3.5 * (1 - math.sqrt(max(0.0, 1 - m * m))):
+    if v < LW(1.5):
         return ("paint_green", 1)
+    if (u % 48) < LW(1):
+        return ("paint_green", 2)
     return ("paint_green", 3)
 
 
@@ -354,13 +365,13 @@ def porch_floor(u, v):
     s = EV(12 * f)
     a, b = u % s, v % s
     if a < LW(1) or b < LW(1):
-        return ("plaster", 2)
+        return ("plaster", 1)
     ca, cb = abs(a - s / 2), abs(b - s / 2)
     if ca + cb < 1.6 * f:
         return ("clay", 5)
     if abs(ca - cb) < LW(0.7) / (1 if f == 1 else 2) and 2 * f < ca < 4.5 * f:
         return ("plaster", 4)
-    return ("plaster", 5 if (int(u // s) + int(v // s)) % 2 == 0 else 4)
+    return ("plaster", 4 if (int(u // s) + int(v // s)) % 2 == 0 else 3)
 
 
 def bench(ms, x0, y0, x1, y1):
@@ -404,51 +415,51 @@ def log_top():
     return lambda u, v: ("bark", 4 if (u % (9 * FS())) > LW(1.5) else 2)
 
 
-def details(cv, ms, dx0, dx1):
-    """Pixel-drawn props that are easier in 2D: lantern, pots, plants, jar."""
+def details(cv, P, ms, dx0, dx1):
+    """Props that are easier to draw in 2D (lantern, pots, plants, jar), at art
+    resolution: cv is the art-size layer, P the art pixel size in screen px."""
     from plants import leaf, flower
-    from pix import toon
-    g = toon("leaf")
-    jx, jy = ms.scr((LX - 26, LY - 22, PL))
-    draw_gentong(cv, int(jx), int(jy))
+    g = PAL["leaf"]
+
+    def at(p):
+        x, y = ms.scr(p)
+        return int(x // P), int(y // P)
+    draw_gentong(cv, *at((LX - 26, LY - 22, PL)))
     # hanging lantern on the beam, right of the door
-    lx, ly = ms.scr((dx1 + 16, WALL_Y1 + 2, PL + 104))
-    lx, ly = int(lx), int(ly)
-    iron, gold = ramp("iron"), ramp("yellow")
-    for i in range(6):
+    lx, ly = at((dx1 + 16, WALL_Y1 + 2, PL + 104))
+    iron, gold = PAL["iron"], PAL["yellow"]
+    for i in range(3):
         cv.put(lx, ly + i, iron[3])
-    for yy in range(7):
-        for xx in range(-3, 4):
-            if yy in (0, 6) or abs(xx) == 3:
-                cv.put(lx + xx, ly + 6 + yy, iron[2 if xx > 0 else 4])
+    for yy in range(5):
+        for xx in range(-2, 3):
+            if yy in (0, 4) or abs(xx) == 2:
+                cv.put(lx + xx, ly + 3 + yy, iron[2 if xx > 0 else 5])
             else:
-                cv.put(lx + xx, ly + 6 + yy, gold[6 if (xx < 0 and yy < 4) else 5])
-    cv.put(lx, ly + 13, iron[1])
+                cv.put(lx + xx, ly + 3 + yy, gold[7 if (xx < 0 and yy < 2) else 5])
     # potted plants beside the steps
-    for (px, side) in ((dx0 - 10, -1), (dx1 + 10, 1)):
-        sx, sy = ms.scr((px, LY + 2, 0))
-        sx, sy = int(sx), int(sy)
-        pot = ramp("clay")
-        for yy in range(10):
-            w = 6 - yy * 0.25
+    for px in (dx0 - 10, dx1 + 10):
+        sx, sy = at((px, LY + 2, 0))
+        pot = PAL["clay"]
+        for yy in range(5):
+            w = 3 - yy * 0.2
             for xx in range(-int(w), int(w) + 1):
-                t = 5 if xx < -1 else (3 if xx < 2 else 2)
-                if yy < 2:
-                    t = 6 if yy == 0 else 4
+                t = 5 if xx < -1 else (4 if xx < 1 else 2)
+                if yy == 4:
+                    t = 6 if xx < 1 else 4      # rim
                 cv.put(sx + xx, sy - yy, pot[t])
         for k, a in enumerate((-2.6, -0.5, -2.1, -1.0, -1.57)):
-            leaf(cv, sx, sy - 10, a, 11 + (k % 2) * 2, 3.2, g, droop=0.2, dim=-1 if k < 2 else 0, rib=False)
-        flower(cv, sx - 4, sy - 20, toon("red"))
-        flower(cv, sx + 5, sy - 17, toon("red"))
+            sv.outlined(cv, lambda c, a=a, k=k: leaf(c, sx, sy - 5, a, 6 + (k % 2), 1.7, g, droop=0.15,
+                                                     base=3 if k < 2 else 4, rib=False))
+        flower(cv, sx - 2, sy - 10, PAL["red"])
+        flower(cv, sx + 2, sy - 9, PAL["red"])
     # flowers in the window boxes
     for (u0, u1) in ((20 + 14, 72 - 14), (156 + 14, 208 - 14)):
         for k in range(4):
             u = 12 + u0 + (u1 - u0) * (k + 0.5) / 4
-            sx, sy = ms.scr((u, WALL_Y1 + 3, PL + 35))
-            sx, sy = int(sx), int(sy)
+            sx, sy = at((u, WALL_Y1 + 3, PL + 35))
             for a in (-2.4, -0.8):
-                leaf(cv, sx, sy, a, 6, 2.4, g, rib=False)
-            flower(cv, sx, sy - 4, toon("pink" if k % 2 else "yellow"))
+                leaf(cv, sx, sy, a, 3, 1.2, g, rib=False)
+            flower(cv, sx, sy - 2, PAL["pink" if k % 2 else "yellow"])
 
 
 def canopy(ms, x0, x1, y0, y1):
@@ -488,36 +499,31 @@ def canopy(ms, x0, x1, y0, y1):
 
 
 def draw_gentong(cv, x, y):
-    """A round clay water jar (gentong) with a wooden lid and a coconut-shell dipper."""
-    from pix import LIGHT3
-    cl, pl = ramp("clay"), ramp("plank")
-    H = 24
+    """A round clay water jar (gentong) with a wooden lid and a coconut-shell dipper (art px)."""
+    cl, pl, bk = PAL["clay"], PAL["plank"], PAL["bark"]
+    H = 12
     for yy in range(H):
         t = yy / (H - 1)                    # 0 top .. 1 bottom
-        r = 6 + 6.5 * math.sin(min(1.0, 0.25 + t * 0.95) * math.pi * 0.9)
-        if yy < 3:
-            r = 7.5                          # rim
+        r = 3 + 3.3 * math.sin(min(1.0, 0.25 + t * 0.95) * math.pi * 0.9)
+        if yy < 2:
+            r = 3.6                          # rim
         for xx in range(-int(r), int(r) + 1):
             s = xx / (r + 0.01)
-            n = np.array([s, (t - 0.45) * 0.9, math.sqrt(max(0.05, 1 - s * s))])
-            n = n / np.linalg.norm(n)
-            v = 0.42 + 0.6 * float(n @ LIGHT3)
-            k = int(max(1, min(len(cl) - 2, math.floor(v * len(cl)))))
-            if yy < 3:
-                k = 5 if yy == 0 else 3
-            if yy == 9 or yy == 10:
+            n = sv._n([s, (t - 0.45) * 0.9, math.sqrt(max(0.05, 1 - s * s))])
+            k = clamp(round(1 + (float(n @ sv.LIGHT) + 0.5) / 1.5 * 5), 1, 6)
+            if yy < 2:
+                k = 6 if yy == 0 else 3
+            if yy == 5:
                 k = max(1, k - 1)            # a pressed band
             if abs(xx) == int(r) and xx > 0:
                 k = 1
             cv.put(x + xx, y - H + yy, cl[k])
     # lid
-    for xx in range(-8, 9):
-        cv.put(x + xx, y - H - 1, pl[5 if xx < 3 else 3])
+    for xx in range(-4, 5):
+        cv.put(x + xx, y - H - 1, pl[6 if xx < 1 else 4])
         cv.put(x + xx, y - H, pl[2])
-    for xx in range(-1, 2):
-        cv.put(x + xx, y - H - 2, pl[4])
+    cv.put(x, y - H - 2, pl[5])
     # dipper (gayung batok) resting on the lid
-    for xx in range(2, 7):
-        cv.put(x + xx, y - H - 3, ramp("bark")[4 if xx < 4 else 2])
-        cv.put(x + xx, y - H - 2, ramp("bark")[2])
-    cv.line(x + 6, y - H - 3, x + 12, y - H - 7, ramp("plank")[5])
+    for xx in range(1, 4):
+        cv.put(x + xx, y - H - 2, bk[5 if xx < 2 else 3])
+    cv.line(x + 3, y - H - 2, x + 6, y - H - 4, pl[6])
