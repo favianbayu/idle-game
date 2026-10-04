@@ -28,8 +28,10 @@ Ciri gaya yang dipakai (mengikuti referensi Stardew):
   bijih berupa butiran mengkilap.
 - Rumput liar: helai 1 piksel, gelap di pangkal dan terang di ujung.
 - Ubin: rumput dengan petak dua nada dan tanda helai rumput, tanah olah bergumpal, jalan
-  tanah berkerikil, jalan batu bulat. Tekstur dihitung dari posisi dunia, jadi ubin mana pun
-  bisa bersebelahan tanpa sambungan.
+  tanah berkerikil, jalan batu bulat, plus air, air dalam, sawah, lumpur, pasir, lantai batu,
+  tanah kosong, batas peta, lantai dan dinding gua, dan jurang. Tekstur dihitung dari posisi
+  dunia, jadi ubin sejenis bisa bersebelahan tanpa sambungan; ketiga ubin rumput berbagi pola
+  dasar yang sama, jadi boleh dicampur ubin per ubin.
 - Rumah: genteng persegi bertingkat dengan tepi atas terang dan bintik, dinding papan, umpak batu.
 
 `compare_chibi_vs_stardew.png` membandingkan gaya chibi sebelumnya dengan yang sekarang.
@@ -62,15 +64,22 @@ Bayangan kontak (semi transparan) sudah termasuk di tiap sprite.
 | Folder | Isi |
 | --- | --- |
 | `bangunan/` | rumah_utama_sw, rumah_utama_se |
-| `pohon/` | mangga, mangga_berbuah, pohon_hutan, jati, pohon_kemarau, kelapa, pisang, bibit_0-2, tunggul, tunggul_besar |
+| `pohon/` | mangga, mangga_berbuah, pohon_hutan, jati, pohon_kemarau, kelapa, pisang, bibit_0-2, tunggul, tunggul_besar, tunggul_tua (2 x 2) |
 | `tanaman/` | padi, jagung, cabai, tomat, terong, semangka |
 | `batu/` | batu_kecil, batu_kecil_2, batu_lumut, batu_besar, bijih_tembaga, bijih_besi, bijih_emas, bijih_permata, kerikil |
 | `puing/` | ranting, daun_kering, kayu_tumbang, peti, peti_rusak, papan_patah, pagar_bambu, pagar_bambu_rusak, reruntuhan_bata, tembok_runtuh, tiang_lapuk |
 | `vegetasi/` | rumput_liar, rumput_daun, pakis, alang_alang, semak, semak_buah, semak_kembang_sepatu, semak_melati, bunga_liar_kuning, bunga_liar_merah_muda |
-| `tanah/` | rumput_0-2, tanah_olah, tanah_olah_basah, jalan_tanah, jalan_batu |
+| `tanah/` | rumput_0-2, tanah_olah, tanah_olah_basah, jalan_tanah, jalan_batu, tanah_kosong, batas, air, air_dalam, sawah, lumpur, pasir, lantai, lantai_gua, dinding_gua, jurang |
 
 `catalog.png` menampilkan semuanya dalam satu lembar, `preview.png` menampilkan contoh
 pojok kebun.
+
+## Ke prototype Godot
+
+`python3 tools/envart/export_rimbasari.py <folder Rimbasari>` mengemas aset ini ke lembar
+sprite prototype 0.7 (tile tanah, 7 tanaman, puing, pohon liar, sebagian pohon desa dan
+dekorasi, dan `props/rumah_utama.png`), dengan pivot tiap sprite tepat di titik jangkar
+lembarnya. Pemetaannya ada di bagian atas skrip.
 
 ## Kode
 

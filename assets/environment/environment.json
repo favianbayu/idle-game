@@ -187,6 +187,21 @@
         1
       ]
     },
+    "pohon/tunggul_tua": {
+      "file": "pohon/tunggul_tua.png",
+      "size": [
+        90,
+        54
+      ],
+      "pivot": [
+        45,
+        47
+      ],
+      "footprint": [
+        2,
+        2
+      ]
+    },
     "batu/batu_kecil": {
       "file": "batu/batu_kecil.png",
       "size": [
@@ -879,6 +894,138 @@
     },
     "tanah/jalan_batu": {
       "file": "tanah/jalan_batu.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/tanah_kosong": {
+      "file": "tanah/tanah_kosong.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/batas": {
+      "file": "tanah/batas.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/air": {
+      "file": "tanah/air.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/air_dalam": {
+      "file": "tanah/air_dalam.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/sawah": {
+      "file": "tanah/sawah.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/lumpur": {
+      "file": "tanah/lumpur.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/pasir": {
+      "file": "tanah/pasir.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/lantai": {
+      "file": "tanah/lantai.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/lantai_gua": {
+      "file": "tanah/lantai_gua.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/dinding_gua": {
+      "file": "tanah/dinding_gua.png",
+      "size": [
+        96,
+        48
+      ],
+      "pivot": [
+        48,
+        24
+      ],
+      "note": "diamond tile; pivot = tile centre"
+    },
+    "tanah/jurang": {
+      "file": "tanah/jurang.png",
       "size": [
         96,
         48

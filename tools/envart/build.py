@@ -124,8 +124,9 @@ def build_all(out, char=None):
         ("bibit_2", t.sapling(6, 2), (20, 8)),
         ("tunggul", t.stump(7), (14, 6)),
         ("tunggul_besar", t.stump(8, big=True), (24, 9)),
+        ("tunggul_tua", t.stump(10, huge=True), (40, 14)),
     ]:
-        put("pohon", name, cv, pv, sh, footprint=[1, 1])
+        put("pohon", name, cv, pv, sh, footprint=[2, 2] if name == "tunggul_tua" else [1, 1])
 
     # ---------------------------------------------------------- rocks
     r = rocks
@@ -193,6 +194,10 @@ def build_all(out, char=None):
         ("rumput_0", tiles.grass(1, 0)), ("rumput_1", tiles.grass(1, 1)), ("rumput_2", tiles.grass(1, 2)),
         ("tanah_olah", tiles.soil(2)), ("tanah_olah_basah", tiles.soil(2, wet=True)),
         ("jalan_tanah", tiles.path(3)), ("jalan_batu", tiles.path(3, "batu")),
+        ("tanah_kosong", tiles.tanah(8)), ("batas", tiles.grass(1, 0, shift=-2)),
+        ("air", tiles.water(4)), ("air_dalam", tiles.water(12, deep=True)), ("sawah", tiles.sawah(7)),
+        ("lumpur", tiles.lumpur(5)), ("pasir", tiles.pasir(9)), ("lantai", tiles.lantai(6)),
+        ("lantai_gua", tiles.gua(10)), ("dinding_gua", tiles.gua(11, wall=True)), ("jurang", tiles.jurang(13)),
     ]:
         cv.chunky(min_cover=1)
         img = cv.image()

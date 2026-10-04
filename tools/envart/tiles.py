@@ -79,26 +79,31 @@ TICKS = {
 
 
 @tile
-def grass(cv, px, P, seed, variant=0):
-    """Grass: two soft tones in big wavy patches and lots of little blade ticks."""
-    g = PAL["turf"]
-    nz = Noise(seed + 11 * variant)
+def grass(cv, px, P, seed, variant=0, pal_="turf", shift=0):
+    """Grass: two soft tones in big wavy patches and lots of little blade ticks.
+
+    Every variant shares the same patches and ticks, so variants can be mixed
+    tile by tile without a seam: 1 adds darker patches, 2 a few flowers.
+    shift moves every tone (negative = darker), for the dense map border."""
+    g = PAL[pal_]
+    nz = Noise(seed)
     base = {}
     for (x, y, u, v) in px:
         n = tiled_noise(nz, u, v, 3)
         t = 4 if n < 0.55 else 5
         if variant == 1 and n < 0.32:
             t = 3
+        t += shift
         base[(x, y)] = t
         cv.put(x, y, g[t])
-    pts = marks(seed * 3 + variant, 30 if variant != 1 else 24, min_d=5.5)
+    pts = marks(seed * 3, 30 if shift == 0 else 44, min_d=5.5 if shift == 0 else 4.5)
     names = ["blade", "v", "v", "tall", "blade", "v"]
 
     def pick(p):
         return names[int(p[2] * len(names))], None
 
     def draw(p, x, y, code):
-        return g[clamp(base.get((x, y), 4) + code, 1, 7)]
+        return g[clamp(base.get((x, y), 4 + shift) + code, 1, 7)]
     for (x, y, u, v) in px:
         for p in pts:
             du, dv = wrap(u - p[0]), wrap(v - p[1])
@@ -109,7 +114,7 @@ def grass(cv, px, P, seed, variant=0):
                 if int(math.floor(ox + 0.5)) == dx and int(math.floor(oy + 0.5)) == dy:
                     cv.put(x, y, draw(p, x, y, code))
     if variant == 2:      # a few tiny flowers
-        fl = marks(seed + 77, 4, min_d=14)
+        fl = marks(seed + 77, 2, min_d=20)
         cols = [PAL["white"], PAL["yellow"], PAL["pink"], PAL["white"]]
         for (x, y, u, v) in px:
             for k, p in enumerate(fl):
@@ -198,3 +203,145 @@ def path(cv, px, P, seed, kind="tanah"):
         if (x * 5 + y * 3 + i) % 11 == 0:
             t -= 1
         cv.put(x, y, st[clamp(t, 1, 7)])
+
+
+# ------------------------------------------------------------ more ground kinds
+# The prototype's ground sheet also needs water, rice paddy, sand, mud, paving,
+# bare soil, the cave floors and the chasm; they reuse the same tick stamps.
+TICKS.update({
+    "ripple": [(-1, 0, 2), (0, 0, 2), (1, 0, 2), (2, 0, 1)],
+    "ripple_s": [(0, 0, 2), (1, 0, 1)],
+    "sparkle": [(0, 0, 3)],
+    "rice": [(0, -3, 2), (-1, -2, 1), (1, -2, 1), (0, -2, 0), (-1, -1, 0), (1, -1, -1), (0, -1, -1), (0, 0, -2)],
+    "shell": [(0, 0, 3), (1, 0, 2), (0, 1, 1)],
+    "crack": [(0, 0, -2), (1, 0, -2), (2, 1, -2), (-1, 1, -1)],
+})
+
+
+def base(cv, px, pal_, seed, tones=(4, 5), cut=0.55, cells=3):
+    """Two tones in soft wavy patches; returns {(x, y): tone}."""
+    nz = Noise(seed)
+    out = {}
+    for (x, y, u, v) in px:
+        t = tones[0] if tiled_noise(nz, u, v, cells) < cut else tones[1]
+        out[(x, y)] = t
+        cv.put(x, y, pal_[t])
+    return out
+
+
+def sprinkle(cv, px, P, pts, pick, colour):
+    """Stamp TICKS[pick(p)] at each wrapped point p; colour(p, x, y, code) -> rgb or None."""
+    for (x, y, u, v) in px:
+        for p in pts:
+            du, dv = wrap(u - p[0]), wrap(v - p[1])
+            ox, oy = (du - dv) / P, (du + dv) / 2 / P
+            if abs(ox) > 3.5 or abs(oy) > 3.5:
+                continue
+            for (dx, dy, code) in TICKS[pick(p)]:
+                if int(math.floor(ox + 0.5)) == dx and int(math.floor(oy + 0.5)) == dy:
+                    c = colour(p, x, y, code)
+                    if c is not None:
+                        cv.put(x, y, c)
+
+
+@tile
+def water(cv, px, P, seed, deep=False):
+    """Still water: two blues in slow patches with light ripple dashes."""
+    w = PAL["water"]
+    b = base(cv, px, w, seed, (2, 3) if deep else (4, 5), 0.5, 5 if deep else 2)
+    pts = marks(seed + 2, 9, min_d=11)
+    sprinkle(cv, px, P, pts, lambda p: "ripple" if p[2] < 0.45 else ("ripple_s" if p[2] < 0.85 else "sparkle"),
+             lambda p, x, y, code: w[clamp(b[(x, y)] + code, 1, 7)])
+
+
+@tile
+def sawah(cv, px, P, seed):
+    """Flooded rice paddy: muddy-blue water with rows of young rice clumps."""
+    w, g = PAL["water"], PAL["grass"]
+    b = base(cv, px, w, seed, (4, 3), 0.6, 2)
+    sprinkle(cv, px, P, marks(seed + 4, 5, min_d=14), lambda p: "ripple_s",
+             lambda p, x, y, code: w[clamp(b[(x, y)] + code, 1, 7)])
+    # rice planted on a 4 x 4 grid in the tile's own (u, v) square, so rows run along the tile edges
+    pts = [(6 + 12 * i, 6 + 12 * j, 0.5) for i in range(4) for j in range(4)]
+    sprinkle(cv, px, P, pts, lambda p: "rice", lambda p, x, y, code: g[clamp(4 + code, 1, 7)])
+
+
+@tile
+def pasir(cv, px, P, seed):
+    """Sand: warm pale tones, fine darker grains and the odd shell."""
+    s = PAL["sand"]
+    b = base(cv, px, s, seed, (5, 6), 0.55, 5)
+    pts = marks(seed + 1, 26, min_d=5)
+    sprinkle(cv, px, P, pts, lambda p: "shell" if p[2] < 0.08 else "dot",
+             lambda p, x, y, code: (PAL["white"][clamp(4 + code, 1, 7)] if p[2] < 0.08
+                                    else s[clamp(b[(x, y)] - 1, 1, 7)]))
+
+
+@tile
+def lumpur(cv, px, P, seed):
+    """Mud: wet soil with shallow puddles that catch the light."""
+    s, w = PAL["soil_wet"], PAL["water"]
+    nz = Noise(seed + 5)
+    b = base(cv, px, s, seed, (4, 5), 0.55, 5)
+    for (x, y, u, v) in px:
+        n = tiled_noise(nz, u, v, 6)
+        if n < 0.27:
+            cv.put(x, y, w[2 if n < 0.22 else 1])
+            b[(x, y)] = -1
+    pts = marks(seed + 3, 30, min_d=4.5)
+    sprinkle(cv, px, P, pts, lambda p: "clod" if p[2] < 0.5 else ("sparkle" if p[2] > 0.9 else "dot"),
+             lambda p, x, y, code: (w[4] if b[(x, y)] < 0 and code > 0 else
+                                    (None if b[(x, y)] < 0 else s[clamp(b[(x, y)] + code, 1, 7)])))
+
+
+@tile
+def lantai(cv, px, P, seed):
+    """Paving: square stone slabs laid along the tile edges, dark joints, each slab
+    a slightly different tone and lit along its top left edges."""
+    st = PAL["plaster"]
+    rnd = random.Random(seed)
+    tone = {(i, j): rnd.choice((4, 4, 5, 3)) for i in range(3) for j in range(3)}
+    for (x, y, u, v) in px:
+        i, j = int(u // 16) % 3, int(v // 16) % 3
+        fu, fv = u % 16, v % 16
+        if fu < 1.0 or fv < 1.0:
+            cv.put(x, y, st[1])
+            continue
+        t = tone[(i, j)]
+        if fu < 2.6 or fv < 2.6:
+            t += 1
+        elif fu > 14.4 or fv > 14.4:
+            t -= 1
+        if (x * 7 + y * 3 + i * 5) % 13 == 0:
+            t -= 1
+        cv.put(x, y, st[clamp(t, 1, 7)])
+
+
+@tile
+def tanah(cv, px, P, seed):
+    """Bare packed earth (an empty lot): dirt tones, clods and a few sprigs of grass."""
+    d, g = PAL["dirt"], PAL["turf"]
+    b = base(cv, px, d, seed, (3, 4), 0.55, 5)
+    pts = marks(seed + 2, 26, min_d=5.5)
+    sprinkle(cv, px, P, pts, lambda p: "v" if p[2] < 0.25 else ("clod" if p[2] < 0.6 else "dot"),
+             lambda p, x, y, code: (g[clamp(4 + code, 1, 7)] if p[2] < 0.25
+                                    else d[clamp(b[(x, y)] + code, 1, 7)]))
+
+
+@tile
+def gua(cv, px, P, seed, wall=False):
+    """Cave floor (grey stone, grit and hairline cracks) or the darker rock under the walls."""
+    s = PAL["stone"]
+    b = base(cv, px, s, seed, (1, 2) if wall else (3, 4), 0.55, 5)
+    pts = marks(seed + 6, 22, min_d=6)
+    sprinkle(cv, px, P, pts, lambda p: "crack" if p[2] < 0.3 else ("pebble" if p[2] < 0.55 else "dot"),
+             lambda p, x, y, code: s[clamp(b[(x, y)] + code, 0, 7)])
+
+
+@tile
+def jurang(cv, px, P, seed):
+    """A chasm: near-black with faint specks of rock far below."""
+    s = PAL["stone"]
+    base(cv, px, s, seed, (0, 1), 0.6, 2)
+    sprinkle(cv, px, P, marks(seed + 1, 10, min_d=9), lambda p: "dot",
+             lambda p, x, y, code: s[2])

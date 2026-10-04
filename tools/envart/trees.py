@@ -282,15 +282,17 @@ def sapling(seed, stage):
 
 
 @asset
-def stump(seed, big=False):
-    """Tunggul: a cut stump with growth rings on top and root toes."""
-    W, H = (44, 32) if big else (28, 22)
+def stump(seed, big=False, huge=False):
+    """Tunggul: a cut stump with growth rings on top and root toes.
+    huge is an old stump wide enough for a 2 x 2 tile footprint."""
+    W, H = (66, 46) if huge else ((44, 32) if big else (28, 22))
     cv = Canvas(W, H)
     bp, wp = PAL["bark"], PAL["wood_cut"]
-    bx, by = W // 2, H - 3
-    rw = 18 if big else 11
-    th = 9 if big else 6
-    sv.trunk(cv, bx, by, by - th, rw, rw, bp, seed, flare=3 if big else 2)
+    bx, by = W // 2, H - (4 if huge else 3)
+    rw = 30 if huge else (18 if big else 11)
+    th = 13 if huge else (9 if big else 6)
+    big = big or huge
+    sv.trunk(cv, bx, by, by - th, rw, rw, bp, seed, flare=5 if huge else (3 if big else 2))
     cx, cy = bx, by - th
     rx, ry = rw / 2 + 0.5, rw / 4 + 0.5
     for y in range(int(cy - ry - 1), int(cy + ry + 2)):
@@ -298,7 +300,7 @@ def stump(seed, big=False):
             dx, dy = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
             r = math.hypot(dx, dy)
             if r <= 1:
-                ring = int(r * (4 if big else 3)) % 2
+                ring = int(r * (6 if huge else (4 if big else 3))) % 2
                 t = 5 - ring + (1 if dx + dy < -0.5 else 0)
                 if r > 0.82:
                     t = 6 if dy < 0 else 3
