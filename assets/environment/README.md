@@ -2,9 +2,10 @@
 
 Pixel art environment untuk prototype dan game: pohon, tanaman ladang (5 tahap tumbuh),
 batu dan bijih, puing (sisa Kebun Warisan yang rusak), semak dan bunga, ubin tanah, dan
-rumah karakter utama. Gaya mengacu ke Stardew Valley (outline berwarna, bayangan kebiruan,
-highlight hangat, cahaya dari kiri atas) tapi semua digambar orisinal lewat kode, tidak ada
-sprite Stardew yang dipakai.
+rumah karakter utama. Gayanya pixel art chibi: bentuk bulat dan gemuk, sedikit warna per
+bahan (5 nada bersih, tanpa dither atau noise), outline berwarna, bayangan kebiruan, highlight
+hangat, cahaya dari kiri atas. Semua digambar orisinal lewat kode, tidak ada sprite Stardew
+yang dipakai.
 
 Semua file dibuat ulang dengan:
 
@@ -12,21 +13,31 @@ Semua file dibuat ulang dengan:
 
 `--char` hanya untuk menaruh karakter di `preview.png` sebagai pembanding skala.
 
-## Versi piksel 2 x 2
+## Piksel 2 x 2 dan gaya chibi
 
-`assets/environment_px2/` berisi aset yang sama dengan ukuran sprite yang sama, tapi tiap
-piksel art digambar 2 x 2 piksel layar (lebih "chunky"). Dibuat dengan:
+Tiap piksel art digambar 2 x 2 piksel layar (ukuran sprite tetap, pikselnya lebih "chunky").
+Ini bukan hasil resize: bentuknya digambar langsung di grid 2 x 2, jadi outline, bayangan dan
+tekstur rapi satu blok. `environment.json` punya field `"pixel": 2`.
 
-    python3 tools/envart/build.py --out assets/environment_px2 --pixel 2
+Gaya chibi:
 
-Ini bukan hasil resize: bentuknya digambar ulang langsung di grid 2 x 2, jadi outline, bayangan
-dan tekstur tetap rapi satu blok. Struktur folder dan `environment.json` sama (ada field
-`"pixel": 2`); ukuran hasil trim bisa beda beberapa piksel dari versi 1 x 1.
+- Pohon: batang pendek dan gemuk, mahkota bulat dari beberapa gumpalan besar, buah besar
+  mengkilap.
+- Batu: gumpalan bulat dengan atas yang terang, satu retakan kecil; lumut seperti topi.
+- Tanaman ladang dan semak: daun montok, buah besar dengan kilau.
+- Rumah: atap lebih tinggi dan menjorok, genteng bulat besar, lisplang bergelombang, dinding
+  papan polos.
+- Ubin: rumput dan jalan polos dengan beberapa petak terang dan tanda rumput kecil. Petak
+  terang selalu di tengah ubin, jadi varian mana pun bisa bersebelahan tanpa sambungan.
+
+`compare_realistis_vs_chibi.png` membandingkan gaya sebelumnya dengan yang sekarang. Versi
+piksel 1 x 1 masih bisa dibuat dengan `--pixel 1`; gaya realistis yang lama ada di riwayat git
+(commit `cf74631`).
 
 ## Skala dan grid
 
 - Ubin isometrik 2:1, **96 x 48 px** (sama dengan `Iso.TILE_W` / `TILE_H` di prototype).
-- Karakter sekitar 80 px tinggi; pintu rumah 84 px, pohon besar 150 - 200 px.
+- Karakter sekitar 80 px tinggi; pintu rumah 84 px, pohon besar 140 - 180 px.
 - Cahaya dari kiri atas: sisi SW bangunan terang, sisi SE teduh.
 
 ## environment.json
@@ -62,6 +73,7 @@ pojok kebun.
 
 ## Kode
 
-`tools/envart/`: `pix.py` (kanvas, palet, outline), `iso.py` (renderer isometrik untuk
-bangunan dan benda kotak), `trees.py`, `plants.py`, `rocks.py`, `debris.py`, `tiles.py`,
+`tools/envart/`: `pix.py` (kanvas, palet, outline), `toon.py` (shading chibi: gumpalan,
+bola, silinder dengan 5 nada), `iso.py` (renderer isometrik untuk bangunan dan benda kotak),
+`trees.py`, `plants.py`, `rocks.py`, `debris.py`, `tiles.py`,
 `house.py`, `build.py`. Butuh Python 3, Pillow dan NumPy.

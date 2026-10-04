@@ -15,7 +15,7 @@ import math
 
 import numpy as np
 
-from iso import IsoScene, planks_h, bricks, stones, solid, LW, EV, FS
+from iso import IsoScene, planks_h, stones, solid, LW, EV, FS
 from pix import ramp, Canvas
 
 LX, LY = 240, 192          # footprint (5 x 4 tiles)
@@ -56,7 +56,7 @@ def wall_tex(length, height, openings=(), porch_shade=0, side=False):
 
     openings: list of (u0, u1, v0, v1, fn) drawn instead of the wall there.
     """
-    boards = planks_h("plank", base=4, gap=7 * FS(), seed=3 if side else 1)
+    boards = planks_h("plank", base=4, gap=10 * FS(), seed=3 if side else 1)
     post_every = 72
 
     def f(u, v):
@@ -80,8 +80,7 @@ def wall_tex(length, height, openings=(), porch_shade=0, side=False):
             # whitewashed lower wall with a few patches where plaster fell off
             if v < 4.5:
                 return ("plaster", 2 + shade)
-            pat = math.sin(u * 0.21) + math.sin(v * 0.37 + u * 0.05)
-            return ("plaster", 5 + shade - (1 if pat > 1.55 else 0))
+            return ("plaster", (6 if v > 27 else 5) + shade)
         if v < 34:
             return ("teak", (4 if v > 32.5 else 2) + shade)   # rail
         r, t = boards(u, v - 34)
@@ -179,20 +178,21 @@ def door_fn():
 
 def roof_tiles(eave_len, slope_len, inset_per_v, *, ridge_cap=True, hip=True):
     """Genteng rows on a hip-roof plane (a trapezoid)."""
-    row_h, tile_w = float(EV(8 * FS())), float(EV(11 * FS()))
+    row_h, tile_w = float(EV(11 * FS())), float(EV(15 * FS()))
     l1, l2, cap = LW(1.2), LW(1.6), EV(6 * FS())
 
     def f(u, v):
-        b = v / slope_len
         left = inset_per_v * v
         right = eave_len - inset_per_v * v
         if u < left or u > right:
             return None
         # hip caps along the slanted edges, ridge cap along the top
         de = min(u - left, right - u) / max(0.3, math.hypot(1, inset_per_v)) if hip else 99
-        if hip and de < 4:
+        if hip and de < 5 * FS():
+            if de > 3.6 * FS():
+                return ("clay", 1)                    # shade beside the hip cap
             k = (v % cap)
-            return ("clay", (2 if k < l1 else 5) - (1 if de > 3 else 0))
+            return ("clay", 2 if k < l1 else 6)
         if ridge_cap and slope_len - v < 5:
             k = (u % EV(9 * FS()))
             return ("clay", 2 if k < l1 else (5 if slope_len - v > 2.5 else 4))
@@ -209,16 +209,15 @@ def roof_tiles(eave_len, slope_len, inset_per_v, *, ridge_cap=True, hip=True):
             t -= 1                   # an older, darker tile
         if ti % 17 == 0:
             t += 1
-        if k < l2:
-            return ("clay", 1)       # shadow under the row above
+        c = (2 * m / tile_w - 1) ** 2         # 0 mid-tile .. 1 at its sides
+        if k < l2 + 3 * FS() * c:
+            return ("clay", 1)       # the round lip of each tile over the row below
         if k > row_h - l1:
             return ("clay", t + 2)   # lit top of this row
-        if m < l1:
-            return ("clay", 2)
-        if m < 4 * FS():
-            return ("clay", t + 1)
-        if m > tile_w - 2.5 * FS():
-            return ("clay", t - 1)
+        if m < 4 * FS() and k > row_h * 0.4:
+            return ("clay", t + 2)   # a shine on each tile
+        if m > tile_w - 3 * FS():
+            return ("clay", t - 2)
         return ("clay", t)
     return f
 
@@ -234,7 +233,7 @@ def build(door="SW"):
     sc.ox = W / 2 - (cxw if not swap else -cxw)
     sc.oy = H - 4 - (LX + LY) / 2 - 18
 
-    stone = stones("stone_warm", base=4, size=10 * FS(), seed=5, mortar="stone_warm", mt=1)
+    stone = stones("stone_warm", base=4, size=15 * FS(), seed=5, mortar="stone_warm", mt=1)
     # --- plinth (batur)
     ms.box(4, 4, 0, LX - 4, LY - 4, PL,
            top=lambda u, v: ("plaster", 3) if v < WALL_Y1 - 4 else porch_floor(u, v - (WALL_Y1 - 4)),
@@ -272,11 +271,11 @@ def build(door="SW"):
     ms.box(LX - 12, 22, PL, LX - 2, 76, PL + 30,
            top=log_top(), sw=log_side(), se=log_ends(), bias=0.5)
     # --- roof (limasan)
-    ov = 10
+    ov = 16                     # a deep, chunky overhang
     x0, x1 = -ov, LX + ov
     y0, y1 = -ov, WALL_Y1 + ov
     half = (y1 - y0) / 2
-    rise = half * 0.74
+    rise = half * 0.98          # a tall, cosy roof
     ridge_z = EAVE + rise
     slope = math.hypot(half, rise)
     inset = half / slope            # horizontal inset per unit of slope distance
@@ -287,13 +286,13 @@ def build(door="SW"):
     ms.quad((x1, y1, EAVE), (0, -(y1 - y0), 0), (-half, 0, rise), roof_tiles(y1 - y0, slope, inset))
     ms.quad((x0, y0, EAVE), (0, y1 - y0, 0), (half, 0, rise), roof_tiles(y1 - y0, slope, inset))
     # fascia boards (lisplang) under the eaves
-    ms.quad((x0, y1, EAVE - 6), (x1 - x0, 0, 0), (0, 0, 6), fascia, bias=-0.5)
-    ms.quad((x1, y0, EAVE - 6), (0, y1 - y0, 0), (0, 0, 6), fascia, bias=-0.5)
+    ms.quad((x0, y1, EAVE - 9), (x1 - x0, 0, 0), (0, 0, 9), fascia, bias=-0.5)
+    ms.quad((x1, y0, EAVE - 9), (0, y1 - y0, 0), (0, 0, 9), fascia, bias=-0.5)
     # ridge ornaments (gendheng wuwung / mahkota) at both ridge ends
     rx0, rx1 = x0 + half, x1 - half
     ry = (y0 + y1) / 2
     for rxp in (rx0, rx1):
-        ms.quad((rxp - 5, ry, ridge_z - 2), (10, 0, 0), (0, 0, 16), crown_tex, bias=2)
+        ms.quad((rxp - 5, ry, ridge_z - 2), (10, 0, 0), (0, 0, 11), crown_tex, bias=2)
     cv = sc.render(outline=False)
     # 2D details placed by their world position
     layer = Canvas(cv.w, cv.h)
@@ -326,28 +325,32 @@ def beam_tex():
 
 
 def fascia(u, v):
-    if v > 6 - LW(1.2):
+    if v > 9 - LW(1.2):
         return ("paint_green", 5)
-    if v < LW(1.2):
+    # a scalloped lower edge: round bumps along the board
+    p = EV(10 * FS())
+    m = (u % p) / p * 2 - 1
+    if v < 3.5 * (1 - math.sqrt(max(0.0, 1 - m * m))):
+        return None
+    if v < LW(1.2) + 3.5 * (1 - math.sqrt(max(0.0, 1 - m * m))):
         return ("paint_green", 1)
-    # scalloped edge pattern
-    return ("paint_green", 3 if (u % EV(8 * FS())) > LW(1) else 2)
+    return ("paint_green", 3)
 
 
 def crown_tex(u, v):
     # a small curled ridge ornament silhouette (10 x 16)
     cx = 5
-    w = 5 - abs(v - 6) * 0.45 if v < 12 else 2.2 - (v - 12) * 0.4
+    w = 5 - abs(v - 4) * 0.5 if v < 8 else 3 - (v - 8) * 0.6
     if abs(u - cx) > w:
         return None
-    if v > 14:
+    if v > 11:
         return None
     return ("clay", 5 if u < cx else 3)
 
 
 def porch_floor(u, v):
     """Tegel kunci: patterned cement floor tiles, 12 x 12."""
-    f = FS()
+    f = FS() * 1.3
     s = EV(12 * f)
     a, b = u % s, v % s
     if a < LW(1) or b < LW(1):
@@ -403,8 +406,9 @@ def log_top():
 
 def details(cv, ms, dx0, dx1):
     """Pixel-drawn props that are easier in 2D: lantern, pots, plants, jar."""
-    from plants import leaf, ball, flower
-    g = ramp("leaf")
+    from plants import leaf, flower
+    from pix import toon
+    g = toon("leaf")
     jx, jy = ms.scr((LX - 26, LY - 22, PL))
     draw_gentong(cv, int(jx), int(jy))
     # hanging lantern on the beam, right of the door
@@ -432,19 +436,19 @@ def details(cv, ms, dx0, dx1):
                 if yy < 2:
                     t = 6 if yy == 0 else 4
                 cv.put(sx + xx, sy - yy, pot[t])
-        for k, a in enumerate((-2.3, -1.9, -1.5, -1.2, -0.85, -2.6, -0.5)):
-            leaf(cv, sx, sy - 10, a, 10 + (k % 3) * 2, 2.2, g, droop=0.25, bias=0.08 if a < -1.57 else -0.06)
-        flower(cv, sx - 3, sy - 19, ramp("red"))
-        flower(cv, sx + 4, sy - 16, ramp("red"))
+        for k, a in enumerate((-2.6, -0.5, -2.1, -1.0, -1.57)):
+            leaf(cv, sx, sy - 10, a, 11 + (k % 2) * 2, 3.2, g, droop=0.2, dim=-1 if k < 2 else 0, rib=False)
+        flower(cv, sx - 4, sy - 20, toon("red"))
+        flower(cv, sx + 5, sy - 17, toon("red"))
     # flowers in the window boxes
     for (u0, u1) in ((20 + 14, 72 - 14), (156 + 14, 208 - 14)):
         for k in range(4):
             u = 12 + u0 + (u1 - u0) * (k + 0.5) / 4
             sx, sy = ms.scr((u, WALL_Y1 + 3, PL + 35))
             sx, sy = int(sx), int(sy)
-            for a in (-2.2, -1.0):
-                leaf(cv, sx, sy, a, 5, 1.6, g, bias=0.05)
-            flower(cv, sx, sy - 4, ramp("pink" if k % 2 else "yellow"), small=True)
+            for a in (-2.4, -0.8):
+                leaf(cv, sx, sy, a, 6, 2.4, g, rib=False)
+            flower(cv, sx, sy - 4, toon("pink" if k % 2 else "yellow"))
 
 
 def canopy(ms, x0, x1, y0, y1):

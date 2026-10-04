@@ -18,7 +18,7 @@ import math
 import numpy as np
 
 import pix
-from pix import Canvas, RAMPS, darker
+from pix import Canvas, darker, ramp
 
 LIGHT_W = np.array([-0.5, 0.45, 1.0])
 LIGHT_W = LIGHT_W / np.linalg.norm(LIGHT_W)
@@ -143,7 +143,7 @@ class IsoScene:
                 r = self.ramp[y, x]
                 if r is None:
                     continue
-                rm = RAMPS[r]
+                rm = ramp(r)
                 t = max(0, min(len(rm) - 1, int(self.tone[y, x])))
                 cv.put(x, y, rm[t])
         # occlusion edges: a nearer surface gets a dark border where it lies
@@ -188,6 +188,8 @@ def planks_h(rmp, base=4, gap=8, seed=0, knots=True):
         # board ends (butt joints) staggered per row
         if ((u + h * 13) % 70) < lw:
             return (rmp, base - 2)
+        if pix.STYLE == "chibi":
+            return (rmp, t)              # clean boards, no grain
         g = math.sin(u * 0.35 + row * 2.1 + math.sin(u * 0.07 + row) * 2)
         if g > 0.93:
             return (rmp, t - 1)

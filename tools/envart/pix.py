@@ -81,7 +81,96 @@ RAMPS = {
 }
 
 
+def _interp(r, pos):
+    """The colour at `pos` (0 dark .. 1 light) along a ramp, blended between entries."""
+    f = pos * (len(r) - 1)
+    i = min(len(r) - 2, int(f))
+    t = f - i
+    return tuple(r[i][k] + (r[i + 1][k] - r[i][k]) * t for k in range(3))
+
+
+def _chibi_color(c, pos):
+    """Brighter, a bit more saturated; shadows lean blue/purple, lights lean warm."""
+    import colorsys
+    h, s, v = colorsys.rgb_to_hsv(*(x / 255 for x in c))
+    s = min(1.0, s * 1.12 + 0.03)
+    v = min(1.0, 0.07 + v * 0.97 + 0.04 * pos)
+    if pos < 0.4:
+        h = (h + (0.66 - h) * 0.07) % 1.0
+    elif pos > 0.7 and 0.05 < h < 0.45:
+        h = h - (h - 0.13) * 0.08
+    return tuple(int(round(x * 255)) for x in colorsys.hsv_to_rgb(h, s, v))
+
+
+TOON_POS = (0.06, 0.3, 0.53, 0.77, 1.0)
+
+# Hand-picked chibi palettes (deep, shadow, mid, light, highlight) for the
+# materials that matter most; every other ramp gets one derived from its
+# realistic ramp (see toon()).
+TOON = {
+    "leaf": R("#1d4a3a", "#2c6e43", "#4b963f", "#79bb49", "#b4dc6c"),
+    "leaf_dark": R("#163c39", "#205c48", "#327c4e", "#4f9d55", "#82c169"),
+    "leaf_yellow": R("#6b3a22", "#a85a28", "#d98b30", "#f2b947", "#fbe08c"),
+    "palm": R("#19463b", "#286a45", "#459343", "#73b84d", "#acda6f"),
+    "banana": R("#1b4b3a", "#2a7346", "#47a04a", "#7bc75a", "#b9e587"),
+    "grass": R("#24533c", "#357a42", "#55a044", "#7fc152", "#b4de74"),
+    "bark": R("#3b2218", "#5d3923", "#835531", "#a87549", "#cc9c69"),
+    "bark_grey": R("#37313a", "#574d4d", "#7a6c64", "#9e8e7e", "#c4b59f"),
+    "palm_bark": R("#4a2f21", "#6f4a2f", "#966b40", "#bb8f58", "#dcb57f"),
+    "stone": R("#383650", "#5a5871", "#827f98", "#adaabe", "#dad8e3"),
+    "stone_warm": R("#463837", "#6c5a54", "#947f71", "#bba691", "#dfcfb6"),
+    "mossy": R("#24473a", "#386a3c", "#558e40", "#7cb24c", "#acd16a"),
+    "clay": R("#6e2420", "#a83a24", "#d65a2c", "#f0853c", "#fbb466"),
+    "plank": R("#4a2a1c", "#74432a", "#9c6038", "#c3824c", "#e3aa6c"),
+    "plank_old": R("#423830", "#665646", "#8b775d", "#ae9a7a", "#cfbf9c"),
+    "wood_cut": R("#7a4a2a", "#a86c3c", "#cf9452", "#e8b875", "#f6d9a0"),
+    "orange": R("#7d3416", "#c0561d", "#ee8a2a", "#fbb446", "#ffe39a"),
+    "red": R("#6e1a2a", "#aa2832", "#dc4438", "#f57a52", "#ffb48a"),
+    "tomato": R("#701c1c", "#ac2c20", "#e04a28", "#f67e42", "#ffbe82"),
+    "yellow": R("#7a5a12", "#b88d18", "#e6bd2a", "#f8df58", "#fff6b0"),
+    "pink": R("#6e2148", "#a83466", "#dc5a8c", "#f48db2", "#ffc6dc"),
+    "purple": R("#2e1a48", "#4d2a6c", "#704490", "#9466b0", "#bf98d2"),
+    "white": R("#77708a", "#a39fb2", "#cbc8d2", "#ecebee", "#ffffff"),
+    "melon": R("#1d4a2c", "#2c6c32", "#46923a", "#6eb44a", "#a6d470"),
+    "corn": R("#8a5a12", "#c08a1a", "#ebbc2c", "#f9de5c", "#fff4b4"),
+    "corn_husk": R("#3c5222", "#5c7a2a", "#84a234", "#acc450", "#d6e486"),
+    "straw": R("#6a4a22", "#9a7432", "#c9a044", "#e8c862", "#f8e8a4"),
+    "rice_green": R("#22503a", "#357840", "#55a046", "#82c25a", "#b8e080"),
+    "soil": R("#3a2219", "#56331f", "#764a2b", "#966339", "#b27f4c"),
+    "dirt": R("#5a3a24", "#7e5631", "#a27540", "#c29655", "#dcb878"),
+    # toon-only palettes (no realistic ramp)
+    "leaf_olive": R("#2f4630", "#476a36", "#6b8c3c", "#94b04c", "#c6d474"),
+    "coconut": R("#3e2a1e", "#62402a", "#8a5c34", "#b0804a", "#d6aa70"),
+    "watermelon": R("#173a2a", "#245a30", "#77b84c", "#9fd25c", "#d0ec8a"),
+    "banana_fruit": R("#4d5a1a", "#7c8a1e", "#adb92a", "#d8d64a", "#f4ee96"),
+}
+
+
+def toon(name):
+    """A 5-colour chibi palette for a material: deep, shadow, mid, light, highlight."""
+    if name in TOON:
+        return TOON[name]
+    r = RAMPS[name]
+    return [_chibi_color(_interp(r, p), p) for p in TOON_POS]
+
+
+def _chibi_ramp(name):
+    """A realistic ramp re-mapped onto the material's 5 chibi colours, so code
+    that indexes ramp tones keeps working but draws in a few clean bands."""
+    r, t = RAMPS[name], toon(name)
+    n = len(r)
+    return [t[int(round(i / max(1, n - 1) * 4))] for i in range(n)]
+
+
+STYLE = "chibi"
+_CHIBI = {}
+
+
 def ramp(name):
+    if STYLE == "chibi":
+        if name not in _CHIBI:
+            _CHIBI[name] = _chibi_ramp(name)
+        return _CHIBI[name]
     return RAMPS[name]
 
 
@@ -140,7 +229,7 @@ class Noise:
 # but is drawn with 2 x 2 blocks: shapes are drawn as usual, then each 2 x 2
 # block takes the colour most of its pixels have, and the outline is drawn
 # around the blocks (see Canvas.outline / Canvas.chunky).
-PIXEL = 1
+PIXEL = 2
 TIE_DARK = True     # a 2-2 tie in a block goes to the darker colour, so seams and creases survive
 
 LIGHT3 = np.array([-0.55, -0.62, 0.56])   # screen x right, y down, z toward viewer

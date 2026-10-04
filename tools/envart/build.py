@@ -78,7 +78,6 @@ def chunky_image(img):
 def iso_shadow(cv_img, ms_scr, lx, ly, pad=6):
     """A soft footprint-shaped shadow under a building (diamond, offset down-right)."""
     sh = Image.new("RGBA", cv_img.size, (0, 0, 0, 0))
-    px = sh.load()
     pts = [ms_scr((-pad, -pad, 0)), ms_scr((lx + pad, -pad, 0)), ms_scr((lx + pad, ly + pad, 0)), ms_scr((-pad, ly + pad, 0))]
     pts = [(x + 8, y + 4) for x, y in pts]
     from PIL import ImageDraw
@@ -131,10 +130,10 @@ def build_all(out, char=None):
     # ---------------------------------------------------------- rocks
     r = rocks
     for name, (cv, pv), sh in [
-        ("batu_kecil", r.rock("a", 1, 48, 40, 18, 13), (16, 6)),
-        ("batu_kecil_2", r.rock("d", 4, 48, 40, 16, 12, stone="stone_warm"), (15, 6)),
-        ("batu_lumut", r.rock("b", 2, 48, 40, 18, 13, moss="mossy"), (16, 6)),
-        ("batu_besar", r.rock("c", 3, 100, 76, 40, 28, cracks=3, moss="mossy", facets=8), (38, 13)),
+        ("batu_kecil", r.rock("a", 1, 48, 44, 18, 15), (16, 6)),
+        ("batu_kecil_2", r.rock("d", 4, 48, 44, 17, 14, stone_pal="stone_warm"), (15, 6)),
+        ("batu_lumut", r.rock("b", 2, 48, 44, 18, 15, moss="mossy"), (16, 6)),
+        ("batu_besar", r.rock("c", 3, 100, 84, 40, 32, cracks=2, moss="mossy", big=True), (38, 13)),
         ("bijih_tembaga", r.ore_rock(5, "copper"), (20, 7)),
         ("bijih_besi", r.ore_rock(6, "ironore"), (20, 7)),
         ("bijih_emas", r.ore_rock(7, "gold"), (20, 7)),
@@ -337,7 +336,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="assets/environment")
     ap.add_argument("--char", default=None, help="a character frame (96 x 128, feet at 48,116) shown for scale")
-    ap.add_argument("--pixel", type=int, default=1, help="art pixel size: 2 draws every sprite in 2 x 2 blocks, same sprite size")
+    ap.add_argument("--pixel", type=int, default=2, help="art pixel size: 2 draws every sprite in 2 x 2 blocks, same sprite size")
     a = ap.parse_args()
     pix.PIXEL = a.pixel
     m = build_all(a.out, a.char)

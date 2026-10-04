@@ -4,18 +4,18 @@
     "h": 48,
     "note": "isometric 2:1, Iso.TILE_W x TILE_H"
   },
-  "pixel": 1,
+  "pixel": 2,
   "light": "top left",
   "assets": {
     "pohon/mangga": {
       "file": "pohon/mangga.png",
       "size": [
-        146,
-        155
+        134,
+        138
       ],
       "pivot": [
-        73,
-        147
+        68,
+        130
       ],
       "footprint": [
         1,
@@ -25,12 +25,12 @@
     "pohon/mangga_berbuah": {
       "file": "pohon/mangga_berbuah.png",
       "size": [
-        142,
-        156
+        130,
+        136
       ],
       "pivot": [
-        70,
-        148
+        66,
+        128
       ],
       "footprint": [
         1,
@@ -40,12 +40,12 @@
     "pohon/pohon_hutan": {
       "file": "pohon/pohon_hutan.png",
       "size": [
-        147,
-        162
+        150,
+        148
       ],
       "pivot": [
-        74,
-        154
+        76,
+        140
       ],
       "footprint": [
         1,
@@ -55,12 +55,12 @@
     "pohon/jati": {
       "file": "pohon/jati.png",
       "size": [
-        123,
-        168
+        108,
+        174
       ],
       "pivot": [
-        60,
-        160
+        54,
+        166
       ],
       "footprint": [
         1,
@@ -70,12 +70,12 @@
     "pohon/pohon_kemarau": {
       "file": "pohon/pohon_kemarau.png",
       "size": [
-        148,
-        164
+        126,
+        138
       ],
       "pivot": [
-        73,
-        156
+        62,
+        130
       ],
       "footprint": [
         1,
@@ -85,12 +85,12 @@
     "pohon/kelapa": {
       "file": "pohon/kelapa.png",
       "size": [
-        154,
-        187
+        134,
+        154
       ],
       "pivot": [
-        47,
-        179
+        42,
+        146
       ],
       "footprint": [
         1,
@@ -100,12 +100,12 @@
     "pohon/pisang": {
       "file": "pohon/pisang.png",
       "size": [
-        110,
-        104
+        98,
+        110
       ],
       "pivot": [
-        55,
-        96
+        48,
+        102
       ],
       "footprint": [
         1,
@@ -115,12 +115,12 @@
     "pohon/bibit_0": {
       "file": "pohon/bibit_0.png",
       "size": [
-        19,
-        21
+        32,
+        26
       ],
       "pivot": [
-        9,
-        16
+        16,
+        20
       ],
       "footprint": [
         1,
@@ -130,12 +130,12 @@
     "pohon/bibit_1": {
       "file": "pohon/bibit_1.png",
       "size": [
-        33,
-        58
+        40,
+        62
       ],
       "pivot": [
-        17,
-        52
+        20,
+        56
       ],
       "footprint": [
         1,
@@ -145,12 +145,12 @@
     "pohon/bibit_2": {
       "file": "pohon/bibit_2.png",
       "size": [
-        70,
-        108
+        68,
+        106
       ],
       "pivot": [
-        35,
-        102
+        34,
+        100
       ],
       "footprint": [
         1,
@@ -160,12 +160,12 @@
     "pohon/tunggul": {
       "file": "pohon/tunggul.png",
       "size": [
-        35,
-        25
+        48,
+        30
       ],
       "pivot": [
-        17,
-        17
+        24,
+        22
       ],
       "footprint": [
         1,
@@ -175,12 +175,12 @@
     "pohon/tunggul_besar": {
       "file": "pohon/tunggul_besar.png",
       "size": [
-        52,
-        34
+        60,
+        40
       ],
       "pivot": [
-        26,
-        26
+        30,
+        32
       ],
       "footprint": [
         1,
@@ -190,12 +190,12 @@
     "batu/batu_kecil": {
       "file": "batu/batu_kecil.png",
       "size": [
-        44,
-        34
+        46,
+        38
       ],
       "pivot": [
-        23,
-        30
+        24,
+        34
       ],
       "footprint": [
         1,
@@ -205,12 +205,12 @@
     "batu/batu_kecil_2": {
       "file": "batu/batu_kecil_2.png",
       "size": [
-        39,
-        30
+        46,
+        36
       ],
       "pivot": [
-        18,
-        26
+        22,
+        32
       ],
       "footprint": [
         1,
@@ -220,12 +220,12 @@
     "batu/batu_lumut": {
       "file": "batu/batu_lumut.png",
       "size": [
-        41,
-        32
+        44,
+        40
       ],
       "pivot": [
-        19,
-        28
+        22,
+        36
       ],
       "footprint": [
         1,
@@ -235,12 +235,12 @@
     "batu/batu_besar": {
       "file": "batu/batu_besar.png",
       "size": [
-        85,
-        64
+        94,
+        68
       ],
       "pivot": [
-        44,
-        60
+        46,
+        64
       ],
       "footprint": [
         2,
@@ -251,11 +251,11 @@
       "file": "batu/bijih_tembaga.png",
       "size": [
         50,
-        36
+        46
       ],
       "pivot": [
-        25,
-        32
+        26,
+        42
       ],
       "footprint": [
         1,
@@ -265,12 +265,12 @@
     "batu/bijih_besi": {
       "file": "batu/bijih_besi.png",
       "size": [
-        47,
-        38
+        50,
+        46
       ],
       "pivot": [
-        22,
-        34
+        26,
+        42
       ],
       "footprint": [
         1,
@@ -280,12 +280,12 @@
     "batu/bijih_emas": {
       "file": "batu/bijih_emas.png",
       "size": [
-        50,
-        40
+        56,
+        44
       ],
       "pivot": [
-        25,
-        36
+        28,
+        40
       ],
       "footprint": [
         1,
@@ -295,12 +295,12 @@
     "batu/bijih_permata": {
       "file": "batu/bijih_permata.png",
       "size": [
-        52,
-        37
+        56,
+        44
       ],
       "pivot": [
         28,
-        33
+        40
       ],
       "footprint": [
         1,
@@ -310,12 +310,12 @@
     "batu/kerikil": {
       "file": "batu/kerikil.png",
       "size": [
-        32,
-        19
+        46,
+        28
       ],
       "pivot": [
-        13,
-        15
+        24,
+        22
       ],
       "footprint": [
         1,
@@ -325,12 +325,12 @@
     "puing/ranting": {
       "file": "puing/ranting.png",
       "size": [
-        46,
-        27
+        44,
+        30
       ],
       "pivot": [
-        25,
-        19
+        22,
+        24
       ],
       "footprint": [
         1,
@@ -340,12 +340,12 @@
     "puing/daun_kering": {
       "file": "puing/daun_kering.png",
       "size": [
-        62,
-        33
+        60,
+        42
       ],
       "pivot": [
-        26,
-        21
+        32,
+        30
       ],
       "footprint": [
         1,
@@ -355,11 +355,11 @@
     "puing/kayu_tumbang": {
       "file": "puing/kayu_tumbang.png",
       "size": [
-        90,
-        64
+        96,
+        66
       ],
       "pivot": [
-        44,
+        48,
         48
       ],
       "footprint": [
@@ -370,12 +370,12 @@
     "puing/peti": {
       "file": "puing/peti.png",
       "size": [
-        62,
-        59
+        64,
+        60
       ],
       "pivot": [
-        31,
-        59
+        32,
+        60
       ],
       "footprint": [
         1,
@@ -385,12 +385,12 @@
     "puing/peti_rusak": {
       "file": "puing/peti_rusak.png",
       "size": [
-        62,
-        59
+        64,
+        60
       ],
       "pivot": [
-        31,
-        59
+        32,
+        60
       ],
       "footprint": [
         1,
@@ -400,12 +400,12 @@
     "puing/papan_patah": {
       "file": "puing/papan_patah.png",
       "size": [
-        80,
-        55
+        82,
+        56
       ],
       "pivot": [
-        35,
-        43
+        36,
+        44
       ],
       "footprint": [
         1,
@@ -415,12 +415,12 @@
     "puing/pagar_bambu": {
       "file": "puing/pagar_bambu.png",
       "size": [
-        108,
-        97
+        110,
+        98
       ],
       "pivot": [
-        55,
-        69
+        56,
+        70
       ],
       "footprint": [
         2,
@@ -430,12 +430,12 @@
     "puing/pagar_bambu_rusak": {
       "file": "puing/pagar_bambu_rusak.png",
       "size": [
-        108,
-        99
+        110,
+        100
       ],
       "pivot": [
-        55,
-        69
+        56,
+        70
       ],
       "footprint": [
         2,
@@ -445,11 +445,11 @@
     "puing/reruntuhan_bata": {
       "file": "puing/reruntuhan_bata.png",
       "size": [
-        103,
+        84,
         72
       ],
       "pivot": [
-        52,
+        42,
         56
       ],
       "footprint": [
@@ -460,11 +460,11 @@
     "puing/tembok_runtuh": {
       "file": "puing/tembok_runtuh.png",
       "size": [
-        112,
+        114,
         98
       ],
       "pivot": [
-        56,
+        57,
         78
       ],
       "footprint": [
@@ -475,12 +475,12 @@
     "puing/tiang_lapuk": {
       "file": "puing/tiang_lapuk.png",
       "size": [
-        28,
-        86
+        30,
+        88
       ],
       "pivot": [
-        11,
-        79
+        12,
+        80
       ],
       "footprint": [
         1,
@@ -490,12 +490,12 @@
     "vegetasi/rumput_liar": {
       "file": "vegetasi/rumput_liar.png",
       "size": [
-        36,
-        36
+        44,
+        34
       ],
       "pivot": [
-        19,
-        33
+        22,
+        28
       ],
       "footprint": [
         1,
@@ -505,12 +505,12 @@
     "vegetasi/rumput_daun": {
       "file": "vegetasi/rumput_daun.png",
       "size": [
-        48,
-        37
+        42,
+        36
       ],
       "pivot": [
-        25,
-        31
+        22,
+        30
       ],
       "footprint": [
         1,
@@ -520,12 +520,12 @@
     "vegetasi/pakis": {
       "file": "vegetasi/pakis.png",
       "size": [
-        64,
-        33
+        62,
+        34
       ],
       "pivot": [
         32,
-        29
+        28
       ],
       "footprint": [
         1,
@@ -535,12 +535,12 @@
     "vegetasi/alang_alang": {
       "file": "vegetasi/alang_alang.png",
       "size": [
-        64,
-        66
+        70,
+        82
       ],
       "pivot": [
-        30,
-        63
+        34,
+        76
       ],
       "footprint": [
         1,
@@ -550,12 +550,12 @@
     "vegetasi/semak": {
       "file": "vegetasi/semak.png",
       "size": [
-        62,
-        48
+        68,
+        56
       ],
       "pivot": [
-        30,
-        42
+        34,
+        48
       ],
       "footprint": [
         1,
@@ -565,12 +565,12 @@
     "vegetasi/semak_buah": {
       "file": "vegetasi/semak_buah.png",
       "size": [
-        63,
-        47
+        68,
+        56
       ],
       "pivot": [
-        32,
-        41
+        34,
+        48
       ],
       "footprint": [
         1,
@@ -580,12 +580,12 @@
     "vegetasi/semak_kembang_sepatu": {
       "file": "vegetasi/semak_kembang_sepatu.png",
       "size": [
-        62,
-        48
+        70,
+        56
       ],
       "pivot": [
-        30,
-        42
+        34,
+        48
       ],
       "footprint": [
         1,
@@ -595,12 +595,12 @@
     "vegetasi/semak_melati": {
       "file": "vegetasi/semak_melati.png",
       "size": [
-        62,
-        48
+        68,
+        56
       ],
       "pivot": [
-        30,
-        42
+        34,
+        48
       ],
       "footprint": [
         1,
@@ -610,12 +610,12 @@
     "vegetasi/bunga_liar_kuning": {
       "file": "vegetasi/bunga_liar_kuning.png",
       "size": [
-        61,
-        31
+        56,
+        38
       ],
       "pivot": [
-        31,
-        26
+        26,
+        30
       ],
       "footprint": [
         1,
@@ -626,11 +626,11 @@
       "file": "vegetasi/bunga_liar_merah_muda.png",
       "size": [
         54,
-        31
+        40
       ],
       "pivot": [
-        23,
-        30
+        28,
+        32
       ],
       "footprint": [
         1,
@@ -892,16 +892,16 @@
     "bangunan/rumah_utama_sw": {
       "file": "bangunan/rumah_utama_sw.png",
       "size": [
-        461,
-        384
+        472,
+        398
       ],
       "pivot": [
-        118,
-        315
+        116,
+        330
       ],
       "grid_origin": [
-        198,
-        155
+        196,
+        170
       ],
       "footprint": [
         5,
@@ -917,16 +917,16 @@
     "bangunan/rumah_utama_se": {
       "file": "bangunan/rumah_utama_se.png",
       "size": [
-        478,
-        384
+        488,
+        398
       ],
       "pivot": [
-        343,
-        315
+        356,
+        330
       ],
       "grid_origin": [
-        263,
-        155
+        276,
+        170
       ],
       "footprint": [
         4,
