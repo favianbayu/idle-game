@@ -45,6 +45,8 @@ Tokoh dewasa ±36 voxel. Pintu 44, dinding 52, atap ±24, pagar 27, motor (jok �
 - Cahaya per voxel dari normal permukaan, 4 tingkat warna per material.
 
 - Rambut punya poni (`BANGS`), helai gelap (`hair2`), dan bentuk khusus per gaya (`hairAt`). Rambut pemain bisa diganti di menu opsi.
+- Ukuran grid tiap frame menyesuaikan isinya (pedang, sapu, guling, terbaring) dengan poros tetap di tengah,
+  jadi tidak ada animasi yang terpotong. `composite()` menempel badan atas & bawah di tengah walau ukurannya beda.
 - Kepala bisa menoleh (`hy`), pinggul bergoyang (`sy`), telapak kaki menapak/jinjit (`ftL/ftR`).
 - Fase animasi jalan/lari maju sesuai jarak tempuh (`stride`), jadi kaki tidak meluncur. Gerak punya akselerasi & pengereman halus.
 

@@ -878,11 +878,18 @@ function humanShape(P0, st, part = 'all') {
   if (P.sword > 0.5) sp.push([add(Rr.hand, bd, 14 * S), 1.4], [add(Rr.hand, bd, -1.2 * S), 1.2], [add(Rr.hand, bd, 1.3 * S), 2]);
   if (P.broom > 0.5) sp.push([add(Rr.hand, brd, 14 * S), 3], [add(Rr.hand, brd, -3 * S), 1]);
   if (P.orb > 0) sp.push([orbPos, P.orb + 0.5]);
-  const lo = [0, 1, 2].map(i => Math.min(...sp.map(([c, r]) => c[i] - r * S)));
-  const hi = [0, 1, 2].map(i => Math.max(...sp.map(([c, r]) => c[i] + r * S)));
-  const dims = [L, W, H];
-  const bbox = [...lo.map((v, i) => Math.max(0, Math.floor(v))), ...hi.map((v, i) => Math.min(dims[i] - 1, Math.ceil(v)))];
-  return { mat, L, W, H, bbox, lift: P.jump * S, pelvisZ: pelvis[2], yaw: P.yaw, buttZ };
+  if (P.phone > 0.5) sp.push([phone1, 1.5]);
+  const lo = [0, 1, 2].map(i => Math.min(...sp.map(([c, r]) => c[i] - r * S)) - 1);
+  const hi = [0, 1, 2].map(i => Math.max(...sp.map(([c, r]) => c[i] + r * S)) + 1);
+  // Grid menyesuaikan isi frame (pedang, sapu, guling, terbaring) tanpa terpotong.
+  // Titik tengah tetap di (L/2, W/2) supaya semua frame berputar di poros yang sama.
+  const hx = Math.ceil(Math.max(L / 2 - lo[0], hi[0] - L / 2)), hy = Math.ceil(Math.max(W / 2 - lo[1], hi[1] - W / 2));
+  const ox = Math.max(0, hx - Math.floor(L / 2)), oy = Math.max(0, hy - Math.floor(W / 2));
+  const L2 = L + ox * 2, W2 = W + oy * 2, H2 = Math.max(H, Math.ceil(hi[2]) + 1);
+  const bbox = [Math.max(0, Math.floor(lo[0] + ox)), Math.max(0, Math.floor(lo[1] + oy)), Math.max(0, Math.floor(lo[2])),
+                Math.min(L2 - 1, Math.ceil(hi[0] + ox)), Math.min(W2 - 1, Math.ceil(hi[1] + oy)), H2 - 1];
+  const mat2 = ox || oy ? (x, y, z) => mat(x - ox, y - oy, z) : mat;
+  return { mat: mat2, L: L2, W: W2, H: H2, bbox, lift: P.jump * S, pelvisZ: pelvis[2], yaw: P.yaw, buttZ };
 }
 
 /* ---------- Gerakan ----------
@@ -1031,18 +1038,20 @@ function composite(lower, upper) {
   let m1 = COMP.get(lower); if (!m1) COMP.set(lower, m1 = new Map());
   let c = m1.get(upper); if (c) return c;
   const dz = Math.round(lower.pelvisZ - upper.pelvisZ), n = Math.max(lower.slices.length, upper.slices.length + dz);
+  const Lc = Math.max(lower.L, upper.L), Wc = Math.max(lower.W, upper.W);   // ukuran bisa beda: tempel di tengah
+  const ax = (Lc - lower.L) / 2, ay = (Wc - lower.W) / 2, bx = (Lc - upper.L) / 2, by = (Wc - upper.W) / 2;
   const slices = [];
   for (let z = 0; z < n; z++) {
     const a = lower.slices[z], b = upper.slices[z - dz];
     if (!a && !b) { slices.push(null); continue; }
-    const cv = makeCanvas(lower.L, lower.W), g = cv.getContext('2d');
-    if (a) g.drawImage(a, 0, 0);
-    if (b) g.drawImage(b, 0, 0);
+    const cv = makeCanvas(Lc, Wc), g = cv.getContext('2d');
+    if (a) g.drawImage(a, ax, ay);
+    if (b) g.drawImage(b, bx, by);
     slices.push(cv);
   }
-  const shadow = makeCanvas(lower.L, lower.W), g = shadow.getContext('2d');
-  g.drawImage(lower.shadow, 0, 0); g.drawImage(upper.shadow, 0, 0);
-  c = { L: lower.L, W: lower.W, H: n, slices, shadow, lift: 0, yaw: upper.yaw || 0, shadowOff: 2 };
+  const shadow = makeCanvas(Lc, Wc), g = shadow.getContext('2d');
+  g.drawImage(lower.shadow, ax, ay); g.drawImage(upper.shadow, bx, by);
+  c = { L: Lc, W: Wc, H: n, slices, shadow, lift: 0, yaw: upper.yaw || 0, shadowOff: 2 };
   m1.set(upper, c);
   return c;
 }
