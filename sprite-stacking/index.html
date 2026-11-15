@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Sprite Stacking Demo</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #111; color: #eee; font: 14px/1.4 system-ui, sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  #tabs { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 5; background: #000a; padding: 4px; border-radius: 10px; }
+  #tabs button, .btn { background: #2a2f3a; color: #eee; border: 0; padding: 7px 12px; border-radius: 7px; font: inherit; cursor: pointer; }
+  #tabs button.on, .btn.on { background: #2a5bd7; }
+  .screen { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; }
+  .screen.on { display: flex; }
+  #game { background: #3c8a2e; }
+  #hud { position: fixed; top: 52px; left: 10px; background: #000a; padding: 8px 10px; border-radius: 8px; font-size: 12px; z-index: 4; }
+  #hud label { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+  #hud input[type=range] { width: 90px; }
+  #help { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #000a; padding: 5px 10px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+  .touch { position: fixed; bottom: 18px; display: none; gap: 10px; z-index: 4; }
+  .touch button { width: 64px; height: 64px; border-radius: 50%; border: 0; background: #fff3; color: #fff; font-size: 24px; }
+  .touch button.down { background: #fff6; }
+  #tl { left: 16px; } #tr { right: 16px; }
+  body.is-touch .touch { display: flex; }
+  body.is-touch #help { display: none; }
+  #scrTut.on { flex-direction: column; background: #f4f4f4; color: #111; gap: 10px; padding: 60px 12px 12px; }
+  #scrTut h2 { margin: 0; font-size: 17px; text-align: center; }
+  #scrTut p { margin: 0; max-width: 560px; text-align: center; color: #444; font-size: 13px; }
+  #tutCanvas { background: #fff; }
+  #tutCtl { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  #tutCtl .btn { background: #ddd; color: #111; }
+  #tutCtl .btn.on { background: #2a5bd7; color: #fff; }
+  #tutSliders { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; font-size: 13px; }
+  #tutSliders label { display: flex; gap: 6px; align-items: center; }
+</style>
+</head>
+<body>
+<div id="tabs">
+  <button id="tabGame" class="on">Demo Balap</button>
+  <button id="tabTut">Cara Kerja</button>
+</div>
+
+<!-- ============ GAME ============ -->
+<div id="scrGame" class="screen on">
+  <canvas id="game"></canvas>
+  <div id="hud">
+    <div id="speed">0 km/j</div>
+    <label><input type="checkbox" id="optCam"> Kamera ikut berputar</label>
+    <label><input type="checkbox" id="optShadow" checked> Bayangan</label>
+    <label>Jarak slice <input type="range" id="optSpace" min="1" max="6" step="1" value="1"></label>
+  </div>
+  <div id="help">← → / A D belok · ↑ / W gas · ↓ / S rem/mundur · C kamera</div>
+  <div class="touch" id="tl"><button data-k="left">◀</button><button data-k="right">▶</button></div>
+  <div class="touch" id="tr"><button data-k="down">▼</button><button data-k="up">▲</button></div>
+</div>
+
+<!-- ============ TUTORIAL ============ -->
+<div id="scrTut" class="screen">
+  <h2 id="tutTitle"></h2>
+  <canvas id="tutCanvas"></canvas>
+  <p id="tutText"></p>
+  <div id="tutCtl">
+    <button class="btn on" data-step="0">1. Gambar 4 sisi</button>
+    <button class="btn" data-step="1">2. Baris → slice</button>
+    <button class="btn" data-step="2">3. Tumpuk & putar</button>
+  </div>
+  <div id="tutSliders">
+    <label>Jarak slice <input type="range" id="tSpace" min="1" max="6" step="1" value="1"><span id="tSpaceV">1</span></label>
+    <label><input type="checkbox" id="tAuto" checked> Putar otomatis</label>
+    <label>Sudut <input type="range" id="tAngle" min="0" max="360" value="30"></label>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   1. DATA: mobil digambar dari 4 sisi (seperti di video).
+      Tiap karakter = 1 piksel; '.' = kosong. Palet di bawah.
+   ===================================================================== */
+const PAL = {
+  K: '#141a3c', // outline
+  B: '#2a5bd7', // biru body
+  b: '#1c3c9a', // biru gelap
+  L: '#4f84f5', // biru terang (highlight)
+  W: '#eef2ff', // strip putih
+  G: '#252c44', // kaca gelap
+  g: '#56658a', // kaca terang
+  T: '#18181c', // ban
+  R: '#9a9aa6', // velg
+  H: '#ffe27a', // lampu depan
+  r: '#e2384d', // lampu belakang
+};
+
+// Ukuran: panjang 28 (x, depan = kanan), lebar 14 (y), tinggi 11 (z).
+const CAR_VIEWS = {
+  // Tampak samping: baris pertama = paling atas (z=10), baris terakhir = tanah (z=0)
+  side: [
+    '..........KKKKKKKK..........',
+    '.........KgGGGGKGGGgK.......',
+    '........KgGGGGGKGGGGgK......',
+    '...KKKKKBBBBBBBBBBBBBBKKKKK.',
+    '..KLLLLLLLLLLLLLLLLLLLLLLLK.',
+    '.KrBBBBBBBBBBBBBBBBBBBBBBBHK',
+    '.KbBBBBBBBBBBBBBBBBBBBBBBBBK',
+    '.KbbKKKKKKbbbbbbbbKKKKKKbbbK',
+    '..KbKTTTTKbbbbbbbbKTTTTKbbK.',
+    '...KKTRRTKKKKKKKKKKTRRTKKK..',
+    '.....TTTT..........TTTT.....',
+  ],
+  // Tampak atas: baris = y (0 = sisi kiri mobil), kolom = x (depan di kanan)
+  top: [
+    '.KKKKKKKKKKKKKKKKKKKKKKKKKK.',
+    'KbbbbbbbbbbbbbbbbbbbbbbbbbbK',
+    'KrBBBBBgGGBBBBBBBBGGgBBBBBHK',
+    'KBBBBBBgGGBBBBBBBBGGgBBBBBBK',
+    'KWWWWWWgGGWWWWWWWWGGgWWWWWWK',
+    'KWWWWWWgGGWWWWWWWWGGgWWWWWWK',
+    'KBBBBBBgGGBBBBBBBBGGgBBBBBBK',
+    'KBBBBBBgGGBBBBBBBBGGgBBBBBBK',
+    'KWWWWWWgGGWWWWWWWWGGgWWWWWWK',
+    'KWWWWWWgGGWWWWWWWWGGgWWWWWWK',
+    'KBBBBBBgGGBBBBBBBBGGgBBBBBBK',
+    'KrBBBBBgGGBBBBBBBBGGgBBBBBHK',
+    'KbbbbbbbbbbbbbbbbbbbbbbbbbbK',
+    '.KKKKKKKKKKKKKKKKKKKKKKKKKK.',
+  ],
+  // Tampak depan / belakang: kolom = lebar, baris = tinggi (atas ke bawah)
+  front: [
+    '....KKKKKK....',
+    '...KggggggK...',
+    '..KGGGGGGGGK..',
+    '.KBBWWBBWWBBK.',
+    'KLLLWWLLWWLLLK',
+    'KHHBBBBBBBBHHK',
+    'KBBKKKKKKKKBBK',
+    'KbbbbbbbbbbbbK',
+    'KTTbbbbbbbbTTK',
+    'KTTKKKKKKKKTTK',
+    '.TT........TT.',
+  ],
+  back: [
+    '....KKKKKK....',
+    '...KggggggK...',
+    '..KGGGGGGGGK..',
+    '.KBBWWBBWWBBK.',
+    'KLLLWWLLWWLLLK',
+    'KrrBBBBBBBBrrK',
+    'KbbbbbbbbbbbbK',
+    'KbbbbbbbbbbbbK',
+    'KTTbbbbbbbbTTK',
+    'KTTKKKKKKKKTTK',
+    '.TT........TT.',
+  ],
+};
+
+/* =====================================================================
+   2. MEMBANGUN SLICE
+   Model = grid voxel L×W×H. Slice ke-z = gambar tampak-atas dari lapisan z.
+   Untuk model dari 4 sisi: voxel ada jika SEMUA tampak punya piksel di situ
+   ("carving"). Warna diambil dari tampak yang benar-benar terlihat.
+   ===================================================================== */
+function makeCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+// Generic: solid(x,y,z) -> bool, color(x,y,z,exp) -> css color
+function buildModel(L, W, H, solid, color) {
+  const S = (x, y, z) => x >= 0 && y >= 0 && z >= 0 && x < L && y < W && z < H && solid(x, y, z);
+  const slices = [];
+  const shadow = makeCanvas(L, W), sctx = shadow.getContext('2d');
+  sctx.fillStyle = '#000';
+  for (let z = 0; z < H; z++) {
+    const c = makeCanvas(L, W), ctx = c.getContext('2d');
+    let any = false;
+    for (let y = 0; y < W; y++) for (let x = 0; x < L; x++) {
+      if (!S(x, y, z)) continue;
+      const exp = {
+        top: !S(x, y, z + 1),
+        xp: !S(x + 1, y, z), xn: !S(x - 1, y, z),
+        yp: !S(x, y + 1, z), yn: !S(x, y - 1, z),
+      };
+      const col = color(x, y, z, exp);
+      if (!col) continue;
+      ctx.fillStyle = col;
+      ctx.fillRect(x, y, 1, 1);
+      sctx.fillRect(x, y, 1, 1);
+      any = true;
+    }
+    slices.push(c);
+  }
+  return { L, W, H, slices, shadow };
+}
+
+function buildFromViews(v) {
+  const L = v.top[0].length, W = v.top.length, H = v.side.length;
+  const at = (rows, r, c) => (rows[r] && rows[r][c]) || '.';
+  const top   = (x, y)    => at(v.top, y, x);
+  const side  = (x, z)    => at(v.side, H - 1 - z, x);
+  const front = (y, z)    => at(v.front, H - 1 - z, W - 1 - y); // dilihat dari depan: kiri pengamat = kanan mobil
+  const back  = (y, z)    => at(v.back, H - 1 - z, y);
+  const solid = (x, y, z) => top(x, y) !== '.' && side(x, z) !== '.' && front(y, z) !== '.' && back(y, z) !== '.';
+  const color = (x, y, z, e) => {
+    let ch;
+    if (e.yp || e.yn)      ch = side(x, z);   // tepi kiri/kanan -> warna tampak samping
+    else if (e.xp)         ch = front(y, z);  // tepi depan
+    else if (e.xn)         ch = back(y, z);   // tepi belakang
+    else if (e.top)        ch = top(x, y);    // permukaan atas -> warna tampak atas
+    else                   ch = side(x, z);   // bagian dalam (hampir tak terlihat)
+    return PAL[ch] || PAL.K;
+  };
+  const m = buildModel(L, W, H, solid, color);
+  m.views = v;
+  return m;
+}
+
+// ---------- Model prosedural lain (pohon, cone, tumpukan ban) ----------
+function hash(x, y, z) {
+  let h = (x * 374761393 + y * 668265263 + z * 2147483647) | 0;
+  h = (h ^ (h >>> 13)) * 1274126177;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+}
+
+function makeTree(seed) {
+  const N = 17, H = 22, c = (N - 1) / 2;
+  const radius = z => {
+    if (z < 4) return 1.4;
+    const t = (z - 4) / (H - 4);
+    const tier = 1 - ((z - 4) % 6) / 9;
+    return Math.max(0.6, (1 - t) * 7.8 * tier + 0.5);
+  };
+  return buildModel(N, N, H,
+    (x, y, z) => {
+      const d = Math.hypot(x - c, y - c);
+      return d <= radius(z) + (z >= 4 ? (hash(x + seed, y, z) - 0.5) * 0.9 : 0);
+    },
+    (x, y, z, e) => {
+      if (z < 4) return e.top ? '#6b4a2b' : '#4a301b';
+      const n = hash(x, y + seed, z);
+      if (!e.top && (e.xp || e.xn || e.yp || e.yn)) return n < 0.5 ? '#1e5a2c' : '#174a24';
+      return n < 0.3 ? '#4fa64a' : n < 0.8 ? '#3b8f3c' : '#2f7734';
+    });
+}
+
+function makeCone() {
+  const N = 7, H = 9, c = 3;
+  return buildModel(N, N, H,
+    (x, y, z) => z === 0 ? true : Math.hypot(x - c, y - c) <= 3.1 - z * 0.33,
+    (x, y, z, e) => {
+      if (z === 0) return e.xp || e.xn || e.yp || e.yn ? '#a8401a' : '#d9561f';
+      if (z === 4 || z === 5) return e.top ? '#ffffff' : '#c9c9c9';
+      return e.top ? '#ff7a2e' : '#d9561f';
+    });
+}
+
+function makeTires() {
+  const N = 11, H = 9, c = 5;
+  return buildModel(N, N, H,
+    (x, y, z) => { const d = Math.hypot(x - c, y - c); return d <= 5.2 && d >= 2.2; },
+    (x, y, z, e) => {
+      const band = Math.floor(z / 3) % 2;
+      if (e.top) return band ? '#e8e8e8' : '#d33b3b';
+      return band ? '#9a9a9a' : '#922828';
+    });
+}
+
+const CAR = buildFromViews(CAR_VIEWS);
+const MODELS = { tree: [makeTree(1), makeTree(7), makeTree(13)], cone: makeCone(), tires: makeTires() };
+
+/* =====================================================================
+   3. RENDER: inti sprite stacking.
+   Gambar slice dari bawah ke atas, tiap slice digeser `spacing` px ke atas
+   layar, semuanya diputar dengan sudut yang sama di sekitar pusatnya.
+   ===================================================================== */
+function drawStack(ctx, model, x, y, angle, spacing = 1, scale = 1) {
+  const sx = Math.round(x), sy = Math.round(y);
+  for (let i = 0; i < model.slices.length; i++) {
+    ctx.save();
+    ctx.translate(sx, sy - i * spacing * scale);
+    ctx.rotate(angle);
+    ctx.scale(scale, scale);
+    ctx.drawImage(model.slices[i], -model.L / 2, -model.W / 2);
+    ctx.restore();
+  }
+}
+
+function drawShadow(ctx, model, x, y, angle, scale = 1) {
+  ctx.save();
+  ctx.globalAlpha = 0.28;
+  ctx.translate(Math.round(x) + 2 * scale, Math.round(y) + 2 * scale);
+  ctx.rotate(angle);
+  ctx.scale(scale, scale);
+  ctx.drawImage(model.shadow, -model.L / 2, -model.W / 2);
+  ctx.restore();
+}
+
+/* =====================================================================
+   4. GAME: lintasan, mobil, kamera
+   ===================================================================== */
+const WW = 760, WH = 560;           // ukuran dunia (piksel low-res)
+const TRACK_W = 46;
+const ground = makeCanvas(WW, WH), gctx = ground.getContext('2d');
+const surf = new Uint8Array(WW * WH); // 0 rumput, 1 aspal, 2 curb
+
+const ctrl = [[130, 130], [380, 85], [620, 120], [690, 260], [610, 430], [470, 360], [340, 470], [150, 440], [85, 290]];
+function spline(pts, steps) {
+  const out = [], n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+    for (let s = 0; s < steps; s++) {
+      const t = s / steps, t2 = t * t, t3 = t2 * t;
+      out.push([0, 1].map(k => 0.5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3)));
+    }
+  }
+  return out;
+}
+const path = spline(ctrl, 24);
+
+function buildGround() {
+  // Gambar dengan warna "kunci", lalu kuantisasi per piksel supaya tetap tajam (pixel-art)
+  gctx.fillStyle = '#00ff00'; gctx.fillRect(0, 0, WW, WH);
+  const stroke = (w, col, dash) => {
+    gctx.beginPath();
+    path.forEach(([x, y], i) => i ? gctx.lineTo(x, y) : gctx.moveTo(x, y));
+    gctx.closePath();
+    gctx.lineWidth = w; gctx.strokeStyle = col; gctx.lineJoin = 'round';
+    gctx.setLineDash(dash || []); gctx.stroke();
+  };
+  stroke(TRACK_W + 10, '#ffffff');
+  stroke(TRACK_W + 10, '#ff0000', [7, 7]);
+  stroke(TRACK_W, '#000000');
+  gctx.setLineDash([]);
+
+  const img = gctx.getImageData(0, 0, WW, WH), d = img.data;
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const x = p % WW, y = (p / WW) | 0, n = hash(x, y, 3);
+    let col, s;
+    if (g > 150 && r < 120) { s = 0; col = n < 0.12 ? [92, 170, 62] : n < 0.55 ? [70, 148, 52] : n < 0.93 ? [60, 132, 46] : [44, 108, 38]; }
+    else if (r > 200 && g > 200) { s = 2; col = [240, 240, 240]; }
+    else if (r > 150) { s = 2; col = [214, 48, 48]; }
+    else { s = 1; col = n < 0.15 ? [74, 74, 80] : n < 0.9 ? [62, 62, 68] : [52, 52, 58]; }
+    surf[p] = s; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
+  }
+  // Garis start kotak-kotak
+  const [ax, ay] = path[0], [bx, by] = path[1];
+  const tl = Math.hypot(bx - ax, by - ay), tx = (bx - ax) / tl, ty = (by - ay) / tl;
+  for (let u = -TRACK_W / 2; u < TRACK_W / 2; u++) for (let v = 0; v < 6; v++) {
+    const x = Math.round(ax - ty * u + tx * v), y = Math.round(ay + tx * u + ty * v);
+    const k = (y * WW + x) * 4;
+    const c = ((Math.floor((u + 100) / 3) + Math.floor(v / 3)) % 2) ? 240 : 25;
+    d[k] = d[k + 1] = d[k + 2] = c;
+  }
+  gctx.putImageData(img, 0, 0);
+}
+buildGround();
+
+// Objek dunia
+const objects = [];
+(function placeObjects() {
+  const nearTrack = (x, y, r) => {
+    for (const [px, py] of path) if (Math.hypot(px - x, py - y) < r) return true;
+    return false;
+  };
+  let tries = 0;
+  while (objects.filter(o => o.kind === 'tree').length < 55 && tries++ < 4000) {
+    const x = 10 + hash(tries, 1, 9) * (WW - 20), y = 14 + hash(tries, 2, 9) * (WH - 20);
+    if (nearTrack(x, y, TRACK_W / 2 + 14)) continue;
+    if (objects.some(o => Math.hypot(o.x - x, o.y - y) < 18)) continue;
+    objects.push({ kind: 'tree', model: MODELS.tree[tries % 3], x, y, a: hash(tries, 3, 9) * 6.28, r: 4 });
+  }
+  // Cone di sisi dalam tikungan, tumpukan ban di sisi luar
+  for (let i = 12; i < path.length; i += 34) {
+    const [x0, y0] = path[i], [x1, y1] = path[(i + 1) % path.length];
+    const l = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / l, ny = (x1 - x0) / l;
+    const off = TRACK_W / 2 + 12;
+    objects.push({ kind: 'cone', model: MODELS.cone, x: x0 + nx * off, y: y0 + ny * off, a: 0, r: 3 });
+    objects.push({ kind: 'tires', model: MODELS.tires, x: x0 - nx * off, y: y0 - ny * off, a: 0, r: 5 });
+  }
+})();
+
+const car = { x: path[2][0], y: path[2][1], a: Math.atan2(path[3][1] - path[2][1], path[3][0] - path[2][0]), vx: 0, vy: 0 };
+const cam = { x: car.x, y: car.y, a: car.a + Math.PI / 2 };
+const keys = { up: false, down: false, left: false, right: false };
+const opts = { rotCam: false, shadow: true, spacing: 1 };
+
+const gameCanvas = document.getElementById('game'), ctx = gameCanvas.getContext('2d');
+let VW = 240, VH = 320;
+function resizeGame() {
+  const w = innerWidth, h = innerHeight;
+  const px = Math.max(1, Math.round(Math.min(w, h) / 210));
+  VW = Math.ceil(w / px); VH = Math.ceil(h / px);
+  gameCanvas.width = VW; gameCanvas.height = VH;
+  gameCanvas.style.width = VW * px + 'px'; gameCanvas.style.height = VH * px + 'px';
+}
+addEventListener('resize', () => { resizeGame(); resizeTut(); });
+resizeGame();
+
+function surfAt(x, y) {
+  x |= 0; y |= 0;
+  if (x < 0 || y < 0 || x >= WW || y >= WH) return 0;
+  return surf[y * WW + x];
+}
+
+function update(dt) {
+  const fx = Math.cos(car.a), fy = Math.sin(car.a);
+  let fwd = car.vx * fx + car.vy * fy;         // kecepatan maju
+  let lat = -car.vx * fy + car.vy * fx;        // kecepatan menyamping (drift)
+  const s = surfAt(car.x, car.y);
+  const grass = s === 0;
+
+  if (keys.up) fwd += (grass ? 90 : 150) * dt;
+  if (keys.down) fwd -= (fwd > 0 ? 220 : 70) * dt;
+  const maxF = grass ? 55 : 125;
+  fwd = Math.max(-40, Math.min(maxF + (fwd > maxF ? (fwd - maxF) * 0.97 : 0), fwd));
+  fwd *= Math.pow(grass ? 0.35 : 0.72, dt);
+  lat *= Math.pow(grass ? 0.02 : 0.004, dt);    // grip ban
+
+  const steer = (keys.right - keys.left);
+  const turnRate = 2.6 * Math.min(1, Math.abs(fwd) / 45) * Math.sign(fwd || 1);
+  car.a += steer * turnRate * dt;
+  // efek drift: setir menambah slip menyamping
+  lat -= steer * Math.abs(fwd) * 0.45 * dt * (keys.up ? 1.6 : 1);
+
+  const nx = Math.cos(car.a), ny = Math.sin(car.a);
+  car.vx = nx * fwd - ny * lat;
+  car.vy = ny * fwd + nx * lat;
+  car.x += car.vx * dt; car.y += car.vy * dt;
+
+  // batas dunia & tabrakan sederhana
+  car.x = Math.max(8, Math.min(WW - 8, car.x));
+  car.y = Math.max(8, Math.min(WH - 8, car.y));
+  for (const o of objects) {
+    const dx = car.x - o.x, dy = car.y - o.y, dist = Math.hypot(dx, dy), min = o.r + 7;
+    if (dist < min && dist > 0) {
+      car.x = o.x + dx / dist * min; car.y = o.y + dy / dist * min;
+      const vn = (car.vx * dx + car.vy * dy) / dist;
+      if (vn < 0) { car.vx -= 1.5 * vn * dx / dist; car.vy -= 1.5 * vn * dy / dist; }
+    }
+  }
+
+  // jejak ban saat drift
+  if (Math.abs(lat) > 18 && !grass) {
+    gctx.fillStyle = 'rgba(25,25,28,0.55)';
+    for (const side of [-5, 5]) {
+      const wx = car.x - nx * 8 - ny * side, wy = car.y - ny * 8 + nx * side;
+      gctx.fillRect(wx | 0, wy | 0, 1, 1);
+    }
+  }
+
+  // kamera
+  const k = 1 - Math.pow(0.0005, dt);
+  cam.x += (car.x + car.vx * 0.35 - cam.x) * k;
+  cam.y += (car.y + car.vy * 0.35 - cam.y) * k;
+  const target = opts.rotCam ? car.a + Math.PI / 2 : 0;
+  let da = target - cam.a;
+  da = Math.atan2(Math.sin(da), Math.cos(da));
+  cam.a += da * (1 - Math.pow(0.02, dt));
+  if (!opts.rotCam) {  // jangan tampilkan area di luar dunia
+    const hw = VW / 2, hh = VH / 2;
+    cam.x = WW > VW ? Math.max(hw, Math.min(WW - hw, cam.x)) : WW / 2;
+    cam.y = WH > VH ? Math.max(hh, Math.min(WH - hh, cam.y)) : WH / 2;
+  }
+
+  document.getElementById('speed').textContent = Math.round(Math.abs(fwd) * 1.6) + ' km/j';
+}
+
+function render() {
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#2f7734';
+  ctx.fillRect(0, 0, VW, VH);
+  const cx = Math.round(VW / 2), cy = Math.round(VH * (opts.rotCam ? 0.62 : 0.5));
+  const ca = Math.cos(-cam.a), sa = Math.sin(-cam.a);
+
+  // tanah (diputar bersama kamera)
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-cam.a);
+  ctx.translate(-Math.round(cam.x), -Math.round(cam.y));
+  ctx.drawImage(ground, 0, 0);
+  ctx.restore();
+
+  // posisi layar tiap objek; sudut objek dikurangi sudut kamera
+  const list = objects.concat([{ model: CAR, x: car.x, y: car.y, a: car.a, isCar: true }]).map(o => {
+    const dx = o.x - cam.x, dy = o.y - cam.y;
+    return { o, sx: cx + dx * ca - dy * sa, sy: cy + dx * sa + dy * ca };
+  }).filter(p => p.sx > -40 && p.sx < VW + 40 && p.sy > -40 && p.sy < VH + 60);
+
+  list.sort((a, b) => a.sy - b.sy);  // urutkan dari belakang ke depan
+
+  if (opts.shadow) for (const p of list) drawShadow(ctx, p.o.model, p.sx, p.sy, p.o.a - cam.a);
+  for (const p of list) drawStack(ctx, p.o.model, p.sx, p.sy, p.o.a - cam.a, opts.spacing);
+}
+
+let last = performance.now();
+function frame(t) {
+  const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  if (current === 'game') { update(dt); render(); }
+  else renderTut(t / 1000, dt);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- input ---------- */
+const KEYMAP = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
+addEventListener('keydown', e => {
+  if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; e.preventDefault(); }
+  if (e.code === 'KeyC') { opts.rotCam = !opts.rotCam; document.getElementById('optCam').checked = opts.rotCam; }
+});
+addEventListener('keyup', e => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; });
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) document.body.classList.add('is-touch');
+document.querySelectorAll('.touch button').forEach(b => {
+  const k = b.dataset.k;
+  const on = e => { e.preventDefault(); keys[k] = true; b.classList.add('down'); };
+  const off = e => { e.preventDefault(); keys[k] = false; b.classList.remove('down'); };
+  b.addEventListener('pointerdown', on);
+  b.addEventListener('pointerup', off);
+  b.addEventListener('pointercancel', off);
+  b.addEventListener('pointerleave', off);
+});
+document.getElementById('optCam').onchange = e => opts.rotCam = e.target.checked;
+document.getElementById('optShadow').onchange = e => opts.shadow = e.target.checked;
+document.getElementById('optSpace').oninput = e => opts.spacing = +e.target.value;
+
+/* =====================================================================
+   5. TUTORIAL: visualisasi 3 langkah dari video
+   ===================================================================== */
+const STEPS = [
+  { title: 'Gambar mobil dari 4 sisi',
+    text: 'Atas, samping, depan, belakang. Ukurannya harus konsisten: panjang 28, lebar 14, tinggi 11 piksel. Model 3D (voxel) didapat dari irisan keempat siluet ini.' },
+  { title: 'Tiap baris tampak samping menjadi satu slice',
+    text: 'Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. 11 baris → 11 gambar slice.' },
+  { title: 'Tumpuk slice berjarak 1 px lalu putar',
+    text: 'Gambar slice dari bawah ke atas; tiap slice digeser 1 px ke atas layar dan diputar dengan sudut yang sama. Geser "Jarak slice" untuk melihat tumpukannya terpisah.' },
+];
+let step = 0;
+const tutCanvas = document.getElementById('tutCanvas'), tctx = tutCanvas.getContext('2d');
+const TW = 200, TH = 170;
+let tutAngle = 30 * Math.PI / 180;
+function resizeTut() {
+  tutCanvas.width = TW; tutCanvas.height = TH;
+  const px = Math.max(1, Math.floor(Math.min((innerWidth - 24) / TW, (innerHeight - 290) / TH)));
+  tutCanvas.style.width = TW * px + 'px'; tutCanvas.style.height = TH * px + 'px';
+}
+resizeTut();
+
+// Render tampak (string) ke canvas
+function viewCanvas(rows) {
+  const c = makeCanvas(rows[0].length, rows.length), x = c.getContext('2d');
+  rows.forEach((r, y) => [...r].forEach((ch, i) => { if (PAL[ch]) { x.fillStyle = PAL[ch]; x.fillRect(i, y, 1, 1); } }));
+  return c;
+}
+const VC = { top: viewCanvas(CAR_VIEWS.top), side: viewCanvas(CAR_VIEWS.side), front: viewCanvas(CAR_VIEWS.front), back: viewCanvas(CAR_VIEWS.back) };
+
+function renderTut(t) {
+  const c = tctx;
+  c.imageSmoothingEnabled = false;
+  c.fillStyle = '#ffffff'; c.fillRect(0, 0, TW, TH);
+  const blit = (img, x, y, s = 1) => c.drawImage(img, Math.round(x), Math.round(y), img.width * s, img.height * s);
+
+  if (step === 0) {
+    // atas (diputar menghadap atas seperti di video), samping, depan, belakang
+    const s = 2, y0 = 30;
+    c.save(); c.translate(10 + 14 * s / 2 + 4, y0 + 28 * s / 2); c.rotate(-Math.PI / 2);
+    c.drawImage(VC.top, -28 * s / 2, -14 * s / 2, 28 * s, 14 * s); c.restore();
+    blit(VC.side, 52, y0 + 28 - 11, s);
+    blit(VC.front, 120, y0 + 28 - 11, s);
+    blit(VC.back, 156, y0 + 28 - 11, s);
+    // label pakai piksel kecil (garis bawah warna)
+    c.fillStyle = '#bbb';
+    [[12, 32], [52, 56], [120, 28], [156, 28]].forEach(([x, w]) => c.fillRect(x, y0 + 64, w, 1));
+  } else if (step === 1) {
+    const z = Math.floor(t * 2.5) % CAR.H;          // baris yang sedang disorot
+    const row = CAR.H - 1 - z;
+    const s = 2;
+    blit(VC.side, 8, 8, s);
+    c.fillStyle = 'rgba(255,200,0,0.45)';
+    c.fillRect(6, 8 + row * s, 28 * s + 4, s);
+    // panah
+    c.fillStyle = '#999';
+    c.fillRect(70, 8 + row * s, 22, 1);
+    c.fillRect(90, 8 + row * s - 1, 1, 3);
+    // slice terpilih, diperbesar
+    c.fillStyle = '#eee'; c.fillRect(100, 6, 28 * 3 + 4, 14 * 3 + 4);
+    blit(CAR.slices[z], 102, 8, 3);
+    // semua slice di bawah
+    for (let i = 0; i < CAR.H; i++) {
+      const gx = 6 + (i % 6) * 32, gy = 70 + Math.floor(i / 6) * 24;
+      c.fillStyle = i === z ? '#ffd24a' : '#eee';
+      c.fillRect(gx - 1, gy - 1, 30, 16);
+      blit(CAR.slices[i], gx, gy);
+    }
+  } else {
+    if (document.getElementById('tAuto').checked) {
+      tutAngle += 0.9 * (1 / 60);
+      document.getElementById('tAngle').value = Math.round((tutAngle * 180 / Math.PI) % 360);
+    }
+    const sp = +document.getElementById('tSpace').value;
+    const s = 2;
+    const baseY = Math.round(TH / 2 + ((CAR.H - 1) * sp * s) / 2 + 4);
+    // bayangan di tanah tetap di bawah
+    drawShadow(c, CAR, TW / 2, baseY, tutAngle, s);
+    drawStack(c, CAR, TW / 2, baseY, tutAngle, sp, s);
+  }
+}
+
+function setStep(i) {
+  step = i;
+  document.querySelectorAll('#tutCtl .btn').forEach(b => b.classList.toggle('on', +b.dataset.step === i));
+  document.getElementById('tutTitle').textContent = STEPS[i].title;
+  document.getElementById('tutText').textContent = STEPS[i].text;
+  document.getElementById('tutSliders').style.visibility = i === 2 ? 'visible' : 'hidden';
+}
+document.querySelectorAll('#tutCtl .btn').forEach(b => b.onclick = () => setStep(+b.dataset.step));
+document.getElementById('tSpace').oninput = e => document.getElementById('tSpaceV').textContent = e.target.value;
+document.getElementById('tAngle').oninput = e => { document.getElementById('tAuto').checked = false; tutAngle = e.target.value * Math.PI / 180; };
+setStep(0);
+
+/* ---------- tab ---------- */
+let current = 'game';
+function show(which) {
+  current = which;
+  document.getElementById('scrGame').classList.toggle('on', which === 'game');
+  document.getElementById('scrTut').classList.toggle('on', which === 'tut');
+  document.getElementById('tabGame').classList.toggle('on', which === 'game');
+  document.getElementById('tabTut').classList.toggle('on', which === 'tut');
+}
+document.getElementById('tabGame').onclick = () => show('game');
+document.getElementById('tabTut').onclick = () => show('tut');
+if (location.hash === '#tut') show('tut');
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
