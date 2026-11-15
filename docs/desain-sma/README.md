@@ -18,6 +18,7 @@ sapu, guling, motor/sepeda/mobil, rambut & peci/topi/helm).
 | [05-bangunan.md](05-bangunan.md) | Gaya, warna (kode hex), bentuk, ukuran, dan detail setiap bangunan & tipe rumah per wilayah |
 | [06-event.md](06-event.md) | Event harian, mingguan, sekolah, kalender tahunan, acak, sosial, geng, usaha, rahasia, dan ulang tahun tokoh |
 | [karakter/](karakter/README.md) | Kartu 34 tokoh: sprite voxel (dirender dari renderer asli), portrait, baju, gerak khas, jadwal; plus `npc_styles.js` |
+| [guide/](guide/00-ringkasan.md) | **Guide desain lengkap** (30 segmen): 16 NPC utama romanceable, NPC pendukung & pengisi, sistem hati, obrolan, konsekuensi, pelajaran, upgrade, keuangan, animasi. `guide/_artifact/index.html` = semua segmen dalam satu halaman |
 | [peta/](peta/) | Peta kota, 4 denah wilayah, denah sekolah & lantai (PNG) dan skrip `peta_organik.py` + `buat_peta.py` untuk menggambar ulang |
 
 ## Pitch satu paragraf
