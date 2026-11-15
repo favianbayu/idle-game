@@ -26,6 +26,8 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 | 80 | Peta & denah | Peta kota, 4 denah wilayah, denah sekolah |
 | 81 | Interior sekolah | Denah dalam semua gedung sekolah, ukuran untuk gameplay |
 | 82 | Interior kota | Rumah, warkop, markas, toko, dan bangunan lain yang bisa dimasuki |
+| 83 | Sekolah dari luar | Denah tapak baru, tampak tiap gedung, halaman, lapangan, parkiran |
+| 84 | Habit NPC sekolah | Jadwal per jam, kelompok, kebiasaan siswa & guru, reaksi kerumunan |
 
 Dokumen yang sudah ada sebelumnya (`01-cerita.md` sampai `06-event.md`, peta, bangunan, sprite) tetap berlaku. Guide ini
 memperdalam dan, kalau ada yang beda, **guide ini yang dipakai**.

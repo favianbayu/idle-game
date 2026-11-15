@@ -65,7 +65,10 @@ kota ±260 petak (motor ±45 detik). Angkot dari terminal = pindah cepat antar w
 
 ## Peta sekolah (76 x 52 petak)
 
-![Denah SMA Negeri 3 Wirabumi](../peta/peta_sekolah.png)
+> Denah halaman di bawah adalah versi lama (gedung kotak). Versi baru dengan bentuk gedung dan atap ada di
+> [83. Sekolah dari luar](#83-sekolah-luar). Fungsi tiap area tetap sama.
+
+![Denah SMA Negeri 3 Wirabumi (versi lama)](../peta/peta_sekolah.png)
 
 | No | Area | Isi & fungsi |
 |---|---|---|

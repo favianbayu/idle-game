@@ -23,6 +23,8 @@ ngobrol, kejar-kejaran, berantem, dan sembunyi.
 
 ### Ukuran luar vs dalam
 
+> Ukuran luar diperbarui di [83. Sekolah dari luar](#83-sekolah-luar) (gedung tidak lagi berbentuk kotak).
+
 | Gedung | Luar (di peta sekolah) | Dalam (scene) | Lantai |
 |---|---|---|---|
 | Gedung A (kantor) | 20 x 9 | 56 x 14 per lantai | 2 |
