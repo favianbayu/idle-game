@@ -17,6 +17,12 @@
   #hud { position: fixed; top: 52px; left: 10px; background: #000a; padding: 8px 10px; border-radius: 8px; font-size: 12px; z-index: 4; }
   #hud label { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
   #hud input[type=range] { width: 90px; }
+  #acts { position: fixed; right: 8px; top: 52px; display: none; flex-direction: column; gap: 4px; z-index: 4; }
+  body.human #acts { display: flex; }
+  #acts button { background: #000a; color: #fff; border: 1px solid #fff3; border-radius: 7px; padding: 5px 8px; font: 12px system-ui; min-width: 74px; display: flex; justify-content: space-between; gap: 6px; }
+  #acts button small { opacity: .55; }
+  #acts button.on { background: #2a5bd7; }
+  body.is-touch #acts small { display: none; }
   #help { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #000a; padding: 5px 10px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
   .touch { position: fixed; bottom: 18px; display: none; gap: 10px; z-index: 4; }
   .touch button { width: 64px; height: 64px; border-radius: 50%; border: 0; background: #fff3; color: #fff; font-size: 24px; }
@@ -52,6 +58,17 @@
     <label>Jarak slice <input type="range" id="optSpace" min="1" max="6" step="1" value="1"></label>
   </div>
   <div id="help">← → / A D belok · ↑ / W gas · ↓ / S rem/mundur · C kamera</div>
+  <div id="acts">
+    <button data-a="run" data-hold="1">Lari<small>Shift</small></button>
+    <button data-a="crouch">Jongkok<small>Q</small></button>
+    <button data-a="crawl">Rangkak<small>E</small></button>
+    <button data-a="jump">Lompat<small>Spasi</small></button>
+    <button data-a="punch">Pukul<small>J</small></button>
+    <button data-a="kick">Tendang<small>K</small></button>
+    <button data-a="slash">Pedang<small>L</small></button>
+    <button data-a="cast">Sihir<small>U</small></button>
+    <button data-a="fall">Jatuh<small>H</small></button>
+  </div>
   <div class="touch" id="tl"><button data-k="left">◀</button><button data-k="right">▶</button></div>
   <div class="touch" id="tr"><button data-k="down">▼</button><button data-k="up">▲</button></div>
 </div>
@@ -70,6 +87,7 @@
   <div id="tutSliders">
     <label>Jarak slice <input type="range" id="tSpace" min="1" max="6" step="1" value="1"><span id="tSpaceV">1</span></label>
     <label><input type="checkbox" id="tAuto" checked> Putar otomatis</label>
+    <label id="tAnimWrap">Gerakan <select id="tAnim"></select></label>
     <label>Sudut <input type="range" id="tAngle" min="0" max="360" value="30"></label>
   </div>
 </div>
@@ -408,6 +426,9 @@ const RAMPS = {
   shoe:  ['#161112', '#2e2220', '#4a3731', '#665048'],
   eye:   ['#141420', '#141420', '#1e1e30', '#2a2a40'],
   blush: ['#c96d62', '#e88a7c', '#f5a092', '#f5a092'],
+  blade: ['#7d8794', '#b4bfcc', '#dde5ee', '#ffffff'],
+  hilt:  ['#5a3a12', '#8a5a1c', '#c08a2a', '#e8b84a'],
+  orb:   ['#49b8ff', '#7fd6ff', '#bff0ff', '#ffffff'],
 };
 const LIGHT = (() => { const v = [0.35, -0.45, 0.82], l = Math.hypot(...v); return v.map(c => c / l); })();
 
@@ -419,33 +440,81 @@ function segDist(p, a, b) {          // jarak titik ke ruas garis + posisi t (0.
 const capsule = (p, a, b, r0, r1) => { const [d, t] = segDist(p, a, b); return d <= r0 + (r1 - r0) * t ? t : -1; };
 const ellip = (p, c, rx, ry, rz) => ((p[0] - c[0]) / rx) ** 2 + ((p[1] - c[1]) / ry) ** 2 + ((p[2] - c[2]) / rz) ** 2;
 
-// Pose manusia untuk fase jalan `ph` (radian). Mengembalikan fungsi material(x,y,z).
-function humanShape(ph) {
-  const cx = 8, cy = 8;
-  const sw = Math.sin(ph), bob = Math.abs(Math.cos(ph)) * 0.45;   // badan naik-turun sedikit
-  const legs = [-1, 1].map(s => {                    // s=-1 kiri (y kecil), s=+1 kanan
-    const hip = [cx, cy + s * 1.7, 10.4 + bob];
-    const fx = cx - s * sw * 3.0;                    // kaki maju/mundur berlawanan
-    const lift = Math.max(0, -s * Math.cos(ph)) * 1.3; // kaki yang melangkah sedikit diangkat
-    const ankle = [fx, cy + s * 1.8, 2.0 + lift];
-    const knee = [(hip[0] + fx) / 2 + 0.7 + lift * 0.6, cy + s * 1.8, 6.2 + lift * 0.6 + bob / 2];
-    return { hip, knee, ankle };
-  });
-  const arms = [-1, 1].map(s => {
-    const sh = [cx, cy + s * 3.4, 17.1 + bob];
-    const hand = [cx + s * sw * 2.6, cy + s * 4.0, 11.4 + bob];
-    const elbow = [(sh[0] + hand[0]) / 2 - 0.3, cy + s * 3.9, 14.3 + bob];
-    return { sh, elbow, hand };
-  });
-  const head = [cx + 0.2, cy, 22.6 + bob];
+/* ---------- Rangka (skeleton) manusia ----------
+   Pose = sudut sendi. Sudut tungkai diukur di bidang depan-atas:
+   0 = lurus ke bawah, +π/2 = lurus ke depan, π = lurus ke atas, negatif = ke belakang.
+   L = kiri (y kecil), R = kanan. Semua gerakan RPG hanyalah kumpulan pose ini. */
+const HL = 26, HW = 18, HH = 30;                     // ukuran grid voxel manusia
+const POSE0 = {
+  lean: 0.03,  // condong badan (+ ke depan)
+  hp: 0,       // kepala menunduk/mendongak relatif badan
+  thL: 0, thR: 0, knL: 0.1, knR: 0.1,              // paha & tekukan lutut
+  arL: 0.08, arR: 0.08, elL: 0.25, elR: 0.25,      // lengan atas & tekukan siku
+  spL: 0.12, spR: 0.12,                            // lengan membuka ke samping
+  tw: 0,       // putar bahu (pukulan)
+  px: 0,       // geser badan maju/mundur di dalam grid
+  jump: 0,     // tinggi lompat (voxel) -> digambar oleh renderer, bukan di voxel
+  sword: 0, swa: 0,   // pedang & sudut pedang relatif lengan bawah
+  orb: 0,      // radius bola sihir
+};
+const limb = a => [Math.sin(a), 0, -Math.cos(a)];
+const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-  return (x, y, z) => {
+function humanShape(P) {
+  P = Object.assign({}, POSE0, P);
+  const cy = HW / 2;
+  const up = [Math.sin(P.lean), 0, Math.cos(P.lean)], fwd = [Math.cos(P.lean), 0, -Math.sin(P.lean)];
+  const pelvis = [HL / 2 - 1 + P.px, cy, 0];
+  const neck = add(pelvis, up, 7.8);
+  const J = { pelvis, neck };
+  const ha = P.lean + P.hp;
+  const hu = [Math.sin(ha), 0, Math.cos(ha)], hf = [Math.cos(ha), 0, -Math.sin(ha)];
+  J.head = add(neck, hu, 4.6);
+  J.arms = [-1, 1].map(s => {
+    const S = s < 0 ? 'L' : 'R', a = P['ar' + S], el = P['el' + S], sp = P['sp' + S];
+    const sh = add(add(pelvis, up, 6.6), [-s * 3.3 * Math.sin(P.tw), s * 3.3 * Math.cos(P.tw), 0]);
+    const dir = (ang, b) => [Math.sin(ang) * Math.cos(b), s * Math.sin(b), -Math.cos(ang) * Math.cos(b)];
+    const elbow = add(sh, dir(a, sp), 3.3);
+    const hand = add(elbow, dir(a + el, sp * 0.5), 3.1);
+    return { sh, elbow, hand, fa: a + el };
+  });
+  J.legs = [-1, 1].map(s => {
+    const S = s < 0 ? 'L' : 'R', th = P['th' + S], kn = P['kn' + S];
+    const hip = add(add(pelvis, up, -0.3), [0, s * 1.7, 0]);
+    const knee = add(hip, limb(th), 4.4);
+    const ankle = add(knee, limb(th - kn), 4.3);
+    const toe = add(ankle, limb(th - kn + Math.PI / 2), 1.7);
+    return { hip, knee, ankle, toe };
+  });
+  // Grounding: geser seluruh badan supaya titik terendah tepat menyentuh tanah (z=0)
+  const pts = [[pelvis, 2.4], [neck, 2.4], [J.head, 4.0]];
+  for (const a of J.arms) pts.push([a.elbow, 1.2], [a.hand, 1.25]);
+  for (const l of J.legs) pts.push([l.knee, 1.5], [l.ankle, 1.25], [l.toe, 1.15]);
+  const shift = -Math.min(...pts.map(([p, r]) => p[2] - r));
+  const all = [pelvis, neck, J.head];
+  for (const a of J.arms) all.push(a.sh, a.elbow, a.hand);
+  for (const l of J.legs) all.push(l.hip, l.knee, l.ankle, l.toe);
+  for (const p of all) p[2] += shift;
+
+  const R = J.arms[1];
+  const bladeDir = limb(R.fa + P.swa);
+  const orbC = add(add(J.arms[0].hand, J.arms[1].hand), [0, 0, 0], 1).map(v => v / 2);
+  const orbPos = add(orbC, fwd, 2.2);
+
+  const mat = (x, y, z) => {
     const p = [x + 0.5, y + 0.5, z + 0.5];
-    // sepatu
-    for (const l of legs) if (p[2] >= 0 && ellip(p, [l.ankle[0] + 0.8, l.ankle[1], l.ankle[2] - 1.0], 2.1, 1.35, 1.25) <= 1) return 'shoe';
-    // kepala + rambut
-    const dx = p[0] - head[0], dy = p[1] - head[1], dz = p[2] - head[2];
-    const inHead = ellip(p, head, 3.9, 3.7, 4.0) <= 1;
+    if (P.orb > 0 && ellip(p, orbPos, P.orb, P.orb, P.orb) <= 1) return 'orb';
+    if (P.sword) {
+      if (capsule(p, add(R.hand, bladeDir, -1.2), add(R.hand, bladeDir, 1.0), 0.65, 0.65) >= 0) return 'hilt';
+      if (capsule(p, add(R.hand, bladeDir, 1.0), add(R.hand, bladeDir, 1.6), 1.6, 1.6) >= 0 && Math.abs(dot([p[0] - R.hand[0], 0, p[2] - R.hand[2]], bladeDir) - 1.3) < 0.5) return 'hilt';
+      if (capsule(p, add(R.hand, bladeDir, 1.6), add(R.hand, bladeDir, 11), 1.0, 0.55) >= 0) return 'blade';
+    }
+    for (const l of J.legs) if (capsule(p, l.ankle, l.toe, 1.3, 1.15) >= 0) return 'shoe';
+    // kepala + rambut (koordinat lokal kepala, ikut menunduk/mendongak)
+    const v = [p[0] - J.head[0], p[1] - J.head[1], p[2] - J.head[2]];
+    const dx = dot(v, hf), dy = v[1], dz = dot(v, hu);
+    const inHead = (dx / 3.9) ** 2 + (dy / 3.7) ** 2 + (dz / 4.0) ** 2 <= 1;
     const face = dx > 0.6 && dz < 1.4 && dz > -3.6 && Math.abs(dy) < 3.0;
     if (inHead) {
       if (!face) return 'hair';
@@ -453,40 +522,133 @@ function humanShape(ph) {
       if (dx > 2.0 && Math.abs(dz + 1.0) < 0.5 && Math.abs(Math.abs(dy) - 2.2) < 0.6) return 'blush';
       return 'skin';
     }
-    // rambut sedikit lebih besar dari kepala, menjuntai di belakang
-    if (!face && ellip(p, [head[0] - 0.4, head[1], head[2] + 0.2], 4.5, 4.3, 4.4) <= 1 && dz > -3.2) return 'hair';
-    // lengan: atas = lengan baju, bawah = kulit
-    for (const a of arms) {
-      if (ellip(p, a.hand, 1.3, 1.2, 1.3) <= 1) return 'skin';
+    if (!face && ((dx + 0.4) / 4.5) ** 2 + (dy / 4.3) ** 2 + ((dz - 0.2) / 4.4) ** 2 <= 1 && dz > -3.2) return 'hair';
+    for (const a of J.arms) {
+      if (ellip(p, a.hand, 1.3, 1.25, 1.3) <= 1) return 'skin';
       const t1 = capsule(p, a.sh, a.elbow, 1.35, 1.15);
       if (t1 >= 0) return t1 < 0.7 ? 'shirt' : 'skin';
       if (capsule(p, a.elbow, a.hand, 1.15, 1.0) >= 0) return 'skin';
     }
-    // badan: melebar ke bahu, bagian atas membulat
-    if (p[2] >= 9.6 + bob && p[2] <= 18.6 + bob) {
-      const t = (p[2] - 9.6 - bob) / 9;
+    // badan: penampang elips (lebar ke samping), sumbu mengikuti condong badan
+    const w = [p[0] - pelvis[0], p[1] - pelvis[1], p[2] - pelvis[2]];
+    const t = (dot(w, up) + 1.0) / 9;
+    if (t >= 0 && t <= 1) {
       let ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
       if (t > 0.72) { const k = Math.sqrt(Math.max(0, 1 - ((t - 0.72) / 0.3) ** 2)); ry *= 0.55 + 0.45 * k; rx *= 0.6 + 0.4 * k; }
-      if (((p[0] - cx) / rx) ** 2 + ((p[1] - cy) / ry) ** 2 <= 1) return t < 0.2 ? 'pants' : 'shirt';
+      if ((dot(w, fwd) / rx) ** 2 + (w[1] / ry) ** 2 <= 1) return t < 0.2 ? 'pants' : 'shirt';
     }
-    // leher
-    if (capsule(p, [cx, cy, 18 + bob], [cx, cy, 20 + bob], 1.1, 1.1) >= 0) return 'skin';
-    // kaki
-    for (const l of legs) {
-      if (capsule(p, l.hip, l.knee, 1.6, 1.4) >= 0) return 'pants';
+    if (capsule(p, add(neck, up, -0.6), add(neck, hu, 1.4), 1.1, 1.1) >= 0) return 'skin';
+    for (const l of J.legs) {
+      if (capsule(p, l.hip, l.knee, 1.65, 1.4) >= 0) return 'pants';
       if (capsule(p, l.knee, l.ankle, 1.4, 1.2) >= 0) return 'pants';
     }
     return null;
   };
+  mat.lift = P.jump;
+  return mat;
 }
 
-function buildOrganic(L, W, H, mat) {
+/* ---------- Daftar gerakan ----------
+   Gerakan berulang (siklus) = fungsi fase. Gerakan aksi = keyframe pose yang diinterpolasi. */
+const TAU = Math.PI * 2;
+function keyed(keys) {
+  // tiap key mewarisi key sebelumnya, jadi cukup tulis sendi yang berubah
+  let acc = Object.assign({}, POSE0);
+  const full = keys.map(([t, p]) => [t, acc = Object.assign({}, acc, p)]);
+  return t => {
+    let i = 0;
+    while (i < full.length - 2 && t > full[i + 1][0]) i++;
+    const [t0, a] = full[i], [t1, b] = full[i + 1];
+    let u = Math.max(0, Math.min(1, (t - t0) / (t1 - t0 || 1)));
+    u = u * u * (3 - 2 * u);
+    const o = {};
+    for (const k in a) o[k] = a[k] + (b[k] - a[k]) * u;
+    return o;
+  };
+}
+const GUARD = { arL: 0.9, elL: 1.9, arR: 0.9, elR: 1.9, spL: 0.25, spR: 0.25, thL: 0.3, thR: -0.3, knL: 0.25, knR: 0.25, lean: 0.1 };
+const ANIMS = {
+  idle:   { name: 'Diam', n: 6, fps: 5, loop: true, pose: t => {
+    const s = Math.sin(t * TAU);
+    return { lean: 0.03 + 0.02 * s, elL: 0.25 + 0.06 * s, elR: 0.25 + 0.06 * s, spL: 0.12 + 0.03 * s, spR: 0.12 + 0.03 * s }; } },
+  walk:   { name: 'Jalan', n: 8, fps: 10, loop: true, pose: t => {
+    const s = Math.sin(t * TAU), c = Math.cos(t * TAU);
+    return { lean: 0.06, thL: 0.45 * s, thR: -0.45 * s, knL: 0.15 + 0.7 * Math.max(0, c), knR: 0.15 + 0.7 * Math.max(0, -c),
+             arL: -0.4 * s, arR: 0.4 * s, elL: 0.3, elR: 0.3 }; } },
+  run:    { name: 'Lari', n: 8, fps: 14, loop: true, pose: t => {
+    const s = Math.sin(t * TAU), c = Math.cos(t * TAU);
+    return { lean: 0.3, hp: -0.2, thL: 0.25 + 0.85 * s, thR: 0.25 - 0.85 * s, knL: 0.35 + 1.5 * Math.max(0, c), knR: 0.35 + 1.5 * Math.max(0, -c),
+             arL: 0.2 - 0.9 * s, arR: 0.2 + 0.9 * s, elL: 1.5, elR: 1.5, spL: 0.2, spR: 0.2, jump: 0.8 * Math.abs(s) }; } },
+  crouch: { name: 'Jongkok jalan', n: 8, fps: 8, loop: true, pose: t => {
+    const s = Math.sin(t * TAU), c = Math.cos(t * TAU);
+    return { lean: 0.5, hp: -0.45, thL: 1.0 + 0.35 * s, thR: 1.0 - 0.35 * s, knL: 1.9 + 0.3 * Math.max(0, c), knR: 1.9 + 0.3 * Math.max(0, -c),
+             arL: 0.7 - 0.3 * s, arR: 0.7 + 0.3 * s, elL: 0.9, elR: 0.9, spL: 0.2, spR: 0.2 }; } },
+  crawl:  { name: 'Merangkak', n: 8, fps: 6, loop: true, pose: t => {
+    const s = Math.sin(t * TAU), c = Math.cos(t * TAU);
+    return { lean: 1.3, hp: -0.75, px: -4, thL: 0.25 * s, thR: -0.25 * s, knL: 1.57 + 0.2 * Math.max(0, c), knR: 1.57 + 0.2 * Math.max(0, -c),
+             arL: -0.28 * s, arR: 0.28 * s, elL: 0, elR: 0, spL: 0.12, spR: 0.12 }; } },
+  jump:   { name: 'Lompat', n: 10, fps: 12, pose: keyed([
+    [0, {}],
+    [0.15, { thL: 0.7, thR: 0.7, knL: 1.4, knR: 1.4, lean: 0.35, arL: -0.6, arR: -0.6, elL: 0.2, elR: 0.2 }],
+    [0.3, { thL: -0.1, thR: -0.1, knL: 0.1, knR: 0.1, lean: 0.05, arL: 2.6, arR: 2.6, jump: 3 }],
+    [0.5, { thL: 1.0, thR: 0.8, knL: 1.6, knR: 1.5, arL: 1.8, arR: 1.8, jump: 7 }],
+    [0.7, { thL: 0.3, thR: 0.2, knL: 0.4, knR: 0.4, arL: 1.0, arR: 1.0, jump: 3 }],
+    [0.85, { thL: 0.7, thR: 0.7, knL: 1.4, knR: 1.4, lean: 0.35, arL: 0.6, arR: 0.6, jump: 0 }],
+    [1, POSE0]]) },
+  punch:  { name: 'Pukul', n: 8, fps: 14, pose: keyed([
+    [0, GUARD],
+    [0.3, { tw: 0.35, arR: 0.5, elR: 2.0 }],
+    [0.5, { tw: -0.55, arR: 1.57, elR: 0, spR: 0.02, lean: 0.22 }],
+    [0.7, {}],
+    [1, Object.assign({}, GUARD, { tw: 0 })]]) },
+  kick:   { name: 'Tendang', n: 8, fps: 12, pose: keyed([
+    [0, GUARD],
+    [0.3, { thR: 1.3, knR: 2.0, thL: 0, knL: 0.15, lean: -0.1 }],
+    [0.5, { thR: 1.55, knR: 0.05, lean: -0.3, arL: 0.6, elL: 1.2, arR: -0.4, elR: 0.6 }],
+    [0.7, { thR: 1.3, knR: 2.0, lean: -0.1 }],
+    [1, GUARD]]) },
+  slash:  { name: 'Tebas pedang', n: 10, fps: 14, pose: keyed([
+    [0, { sword: 1, arR: 0.6, elR: 0.8, swa: 1.2, arL: 0.5, elL: 1.2, thL: 0.3, thR: -0.3, knL: 0.2, knR: 0.2 }],
+    [0.35, { arR: 2.9, elR: 0.4, swa: 0.6, lean: -0.1, tw: 0.3 }],
+    [0.6, { arR: 1.3, elR: 0, swa: 0.3, lean: 0.25, tw: -0.4, thL: 0.5, knL: 0.4 }],
+    [0.8, { arR: 0.6, swa: 0.3 }],
+    [1, { arR: 0.6, elR: 0.8, swa: 1.2, lean: 0.03, tw: 0, thL: 0.3, knL: 0.2 }]]) },
+  cast:   { name: 'Sihir', n: 10, fps: 10, pose: keyed([
+    [0, {}],
+    [0.3, { arL: 1.9, arR: 1.9, elL: 0.3, elR: 0.3, spL: 0.35, spR: 0.35, orb: 1.2, thL: 0.25, thR: -0.25 }],
+    [0.6, { arL: 2.1, arR: 2.1, orb: 2.4, lean: -0.08 }],
+    [0.8, { arL: 1.57, arR: 1.57, elL: 0, elR: 0, spL: 0.15, spR: 0.15, orb: 2.8, lean: 0.15 }],
+    [1, Object.assign({}, POSE0)]]) },
+  fall:   { name: 'Jatuh', n: 8, fps: 10, hold: true, pose: keyed([
+    [0, {}],
+    [0.3, { lean: -0.4, thL: 0.4, knL: 0.6, arL: 1.2, arR: 1.0, elL: 0.4, elR: 0.4 }],
+    [0.6, { lean: -0.8, thL: 1.4, thR: 1.4, knL: 0.4, knR: 0.4, arL: -0.6, arR: -0.6, px: 2 }],
+    [1, { lean: -1.45, hp: 0.15, thL: 1.4, thR: 1.3, knL: 0.15, knR: 0.35, arL: -1.6, arR: -1.3, elL: 0.2, elR: 0.2, spL: 0.5, spR: 0.6, px: 4 }]]) },
+};
+
+// Frame dibangun saat pertama dipakai (lalu disimpan)
+const animCache = {};
+function getAnim(name) {
+  if (animCache[name]) return animCache[name];
+  const A = ANIMS[name];
+  return animCache[name] = [...Array(A.n).keys()].map(i => {
+    const t = A.loop ? i / A.n : i / (A.n - 1);
+    const mat = humanShape(A.pose(t));
+    const m = buildOrganic(HL, HW, HH, mat, name === 'idle' && i === 0);
+    m.lift = mat.lift || 0;
+    return m;
+  });
+}
+
+function buildOrganic(L, W, H, mat, withViews = false) {
   const grid = new Array(L * W * H);
   const idx = (x, y, z) => (z * W + y) * L + x;
   for (let z = 0; z < H; z++) for (let y = 0; y < W; y++) for (let x = 0; x < L; x++) grid[idx(x, y, z)] = mat(x, y, z);
   const at = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= L || y >= W || z >= H) ? null : grid[idx(x, y, z)];
   // normal = rata-rata arah ke tetangga kosong (radius 2) -> permukaan terasa halus
   const shade = (x, y, z, m) => {
+    // voxel yang tertutup di 6 sisi tak terlihat -> tak perlu dihitung
+    if (at(x + 1, y, z) && at(x - 1, y, z) && at(x, y + 1, z) && at(x, y - 1, z) && at(x, y, z + 1) && at(x, y, z - 1)) return RAMPS[m][1];
     let nx = 0, ny = 0, nz = 0;
     for (let k = -2; k <= 2; k++) for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++)
       if (!at(x + i, y + j, z + k)) { const w = 1 / (i * i + j * j + k * k || 1); nx += i * w; ny += j * w; nz += k * w; }
@@ -496,6 +658,7 @@ function buildOrganic(L, W, H, mat) {
     return RAMPS[m][v < 0.5 ? 0 : v < 0.72 ? 1 : v < 0.9 ? 2 : 3];
   };
   const m = buildModel(L, W, H, (x, y, z) => !!at(x, y, z), (x, y, z) => shade(x, y, z, at(x, y, z)));
+  if (!withViews) return m;
   // tampak 4 sisi diproyeksikan dari voxel (untuk tutorial)
   const proj = (w, h, fn) => {
     const c = makeCanvas(w, h), g = c.getContext('2d');
@@ -513,9 +676,8 @@ function buildOrganic(L, W, H, mat) {
   return m;
 }
 
-const HUMAN_FRAMES = [...Array(8).keys()].map(i => buildOrganic(16, 16, 28, humanShape(i / 8 * Math.PI * 2)));
-const HUMAN = HUMAN_FRAMES[0];
-const WALKERS = { robot: ROBOT_FRAMES, human: HUMAN_FRAMES };
+const HUMAN = getAnim('idle')[0];
+const WALKERS = { robot: ROBOT_FRAMES, human: true };
 const ROBOT = ROBOT_FRAMES[0];
 
 const MODELS = { tree: [makeTree(1), makeTree(7), makeTree(13)], cone: makeCone(), tires: makeTires() };
@@ -526,7 +688,8 @@ const MODELS = { tree: [makeTree(1), makeTree(7), makeTree(13)], cone: makeCone(
    layar, semuanya diputar dengan sudut yang sama di sekitar pusatnya.
    ===================================================================== */
 function drawStack(ctx, model, x, y, angle, spacing = 1, scale = 1) {
-  const sx = Math.round(x), sy = Math.round(y);
+  // model.lift: tinggi lompat; seluruh tumpukan naik, bayangan tetap di tanah
+  const sx = Math.round(x), sy = Math.round(y - (model.lift || 0) * spacing * scale);
   for (let i = 0; i < model.slices.length; i++) {
     ctx.save();
     ctx.translate(sx, sy - i * spacing * scale);
@@ -634,9 +797,9 @@ const objects = [];
 
 const car = { x: path[2][0], y: path[2][1], a: Math.atan2(path[3][1] - path[2][1], path[3][0] - path[2][0]), vx: 0, vy: 0 };
 const cam = { x: car.x, y: car.y, a: car.a + Math.PI / 2 };
-const keys = { up: false, down: false, left: false, right: false };
+const keys = { up: false, down: false, left: false, right: false, run: false };
 const opts = { rotCam: false, shadow: true, spacing: 1, char: 'car' };
-const bot = { x: 0, y: 0, a: 0, walk: 0, speed: 0 };
+const bot = { x: 0, y: 0, a: 0, walk: 0, speed: 0, mode: 'stand', action: null, at: 0, phase: 0, anim: 'idle', frame: 0 };
 
 const gameCanvas = document.getElementById('game'), ctx = gameCanvas.getContext('2d');
 let VW = 240, VH = 320;
@@ -731,11 +894,13 @@ function updateRobot(dt) {
     const target = Math.atan2(wy, wx);
     let da = Math.atan2(Math.sin(target - bot.a), Math.cos(target - bot.a));
     bot.a += da * Math.min(1, dt * 12);
-    const sp = surfAt(bot.x, bot.y) === 0 ? 34 : 42;
+    let sp = surfAt(bot.x, bot.y) === 0 ? 34 : 42;
+    if (opts.char === 'human') sp *= humanSpeed();
     bot.x += wx * sp * dt; bot.y += wy * sp * dt;
     bot.walk += dt * 8;
     bot.moving = true;
   } else { bot.walk = 0; bot.moving = false; } // kembali ke pose diam
+  if (opts.char === 'human') humanAnimate(dt, moving);
   bot.x = Math.max(8, Math.min(WW - 8, bot.x));
   bot.y = Math.max(8, Math.min(WH - 8, bot.y));
   for (const o of objects) {
@@ -744,12 +909,51 @@ function updateRobot(dt) {
   }
   const k = 1 - Math.pow(0.0005, dt);
   cam.x += (bot.x - cam.x) * k; cam.y += (bot.y - cam.y) * k;
+  const ta = opts.rotCam ? bot.a + Math.PI / 2 : 0;
+  cam.a += Math.atan2(Math.sin(ta - cam.a), Math.cos(ta - cam.a)) * (1 - Math.pow(0.02, dt));
   if (!opts.rotCam) {
     const hw = VW / 2, hh = VH / 2;
     cam.x = WW > VW ? Math.max(hw, Math.min(WW - hw, cam.x)) : WW / 2;
     cam.y = WH > VH ? Math.max(hh, Math.min(WH - hh, cam.y)) : WH / 2;
   }
-  document.getElementById('speed').textContent = moving ? 'berjalan' : 'diam';
+  document.getElementById('speed').textContent = opts.char === 'human' ? ANIMS[bot.anim].name : moving ? 'berjalan' : 'diam';
+}
+
+// ---- state machine animasi manusia ----
+const LOCO = { stand: ['walk', 'idle'], crouch: ['crouch', 'crouch'], crawl: ['crawl', 'crawl'] };
+function humanSpeed() {
+  if (bot.action && bot.action !== 'jump') return 0;          // diam saat memukul dll
+  if (bot.mode === 'crawl') return 0.35;
+  if (bot.mode === 'crouch') return 0.5;
+  return keys.run ? 2.1 : 1;
+}
+function humanAnimate(dt, moving) {
+  if (bot.action) {
+    const A = ANIMS[bot.action];
+    bot.at += dt;
+    const f = Math.floor(bot.at * A.fps);
+    if (f >= A.n) {
+      if (A.hold) { bot.anim = bot.action; bot.frame = A.n - 1; return; }   // jatuh: tetap terbaring
+      bot.action = null;
+    } else { bot.anim = bot.action; bot.frame = f; return; }
+  }
+  let name = LOCO[bot.mode][moving ? 0 : 1];
+  if (bot.mode === 'stand' && moving && keys.run) name = 'run';
+  const A = ANIMS[name];
+  if (moving || name === 'idle') bot.phase += dt * A.fps / A.n;
+  bot.anim = name;
+  bot.frame = (moving || name === 'idle') ? Math.floor(bot.phase * A.n) % A.n : 0;
+}
+function doAction(a) {
+  if (opts.char !== 'human') return;
+  if (a === 'crouch' || a === 'crawl') { bot.mode = bot.mode === a ? 'stand' : a; bot.action = null; syncActionBar(); return; }
+  if (bot.action === 'fall') { bot.action = null; return; }     // bangun lagi
+  if (bot.action && bot.action !== 'fall') return;
+  if (bot.mode !== 'stand' && a !== 'fall') bot.mode = 'stand';
+  bot.action = a; bot.at = 0; syncActionBar();
+}
+function syncActionBar() {
+  document.querySelectorAll('#acts button[data-a]').forEach(b => b.classList.toggle('on', b.dataset.a === bot.mode || b.dataset.a === 'run' && keys.run));
 }
 
 function render() {
@@ -769,7 +973,7 @@ function render() {
 
   // posisi layar tiap objek; sudut objek dikurangi sudut kamera
   const player = WALKERS[opts.char]
-    ? { model: WALKERS[opts.char][Math.floor(bot.walk * WALKERS[opts.char].length / 4) % WALKERS[opts.char].length], x: bot.x, y: bot.y, a: bot.a }
+    ? { model: opts.char === 'human' ? getAnim(bot.anim)[bot.frame] : WALKERS[opts.char][Math.floor(bot.walk) % 4], x: bot.x, y: bot.y, a: bot.a }
     : { model: CAR, x: car.x, y: car.y, a: car.a };
   const list = objects.concat([player]).map(o => {
     const dx = o.x - cam.x, dy = o.y - cam.y;
@@ -794,9 +998,12 @@ function frame(t) {
 const KEYMAP = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
 addEventListener('keydown', e => {
   if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; e.preventDefault(); }
+  const ACT = { Space: 'jump', KeyJ: 'punch', KeyK: 'kick', KeyL: 'slash', KeyU: 'cast', KeyH: 'fall', KeyQ: 'crouch', KeyE: 'crawl' };
+  if (ACT[e.code] && !e.repeat) { doAction(ACT[e.code]); e.preventDefault(); }
+  if (e.key === 'Shift') { keys.run = true; syncActionBar(); }
   if (e.code === 'KeyC') { opts.rotCam = !opts.rotCam; document.getElementById('optCam').checked = opts.rotCam; }
 });
-addEventListener('keyup', e => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; });
+addEventListener('keyup', e => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; if (e.key === 'Shift') { keys.run = false; syncActionBar(); } });
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) document.body.classList.add('is-touch');
 document.querySelectorAll('.touch button').forEach(b => {
   const k = b.dataset.k;
@@ -810,8 +1017,22 @@ document.querySelectorAll('.touch button').forEach(b => {
 document.getElementById('optChar').onchange = e => {
   opts.char = e.target.value;
   if (WALKERS[opts.char]) { bot.x = car.x; bot.y = car.y + 16; bot.a = car.a; opts.rotCam = false; document.getElementById('optCam').checked = false; }
+  updateHelp(); syncActionBar();
   e.target.blur();
 };
+document.querySelectorAll('#acts button').forEach(b => {
+  const a = b.dataset.a;
+  if (b.dataset.hold) {
+    b.addEventListener('pointerdown', e => { e.preventDefault(); keys.run = true; syncActionBar(); });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { keys.run = false; syncActionBar(); });
+  } else b.addEventListener('click', () => doAction(a));
+});
+function updateHelp() {
+  document.body.classList.toggle('human', opts.char === 'human');
+  document.getElementById('help').textContent = opts.char === 'car'
+    ? '← → / A D belok · ↑ / W gas · ↓ / S rem/mundur · C kamera'
+    : 'Panah / WASD jalan · C kamera';
+}
 document.getElementById('optCam').onchange = e => opts.rotCam = e.target.checked;
 document.getElementById('optShadow').onchange = e => opts.shadow = e.target.checked;
 document.getElementById('optSpace').oninput = e => opts.spacing = +e.target.value;
@@ -824,7 +1045,7 @@ const STEPS = [
     text: () => { const m = TUT_CHARS[tutChar].model; if (tutChar === 'human') return `Model organik (${m.L}×${m.W}×${m.H}): dibuat dari bola, elipsoid, dan kapsul, lalu tiap voxel diberi cahaya sesuai arah permukaannya (4 tingkat warna). Tampak 4 sisi di atas adalah hasil proyeksinya.`;
       return `Atas, samping, depan, belakang. Ukurannya harus konsisten: panjang ${m.L}, lebar ${m.W}, tinggi ${m.H} piksel. Model 3D (voxel) didapat dari irisan keempat siluet ini.`; } },
   { title: 'Tiap baris tampak samping menjadi satu slice',
-    text: () => { const h = TUT_CHARS[tutChar].model.H; return `Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. ${h} baris → ${h} gambar slice.` + ({ car: '', robot: ' Animasi jalan: buat beberapa set slice, kaki & tangan digeser maju-mundur tiap frame.', human: ' Animasi jalan: 8 pose (sudut kaki & lengan berbeda), tiap pose dibangun ulang jadi set slice sendiri.' })[tutChar]; } },
+    text: () => { const h = TUT_CHARS[tutChar].model.H; return `Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. ${h} baris → ${h} gambar slice.` + ({ car: '', robot: ' Animasi jalan: buat beberapa set slice, kaki & tangan digeser maju-mundur tiap frame.', human: ' Gerakan: tiap frame = pose rangka (sudut sendi), dibangun ulang jadi set slice sendiri.' })[tutChar]; } },
   { title: 'Tumpuk slice berjarak 1 px lalu putar',
     text: 'Gambar slice dari bawah ke atas; tiap slice digeser 1 px ke atas layar dan diputar dengan sudut yang sama. Geser "Jarak slice" untuk melihat tumpukannya terpisah.' },
 ];
@@ -848,7 +1069,7 @@ function viewCanvas(rows, pal) {
 const TUT_CHARS = {
   car:   { model: CAR,   views: CAR_VIEWS,   pal: PAL },
   robot: { model: ROBOT, views: ROBOT_VIEWS, pal: ROBOT_PAL, frames: ROBOT_FRAMES },
-  human: { model: HUMAN, frames: HUMAN_FRAMES },
+  human: { model: HUMAN, anim: true },
 };
 for (const k in TUT_CHARS) {
   const tc = TUT_CHARS[k];
@@ -911,7 +1132,13 @@ function renderTut(t) {
     const s = (H - 1) * sp * 2 + W * 2 > TH - 10 ? 1 : 2;
     const baseY = Math.round(TH / 2 + ((H - 1) * sp * s) / 2 + 4);
     // robot/manusia: putar frame animasi jalan
-    const model = tc.frames ? tc.frames[Math.floor(t * 6) % tc.frames.length] : M;
+    let model = M;
+    if (tc.frames) model = tc.frames[Math.floor(t * 6) % tc.frames.length];
+    if (tc.anim) {                                     // manusia: mainkan gerakan yang dipilih
+      const name = document.getElementById('tAnim').value, A = ANIMS[name], fr = getAnim(name);
+      const total = A.n + (A.loop ? 0 : Math.round(A.fps * 0.6));   // aksi: jeda sebentar sebelum diulang
+      model = fr[Math.min(A.n - 1, Math.floor(t * A.fps) % total)];
+    }
     drawShadow(c, model, TW / 2, baseY, tutAngle, s);   // bayangan tetap di tanah
     drawStack(c, model, TW / 2, baseY, tutAngle, sp, s);
   }
@@ -924,11 +1151,14 @@ function setStep(i) {
   document.getElementById('tutTitle').textContent = v(STEPS[i].title);
   document.getElementById('tutText').textContent = v(STEPS[i].text);
   document.getElementById('tutSliders').style.visibility = i === 2 ? 'visible' : 'hidden';
+  document.getElementById('tAnimWrap').style.display = tutChar === 'human' ? '' : 'none';
 }
 document.querySelectorAll('#tutCtl .btn').forEach(b => b.onclick = () => setStep(+b.dataset.step));
 document.getElementById('tSpace').oninput = e => document.getElementById('tSpaceV').textContent = e.target.value;
 document.getElementById('tAngle').oninput = e => { document.getElementById('tAuto').checked = false; tutAngle = e.target.value * Math.PI / 180; };
 setStep(0);
+for (const k in ANIMS) document.getElementById('tAnim').add(new Option(ANIMS[k].name, k));
+document.getElementById('tAnim').value = 'walk';
 document.getElementById('tChar').onchange = e => { tutChar = e.target.value; setStep(step); };
 
 /* ---------- tab ---------- */

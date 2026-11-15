@@ -41,14 +41,42 @@ for (let i = 0; i < slices.length; i++) {
   4 frame (`ROBOT_FRAMES`) diputar saat berjalan.
 - Di demo pilih **Karakter → Robot** (gerak 8 arah). Di tab Cara Kerja ada pilihan karakter juga.
 
-## Karakter ketiga: manusia organik
-Tidak digambar dari 4 sisi (hasilnya kotak-kotak), tapi dibangun prosedural:
-- `humanShape(fase)` mengisi tiap voxel 16×16×28 dengan material (kulit, rambut, baju, celana, sepatu)
-  dari bentuk bulat: kepala elipsoid, rambut elipsoid sedikit lebih besar, badan elipsoid yang melebar
-  ke bahu, lengan & kaki kapsul (ruas bahu-siku-tangan, pinggul-lutut-mata kaki), sepatu elipsoid.
-- `buildOrganic` menghitung normal permukaan dari tetangga kosong (radius 2), memberi cahaya
-  (`LIGHT`), lalu memilih 1 dari 4 warna di `RAMPS`. Hasilnya: bentuk membulat, tetap pixel art.
-- Animasi jalan: 8 pose. Tiap pose menghitung ulang posisi lutut, kaki, dan tangan (plus badan naik-turun),
-  lalu dibangun jadi set slice sendiri.
-- Tampak 4 sisi di tutorial diproyeksikan otomatis dari voxel.
-- Ubah warna lewat `RAMPS`, ubah proporsi lewat angka di `humanShape`.
+## Karakter ketiga: manusia organik + gerakan RPG
+Tidak digambar dari 4 sisi (hasilnya kotak-kotak), tapi dibangun prosedural dari **rangka**:
+- `humanShape(pose)` menghitung posisi sendi (pinggul, lutut, mata kaki, bahu, siku, tangan, kepala)
+  dari sudut-sudut di `POSE0`, lalu mengisi grid voxel 26×18×30 dengan bentuk bulat:
+  kepala & rambut elipsoid, badan elips yang ikut condong, lengan/kaki kapsul, sepatu kapsul.
+  Sudut tungkai: 0 = ke bawah, π/2 = ke depan, π = ke atas.
+- *Grounding*: badan otomatis digeser supaya titik terendah (kaki, lutut, tangan, punggung) menyentuh tanah.
+  Karena itu jongkok, merangkak, dan terbaring tidak perlu atur tinggi manual.
+- `buildOrganic` memberi cahaya per voxel (normal dari tetangga kosong) dan 4 tingkat warna (`RAMPS`).
+- Lompat memakai `model.lift`: renderer menaikkan seluruh tumpukan, bayangan tetap di tanah.
+
+### Daftar gerakan (`ANIMS`)
+| Gerakan | Tombol | Jenis |
+|---|---|---|
+| Diam, Jalan | panah / WASD | siklus |
+| Lari | tahan Shift | siklus |
+| Jongkok jalan | Q (toggle) | siklus |
+| Merangkak | E (toggle) | siklus |
+| Lompat | Spasi | aksi |
+| Pukul | J | aksi |
+| Tendang | K | aksi |
+| Tebas pedang | L | aksi |
+| Sihir (bola energi) | U | aksi |
+| Jatuh / bangun | H | aksi, tetap terbaring sampai tombol ditekan lagi |
+
+Di HP ada tombol aksi di kanan layar. Di tab Cara Kerja pilih Manusia lalu dropdown **Gerakan**.
+
+### Menambah gerakan baru
+Gerakan siklus = fungsi fase `t` (0..1). Gerakan aksi = `keyed([[t, {sendi yang berubah}], ...])`,
+tiap key mewarisi key sebelumnya, diinterpolasi halus. Contoh lambaian tangan:
+```js
+wave: { name: 'Melambai', n: 8, fps: 10, pose: keyed([
+  [0, {}],
+  [0.3, { arR: 2.8, elR: 0.6, spR: 0.4 }],
+  [0.5, { elR: 1.2 }],
+  [0.7, { elR: 0.6 }],
+  [1, POSE0]]) },
+```
+Lalu panggil `doAction('wave')` dari tombol mana pun.
