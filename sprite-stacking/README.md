@@ -40,3 +40,12 @@ for (let i = 0; i < slices.length; i++) {
   yang menggeser sumber x per voxel: kaki kiri/kanan dan tangan diayun berlawanan arah.
   4 frame (`ROBOT_FRAMES`) diputar saat berjalan.
 - Di demo pilih **Karakter → Robot** (gerak 8 arah). Di tab Cara Kerja ada pilihan karakter juga.
+
+## Karakter ketiga: manusia chibi
+- `HUMAN_VIEWS` / `HUMAN_PAL`: 8×12×22 (kepala besar), rambut, wajah, baju merah, celana biru.
+- `padViews(views, 1)` menambah 1 kolom kosong depan/belakang supaya kaki yang diayun tidak terpotong.
+- Animasi jalan pakai fungsi umum `makeWalkFrames(views, pal, opsi)`: atur batas tinggi kaki
+  (`legTop`), rentang tangan (`armBot`..`armTop`, `armL`/`armR`), dan besar ayunan (`amp`).
+  Robot dan manusia memakai fungsi yang sama.
+- Tips: baris teratas tampak samping/depan sebaiknya warna rambut, bukan outline,
+  supaya atas kepala tidak terlihat seperti topi.

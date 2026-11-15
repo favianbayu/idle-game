@@ -46,7 +46,7 @@
   <canvas id="game"></canvas>
   <div id="hud">
     <div id="speed">0 km/j</div>
-    <label>Karakter <select id="optChar"><option value="car">Mobil</option><option value="robot">Robot</option></select></label>
+    <label>Karakter <select id="optChar"><option value="car">Mobil</option><option value="robot">Robot</option><option value="human">Manusia</option></select></label>
     <label><input type="checkbox" id="optCam"> Kamera ikut berputar</label>
     <label><input type="checkbox" id="optShadow" checked> Bayangan</label>
     <label>Jarak slice <input type="range" id="optSpace" min="1" max="6" step="1" value="1"></label>
@@ -62,7 +62,7 @@
   <canvas id="tutCanvas"></canvas>
   <p id="tutText"></p>
   <div id="tutCtl">
-    <select id="tChar"><option value="car">Mobil</option><option value="robot">Robot</option></select>
+    <select id="tChar"><option value="car">Mobil</option><option value="robot">Robot</option><option value="human">Manusia</option></select>
     <button class="btn on" data-step="0">1. Gambar 4 sisi</button>
     <button class="btn" data-step="1">2. Baris → slice</button>
     <button class="btn" data-step="2">3. Tumpuk & putar</button>
@@ -260,6 +260,110 @@ const ROBOT_VIEWS = {
   ],
 };
 
+// ---------- Karakter ketiga: manusia chibi (kepala besar) ----------
+const HUMAN_PAL = {
+  K: '#2a1d1a', // outline
+  H: '#5a3520', // rambut
+  h: '#7a4a2a', // rambut highlight
+  F: '#f2c39b', // kulit
+  E: '#1b1b2a', // mata
+  m: '#d9776b', // mulut
+  C: '#d64545', // baju
+  D: '#4a3426', // sabuk
+  P: '#3a5bb0', // celana
+  S: '#3b2a22', // sepatu
+};
+// Ukuran: panjang 8 (x, depan di kanan), lebar 12 (y), tinggi 22 (z).
+// Diberi ruang kosong 1 kolom di depan/belakang (padViews) supaya kaki bisa diayun.
+const HUMAN_VIEWS = {
+  side: [
+    '..KhhhK.',
+    '.KHHHHHK',
+    'KHHHHHHK',
+    'KHHHHFFK',
+    'KHHHFFEK',
+    'KHHFFFFK',
+    'KHFFFFFK',
+    '.KKKKKK.',
+    '..KCCK..',
+    '..KCCK..',
+    '..KCCK..',
+    '..KCCK..',
+    '..KFFK..',
+    '..KPPK..',
+    '..KPPK..',
+    '..KPPK..',
+    '..KPPK..',
+    '..KPPK..',
+    '..KPPK..',
+    '..KPPK..',
+    '..KSSSK.',
+    '..KKKKK.',
+  ],
+  top: [
+    '........',
+    '...KK...',
+    '.KKKKKK.',
+    'KHhhHHHK',
+    'KHhHHHHK',
+    'KHHHHHHK',
+    'KHHHHHHK',
+    'KHHHHHHK',
+    'KHHHHHHK',
+    '.KKKKKK.',
+    '...KK...',
+    '........',
+  ],
+  front: [
+    '...KhhhhK...',
+    '..KHHHHHHK..',
+    '..KHHHHHHK..',
+    '..KHFFFFHK..',
+    '..KFEFFEFK..',
+    '..KFFFFFFK..',
+    '..KFFmmFFK..',
+    '...KKKKKK...',
+    '.KCCCCCCCCK.',
+    '.KCKCCCCKCK.',
+    '.KCKCCCCKCK.',
+    '.KCKCCCCKCK.',
+    '.KFKDDDDKFK.',
+    '.KKKPPPPKKK.',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KSKKSK...',
+    '...KKKKKK...',
+  ],
+  back: [
+    '...KHHHHK...',
+    '..KHHHHHHK..',
+    '..KHHHHHHK..',
+    '..KHHHHHHK..',
+    '..KHHhhHHK..',
+    '..KHHHHHHK..',
+    '..KHHHHHHK..',
+    '...KKKKKK...',
+    '.KCCCCCCCCK.',
+    '.KCKCCCCKCK.',
+    '.KCKCCCCKCK.',
+    '.KCKCCCCKCK.',
+    '.KFKDDDDKFK.',
+    '.KKKPPPPKKK.',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KPKKPK...',
+    '...KSKKSK...',
+    '...KKKKKK...',
+  ],
+};
+
 /* =====================================================================
    2. MEMBANGUN SLICE
    Model = grid voxel L×W×H. Slice ke-z = gambar tampak-atas dari lapisan z.
@@ -379,19 +483,35 @@ function makeTires() {
 const CAR = buildFromViews(CAR_VIEWS);
 CAR.views = CAR_VIEWS; CAR.pal = PAL;
 
+// Tambah n kolom kosong di depan & belakang tampak samping/atas
+function padViews(v, n) {
+  const d = '.'.repeat(n), pad = r => d + r + d;
+  return { side: v.side.map(pad), top: v.top.map(pad), front: v.front, back: v.back };
+}
+
 // Animasi jalan: 4 frame. Kaki kiri/kanan dan tangan diayun berlawanan arah (geser x).
-const ROBOT_FRAMES = [0, 1, 0, -1].map(swing => {
-  const m = buildFromViews(ROBOT_VIEWS, ROBOT_PAL, (x, y, z) => {
-    const left = y < 7 ? 1 : -1;
-    if (z <= 7)               return x - Math.round(swing * left * 2 * (8 - z) / 8);  // kaki: makin bawah makin jauh
-    if (z <= 13 && (y <= 2 || y >= 11)) return x + Math.round(swing * left * 2 * (14 - z) / 6); // tangan
-    return x;
+// o = { legTop, armTop, armBot, mid, armL, armR, amp }
+function makeWalkFrames(views, pal, o) {
+  return [0, 1, 0, -1].map(swing => {
+    const m = buildFromViews(views, pal, (x, y, z) => {
+      const left = y < o.mid ? 1 : -1;
+      if (z <= o.legTop)                      // kaki: makin bawah makin jauh
+        return x - Math.round(swing * left * o.amp * (o.legTop + 1 - z) / (o.legTop + 1));
+      if (z >= o.armBot && z <= o.armTop && (y <= o.armL || y >= o.armR))  // tangan
+        return x + Math.round(swing * left * o.amp * (o.armTop + 1 - z) / (o.armTop + 1 - o.armBot));
+      return x;
+    });
+    m.pal = pal;
+    return m;
   });
-  m.pal = ROBOT_PAL;
-  return m;
-});
+}
+const ROBOT_FRAMES = makeWalkFrames(ROBOT_VIEWS, ROBOT_PAL, { legTop: 7, armBot: 8, armTop: 13, mid: 7, armL: 2, armR: 11, amp: 2 });
+const HUMAN_VIEWS_P = padViews(HUMAN_VIEWS, 1);
+const HUMAN_FRAMES = makeWalkFrames(HUMAN_VIEWS_P, HUMAN_PAL, { legTop: 7, armBot: 9, armTop: 13, mid: 6, armL: 2, armR: 9, amp: 2 });
+const HUMAN = HUMAN_FRAMES[0];
+const WALKERS = { robot: ROBOT_FRAMES, human: HUMAN_FRAMES };
 const ROBOT = ROBOT_FRAMES[0];
-const CHARS = { car: CAR, robot: ROBOT };
+
 const MODELS = { tree: [makeTree(1), makeTree(7), makeTree(13)], cone: makeCone(), tires: makeTires() };
 
 /* =====================================================================
@@ -531,7 +651,7 @@ function surfAt(x, y) {
 }
 
 function update(dt) {
-  if (opts.char === 'robot') return updateRobot(dt);
+  if (WALKERS[opts.char]) return updateRobot(dt);
   const fx = Math.cos(car.a), fy = Math.sin(car.a);
   let fwd = car.vx * fx + car.vy * fy;         // kecepatan maju
   let lat = -car.vx * fy + car.vy * fx;        // kecepatan menyamping (drift)
@@ -641,8 +761,8 @@ function render() {
   ctx.restore();
 
   // posisi layar tiap objek; sudut objek dikurangi sudut kamera
-  const player = opts.char === 'robot'
-    ? { model: ROBOT_FRAMES[Math.floor(bot.walk) % 4], x: bot.x, y: bot.y, a: bot.a }
+  const player = WALKERS[opts.char]
+    ? { model: WALKERS[opts.char][Math.floor(bot.walk) % 4], x: bot.x, y: bot.y, a: bot.a }
     : { model: CAR, x: car.x, y: car.y, a: car.a };
   const list = objects.concat([player]).map(o => {
     const dx = o.x - cam.x, dy = o.y - cam.y;
@@ -682,7 +802,7 @@ document.querySelectorAll('.touch button').forEach(b => {
 });
 document.getElementById('optChar').onchange = e => {
   opts.char = e.target.value;
-  if (opts.char === 'robot') { bot.x = car.x; bot.y = car.y + 16; bot.a = car.a; opts.rotCam = false; document.getElementById('optCam').checked = false; }
+  if (WALKERS[opts.char]) { bot.x = car.x; bot.y = car.y + 16; bot.a = car.a; opts.rotCam = false; document.getElementById('optCam').checked = false; }
   e.target.blur();
 };
 document.getElementById('optCam').onchange = e => opts.rotCam = e.target.checked;
@@ -693,10 +813,10 @@ document.getElementById('optSpace').oninput = e => opts.spacing = +e.target.valu
    5. TUTORIAL: visualisasi 3 langkah dari video
    ===================================================================== */
 const STEPS = [
-  { title: () => `Gambar ${tutChar === 'car' ? 'mobil' : 'robot'} dari 4 sisi`,
+  { title: () => `Gambar ${({ car: 'mobil', robot: 'robot', human: 'manusia' })[tutChar]} dari 4 sisi`,
     text: () => { const m = TUT_CHARS[tutChar].model; return `Atas, samping, depan, belakang. Ukurannya harus konsisten: panjang ${m.L}, lebar ${m.W}, tinggi ${m.H} piksel. Model 3D (voxel) didapat dari irisan keempat siluet ini.`; } },
   { title: 'Tiap baris tampak samping menjadi satu slice',
-    text: () => { const h = TUT_CHARS[tutChar].model.H; return `Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. ${h} baris → ${h} gambar slice.` + (tutChar === 'robot' ? ' Animasi jalan: buat beberapa set slice, kaki & tangan digeser maju-mundur tiap frame.' : ''); } },
+    text: () => { const h = TUT_CHARS[tutChar].model.H; return `Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. ${h} baris → ${h} gambar slice.` + (tutChar !== 'car' ? ' Animasi jalan: buat beberapa set slice, kaki & tangan digeser maju-mundur tiap frame.' : ''); } },
   { title: 'Tumpuk slice berjarak 1 px lalu putar',
     text: 'Gambar slice dari bawah ke atas; tiap slice digeser 1 px ke atas layar dan diputar dengan sudut yang sama. Geser "Jarak slice" untuk melihat tumpukannya terpisah.' },
 ];
@@ -720,6 +840,7 @@ function viewCanvas(rows, pal) {
 const TUT_CHARS = {
   car:   { model: CAR,   views: CAR_VIEWS,   pal: PAL },
   robot: { model: ROBOT, views: ROBOT_VIEWS, pal: ROBOT_PAL, frames: ROBOT_FRAMES },
+  human: { model: HUMAN, views: HUMAN_VIEWS_P, pal: HUMAN_PAL, frames: HUMAN_FRAMES },
 };
 for (const k in TUT_CHARS) {
   const tc = TUT_CHARS[k];
@@ -780,7 +901,7 @@ function renderTut(t) {
     const sp = +document.getElementById('tSpace').value;
     const s = (H - 1) * sp * 2 + W * 2 > TH - 10 ? 1 : 2;
     const baseY = Math.round(TH / 2 + ((H - 1) * sp * s) / 2 + 4);
-    // robot: putar frame animasi jalan
+    // robot/manusia: putar frame animasi jalan
     const model = tc.frames ? tc.frames[Math.floor(t * 6) % tc.frames.length] : M;
     drawShadow(c, model, TW / 2, baseY, tutAngle, s);   // bayangan tetap di tanah
     drawStack(c, model, TW / 2, baseY, tutAngle, sp, s);
