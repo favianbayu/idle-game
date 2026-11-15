@@ -260,110 +260,6 @@ const ROBOT_VIEWS = {
   ],
 };
 
-// ---------- Karakter ketiga: manusia chibi (kepala besar) ----------
-const HUMAN_PAL = {
-  K: '#2a1d1a', // outline
-  H: '#5a3520', // rambut
-  h: '#7a4a2a', // rambut highlight
-  F: '#f2c39b', // kulit
-  E: '#1b1b2a', // mata
-  m: '#d9776b', // mulut
-  C: '#d64545', // baju
-  D: '#4a3426', // sabuk
-  P: '#3a5bb0', // celana
-  S: '#3b2a22', // sepatu
-};
-// Ukuran: panjang 8 (x, depan di kanan), lebar 12 (y), tinggi 22 (z).
-// Diberi ruang kosong 1 kolom di depan/belakang (padViews) supaya kaki bisa diayun.
-const HUMAN_VIEWS = {
-  side: [
-    '..KhhhK.',
-    '.KHHHHHK',
-    'KHHHHHHK',
-    'KHHHHFFK',
-    'KHHHFFEK',
-    'KHHFFFFK',
-    'KHFFFFFK',
-    '.KKKKKK.',
-    '..KCCK..',
-    '..KCCK..',
-    '..KCCK..',
-    '..KCCK..',
-    '..KFFK..',
-    '..KPPK..',
-    '..KPPK..',
-    '..KPPK..',
-    '..KPPK..',
-    '..KPPK..',
-    '..KPPK..',
-    '..KPPK..',
-    '..KSSSK.',
-    '..KKKKK.',
-  ],
-  top: [
-    '........',
-    '...KK...',
-    '.KKKKKK.',
-    'KHhhHHHK',
-    'KHhHHHHK',
-    'KHHHHHHK',
-    'KHHHHHHK',
-    'KHHHHHHK',
-    'KHHHHHHK',
-    '.KKKKKK.',
-    '...KK...',
-    '........',
-  ],
-  front: [
-    '...KhhhhK...',
-    '..KHHHHHHK..',
-    '..KHHHHHHK..',
-    '..KHFFFFHK..',
-    '..KFEFFEFK..',
-    '..KFFFFFFK..',
-    '..KFFmmFFK..',
-    '...KKKKKK...',
-    '.KCCCCCCCCK.',
-    '.KCKCCCCKCK.',
-    '.KCKCCCCKCK.',
-    '.KCKCCCCKCK.',
-    '.KFKDDDDKFK.',
-    '.KKKPPPPKKK.',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KSKKSK...',
-    '...KKKKKK...',
-  ],
-  back: [
-    '...KHHHHK...',
-    '..KHHHHHHK..',
-    '..KHHHHHHK..',
-    '..KHHHHHHK..',
-    '..KHHhhHHK..',
-    '..KHHHHHHK..',
-    '..KHHHHHHK..',
-    '...KKKKKK...',
-    '.KCCCCCCCCK.',
-    '.KCKCCCCKCK.',
-    '.KCKCCCCKCK.',
-    '.KCKCCCCKCK.',
-    '.KFKDDDDKFK.',
-    '.KKKPPPPKKK.',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KPKKPK...',
-    '...KSKKSK...',
-    '...KKKKKK...',
-  ],
-};
-
 /* =====================================================================
    2. MEMBANGUN SLICE
    Model = grid voxel L×W×H. Slice ke-z = gambar tampak-atas dari lapisan z.
@@ -483,12 +379,6 @@ function makeTires() {
 const CAR = buildFromViews(CAR_VIEWS);
 CAR.views = CAR_VIEWS; CAR.pal = PAL;
 
-// Tambah n kolom kosong di depan & belakang tampak samping/atas
-function padViews(v, n) {
-  const d = '.'.repeat(n), pad = r => d + r + d;
-  return { side: v.side.map(pad), top: v.top.map(pad), front: v.front, back: v.back };
-}
-
 // Animasi jalan: 4 frame. Kaki kiri/kanan dan tangan diayun berlawanan arah (geser x).
 // o = { legTop, armTop, armBot, mid, armL, armR, amp }
 function makeWalkFrames(views, pal, o) {
@@ -506,8 +396,124 @@ function makeWalkFrames(views, pal, o) {
   });
 }
 const ROBOT_FRAMES = makeWalkFrames(ROBOT_VIEWS, ROBOT_PAL, { legTop: 7, armBot: 8, armTop: 13, mid: 7, armL: 2, armR: 11, amp: 2 });
-const HUMAN_VIEWS_P = padViews(HUMAN_VIEWS, 1);
-const HUMAN_FRAMES = makeWalkFrames(HUMAN_VIEWS_P, HUMAN_PAL, { legTop: 7, armBot: 9, armTop: 13, mid: 6, armL: 2, armR: 9, amp: 2 });
+/* ---------- Manusia organik: dibangun dari bentuk bulat, bukan dari 4 gambar ----------
+   Tiap voxel diisi material lewat fungsi bentuk (bola, elipsoid, kapsul).
+   Normal permukaan dihitung dari tetangga kosong, lalu diberi cahaya dan
+   dikuantisasi ke 4 tingkat warna (ramp) supaya tetap terlihat pixel art. */
+const RAMPS = {
+  skin:  ['#a8624c', '#d99a78', '#f3c4a0', '#ffe2c8'],
+  hair:  ['#24140d', '#43281a', '#673f27', '#8c5a38'],
+  shirt: ['#6e1a26', '#b0303a', '#d9514e', '#f27d6a'],
+  pants: ['#1b2550', '#2c4183', '#3f5fae', '#5a80cc'],
+  shoe:  ['#161112', '#2e2220', '#4a3731', '#665048'],
+  eye:   ['#141420', '#141420', '#1e1e30', '#2a2a40'],
+  blush: ['#c96d62', '#e88a7c', '#f5a092', '#f5a092'],
+};
+const LIGHT = (() => { const v = [0.35, -0.45, 0.82], l = Math.hypot(...v); return v.map(c => c / l); })();
+
+function segDist(p, a, b) {          // jarak titik ke ruas garis + posisi t (0..1)
+  const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], ap = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
+  const t = Math.max(0, Math.min(1, (ap[0] * ab[0] + ap[1] * ab[1] + ap[2] * ab[2]) / (ab[0] ** 2 + ab[1] ** 2 + ab[2] ** 2)));
+  return [Math.hypot(ap[0] - ab[0] * t, ap[1] - ab[1] * t, ap[2] - ab[2] * t), t];
+}
+const capsule = (p, a, b, r0, r1) => { const [d, t] = segDist(p, a, b); return d <= r0 + (r1 - r0) * t ? t : -1; };
+const ellip = (p, c, rx, ry, rz) => ((p[0] - c[0]) / rx) ** 2 + ((p[1] - c[1]) / ry) ** 2 + ((p[2] - c[2]) / rz) ** 2;
+
+// Pose manusia untuk fase jalan `ph` (radian). Mengembalikan fungsi material(x,y,z).
+function humanShape(ph) {
+  const cx = 8, cy = 8;
+  const sw = Math.sin(ph), bob = Math.abs(Math.cos(ph)) * 0.45;   // badan naik-turun sedikit
+  const legs = [-1, 1].map(s => {                    // s=-1 kiri (y kecil), s=+1 kanan
+    const hip = [cx, cy + s * 1.7, 10.4 + bob];
+    const fx = cx - s * sw * 3.0;                    // kaki maju/mundur berlawanan
+    const lift = Math.max(0, -s * Math.cos(ph)) * 1.3; // kaki yang melangkah sedikit diangkat
+    const ankle = [fx, cy + s * 1.8, 2.0 + lift];
+    const knee = [(hip[0] + fx) / 2 + 0.7 + lift * 0.6, cy + s * 1.8, 6.2 + lift * 0.6 + bob / 2];
+    return { hip, knee, ankle };
+  });
+  const arms = [-1, 1].map(s => {
+    const sh = [cx, cy + s * 3.4, 17.1 + bob];
+    const hand = [cx + s * sw * 2.6, cy + s * 4.0, 11.4 + bob];
+    const elbow = [(sh[0] + hand[0]) / 2 - 0.3, cy + s * 3.9, 14.3 + bob];
+    return { sh, elbow, hand };
+  });
+  const head = [cx + 0.2, cy, 22.6 + bob];
+
+  return (x, y, z) => {
+    const p = [x + 0.5, y + 0.5, z + 0.5];
+    // sepatu
+    for (const l of legs) if (p[2] >= 0 && ellip(p, [l.ankle[0] + 0.8, l.ankle[1], l.ankle[2] - 1.0], 2.1, 1.35, 1.25) <= 1) return 'shoe';
+    // kepala + rambut
+    const dx = p[0] - head[0], dy = p[1] - head[1], dz = p[2] - head[2];
+    const inHead = ellip(p, head, 3.9, 3.7, 4.0) <= 1;
+    const face = dx > 0.6 && dz < 1.4 && dz > -3.6 && Math.abs(dy) < 3.0;
+    if (inHead) {
+      if (!face) return 'hair';
+      if (dx > 2.3 && Math.abs(dz - 0.1) < 0.75 && Math.abs(Math.abs(dy) - 1.5) < 0.55) return 'eye';
+      if (dx > 2.0 && Math.abs(dz + 1.0) < 0.5 && Math.abs(Math.abs(dy) - 2.2) < 0.6) return 'blush';
+      return 'skin';
+    }
+    // rambut sedikit lebih besar dari kepala, menjuntai di belakang
+    if (!face && ellip(p, [head[0] - 0.4, head[1], head[2] + 0.2], 4.5, 4.3, 4.4) <= 1 && dz > -3.2) return 'hair';
+    // lengan: atas = lengan baju, bawah = kulit
+    for (const a of arms) {
+      if (ellip(p, a.hand, 1.3, 1.2, 1.3) <= 1) return 'skin';
+      const t1 = capsule(p, a.sh, a.elbow, 1.35, 1.15);
+      if (t1 >= 0) return t1 < 0.7 ? 'shirt' : 'skin';
+      if (capsule(p, a.elbow, a.hand, 1.15, 1.0) >= 0) return 'skin';
+    }
+    // badan: melebar ke bahu, bagian atas membulat
+    if (p[2] >= 9.6 + bob && p[2] <= 18.6 + bob) {
+      const t = (p[2] - 9.6 - bob) / 9;
+      let ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
+      if (t > 0.72) { const k = Math.sqrt(Math.max(0, 1 - ((t - 0.72) / 0.3) ** 2)); ry *= 0.55 + 0.45 * k; rx *= 0.6 + 0.4 * k; }
+      if (((p[0] - cx) / rx) ** 2 + ((p[1] - cy) / ry) ** 2 <= 1) return t < 0.2 ? 'pants' : 'shirt';
+    }
+    // leher
+    if (capsule(p, [cx, cy, 18 + bob], [cx, cy, 20 + bob], 1.1, 1.1) >= 0) return 'skin';
+    // kaki
+    for (const l of legs) {
+      if (capsule(p, l.hip, l.knee, 1.6, 1.4) >= 0) return 'pants';
+      if (capsule(p, l.knee, l.ankle, 1.4, 1.2) >= 0) return 'pants';
+    }
+    return null;
+  };
+}
+
+function buildOrganic(L, W, H, mat) {
+  const grid = new Array(L * W * H);
+  const idx = (x, y, z) => (z * W + y) * L + x;
+  for (let z = 0; z < H; z++) for (let y = 0; y < W; y++) for (let x = 0; x < L; x++) grid[idx(x, y, z)] = mat(x, y, z);
+  const at = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= L || y >= W || z >= H) ? null : grid[idx(x, y, z)];
+  // normal = rata-rata arah ke tetangga kosong (radius 2) -> permukaan terasa halus
+  const shade = (x, y, z, m) => {
+    let nx = 0, ny = 0, nz = 0;
+    for (let k = -2; k <= 2; k++) for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++)
+      if (!at(x + i, y + j, z + k)) { const w = 1 / (i * i + j * j + k * k || 1); nx += i * w; ny += j * w; nz += k * w; }
+    const l = Math.hypot(nx, ny, nz) || 1;
+    const d = (nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]) / l;
+    const v = 0.38 + 0.62 * Math.max(0, d);
+    return RAMPS[m][v < 0.5 ? 0 : v < 0.72 ? 1 : v < 0.9 ? 2 : 3];
+  };
+  const m = buildModel(L, W, H, (x, y, z) => !!at(x, y, z), (x, y, z) => shade(x, y, z, at(x, y, z)));
+  // tampak 4 sisi diproyeksikan dari voxel (untuk tutorial)
+  const proj = (w, h, fn) => {
+    const c = makeCanvas(w, h), g = c.getContext('2d');
+    for (let v = 0; v < h; v++) for (let u = 0; u < w; u++) { const col = fn(u, v); if (col) { g.fillStyle = col; g.fillRect(u, v, 1, 1); } }
+    return c;
+  };
+  const first = (cells) => { for (const [x, y, z] of cells) { const mm = at(x, y, z); if (mm) return shade(x, y, z, mm); } return null; };
+  const range = (n, rev) => [...Array(n).keys()].map(i => rev ? n - 1 - i : i);
+  m.vc = {
+    top:   proj(L, W, (x, y) => first(range(H, true).map(z => [x, y, z]))),
+    side:  proj(L, H, (x, r) => first(range(W).map(y => [x, y, H - 1 - r]))),
+    front: proj(W, H, (c, r) => first(range(L, true).map(x => [x, W - 1 - c, H - 1 - r]))),
+    back:  proj(W, H, (c, r) => first(range(L).map(x => [x, c, H - 1 - r]))),
+  };
+  return m;
+}
+
+const HUMAN_FRAMES = [...Array(8).keys()].map(i => buildOrganic(16, 16, 28, humanShape(i / 8 * Math.PI * 2)));
 const HUMAN = HUMAN_FRAMES[0];
 const WALKERS = { robot: ROBOT_FRAMES, human: HUMAN_FRAMES };
 const ROBOT = ROBOT_FRAMES[0];
@@ -728,7 +734,8 @@ function updateRobot(dt) {
     const sp = surfAt(bot.x, bot.y) === 0 ? 34 : 42;
     bot.x += wx * sp * dt; bot.y += wy * sp * dt;
     bot.walk += dt * 8;
-  } else bot.walk = Math.round(bot.walk / 2) * 2; // kembali ke pose diam
+    bot.moving = true;
+  } else { bot.walk = 0; bot.moving = false; } // kembali ke pose diam
   bot.x = Math.max(8, Math.min(WW - 8, bot.x));
   bot.y = Math.max(8, Math.min(WH - 8, bot.y));
   for (const o of objects) {
@@ -762,7 +769,7 @@ function render() {
 
   // posisi layar tiap objek; sudut objek dikurangi sudut kamera
   const player = WALKERS[opts.char]
-    ? { model: WALKERS[opts.char][Math.floor(bot.walk) % 4], x: bot.x, y: bot.y, a: bot.a }
+    ? { model: WALKERS[opts.char][Math.floor(bot.walk * WALKERS[opts.char].length / 4) % WALKERS[opts.char].length], x: bot.x, y: bot.y, a: bot.a }
     : { model: CAR, x: car.x, y: car.y, a: car.a };
   const list = objects.concat([player]).map(o => {
     const dx = o.x - cam.x, dy = o.y - cam.y;
@@ -813,10 +820,11 @@ document.getElementById('optSpace').oninput = e => opts.spacing = +e.target.valu
    5. TUTORIAL: visualisasi 3 langkah dari video
    ===================================================================== */
 const STEPS = [
-  { title: () => `Gambar ${({ car: 'mobil', robot: 'robot', human: 'manusia' })[tutChar]} dari 4 sisi`,
-    text: () => { const m = TUT_CHARS[tutChar].model; return `Atas, samping, depan, belakang. Ukurannya harus konsisten: panjang ${m.L}, lebar ${m.W}, tinggi ${m.H} piksel. Model 3D (voxel) didapat dari irisan keempat siluet ini.`; } },
+  { title: () => tutChar === 'human' ? 'Manusia: bentuk organik dari voxel' : `Gambar ${({ car: 'mobil', robot: 'robot' })[tutChar]} dari 4 sisi`,
+    text: () => { const m = TUT_CHARS[tutChar].model; if (tutChar === 'human') return `Model organik (${m.L}×${m.W}×${m.H}): dibuat dari bola, elipsoid, dan kapsul, lalu tiap voxel diberi cahaya sesuai arah permukaannya (4 tingkat warna). Tampak 4 sisi di atas adalah hasil proyeksinya.`;
+      return `Atas, samping, depan, belakang. Ukurannya harus konsisten: panjang ${m.L}, lebar ${m.W}, tinggi ${m.H} piksel. Model 3D (voxel) didapat dari irisan keempat siluet ini.`; } },
   { title: 'Tiap baris tampak samping menjadi satu slice',
-    text: () => { const h = TUT_CHARS[tutChar].model.H; return `Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. ${h} baris → ${h} gambar slice.` + (tutChar !== 'car' ? ' Animasi jalan: buat beberapa set slice, kaki & tangan digeser maju-mundur tiap frame.' : ''); } },
+    text: () => { const h = TUT_CHARS[tutChar].model.H; return `Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. ${h} baris → ${h} gambar slice.` + ({ car: '', robot: ' Animasi jalan: buat beberapa set slice, kaki & tangan digeser maju-mundur tiap frame.', human: ' Animasi jalan: 8 pose (sudut kaki & lengan berbeda), tiap pose dibangun ulang jadi set slice sendiri.' })[tutChar]; } },
   { title: 'Tumpuk slice berjarak 1 px lalu putar',
     text: 'Gambar slice dari bawah ke atas; tiap slice digeser 1 px ke atas layar dan diputar dengan sudut yang sama. Geser "Jarak slice" untuk melihat tumpukannya terpisah.' },
 ];
@@ -840,10 +848,11 @@ function viewCanvas(rows, pal) {
 const TUT_CHARS = {
   car:   { model: CAR,   views: CAR_VIEWS,   pal: PAL },
   robot: { model: ROBOT, views: ROBOT_VIEWS, pal: ROBOT_PAL, frames: ROBOT_FRAMES },
-  human: { model: HUMAN, views: HUMAN_VIEWS_P, pal: HUMAN_PAL, frames: HUMAN_FRAMES },
+  human: { model: HUMAN, frames: HUMAN_FRAMES },
 };
 for (const k in TUT_CHARS) {
   const tc = TUT_CHARS[k];
+  if (tc.model.vc) { tc.vc = tc.model.vc; continue; }   // model organik: tampak hasil proyeksi
   tc.vc = {};
   for (const v of ['top', 'side', 'front', 'back']) tc.vc[v] = viewCanvas(tc.views[v], tc.pal);
 }

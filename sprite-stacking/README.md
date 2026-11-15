@@ -41,11 +41,14 @@ for (let i = 0; i < slices.length; i++) {
   4 frame (`ROBOT_FRAMES`) diputar saat berjalan.
 - Di demo pilih **Karakter → Robot** (gerak 8 arah). Di tab Cara Kerja ada pilihan karakter juga.
 
-## Karakter ketiga: manusia chibi
-- `HUMAN_VIEWS` / `HUMAN_PAL`: 8×12×22 (kepala besar), rambut, wajah, baju merah, celana biru.
-- `padViews(views, 1)` menambah 1 kolom kosong depan/belakang supaya kaki yang diayun tidak terpotong.
-- Animasi jalan pakai fungsi umum `makeWalkFrames(views, pal, opsi)`: atur batas tinggi kaki
-  (`legTop`), rentang tangan (`armBot`..`armTop`, `armL`/`armR`), dan besar ayunan (`amp`).
-  Robot dan manusia memakai fungsi yang sama.
-- Tips: baris teratas tampak samping/depan sebaiknya warna rambut, bukan outline,
-  supaya atas kepala tidak terlihat seperti topi.
+## Karakter ketiga: manusia organik
+Tidak digambar dari 4 sisi (hasilnya kotak-kotak), tapi dibangun prosedural:
+- `humanShape(fase)` mengisi tiap voxel 16×16×28 dengan material (kulit, rambut, baju, celana, sepatu)
+  dari bentuk bulat: kepala elipsoid, rambut elipsoid sedikit lebih besar, badan elipsoid yang melebar
+  ke bahu, lengan & kaki kapsul (ruas bahu-siku-tangan, pinggul-lutut-mata kaki), sepatu elipsoid.
+- `buildOrganic` menghitung normal permukaan dari tetangga kosong (radius 2), memberi cahaya
+  (`LIGHT`), lalu memilih 1 dari 4 warna di `RAMPS`. Hasilnya: bentuk membulat, tetap pixel art.
+- Animasi jalan: 8 pose. Tiap pose menghitung ulang posisi lutut, kaki, dan tangan (plus badan naik-turun),
+  lalu dibangun jadi set slice sendiri.
+- Tampak 4 sisi di tutorial diproyeksikan otomatis dari voxel.
+- Ubah warna lewat `RAMPS`, ubah proporsi lewat angka di `humanShape`.
