@@ -3,61 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Sprite Stacking Demo</title>
+<title>Sprite Stacking: Gang Perumahan</title>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #111; color: #eee; font: 14px/1.4 system-ui, sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
   canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
-  #tabs { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 5; background: #000a; padding: 4px; border-radius: 10px; }
+  #tabs { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 6; background: #000a; padding: 4px; border-radius: 10px; }
   #tabs button, .btn { background: #2a2f3a; color: #eee; border: 0; padding: 7px 12px; border-radius: 7px; font: inherit; cursor: pointer; }
   #tabs button.on, .btn.on { background: #2a5bd7; }
   .screen { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; }
   .screen.on { display: flex; }
-  #game { background: #3c8a2e; }
-  #hud { position: fixed; top: 52px; left: 10px; background: #000a; padding: 8px 10px; border-radius: 8px; font-size: 12px; z-index: 4; }
+  #scrGame { align-items: flex-start; justify-content: flex-start; }
+  #hud { position: fixed; top: 52px; left: 8px; background: #000a; padding: 7px 9px; border-radius: 8px; font-size: 12px; z-index: 4; }
   #hud label { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
-  #hud input[type=range] { width: 90px; }
+  #hud input[type=range] { width: 80px; }
+  #hud.min label { display: none; }
+  #hudToggle { background: none; border: 0; color: #fff; font: inherit; padding: 0; cursor: pointer; text-decoration: underline; opacity: .7; }
   #acts { position: fixed; right: 8px; top: 52px; display: none; flex-direction: column; gap: 4px; z-index: 4; }
   body.human #acts { display: flex; }
-  #acts button { background: #000a; color: #fff; border: 1px solid #fff3; border-radius: 7px; padding: 5px 8px; font: 12px system-ui; min-width: 74px; display: flex; justify-content: space-between; gap: 6px; }
+  #acts button { background: #000a; color: #fff; border: 1px solid #fff3; border-radius: 7px; padding: 5px 8px; font: 12px system-ui; min-width: 76px; display: flex; justify-content: space-between; gap: 6px; }
   #acts button small { opacity: .55; }
   #acts button.on { background: #2a5bd7; }
   body.is-touch #acts small { display: none; }
-  #help { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #000a; padding: 5px 10px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+  #help { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #000a; padding: 5px 10px; border-radius: 8px; font-size: 12px; white-space: nowrap; z-index: 4; }
   .touch { position: fixed; bottom: 18px; display: none; gap: 10px; z-index: 4; }
-  .touch button { width: 64px; height: 64px; border-radius: 50%; border: 0; background: #fff3; color: #fff; font-size: 24px; }
+  .touch button { width: 60px; height: 60px; border-radius: 50%; border: 0; background: #fff3; color: #fff; font-size: 22px; }
   .touch button.down { background: #fff6; }
-  #tl { left: 16px; } #tr { right: 16px; }
+  #tl { left: 14px; } #tr { right: 14px; }
   body.is-touch .touch { display: flex; }
   body.is-touch #help { display: none; }
-  #scrTut.on { flex-direction: column; background: #f4f4f4; color: #111; gap: 10px; padding: 60px 12px 12px; }
+  #bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+  .bubble { position: absolute; transform: translate(-50%, -100%); background: #fffef6; color: #222; font: 600 12px/1.25 system-ui; padding: 4px 8px; border-radius: 9px; border: 2px solid #2a2a2a; white-space: nowrap; max-width: 220px; }
+  .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -5px; border: 5px solid transparent; border-top-color: #2a2a2a; }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #1b2418; color: #dfe8d0; font-size: 15px; z-index: 10; flex-direction: column; gap: 8px; }
+  #scrTut.on { flex-direction: column; background: #f4f4f4; color: #111; gap: 8px; padding: 56px 12px 12px; }
   #scrTut h2 { margin: 0; font-size: 17px; text-align: center; }
   #scrTut p { margin: 0; max-width: 560px; text-align: center; color: #444; font-size: 13px; }
   #tutCanvas { background: #fff; }
   #tutCtl { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
   #tutCtl .btn { background: #ddd; color: #111; }
   #tutCtl .btn.on { background: #2a5bd7; color: #fff; }
-  #tutSliders { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; font-size: 13px; }
+  #tutSliders { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; font-size: 13px; }
   #tutSliders label { display: flex; gap: 6px; align-items: center; }
 </style>
 </head>
 <body>
+<div id="loading"><div>Membangun gang perumahan…</div><div style="opacity:.6;font-size:12px">(rumah, NPC, dan pohon dibuat dari voxel)</div></div>
 <div id="tabs">
-  <button id="tabGame" class="on">Demo Balap</button>
+  <button id="tabGame" class="on">Jelajah</button>
   <button id="tabTut">Cara Kerja</button>
 </div>
 
 <!-- ============ GAME ============ -->
 <div id="scrGame" class="screen on">
   <canvas id="game"></canvas>
+  <div id="bubbles"></div>
   <div id="hud">
-    <div id="speed">0 km/j</div>
-    <label>Karakter <select id="optChar"><option value="car">Mobil</option><option value="robot">Robot</option><option value="human">Manusia</option></select></label>
+    <div><span id="speed">-</span> · <button id="hudToggle">opsi</button></div>
+    <label>Karakter <select id="optChar"><option value="human">Manusia</option><option value="car">Mobil</option><option value="robot">Robot</option></select></label>
     <label><input type="checkbox" id="optCam"> Kamera ikut berputar</label>
     <label><input type="checkbox" id="optShadow" checked> Bayangan</label>
     <label>Jarak slice <input type="range" id="optSpace" min="1" max="6" step="1" value="1"></label>
   </div>
-  <div id="help">← → / A D belok · ↑ / W gas · ↓ / S rem/mundur · C kamera</div>
+  <div id="help"></div>
   <div id="acts">
     <button data-a="run" data-hold="1">Lari<small>Shift</small></button>
     <button data-a="crouch">Jongkok<small>Q</small></button>
@@ -79,24 +87,24 @@
   <canvas id="tutCanvas"></canvas>
   <p id="tutText"></p>
   <div id="tutCtl">
-    <select id="tChar"><option value="car">Mobil</option><option value="robot">Robot</option><option value="human">Manusia</option></select>
-    <button class="btn on" data-step="0">1. Gambar 4 sisi</button>
+    <select id="tChar"><option value="human">Manusia</option><option value="car">Mobil</option><option value="robot">Robot</option></select>
+    <button class="btn on" data-step="0">1. Model</button>
     <button class="btn" data-step="1">2. Baris → slice</button>
     <button class="btn" data-step="2">3. Tumpuk & putar</button>
   </div>
   <div id="tutSliders">
     <label>Jarak slice <input type="range" id="tSpace" min="1" max="6" step="1" value="1"><span id="tSpaceV">1</span></label>
     <label><input type="checkbox" id="tAuto" checked> Putar otomatis</label>
-    <label id="tAnimWrap">Gerakan <select id="tAnim"></select></label>
     <label>Sudut <input type="range" id="tAngle" min="0" max="360" value="30"></label>
+    <label id="tAnimWrap">Gerakan <select id="tAnim"></select></label>
+    <label id="tStyleWrap">Tokoh <select id="tStyle"></select></label>
   </div>
 </div>
 
 <script>
 'use strict';
-/* =====================================================================
-   1. DATA: mobil digambar dari 4 sisi (seperti di video).
-      Tiap karakter = 1 piksel; '.' = kosong. Palet di bawah.
+/* ===================================================================== 
+   DATA: mobil & robot digambar dari 4 sisi (setiap karakter = 1 piksel)
    ===================================================================== */
 const PAL = {
   K: '#141a3c', // outline
@@ -279,280 +287,476 @@ const ROBOT_VIEWS = {
 };
 
 /* =====================================================================
-   2. MEMBANGUN SLICE
-   Model = grid voxel L×W×H. Slice ke-z = gambar tampak-atas dari lapisan z.
-   Untuk model dari 4 sisi: voxel ada jika SEMUA tampak punya piksel di situ
-   ("carving"). Warna diambil dari tampak yang benar-benar terlihat.
+   0. INTI SPRITE STACKING
+   Model = grid voxel L×W×H. Slice ke-z = gambar tampak-atas lapisan z.
+   Render: gambar slice dari bawah ke atas, tiap slice naik 1 px, semua
+   diputar dengan sudut yang sama.
    ===================================================================== */
-function makeCanvas(w, h) {
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  return c;
-}
-
-// Generic: solid(x,y,z) -> bool, color(x,y,z,exp) -> css color
-function buildModel(L, W, H, solid, color) {
-  const S = (x, y, z) => x >= 0 && y >= 0 && z >= 0 && x < L && y < W && z < H && solid(x, y, z);
-  const slices = [];
-  const shadow = makeCanvas(L, W), sctx = shadow.getContext('2d');
-  sctx.fillStyle = '#000';
-  for (let z = 0; z < H; z++) {
-    const c = makeCanvas(L, W), ctx = c.getContext('2d');
-    let any = false;
-    for (let y = 0; y < W; y++) for (let x = 0; x < L; x++) {
-      if (!S(x, y, z)) continue;
-      const exp = {
-        top: !S(x, y, z + 1),
-        xp: !S(x + 1, y, z), xn: !S(x - 1, y, z),
-        yp: !S(x, y + 1, z), yn: !S(x, y - 1, z),
-      };
-      const col = color(x, y, z, exp);
-      if (!col) continue;
-      ctx.fillStyle = col;
-      ctx.fillRect(x, y, 1, 1);
-      sctx.fillRect(x, y, 1, 1);
-      any = true;
-    }
-    slices.push(c);
-  }
-  return { L, W, H, slices, shadow };
-}
-
-// warp(x,y,z) -> x sumber: dipakai untuk animasi (menggeser kaki/tangan per frame)
-function buildFromViews(v, pal = PAL, warp = null) {
-  const L = v.top[0].length, W = v.top.length, H = v.side.length;
-  const sx = warp || ((x) => x);
-  const at = (rows, r, c) => (rows[r] && rows[r][c]) || '.';
-  const top   = (x, y)    => at(v.top, y, x);
-  const side  = (x, z)    => at(v.side, H - 1 - z, x);
-  const front = (y, z)    => at(v.front, H - 1 - z, W - 1 - y); // dilihat dari depan: kiri pengamat = kanan mobil
-  const back  = (y, z)    => at(v.back, H - 1 - z, y);
-  const solid0 = (x, y, z) => top(x, y) !== '.' && side(x, z) !== '.' && front(y, z) !== '.' && back(y, z) !== '.';
-  const solid = (x, y, z) => solid0(sx(x, y, z), y, z);
-  const color = (x0, y, z, e) => {
-    const x = sx(x0, y, z);
-    let ch;
-    if (e.yp || e.yn)      ch = side(x, z);   // tepi kiri/kanan -> warna tampak samping
-    else if (e.xp)         ch = front(y, z);  // tepi depan
-    else if (e.xn)         ch = back(y, z);   // tepi belakang
-    else if (e.top)        ch = top(x, y);    // permukaan atas -> warna tampak atas
-    else                   ch = side(x, z);   // bagian dalam (hampir tak terlihat)
-    return pal[ch] || pal.K;
-  };
-  const m = buildModel(L, W, H, solid, color);
-  m.views = v;
-  return m;
-}
-
-// ---------- Model prosedural lain (pohon, cone, tumpukan ban) ----------
+const TAU = Math.PI * 2;
+function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 function hash(x, y, z) {
   let h = (x * 374761393 + y * 668265263 + z * 2147483647) | 0;
-  h = (h ^ (h >>> 13)) * 1274126177;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
+function rng(seed) { let s = (seed >>> 0) || 1; return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; }
+const hexRGB = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const clamp255 = v => Math.max(0, Math.min(255, Math.round(v)));
+const mixc = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+// 4 tingkat warna (gelap -> terang) dari satu warna dasar
+function ramp(hex) {
+  const c = hexRGB(hex);
+  return [mixc(c.map(v => v * 0.55), [40, 24, 64], 0.18), c.map(v => v * 0.8), c, mixc(c, [255, 248, 228], 0.3)].map(a => a.map(clamp255));
+}
+const RAMP_CACHE = {};
+const R = hex => RAMP_CACHE[hex] || (RAMP_CACHE[hex] = ramp(hex));
 
-function makeTree(seed) {
-  const N = 17, H = 22, c = (N - 1) / 2;
-  const radius = z => {
-    if (z < 4) return 1.4;
-    const t = (z - 4) / (H - 4);
-    const tier = 1 - ((z - 4) % 6) / 9;
-    return Math.max(0.6, (1 - t) * 7.8 * tier + 0.5);
+/* buildVox: fill(x,y,z) -> material (atau null); color(x,y,z,m,exp,at) -> [r,g,b].
+   exp = sisi mana yang terbuka (top, xp, xn, yp, yn). */
+function buildVox(L, W, H, fill, color, o = {}) {
+  const bb = o.bbox || [0, 0, 0, L - 1, W - 1, H - 1];
+  const grid = new Array(L * W * H);
+  const I = (x, y, z) => (z * W + y) * L + x;
+  for (let z = bb[2]; z <= bb[5]; z++) for (let y = bb[1]; y <= bb[4]; y++) for (let x = bb[0]; x <= bb[3]; x++) {
+    const m = fill(x, y, z);
+    if (m) grid[I(x, y, z)] = m;
+  }
+  const at = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= L || y >= W || z >= H) ? null : grid[I(x, y, z)];
+  const slices = [];
+  const shadow = makeCanvas(L, W), sctx = shadow.getContext('2d'), sdata = sctx.createImageData(L, W);
+  let top = -1;
+  for (let z = 0; z <= bb[5]; z++) {
+    let img = null;
+    for (let y = bb[1]; y <= bb[4]; y++) for (let x = bb[0]; x <= bb[3]; x++) {
+      const m = grid[I(x, y, z)];
+      if (!m) continue;
+      const e = { top: !at(x, y, z + 1), xp: !at(x + 1, y, z), xn: !at(x - 1, y, z), yp: !at(x, y + 1, z), yn: !at(x, y - 1, z) };
+      const c = color(x, y, z, m, e, at);
+      if (!img) img = new ImageData(L, W);
+      const k = (y * L + x) * 4;
+      img.data[k] = c[0]; img.data[k + 1] = c[1]; img.data[k + 2] = c[2]; img.data[k + 3] = 255;
+      sdata.data[k + 3] = 255;
+    }
+    if (img) { const cv = makeCanvas(L, W); cv.getContext('2d').putImageData(img, 0, 0); slices[z] = cv; top = z; }
+    else slices[z] = null;
+  }
+  slices.length = top + 1;
+  sctx.putImageData(sdata, 0, 0);
+  const model = { L, W, H: slices.length, slices, shadow };
+  if (o.views) model.vc = projectViews(L, W, slices.length, at, color);
+  return model;
+}
+
+// Tampak 4 sisi diproyeksikan dari voxel (untuk tutorial)
+function projectViews(L, W, H, at, color) {
+  const proj = (w, h, fn) => {
+    const c = makeCanvas(w, h), g = c.getContext('2d'), img = g.createImageData(w, h);
+    for (let v = 0; v < h; v++) for (let u = 0; u < w; u++) {
+      const col = fn(u, v); if (!col) continue;
+      const k = (v * w + u) * 4; img.data[k] = col[0]; img.data[k + 1] = col[1]; img.data[k + 2] = col[2]; img.data[k + 3] = 255;
+    }
+    g.putImageData(img, 0, 0); return c;
   };
-  return buildModel(N, N, H,
-    (x, y, z) => {
-      const d = Math.hypot(x - c, y - c);
-      return d <= radius(z) + (z >= 4 ? (hash(x + seed, y, z) - 0.5) * 0.9 : 0);
-    },
-    (x, y, z, e) => {
-      if (z < 4) return e.top ? '#6b4a2b' : '#4a301b';
-      const n = hash(x, y + seed, z);
-      if (!e.top && (e.xp || e.xn || e.yp || e.yn)) return n < 0.5 ? '#1e5a2c' : '#174a24';
-      return n < 0.3 ? '#4fa64a' : n < 0.8 ? '#3b8f3c' : '#2f7734';
-    });
-}
-
-function makeCone() {
-  const N = 7, H = 9, c = 3;
-  return buildModel(N, N, H,
-    (x, y, z) => z === 0 ? true : Math.hypot(x - c, y - c) <= 3.1 - z * 0.33,
-    (x, y, z, e) => {
-      if (z === 0) return e.xp || e.xn || e.yp || e.yn ? '#a8401a' : '#d9561f';
-      if (z === 4 || z === 5) return e.top ? '#ffffff' : '#c9c9c9';
-      return e.top ? '#ff7a2e' : '#d9561f';
-    });
-}
-
-function makeTires() {
-  const N = 11, H = 9, c = 5;
-  return buildModel(N, N, H,
-    (x, y, z) => { const d = Math.hypot(x - c, y - c); return d <= 5.2 && d >= 2.2; },
-    (x, y, z, e) => {
-      const band = Math.floor(z / 3) % 2;
-      if (e.top) return band ? '#e8e8e8' : '#d33b3b';
-      return band ? '#9a9a9a' : '#922828';
-    });
-}
-
-const CAR = buildFromViews(CAR_VIEWS);
-CAR.views = CAR_VIEWS; CAR.pal = PAL;
-
-// Animasi jalan: 4 frame. Kaki kiri/kanan dan tangan diayun berlawanan arah (geser x).
-// o = { legTop, armTop, armBot, mid, armL, armR, amp }
-function makeWalkFrames(views, pal, o) {
-  return [0, 1, 0, -1].map(swing => {
-    const m = buildFromViews(views, pal, (x, y, z) => {
-      const left = y < o.mid ? 1 : -1;
-      if (z <= o.legTop)                      // kaki: makin bawah makin jauh
-        return x - Math.round(swing * left * o.amp * (o.legTop + 1 - z) / (o.legTop + 1));
-      if (z >= o.armBot && z <= o.armTop && (y <= o.armL || y >= o.armR))  // tangan
-        return x + Math.round(swing * left * o.amp * (o.armTop + 1 - z) / (o.armTop + 1 - o.armBot));
-      return x;
-    });
-    m.pal = pal;
-    return m;
-  });
-}
-const ROBOT_FRAMES = makeWalkFrames(ROBOT_VIEWS, ROBOT_PAL, { legTop: 7, armBot: 8, armTop: 13, mid: 7, armL: 2, armR: 11, amp: 2 });
-/* ---------- Manusia organik: dibangun dari bentuk bulat, bukan dari 4 gambar ----------
-   Tiap voxel diisi material lewat fungsi bentuk (bola, elipsoid, kapsul).
-   Normal permukaan dihitung dari tetangga kosong, lalu diberi cahaya dan
-   dikuantisasi ke 4 tingkat warna (ramp) supaya tetap terlihat pixel art. */
-const RAMPS = {
-  skin:  ['#a8624c', '#d99a78', '#f3c4a0', '#ffe2c8'],
-  hair:  ['#24140d', '#43281a', '#673f27', '#8c5a38'],
-  shirt: ['#6e1a26', '#b0303a', '#d9514e', '#f27d6a'],
-  pants: ['#1b2550', '#2c4183', '#3f5fae', '#5a80cc'],
-  shoe:  ['#161112', '#2e2220', '#4a3731', '#665048'],
-  eye:   ['#141420', '#141420', '#1e1e30', '#2a2a40'],
-  blush: ['#c96d62', '#e88a7c', '#f5a092', '#f5a092'],
-  blade: ['#7d8794', '#b4bfcc', '#dde5ee', '#ffffff'],
-  hilt:  ['#5a3a12', '#8a5a1c', '#c08a2a', '#e8b84a'],
-  orb:   ['#49b8ff', '#7fd6ff', '#bff0ff', '#ffffff'],
-};
-const LIGHT = (() => { const v = [0.35, -0.45, 0.82], l = Math.hypot(...v); return v.map(c => c / l); })();
-
-function segDist(p, a, b) {          // jarak titik ke ruas garis + posisi t (0..1)
-  const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], ap = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
-  const t = Math.max(0, Math.min(1, (ap[0] * ab[0] + ap[1] * ab[1] + ap[2] * ab[2]) / (ab[0] ** 2 + ab[1] ** 2 + ab[2] ** 2)));
-  return [Math.hypot(ap[0] - ab[0] * t, ap[1] - ab[1] * t, ap[2] - ab[2] * t), t];
-}
-const capsule = (p, a, b, r0, r1) => { const [d, t] = segDist(p, a, b); return d <= r0 + (r1 - r0) * t ? t : -1; };
-const ellip = (p, c, rx, ry, rz) => ((p[0] - c[0]) / rx) ** 2 + ((p[1] - c[1]) / ry) ** 2 + ((p[2] - c[2]) / rz) ** 2;
-
-/* ---------- Rangka (skeleton) manusia ----------
-   Pose = sudut sendi. Sudut tungkai diukur di bidang depan-atas:
-   0 = lurus ke bawah, +π/2 = lurus ke depan, π = lurus ke atas, negatif = ke belakang.
-   L = kiri (y kecil), R = kanan. Semua gerakan RPG hanyalah kumpulan pose ini. */
-const HL = 26, HW = 18, HH = 30;                     // ukuran grid voxel manusia
-const POSE0 = {
-  lean: 0.03,  // condong badan (+ ke depan)
-  hp: 0,       // kepala menunduk/mendongak relatif badan
-  thL: 0, thR: 0, knL: 0.1, knR: 0.1,              // paha & tekukan lutut
-  arL: 0.08, arR: 0.08, elL: 0.25, elR: 0.25,      // lengan atas & tekukan siku
-  spL: 0.12, spR: 0.12,                            // lengan membuka ke samping
-  tw: 0,       // putar bahu (pukulan)
-  px: 0,       // geser badan maju/mundur di dalam grid
-  jump: 0,     // tinggi lompat (voxel) -> digambar oleh renderer, bukan di voxel
-  sword: 0, swa: 0,   // pedang & sudut pedang relatif lengan bawah
-  orb: 0,      // radius bola sihir
-};
-const limb = a => [Math.sin(a), 0, -Math.cos(a)];
-const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
-const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-
-function humanShape(P) {
-  P = Object.assign({}, POSE0, P);
-  const cy = HW / 2;
-  const up = [Math.sin(P.lean), 0, Math.cos(P.lean)], fwd = [Math.cos(P.lean), 0, -Math.sin(P.lean)];
-  const pelvis = [HL / 2 - 1 + P.px, cy, 0];
-  const neck = add(pelvis, up, 7.8);
-  const J = { pelvis, neck };
-  const ha = P.lean + P.hp;
-  const hu = [Math.sin(ha), 0, Math.cos(ha)], hf = [Math.cos(ha), 0, -Math.sin(ha)];
-  J.head = add(neck, hu, 4.6);
-  J.arms = [-1, 1].map(s => {
-    const S = s < 0 ? 'L' : 'R', a = P['ar' + S], el = P['el' + S], sp = P['sp' + S];
-    const sh = add(add(pelvis, up, 6.6), [-s * 3.3 * Math.sin(P.tw), s * 3.3 * Math.cos(P.tw), 0]);
-    const dir = (ang, b) => [Math.sin(ang) * Math.cos(b), s * Math.sin(b), -Math.cos(ang) * Math.cos(b)];
-    const elbow = add(sh, dir(a, sp), 3.3);
-    const hand = add(elbow, dir(a + el, sp * 0.5), 3.1);
-    return { sh, elbow, hand, fa: a + el };
-  });
-  J.legs = [-1, 1].map(s => {
-    const S = s < 0 ? 'L' : 'R', th = P['th' + S], kn = P['kn' + S];
-    const hip = add(add(pelvis, up, -0.3), [0, s * 1.7, 0]);
-    const knee = add(hip, limb(th), 4.4);
-    const ankle = add(knee, limb(th - kn), 4.3);
-    const toe = add(ankle, limb(th - kn + Math.PI / 2), 1.7);
-    return { hip, knee, ankle, toe };
-  });
-  // Grounding: geser seluruh badan supaya titik terendah tepat menyentuh tanah (z=0)
-  const pts = [[pelvis, 2.4], [neck, 2.4], [J.head, 4.0]];
-  for (const a of J.arms) pts.push([a.elbow, 1.2], [a.hand, 1.25]);
-  for (const l of J.legs) pts.push([l.knee, 1.5], [l.ankle, 1.25], [l.toe, 1.15]);
-  const shift = -Math.min(...pts.map(([p, r]) => p[2] - r));
-  const all = [pelvis, neck, J.head];
-  for (const a of J.arms) all.push(a.sh, a.elbow, a.hand);
-  for (const l of J.legs) all.push(l.hip, l.knee, l.ankle, l.toe);
-  for (const p of all) p[2] += shift;
-
-  const R = J.arms[1];
-  const bladeDir = limb(R.fa + P.swa);
-  const orbC = add(add(J.arms[0].hand, J.arms[1].hand), [0, 0, 0], 1).map(v => v / 2);
-  const orbPos = add(orbC, fwd, 2.2);
-
-  const mat = (x, y, z) => {
-    const p = [x + 0.5, y + 0.5, z + 0.5];
-    if (P.orb > 0 && ellip(p, orbPos, P.orb, P.orb, P.orb) <= 1) return 'orb';
-    if (P.sword) {
-      if (capsule(p, add(R.hand, bladeDir, -1.2), add(R.hand, bladeDir, 1.0), 0.65, 0.65) >= 0) return 'hilt';
-      if (capsule(p, add(R.hand, bladeDir, 1.0), add(R.hand, bladeDir, 1.6), 1.6, 1.6) >= 0 && Math.abs(dot([p[0] - R.hand[0], 0, p[2] - R.hand[2]], bladeDir) - 1.3) < 0.5) return 'hilt';
-      if (capsule(p, add(R.hand, bladeDir, 1.6), add(R.hand, bladeDir, 11), 1.0, 0.55) >= 0) return 'blade';
-    }
-    for (const l of J.legs) if (capsule(p, l.ankle, l.toe, 1.3, 1.15) >= 0) return 'shoe';
-    // kepala + rambut (koordinat lokal kepala, ikut menunduk/mendongak)
-    const v = [p[0] - J.head[0], p[1] - J.head[1], p[2] - J.head[2]];
-    const dx = dot(v, hf), dy = v[1], dz = dot(v, hu);
-    const inHead = (dx / 3.9) ** 2 + (dy / 3.7) ** 2 + (dz / 4.0) ** 2 <= 1;
-    const face = dx > 0.6 && dz < 1.4 && dz > -3.6 && Math.abs(dy) < 3.0;
-    if (inHead) {
-      if (!face) return 'hair';
-      if (dx > 2.3 && Math.abs(dz - 0.1) < 0.75 && Math.abs(Math.abs(dy) - 1.5) < 0.55) return 'eye';
-      if (dx > 2.0 && Math.abs(dz + 1.0) < 0.5 && Math.abs(Math.abs(dy) - 2.2) < 0.6) return 'blush';
-      return 'skin';
-    }
-    if (!face && ((dx + 0.4) / 4.5) ** 2 + (dy / 4.3) ** 2 + ((dz - 0.2) / 4.4) ** 2 <= 1 && dz > -3.2) return 'hair';
-    for (const a of J.arms) {
-      if (ellip(p, a.hand, 1.3, 1.25, 1.3) <= 1) return 'skin';
-      const t1 = capsule(p, a.sh, a.elbow, 1.35, 1.15);
-      if (t1 >= 0) return t1 < 0.7 ? 'shirt' : 'skin';
-      if (capsule(p, a.elbow, a.hand, 1.15, 1.0) >= 0) return 'skin';
-    }
-    // badan: penampang elips (lebar ke samping), sumbu mengikuti condong badan
-    const w = [p[0] - pelvis[0], p[1] - pelvis[1], p[2] - pelvis[2]];
-    const t = (dot(w, up) + 1.0) / 9;
-    if (t >= 0 && t <= 1) {
-      let ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
-      if (t > 0.72) { const k = Math.sqrt(Math.max(0, 1 - ((t - 0.72) / 0.3) ** 2)); ry *= 0.55 + 0.45 * k; rx *= 0.6 + 0.4 * k; }
-      if ((dot(w, fwd) / rx) ** 2 + (w[1] / ry) ** 2 <= 1) return t < 0.2 ? 'pants' : 'shirt';
-    }
-    if (capsule(p, add(neck, up, -0.6), add(neck, hu, 1.4), 1.1, 1.1) >= 0) return 'skin';
-    for (const l of J.legs) {
-      if (capsule(p, l.hip, l.knee, 1.65, 1.4) >= 0) return 'pants';
-      if (capsule(p, l.knee, l.ankle, 1.4, 1.2) >= 0) return 'pants';
+  const first = cells => {
+    for (const [x, y, z] of cells) {
+      const m = at(x, y, z);
+      if (m) return color(x, y, z, m, { top: !at(x, y, z + 1), xp: !at(x + 1, y, z), xn: !at(x - 1, y, z), yp: !at(x, y + 1, z), yn: !at(x, y - 1, z) }, at);
     }
     return null;
   };
-  mat.lift = P.jump;
-  return mat;
+  const range = (n, rev) => [...Array(n).keys()].map(i => rev ? n - 1 - i : i);
+  return {
+    top:   proj(L, W, (x, y) => first(range(H, true).map(z => [x, y, z]))),
+    side:  proj(L, H, (x, r) => first(range(W).map(y => [x, y, H - 1 - r]))),
+    front: proj(W, H, (c, r) => first(range(L, true).map(x => [x, W - 1 - c, H - 1 - r]))),
+    back:  proj(W, H, (c, r) => first(range(L).map(x => [x, c, H - 1 - r]))),
+  };
 }
 
-/* ---------- Daftar gerakan ----------
-   Gerakan berulang (siklus) = fungsi fase. Gerakan aksi = keyframe pose yang diinterpolasi. */
-const TAU = Math.PI * 2;
+// Pewarnaan "kotak": atas paling terang, sisi depan/kanan sedang, sisi lain gelap
+function boxColor(look) {
+  return (x, y, z, m, e) => {
+    const r = look(m);
+    let i = e.top ? 3 : (e.xp || e.yp) ? 2 : 1;
+    if (z === 0 && !e.top) i = Math.max(0, i - 1);
+    return r[i];
+  };
+}
+// Pewarnaan "organik": normal permukaan dari tetangga kosong -> cahaya -> 4 tingkat warna
+const LIGHT = (() => { const v = [0.35, -0.45, 0.82], l = Math.hypot(...v); return v.map(c => c / l); })();
+const NOFF = [];
+for (let k = -2; k <= 2; k++) for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) {
+  const d = i * i + j * j + k * k;
+  if (d && d <= 6) NOFF.push([i, j, k, 1 / d]);
+}
+function organicColor(look) {
+  return (x, y, z, m, e, at) => {
+    const r = look(m);
+    if (r.length === 1) return r[0];
+    if (!(e.top || e.xp || e.xn || e.yp || e.yn)) return r[1];
+    let nx = 0, ny = 0, nz = 0;
+    for (const [i, j, k, w] of NOFF) if (!at(x + i, y + j, z + k)) { nx += i * w; ny += j * w; nz += k * w; }
+    const l = Math.hypot(nx, ny, nz) || 1;
+    const v = 0.38 + 0.62 * Math.max(0, (nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]) / l);
+    return r[v < 0.5 ? 0 : v < 0.72 ? 1 : v < 0.9 ? 2 : 3];
+  };
+}
+const boxHex = boxColor(R), organicHex = organicColor(R);
+
+/* RENDER inti. model.lift = naik (lompat / duduk di bale), model.yaw = putaran tambahan (jurus putar). */
+function drawStack(ctx, m, x, y, angle, spacing = 1, scale = 1, extraLift = 0) {
+  const sx = Math.round(x), sy = Math.round(y - ((m.lift || 0) + extraLift) * spacing * scale);
+  const a = angle + (m.yaw || 0), c = Math.cos(a) * scale, s = Math.sin(a) * scale;
+  const ox = -m.L / 2, oy = -m.W / 2;
+  for (let i = 0; i < m.slices.length; i++) {
+    const sl = m.slices[i];
+    if (!sl) continue;
+    ctx.setTransform(c, s, -s, c, sx, sy - i * spacing * scale);
+    ctx.drawImage(sl, ox, oy);
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
+function drawShadow(ctx, m, x, y, angle, scale = 1) {
+  const off = (m.shadowOff || 2) * scale, a = angle + (m.yaw || 0);
+  const c = Math.cos(a) * scale, s = Math.sin(a) * scale;
+  ctx.globalAlpha = 0.26;
+  ctx.setTransform(c, s, -s, c, Math.round(x) + off, Math.round(y) + off);
+  ctx.drawImage(m.shadow, -m.L / 2, -m.W / 2);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+}
+
+// Font piksel 3×5 untuk tulisan di gapura, warung, mushola
+const FONT = {
+  A: '010101111101101', B: '110101110101110', D: '110101101101110', E: '111100110100111', G: '011100101101011',
+  H: '101101111101101', I: '111010010010111', J: '001001001101010', K: '101101110101101', L: '100100100100111',
+  M: '101111111101101', N: '110101101101101', O: '010101101101010', R: '110101110101101', S: '011100010001110',
+  T: '111010010010010', U: '101101101101111', W: '101101111111101', ' ': '000000000000000',
+};
+function textMask(str, sc, gap) {
+  const cw = 3 * sc + gap, w = str.length * cw - gap, h = 5 * sc;
+  return { w, h, at(u, v) {
+    if (u < 0 || v < 0 || u >= w || v >= h) return false;
+    const ci = Math.floor(u / cw), cu = u % cw;
+    if (cu >= 3 * sc) return false;
+    return (FONT[str[ci]] || FONT[' '])[Math.floor(v / sc) * 3 + Math.floor(cu / sc)] === '1';
+  } };
+}
+
+/* =====================================================================
+   1. MODEL DARI 4 TAMPAK (mobil & robot)
+   Voxel ada jika SEMUA tampak punya piksel di situ ("carving").
+   Warna diambil dari sisi yang terlihat.
+   ===================================================================== */
+// Perbesar gambar tampak k kali (supaya ukurannya cocok dengan dunia baru)
+function upViews(v, k) {
+  const u = r => [...r].map(c => c.repeat(k)).join('');
+  const rows = a => a.flatMap(r => Array(k).fill(u(r)));
+  return { side: rows(v.side), top: rows(v.top), front: rows(v.front), back: rows(v.back) };
+}
+// warp(x,y,z) -> x sumber: untuk animasi (menggeser kaki/tangan per frame)
+function buildFromViews(v, pal, warp = null) {
+  const L = v.top[0].length, W = v.top.length, H = v.side.length;
+  const at = (rows, r, c) => (rows[r] && rows[r][c]) || '.';
+  const top = (x, y) => at(v.top, y, x), side = (x, z) => at(v.side, H - 1 - z, x);
+  const front = (y, z) => at(v.front, H - 1 - z, W - 1 - y), back = (y, z) => at(v.back, H - 1 - z, y);
+  const sx = warp || (x => x);
+  const solid0 = (x, y, z) => top(x, y) !== '.' && side(x, z) !== '.' && front(y, z) !== '.' && back(y, z) !== '.';
+  const rgb = {}; for (const k in pal) rgb[k] = hexRGB(pal[k]);
+  const fill = (x0, y, z) => { const x = sx(x0, y, z); return solid0(x, y, z) ? 'v' : null; };
+  const color = (x0, y, z, m, e) => {
+    const x = sx(x0, y, z);
+    const ch = (e.yp || e.yn) ? side(x, z) : e.xp ? front(y, z) : e.xn ? back(y, z) : e.top ? top(x, y) : side(x, z);
+    return rgb[ch] || rgb.K;
+  };
+  const m = buildVox(L, W, H, fill, color);
+  m.views = v; m.pal = pal;
+  return m;
+}
+const CAR_VIEWS2 = upViews(CAR_VIEWS, 2);
+const CAR = buildFromViews(CAR_VIEWS2, PAL);
+CAR.shadowOff = 3;
+
+// Animasi jalan robot: 4 frame, kaki & tangan digeser berlawanan arah
+const ROBOT_VIEWS2 = upViews(ROBOT_VIEWS, 2);
+function makeWalkFrames(views, pal, o) {
+  return [0, 1, 0, -1].map(swing => buildFromViews(views, pal, (x, y, z) => {
+    const left = y < o.mid ? 1 : -1;
+    if (z <= o.legTop) return x - Math.round(swing * left * o.amp * (o.legTop + 1 - z) / (o.legTop + 1));
+    if (z >= o.armBot && z <= o.armTop && (y <= o.armL || y >= o.armR)) return x + Math.round(swing * left * o.amp * (o.armTop + 1 - z) / (o.armTop + 1 - o.armBot));
+    return x;
+  }));
+}
+const ROBOT_FRAMES = makeWalkFrames(ROBOT_VIEWS2, ROBOT_PAL, { legTop: 15, armBot: 16, armTop: 27, mid: 14, armL: 5, armR: 22, amp: 4 });
+const ROBOT = ROBOT_FRAMES[0];
+
+/* =====================================================================
+   2. MANUSIA ORGANIK (tinggi ±36 voxel)
+   Rangka -> bentuk bulat (elipsoid/kapsul) -> cahaya per voxel.
+   Tiap tokoh = STYLE (warna, rambut, pakaian, skala).
+   ===================================================================== */
+const STYLES = {
+  player:     { name: 'Kamu', scale: 1.33, skin: '#f0c09a', hair: '#4a2c1c', hairStyle: 'short', top: '#d64545', sleeves: 'short', bottom: '#3a5bb0', bottomStyle: 'pants', shoe: '#3b2a22', shoeStyle: 'shoe' },
+  ibuHijab:   { name: 'Bu Siti', scale: 1.25, skin: '#e8b48c', hijab: '#c2477a', hairStyle: 'hijab', top: '#efe3cc', sleeves: 'long', bottom: '#5a3d7a', bottom2: '#d8b860', bottomStyle: 'skirt', bottomPattern: 'batik', shoe: '#5a3a2a', shoeStyle: 'sandal' },
+  ibuHijab2:  { name: 'Bu Ani', scale: 1.25, skin: '#d9a37c', hijab: '#2f7a8a', hairStyle: 'hijab', top: '#f0cfa0', sleeves: 'long', bottom: '#3a4a6a', bottom2: '#9ab0d0', bottomStyle: 'skirt', bottomPattern: 'batik', shoe: '#2a2a2a', shoeStyle: 'sandal' },
+  ibuDaster:  { name: 'Bu Narti', scale: 1.24, skin: '#d9a07a', hair: '#2a1a12', hairStyle: 'bun', top: '#e0705a', top2: '#f6d27a', topPattern: 'batik', sleeves: 'short', bottom: '#e0705a', bottom2: '#f6d27a', bottomStyle: 'skirt', bottomPattern: 'batik', shoe: '#3a7a4a', shoeStyle: 'sandal' },
+  bapakPeci:  { name: 'Pak Haji', scale: 1.3, skin: '#c98e66', hair: '#1e1a18', hairStyle: 'peci', top: '#f2f0ea', top2: '#b8b0a0', topPattern: 'koko', sleeves: 'long', bottom: '#2f6b52', bottom2: '#c9b26a', bottomStyle: 'sarung', bottomPattern: 'plaid', shoe: '#2a2a2a', shoeStyle: 'sandal', belly: 0.7 },
+  kakek:      { name: 'Mbah Darmo', scale: 1.22, skin: '#c08a64', hair: '#dcd8d0', hairStyle: 'bald', top: '#ece8dc', sleeves: 'short', bottom: '#7a4a2a', bottom2: '#3a2a1a', bottomStyle: 'sarung', bottomPattern: 'plaid', shoe: '#3a3a3a', shoeStyle: 'sandal', glasses: true },
+  pakRT:      { name: 'Pak RT', scale: 1.3, skin: '#d29a72', hair: '#6a6a6a', hairStyle: 'short', glasses: true, top: '#7a4a24', top2: '#e8c070', topPattern: 'batik', sleeves: 'short', bottom: '#2a2a30', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe', belly: 0.5 },
+  anakSD:     { name: 'Dimas', scale: 0.98, skin: '#e6b088', hair: '#1e1612', hairStyle: 'short', top: '#f6f6f2', sleeves: 'short', bottom: '#c22a2a', bottomStyle: 'shorts', shoe: '#1a1a1a', shoeStyle: 'shoe' },
+  anakSDcw:   { name: 'Putri', scale: 0.98, skin: '#f0c09a', hair: '#2a1a12', hairStyle: 'ponytail', top: '#f6f6f2', sleeves: 'short', bottom: '#c22a2a', bottomStyle: 'skirt', skirtShort: true, shoe: '#1a1a1a', shoeStyle: 'shoe' },
+  pemuda:     { name: 'Bayu', scale: 1.3, skin: '#c98e66', hair: '#1a1410', hairStyle: 'short', top: '#26365a', top2: '#e8e8e8', topPattern: 'stripe', sleeves: 'short', bottom: '#b8a070', bottomStyle: 'shorts', shoe: '#2a6ac0', shoeStyle: 'sandal' },
+  mbak:       { name: 'Mbak Rina', scale: 1.25, skin: '#f0c4a0', hair: '#2a1810', hairStyle: 'long', top: '#f2c94c', sleeves: 'short', bottom: '#4466aa', bottomStyle: 'pants', shoe: '#f2f2f2', shoeStyle: 'shoe' },
+  tukangBakso:{ name: 'Mas Bakso', scale: 1.28, skin: '#b8805a', hair: '#1a1410', hairStyle: 'cap', cap: '#d23a3a', top: '#3a7ac0', sleeves: 'long', bottom: '#3a3a40', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'sandal' },
+};
+const fixedRamp = c => [hexRGB(c)];
+for (const id in STYLES) {
+  const st = STYLES[id], r = {};
+  r.skin = R(st.skin); r.nose = [r.skin[0], r.skin[0], r.skin[1], r.skin[1]];
+  r.hair = R(st.hair || '#222222'); r.brow = [r.hair[0], r.hair[0], r.hair[0], r.hair[1]];
+  if (st.hairStyle === 'hijab') r.brow = [R('#3a2418')[0], R('#3a2418')[0], R('#3a2418')[1], R('#3a2418')[1]];
+  r.top = R(st.top); r.top2 = R(st.top2 || st.top);
+  r.bottom = R(st.bottom); r.bottom2 = R(st.bottom2 || st.bottom);
+  r.shoe = R(st.shoe); r.sole = R('#2a2420');
+  r.hijab = R(st.hijab || '#888888'); r.peci = R('#1e1e24'); r.cap = R(st.cap || '#cc3333');
+  r.eye = fixedRamp('#16121e'); r.eyeW = fixedRamp('#ffffff'); r.mouth = fixedRamp('#9a3f38');
+  r.blush = fixedRamp('#ec8f82'); r.glasses = fixedRamp('#26262c');
+  r.blade = R('#c4ced8'); r.hilt = R('#b07a26'); r.orb = R('#8fe0ff');
+  r.stick = R('#9a7440'); r.bristle = R('#d4b36a');
+  st.ramps = r; st.color = organicColor(m => r[m]);
+}
+
+/* ---------- Rangka ----------
+   Sudut tungkai: 0 = lurus ke bawah, +π/2 = ke depan, π = ke atas, negatif = ke belakang.
+   L = kiri, R = kanan. Satuan panjang = "unit", dikali style.scale jadi voxel. */
+const POSE0 = {
+  lean: 0.03, hp: 0, thL: 0, thR: 0, knL: 0.1, knR: 0.1,
+  arL: 0.08, arR: 0.08, elL: 0.25, elR: 0.25, spL: 0.12, spR: 0.12,
+  tw: 0, px: 0, jump: 0, yaw: 0, sword: 0, swa: 0, orb: 0, broom: 0, bsw: 0,
+};
+const limb = a => [Math.sin(a), 0, -Math.cos(a)];
+const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const rotY = (v, t) => [v[0] * Math.cos(t) - v[2] * Math.sin(t), v[1], v[2] * Math.cos(t) + v[0] * Math.sin(t)];
+// kapsul (ruas a-b, jari-jari r0 -> r1): return posisi t (0..1) jika titik p di dalam, -1 jika di luar.
+// Ditulis tanpa membuat array baru supaya cepat (dipanggil ribuan kali per frame).
+function capsule(p, a, b, r0, r1) {
+  const abx = b[0] - a[0], aby = b[1] - a[1], abz = b[2] - a[2];
+  const apx = p[0] - a[0], apy = p[1] - a[1], apz = p[2] - a[2];
+  const rm = r0 > r1 ? r0 : r1;
+  const L2 = abx * abx + aby * aby + abz * abz;
+  let t = L2 ? (apx * abx + apy * aby + apz * abz) / L2 : 0;
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const dx = apx - abx * t, dy = apy - aby * t, dz = apz - abz * t, r = r0 + (r1 - r0) * t;
+  return dx * dx + dy * dy + dz * dz <= r * r && rm > 0 ? t : -1;
+}
+const sph = (p, c, r) => (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 + (p[2] - c[2]) ** 2 <= r * r;
+
+// part: 'all' | 'upper' (badan atas + kepala + tangan + properti) | 'lower' (pinggul + kaki)
+function humanShape(P0, st, part = 'all') {
+  const P = Object.assign({}, POSE0, P0), S = st.scale;
+  const L = Math.ceil(27 * S), W = Math.ceil(19 * S), H = Math.ceil(40 * S);
+  const cy = W / 2;
+  const up = [Math.sin(P.lean), 0, Math.cos(P.lean)], fwd = [Math.cos(P.lean), 0, -Math.sin(P.lean)];
+  const pelvis = [L / 2 - S + P.px * S, cy, 0];
+  const neck = add(pelvis, up, 7.8 * S);
+  const ha = P.lean + P.hp, hu = [Math.sin(ha), 0, Math.cos(ha)], hf = [Math.cos(ha), 0, -Math.sin(ha)];
+  const head = add(neck, hu, 4.6 * S);
+  const arms = [-1, 1].map(s => {
+    const k = s < 0 ? 'L' : 'R', a = P['ar' + k], el = P['el' + k], sp = P['sp' + k];
+    const sh = add(add(pelvis, up, 6.6 * S), [-s * 3.3 * S * Math.sin(P.tw), s * 3.3 * S * Math.cos(P.tw), 0]);
+    const dir = (ang, b) => [Math.sin(ang) * Math.cos(b), s * Math.sin(b), -Math.cos(ang) * Math.cos(b)];
+    const elbow = add(sh, dir(a, sp), 3.3 * S);
+    const hand = add(elbow, dir(a + el, sp * 0.5), 3.1 * S);
+    return { sh, elbow, hand };
+  });
+  const legs = [-1, 1].map(s => {
+    const k = s < 0 ? 'L' : 'R', th = P['th' + k], kn = P['kn' + k];
+    const hip = add(add(pelvis, up, -0.3 * S), [0, s * 1.7 * S, 0]);
+    const knee = add(hip, limb(th), 4.4 * S);
+    const ankle = add(knee, limb(th - kn), 4.3 * S);
+    const toe = add(ankle, limb(th - kn + Math.PI / 2), 1.7 * S);
+    return { hip, knee, ankle, toe };
+  });
+  // Grounding: geser badan supaya titik terendah menyentuh tanah
+  const butt = add(pelvis, up, -1.0 * S), chest = add(pelvis, up, 3.0 * S);
+  const gp = [[butt, 0.5], [chest, 2.1], [neck, 2.0], [head, 4.0]];
+  for (const a of arms) gp.push([a.elbow, 1.2], [a.hand, 1.25]);
+  for (const l of legs) gp.push([l.knee, 1.5], [l.ankle, 1.25], [l.toe, 1.15]);
+  const shift = -Math.min(...gp.map(([p, r]) => p[2] - r * S));
+  const pts = [pelvis, neck, head, butt, chest];
+  for (const a of arms) pts.push(a.sh, a.elbow, a.hand);
+  for (const l of legs) pts.push(l.hip, l.knee, l.ankle, l.toe);
+  for (const p of pts) p[2] += shift;
+
+  const Rr = arms[1];
+  const bd = rotY(norm(sub(Rr.hand, Rr.elbow)), P.swa);            // arah pedang
+  const orbPos = add(add(arms[0].hand, arms[1].hand).map(v => v / 2), fwd, 2.2 * S);
+  const brd = norm([0.5, P.bsw, -1]);                               // arah sapu
+  const hs = st.hairStyle, bs = st.bottomStyle;
+  // titik-titik properti dihitung sekali (bukan per voxel)
+  const hilt0 = add(Rr.hand, bd, -1.2 * S), hilt1 = add(Rr.hand, bd, 1.0 * S), guardC = add(Rr.hand, bd, 1.3 * S);
+  const blade0 = add(Rr.hand, bd, 1.6 * S), blade1 = add(Rr.hand, bd, 14 * S);
+  const stick0 = add(Rr.hand, brd, -3 * S), stick1 = add(Rr.hand, brd, 10 * S), br0 = add(Rr.hand, brd, 9.5 * S), br1 = add(Rr.hand, brd, 14 * S);
+  const neck0 = add(neck, up, -0.6 * S), neck1 = add(neck, hu, 1.4 * S);
+
+  const topMat = (x, y, z, f, wy, rx) => {
+    if (st.topPattern === 'stripe' && Math.floor(z / 3) % 2) return 'top2';
+    if (st.topPattern === 'batik' && (((x + z) % 5 === 0 && (y + z) % 5 === 0) || hash(x >> 1, y >> 1, z >> 1) < 0.1)) return 'top2';
+    if (st.topPattern === 'koko' && Math.abs(wy) < 0.5 && f > rx * 0.7 && z % 3 === 0) return 'top2';
+    return 'top';
+  };
+  const bottomMat = (x, y, z) => {
+    if (st.bottomPattern === 'plaid' && (Math.floor(x / 2) % 3 === 0 || Math.floor(z / 2) % 3 === 0)) return 'bottom2';
+    if (st.bottomPattern === 'batik' && (((x + z) % 5 === 0 && (y + z) % 5 === 0) || hash(x >> 1, y >> 1, z >> 1) < 0.1)) return 'bottom2';
+    return 'bottom';
+  };
+  const faceMat = (dx, dy, dz) => {
+    const ay = Math.abs(dy);
+    if (st.glasses && dx > 1.6 && Math.abs(dz) < 1.0 && Math.abs(ay - 1.5) < 1.05 && !(Math.abs(dz) < 0.55 && Math.abs(ay - 1.5) < 0.6)) return 'glasses';
+    if (st.glasses && dx > 2.6 && Math.abs(dz) < 0.3 && ay < 0.5) return 'glasses';
+    if (dx > 2.0 && Math.abs(dz) < 0.75 && Math.abs(ay - 1.5) < 0.5) return (dz > 0.3 && ay > 1.5) ? 'eyeW' : 'eye';
+    if (dx > 1.8 && dz > 1.0 && dz < 1.55 && Math.abs(ay - 1.5) < 0.75) return 'brow';
+    if (dx > 1.8 && dz > -2.05 && dz < -1.45 && ay < 0.65) return 'mouth';
+    if (dx > 1.8 && dz > -1.35 && dz < -0.7 && Math.abs(ay - 2.3) < 0.45) return 'blush';
+    if (dx > 2.6 && dz > -1.0 && dz < -0.3 && ay < 0.35) return 'nose';
+    return 'skin';
+  };
+  const shortHair = (dx, dy, dz) => ((dx + 0.4) / 4.5) ** 2 + (dy / 4.3) ** 2 + ((dz - 0.2) / 4.4) ** 2 <= 1 && dz > -3.2;
+
+  const upperFn = (p, x, y, z) => {
+    // properti
+    if (P.orb > 0 && sph(p, orbPos, P.orb * S)) return 'orb';
+    if (P.sword > 0.5) {
+      if (capsule(p, hilt0, hilt1, 0.65 * S, 0.65 * S) >= 0) return 'hilt';
+      const qx = p[0] - guardC[0], qy = p[1] - guardC[1], qz = p[2] - guardC[2], al = qx * bd[0] + qy * bd[1] + qz * bd[2];
+      if (Math.abs(al) < 0.45 * S && Math.hypot(qx - bd[0] * al, qy - bd[1] * al, qz - bd[2] * al) < 1.9 * S) return 'hilt';
+      if (capsule(p, blade0, blade1, 1.3 * S, 0.6 * S) >= 0) return 'blade';
+    }
+    if (P.broom > 0.5) {
+      if (capsule(p, stick0, stick1, 0.45 * S, 0.45 * S) >= 0) return 'stick';
+      if (capsule(p, br0, br1, 0.7 * S, 2.6 * S) >= 0) return 'bristle';
+    }
+    // kepala (koordinat lokal kepala, satuan unit)
+    const vx = p[0] - head[0], vy = p[1] - head[1], vz = p[2] - head[2];
+    const dx = (vx * hf[0] + vz * hf[2]) / S, dy = vy / S, dz = (vx * hu[0] + vz * hu[2]) / S;
+    const inHead = (dx / 3.9) ** 2 + (dy / 3.7) ** 2 + (dz / 4.0) ** 2 <= 1;
+    const face = hs === 'hijab'
+      ? dx > 0.6 && (dy / 2.7) ** 2 + ((dz + 0.8) / 2.6) ** 2 <= 1
+      : dx > 0.6 && dz < 1.4 && dz > -3.6 && Math.abs(dy) < 3.0;
+    if (inHead) {
+      if (face) return faceMat(dx, dy, dz);
+      if (hs === 'hijab') return 'hijab';
+      if (hs === 'peci' && dz > 2.2) return 'peci';
+      if (hs === 'cap' && dz > 1.9) return 'cap';
+      if (hs === 'bald' && dz > 0.9) return 'skin';
+      return 'hair';
+    }
+    if (hs === 'hijab') {
+      if (!face && ((dx + 0.3) / 4.6) ** 2 + (dy / 4.4) ** 2 + ((dz - 0.1) / 4.6) ** 2 <= 1) return 'hijab';
+    } else if (hs === 'peci') {
+      if (dz > 2.0 && dz < 4.7 && ((dx + 0.1) / 4.1) ** 2 + (dy / 3.9) ** 2 <= 1) return 'peci';
+      if (!face && dz < 2.0 && shortHair(dx, dy, dz)) return 'hair';
+    } else if (hs === 'cap') {
+      if (dz > 1.6 && ((dx + 0.2) / 4.3) ** 2 + (dy / 4.1) ** 2 + ((dz - 0.8) / 4.2) ** 2 <= 1) return 'cap';
+      if (dx > 2.5 && dx < 6.4 && dz > 1.5 && dz < 2.5 && Math.abs(dy) < 3.0) return 'cap';
+      if (!face && dz < 1.6 && shortHair(dx, dy, dz)) return 'hair';
+    } else if (hs === 'bald') {
+      if (!face && dz < 0.9 && dx < 1.0 && shortHair(dx, dy, dz)) return 'hair';
+    } else {
+      if (!face && shortHair(dx, dy, dz)) return 'hair';
+      if (hs === 'long' && dx < 0.6 && ((dx + 1.3) / 3.4) ** 2 + (dy / 4.4) ** 2 + ((dz + 3.2) / 4.6) ** 2 <= 1) return 'hair';
+      if (hs === 'ponytail' && ((dx + 5.0) / 1.7) ** 2 + (dy / 1.5) ** 2 + ((dz + 1.0) / 3.2) ** 2 <= 1) return 'hair';
+      if (hs === 'bun' && (dx + 3.8) ** 2 + dy ** 2 + (dz - 2.6) ** 2 < 2.4 ** 2) return 'hair';
+    }
+    // lengan
+    for (const a of arms) {
+      if (sph(p, a.hand, 1.3 * S)) return 'skin';
+      const t1 = capsule(p, a.sh, a.elbow, 1.35 * S, 1.15 * S);
+      if (t1 >= 0) return (st.sleeves === 'long' || t1 < 0.7) ? topMat(x, y, z, 0, 9, 1) : 'skin';
+      const t2 = capsule(p, a.elbow, a.hand, 1.15 * S, 1.0 * S);
+      if (t2 >= 0) return (st.sleeves === 'long' && t2 < 0.8) ? topMat(x, y, z, 0, 9, 1) : 'skin';
+    }
+    // badan atas
+    const wx = p[0] - pelvis[0], wy0 = p[1] - pelvis[1], wz = p[2] - pelvis[2];
+    const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / 9;
+    if (t >= 0.2 && t <= 1) {
+      let ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
+      if (t > 0.72) { const k = Math.sqrt(Math.max(0, 1 - ((t - 0.72) / 0.3) ** 2)); ry *= 0.55 + 0.45 * k; rx *= 0.6 + 0.4 * k; }
+      const bump = st.belly ? st.belly * Math.exp(-(((t - 0.38) / 0.2) ** 2)) : 0;
+      const f = (wx * fwd[0] + wz * fwd[2]) / S - bump * 0.9, rxx = rx + bump * 0.9, wy = wy0 / S;
+      if (hs === 'hijab' && t > 0.58 && (f / (rxx + 0.7)) ** 2 + (wy / (ry + 0.6)) ** 2 <= 1) return 'hijab';
+      if ((f / rxx) ** 2 + (wy / ry) ** 2 <= 1) return topMat(x, y, z, f, wy, rxx);
+    }
+    if (capsule(p, neck0, neck1, 1.1 * S, 1.1 * S) >= 0) return hs === 'hijab' ? 'hijab' : 'skin';
+    return null;
+  };
+
+  const zTopSk = pelvis[2] + 1.6 * S;
+  const zBotSk = st.skirtShort ? Math.min(legs[0].knee[2], legs[1].knee[2]) - 0.3 * S
+    : Math.min(legs[0].ankle[2], legs[1].ankle[2]) + (bs === 'sarung' ? 1.6 : 0.9) * S;
+  const legX = (l, z) => {
+    const xs = [];
+    for (const [a, b] of [[l.hip, l.knee], [l.knee, l.ankle]]) {
+      const lo = Math.min(a[2], b[2]), hi = Math.max(a[2], b[2]);
+      if (z >= lo && z <= hi && hi > lo) xs.push(a[0] + (b[0] - a[0]) * (z - a[2]) / (b[2] - a[2]));
+    }
+    return xs;
+  };
+  const lowerFn = (p, x, y, z) => {
+    for (const l of legs) {
+      if (st.shoeStyle === 'sandal') {
+        if (capsule(p, l.ankle, l.toe, 1.15 * S, 1.05 * S) >= 0) return p[2] < Math.min(l.ankle[2], l.toe[2]) - 0.5 * S ? 'sole' : 'skin';
+      } else if (capsule(p, l.ankle, l.toe, 1.3 * S, 1.15 * S) >= 0) return 'shoe';
+    }
+    const wx = p[0] - pelvis[0], wy = p[1] - pelvis[1], wz = p[2] - pelvis[2];
+    const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / 9;
+    if (t >= 0 && t < 0.2) {
+      const ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
+      if (((wx * fwd[0] + wz * fwd[2]) / S / rx) ** 2 + (wy / S / ry) ** 2 <= 1) return bottomMat(x, y, z);
+    }
+    if ((bs === 'sarung' || bs === 'skirt') && p[2] <= zTopSk && p[2] >= zBotSk) {
+      const xs = [pelvis[0], ...legX(legs[0], p[2]), ...legX(legs[1], p[2])];
+      const xmin = Math.min(...xs), xmax = Math.max(...xs), fl = (zTopSk - p[2]) / (zTopSk - zBotSk || 1);
+      const pad = (1.9 + 0.5 * fl) * S, hy = (2.8 + 0.5 * fl) * S, hx = (xmax - xmin) / 2 + pad, xc = (xmin + xmax) / 2;
+      if (((p[0] - xc) / hx) ** 2 + ((p[1] - cy) / hy) ** 2 <= 1) return bottomMat(x, y, z);
+    }
+    for (const l of legs) {
+      if (capsule(p, l.hip, l.knee, 1.65 * S, 1.4 * S) >= 0) return (bs === 'pants' || bs === 'shorts') ? 'bottom' : 'skin';
+      const t2 = capsule(p, l.knee, l.ankle, 1.4 * S, 1.2 * S);
+      if (t2 >= 0) return bs === 'pants' || (bs === 'shorts' && t2 < 0.12) ? 'bottom' : 'skin';
+    }
+    return null;
+  };
+  const p = [0, 0, 0];
+  const mat = (x, y, z) => {
+    p[0] = x + 0.5; p[1] = y + 0.5; p[2] = z + 0.5;
+    let m = null;
+    if (part !== 'lower') m = upperFn(p, x, y, z);
+    if (!m && part !== 'upper') m = lowerFn(p, x, y, z);
+    return m;
+  };
+  // kotak batas supaya hanya area tubuh yang dihitung
+  const sp = [[pelvis, 4.6], [neck, 4.2], [head, 6.6]];
+  for (const a of arms) sp.push([a.sh, 2], [a.elbow, 2], [a.hand, 2]);
+  const lr = bs === 'sarung' || bs === 'skirt' ? 3.8 : 2.4;
+  for (const l of legs) sp.push([l.hip, lr], [l.knee, lr], [l.ankle, lr], [l.toe, 2.2]);
+  if (P.sword > 0.5) sp.push([add(Rr.hand, bd, 14 * S), 1.4], [add(Rr.hand, bd, -1.2 * S), 1.2], [add(Rr.hand, bd, 1.3 * S), 2]);
+  if (P.broom > 0.5) sp.push([add(Rr.hand, brd, 14 * S), 3], [add(Rr.hand, brd, -3 * S), 1]);
+  if (P.orb > 0) sp.push([orbPos, P.orb + 0.5]);
+  const lo = [0, 1, 2].map(i => Math.min(...sp.map(([c, r]) => c[i] - r * S)));
+  const hi = [0, 1, 2].map(i => Math.max(...sp.map(([c, r]) => c[i] + r * S)));
+  const dims = [L, W, H];
+  const bbox = [...lo.map((v, i) => Math.max(0, Math.floor(v))), ...hi.map((v, i) => Math.min(dims[i] - 1, Math.ceil(v)))];
+  return { mat, L, W, H, bbox, lift: P.jump * S, pelvisZ: pelvis[2], yaw: P.yaw };
+}
+
+/* ---------- Gerakan ----------
+   kind: 'loco' (jalan dll), 'upper' (badan atas saja -> bisa sambil jalan), 'full' (seluruh badan).
+   hit: { t: saat kena (0..1), r: jangkauan, arc: lebar sudut }. move: kecepatan gerak saat aksi. */
 function keyed(keys) {
-  // tiap key mewarisi key sebelumnya, jadi cukup tulis sendi yang berubah
   let acc = Object.assign({}, POSE0);
   const full = keys.map(([t, p]) => [t, acc = Object.assign({}, acc, p)]);
   return t => {
@@ -566,440 +770,1111 @@ function keyed(keys) {
     return o;
   };
 }
-const GUARD = { arL: 0.9, elL: 1.9, arR: 0.9, elR: 1.9, spL: 0.25, spR: 0.25, thL: 0.3, thR: -0.3, knL: 0.25, knR: 0.25, lean: 0.1 };
+const GUARD = { arL: 0.9, elL: 1.9, arR: 0.9, elR: 1.9, spL: 0.25, spR: 0.25, thL: 0.3, thR: -0.3, knL: 0.25, knR: 0.25, lean: 0.1, tw: 0 };
+const SW = { sword: 1, arR: 0.6, elR: 0.8, swa: 1.2, spR: 0.12, arL: 0.5, elL: 1.2, spL: 0.2, thL: 0.3, thR: -0.3, knL: 0.2, knR: 0.2, tw: 0, lean: 0.05, yaw: 0 };
+const sinT = t => Math.sin(t * TAU), cosT = t => Math.cos(t * TAU);
 const ANIMS = {
-  idle:   { name: 'Diam', n: 6, fps: 5, loop: true, pose: t => {
-    const s = Math.sin(t * TAU);
-    return { lean: 0.03 + 0.02 * s, elL: 0.25 + 0.06 * s, elR: 0.25 + 0.06 * s, spL: 0.12 + 0.03 * s, spR: 0.12 + 0.03 * s }; } },
-  walk:   { name: 'Jalan', n: 8, fps: 10, loop: true, pose: t => {
-    const s = Math.sin(t * TAU), c = Math.cos(t * TAU);
-    return { lean: 0.06, thL: 0.45 * s, thR: -0.45 * s, knL: 0.15 + 0.7 * Math.max(0, c), knR: 0.15 + 0.7 * Math.max(0, -c),
-             arL: -0.4 * s, arR: 0.4 * s, elL: 0.3, elR: 0.3 }; } },
-  run:    { name: 'Lari', n: 8, fps: 14, loop: true, pose: t => {
-    const s = Math.sin(t * TAU), c = Math.cos(t * TAU);
+  idle:   { name: 'Diam', kind: 'loco', n: 6, fps: 5, loop: true, pose: t => ({ lean: 0.03 + 0.02 * sinT(t), elL: 0.25 + 0.06 * sinT(t), elR: 0.25 + 0.06 * sinT(t), spL: 0.12 + 0.03 * sinT(t), spR: 0.12 + 0.03 * sinT(t) }) },
+  walk:   { name: 'Jalan', kind: 'loco', n: 8, fps: 10, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.06, thL: 0.45 * s, thR: -0.45 * s, knL: 0.15 + 0.7 * Math.max(0, c), knR: 0.15 + 0.7 * Math.max(0, -c), arL: -0.4 * s, arR: 0.4 * s, elL: 0.3, elR: 0.3 }; } },
+  run:    { name: 'Lari', kind: 'loco', n: 8, fps: 14, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
     return { lean: 0.3, hp: -0.2, thL: 0.25 + 0.85 * s, thR: 0.25 - 0.85 * s, knL: 0.35 + 1.5 * Math.max(0, c), knR: 0.35 + 1.5 * Math.max(0, -c),
              arL: 0.2 - 0.9 * s, arR: 0.2 + 0.9 * s, elL: 1.5, elR: 1.5, spL: 0.2, spR: 0.2, jump: 0.8 * Math.abs(s) }; } },
-  crouch: { name: 'Jongkok jalan', n: 8, fps: 8, loop: true, pose: t => {
-    const s = Math.sin(t * TAU), c = Math.cos(t * TAU);
-    return { lean: 0.5, hp: -0.45, thL: 1.0 + 0.35 * s, thR: 1.0 - 0.35 * s, knL: 1.9 + 0.3 * Math.max(0, c), knR: 1.9 + 0.3 * Math.max(0, -c),
-             arL: 0.7 - 0.3 * s, arR: 0.7 + 0.3 * s, elL: 0.9, elR: 0.9, spL: 0.2, spR: 0.2 }; } },
-  crawl:  { name: 'Merangkak', n: 8, fps: 6, loop: true, pose: t => {
-    const s = Math.sin(t * TAU), c = Math.cos(t * TAU);
-    return { lean: 1.3, hp: -0.75, px: -4, thL: 0.25 * s, thR: -0.25 * s, knL: 1.57 + 0.2 * Math.max(0, c), knR: 1.57 + 0.2 * Math.max(0, -c),
-             arL: -0.28 * s, arR: 0.28 * s, elL: 0, elR: 0, spL: 0.12, spR: 0.12 }; } },
-  jump:   { name: 'Lompat', n: 10, fps: 12, pose: keyed([
-    [0, {}],
-    [0.15, { thL: 0.7, thR: 0.7, knL: 1.4, knR: 1.4, lean: 0.35, arL: -0.6, arR: -0.6, elL: 0.2, elR: 0.2 }],
+  crouch: { name: 'Jongkok jalan', kind: 'loco', n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.5, hp: -0.45, thL: 1.0 + 0.35 * s, thR: 1.0 - 0.35 * s, knL: 1.9 + 0.3 * Math.max(0, c), knR: 1.9 + 0.3 * Math.max(0, -c), arL: 0.7 - 0.3 * s, arR: 0.7 + 0.3 * s, elL: 0.9, elR: 0.9, spL: 0.2, spR: 0.2 }; } },
+  crawl:  { name: 'Merangkak', kind: 'loco', n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 1.3, hp: -0.75, px: -4, thL: 0.25 * s, thR: -0.25 * s, knL: 1.57 + 0.2 * Math.max(0, c), knR: 1.57 + 0.2 * Math.max(0, -c), arL: -0.28 * s, arR: 0.28 * s, elL: 0, elR: 0 }; } },
+  sit:    { name: 'Duduk', kind: 'full', n: 4, fps: 3, loop: true, pose: t => ({ lean: -0.12 + 0.02 * sinT(t), thL: 1.75, thR: 1.7, knL: 0.45, knR: 0.5, arL: 0.6, arR: 0.55, elL: 1.0, elR: 1.0, spL: 0.15, spR: 0.15 }) },
+  sweep:  { name: 'Menyapu', kind: 'full', n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t);
+    return { broom: 1, lean: 0.35, hp: -0.1, thL: 0.25, thR: -0.15, knL: 0.35, knR: 0.3, arR: 0.85, elR: 0.5, arL: 0.95, elL: 0.9, spL: 0.05, spR: 0.05, tw: 0.3 * s, bsw: 0.55 * s }; } },
+  wave:   { name: 'Melambai', kind: 'upper', n: 6, fps: 8, loop: true, pose: t => ({ arR: 2.7, elR: 0.5 + 0.5 * sinT(t), spR: 0.35 + 0.15 * sinT(t) }) },
+  talk:   { name: 'Ngobrol', kind: 'upper', n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
+    return { arR: 0.7 + 0.35 * Math.max(0, s), elR: 1.3, arL: 0.4 + 0.25 * Math.max(0, -s), elL: 1.1, hp: 0.06 * s, lean: 0.05 }; } },
+  jump:   { name: 'Lompat', kind: 'full', move: 1, n: 10, fps: 12, pose: keyed([
+    [0, {}], [0.15, { thL: 0.7, thR: 0.7, knL: 1.4, knR: 1.4, lean: 0.35, arL: -0.6, arR: -0.6, elL: 0.2, elR: 0.2 }],
     [0.3, { thL: -0.1, thR: -0.1, knL: 0.1, knR: 0.1, lean: 0.05, arL: 2.6, arR: 2.6, jump: 3 }],
     [0.5, { thL: 1.0, thR: 0.8, knL: 1.6, knR: 1.5, arL: 1.8, arR: 1.8, jump: 7 }],
     [0.7, { thL: 0.3, thR: 0.2, knL: 0.4, knR: 0.4, arL: 1.0, arR: 1.0, jump: 3 }],
-    [0.85, { thL: 0.7, thR: 0.7, knL: 1.4, knR: 1.4, lean: 0.35, arL: 0.6, arR: 0.6, jump: 0 }],
-    [1, POSE0]]) },
-  punch:  { name: 'Pukul', n: 8, fps: 14, pose: keyed([
-    [0, GUARD],
-    [0.3, { tw: 0.35, arR: 0.5, elR: 2.0 }],
-    [0.5, { tw: -0.55, arR: 1.57, elR: 0, spR: 0.02, lean: 0.22 }],
-    [0.7, {}],
-    [1, Object.assign({}, GUARD, { tw: 0 })]]) },
-  kick:   { name: 'Tendang', n: 8, fps: 12, pose: keyed([
-    [0, GUARD],
-    [0.3, { thR: 1.3, knR: 2.0, thL: 0, knL: 0.15, lean: -0.1 }],
-    [0.5, { thR: 1.55, knR: 0.05, lean: -0.3, arL: 0.6, elL: 1.2, arR: -0.4, elR: 0.6 }],
-    [0.7, { thR: 1.3, knR: 2.0, lean: -0.1 }],
-    [1, GUARD]]) },
-  slash:  { name: 'Tebas pedang', n: 10, fps: 14, pose: keyed([
-    [0, { sword: 1, arR: 0.6, elR: 0.8, swa: 1.2, arL: 0.5, elL: 1.2, thL: 0.3, thR: -0.3, knL: 0.2, knR: 0.2 }],
-    [0.35, { arR: 2.9, elR: 0.4, swa: 0.6, lean: -0.1, tw: 0.3 }],
-    [0.6, { arR: 1.3, elR: 0, swa: 0.3, lean: 0.25, tw: -0.4, thL: 0.5, knL: 0.4 }],
-    [0.8, { arR: 0.6, swa: 0.3 }],
-    [1, { arR: 0.6, elR: 0.8, swa: 1.2, lean: 0.03, tw: 0, thL: 0.3, knL: 0.2 }]]) },
-  cast:   { name: 'Sihir', n: 10, fps: 10, pose: keyed([
-    [0, {}],
-    [0.3, { arL: 1.9, arR: 1.9, elL: 0.3, elR: 0.3, spL: 0.35, spR: 0.35, orb: 1.2, thL: 0.25, thR: -0.25 }],
-    [0.6, { arL: 2.1, arR: 2.1, orb: 2.4, lean: -0.08 }],
-    [0.8, { arL: 1.57, arR: 1.57, elL: 0, elR: 0, spL: 0.15, spR: 0.15, orb: 2.8, lean: 0.15 }],
-    [1, Object.assign({}, POSE0)]]) },
-  fall:   { name: 'Jatuh', n: 8, fps: 10, hold: true, pose: keyed([
-    [0, {}],
-    [0.3, { lean: -0.4, thL: 0.4, knL: 0.6, arL: 1.2, arR: 1.0, elL: 0.4, elR: 0.4 }],
+    [0.85, { thL: 0.7, thR: 0.7, knL: 1.4, knR: 1.4, lean: 0.35, arL: 0.6, arR: 0.6, jump: 0 }], [1, POSE0]]) },
+  // --- pukulan (bisa sambil jalan) ---
+  jab:      { name: 'Jab kiri', kind: 'upper', n: 6, fps: 16, hit: { t: 0.45, r: 30, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.4, { arL: 1.57, elL: 0, spL: 0.05, tw: 0.35, lean: 0.15 }], [0.6, {}], [1, GUARD]]) },
+  straight: { name: 'Pukulan lurus', kind: 'upper', n: 8, fps: 15, hit: { t: 0.5, r: 32, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.25, { tw: 0.3, arR: 0.6, elR: 2.1 }], [0.5, { tw: -0.55, arR: 1.57, elR: 0, spR: 0.02, lean: 0.22 }], [0.7, {}], [1, GUARD]]) },
+  hook:     { name: 'Hook', kind: 'upper', n: 8, fps: 15, hit: { t: 0.55, r: 30, arc: 1.8 }, pose: keyed([
+    [0, GUARD], [0.3, { tw: 0.6, arR: 1.4, elR: 1.5, spR: 1.1, lean: 0.05 }], [0.55, { tw: -0.8, arR: 1.5, elR: 1.6, spR: 0.3, lean: 0.15 }], [0.7, {}], [1, GUARD]]) },
+  uppercut: { name: 'Uppercut', kind: 'upper', n: 8, fps: 14, hit: { t: 0.55, r: 28, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.3, { arR: 0.1, elR: 2.3, thL: 0.5, thR: 0.1, knL: 1.0, knR: 1.0, lean: 0.25, tw: 0.2 }],
+    [0.55, { arR: 1.6, elR: 1.9, thL: 0.3, thR: -0.3, knL: 0.2, knR: 0.2, lean: -0.15, tw: -0.4 }], [0.75, {}], [1, GUARD]]) },
+  // --- tendangan (seluruh badan) ---
+  kickFront:{ name: 'Tendangan depan', kind: 'full', move: 0.3, n: 8, fps: 12, hit: { t: 0.5, r: 36, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.3, { thR: 1.3, knR: 2.0, thL: 0, knL: 0.15, lean: -0.1 }],
+    [0.5, { thR: 1.55, knR: 0.05, lean: -0.3, arL: 0.6, elL: 1.2, arR: -0.4, elR: 0.6 }], [0.7, { thR: 1.3, knR: 2.0, lean: -0.1 }], [1, GUARD]]) },
+  kickHigh: { name: 'Tendangan tinggi', kind: 'full', move: 0.3, n: 8, fps: 12, hit: { t: 0.5, r: 38, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.3, { thR: 1.6, knR: 2.2, thL: 0, knL: 0.1, lean: -0.2 }],
+    [0.5, { thR: 2.3, knR: 0.1, lean: -0.5, arL: 0.4, elL: 1.0, arR: -0.5, elR: 0.5 }], [0.7, { thR: 1.6, knR: 2.2, lean: -0.2 }], [1, GUARD]]) },
+  // --- pedang ---
+  slashV:   { name: 'Tebas atas-bawah', kind: 'upper', n: 10, fps: 15, hit: { t: 0.6, r: 46, arc: 1.4 }, pose: keyed([
+    [0, SW], [0.35, { arR: 2.9, elR: 0.4, swa: 0.6, lean: -0.1, tw: 0.3 }],
+    [0.6, { arR: 1.3, elR: 0, swa: 0.3, lean: 0.25, tw: -0.4, thL: 0.5, knL: 0.4 }], [0.8, { arR: 0.6, swa: 0.3 }], [1, SW]]) },
+  slashH:   { name: 'Tebas menyamping', kind: 'upper', n: 10, fps: 15, hit: { t: 0.55, r: 46, arc: 2.6 }, pose: keyed([
+    [0, SW], [0.3, { tw: 0.9, arR: 1.45, elR: 0.3, spR: 0.9, swa: 0, lean: 0 }],
+    [0.55, { tw: -1.0, arR: 1.45, elR: 0.1, spR: 0.2, lean: 0.15 }], [0.75, { tw: -1.1 }], [1, SW]]) },
+  thrust:   { name: 'Tusukan', kind: 'upper', n: 8, fps: 14, hit: { t: 0.55, r: 52, arc: 0.8 }, pose: keyed([
+    [0, SW], [0.35, { arR: -0.4, elR: 1.97, swa: 0, tw: 0.4, spR: 0.1 }],
+    [0.55, { arR: 1.4, elR: 0.15, tw: -0.6, lean: 0.3, thL: 0.6, knL: 0.5 }], [0.75, {}], [1, SW]]) },
+  spin:     { name: 'Tebasan putar', kind: 'full', move: 0.6, n: 10, fps: 16, hit: { t: 0.5, r: 48, arc: TAU }, pose: keyed([
+    [0, SW], [0.15, { arR: 1.5, elR: 0.1, spR: 1.35, swa: 0, arL: 1.3, spL: 1.2, elL: 0.2 }], [0.85, { yaw: TAU }], [1, Object.assign({}, SW, { yaw: TAU })]]) },
+  cast:     { name: 'Sihir', kind: 'upper', n: 10, fps: 10, hit: { t: 0.8, r: 60, arc: 0.9 }, pose: keyed([
+    [0, {}], [0.3, { arL: 1.9, arR: 1.9, elL: 0.3, elR: 0.3, spL: 0.35, spR: 0.35, orb: 1.2 }],
+    [0.6, { arL: 2.1, arR: 2.1, orb: 2.4, lean: -0.08 }], [0.8, { arL: 1.57, arR: 1.57, elL: 0, elR: 0, spL: 0.15, spR: 0.15, orb: 2.8, lean: 0.15 }], [1, Object.assign({}, POSE0)]]) },
+  fall:     { name: 'Jatuh', kind: 'full', move: 0, n: 8, fps: 10, hold: true, pose: keyed([
+    [0, {}], [0.3, { lean: -0.4, thL: 0.4, knL: 0.6, arL: 1.2, arR: 1.0, elL: 0.4, elR: 0.4 }],
     [0.6, { lean: -0.8, thL: 1.4, thR: 1.4, knL: 0.4, knR: 0.4, arL: -0.6, arR: -0.6, px: 2 }],
     [1, { lean: -1.45, hp: 0.15, thL: 1.4, thR: 1.3, knL: 0.15, knR: 0.35, arL: -1.6, arR: -1.3, elL: 0.2, elR: 0.2, spL: 0.5, spR: 0.6, px: 4 }]]) },
 };
+ANIMS.getup = { name: 'Bangun', kind: 'full', move: 0, n: 8, fps: 9, pose: t => ANIMS.fall.pose(1 - t) };
+const COMBOS = { punch: ['jab', 'straight', 'hook', 'uppercut'], kick: ['kickFront', 'kickHigh'], slash: ['slashH', 'slashV', 'thrust', 'spin'] };
+const FAMILY = {}; for (const f in COMBOS) for (const a of COMBOS[f]) FAMILY[a] = f;
+const animDur = n => ANIMS[n].n / ANIMS[n].fps;
 
-// Frame dibangun saat pertama dipakai (lalu disimpan)
-const animCache = {};
-function getAnim(name) {
-  if (animCache[name]) return animCache[name];
-  const A = ANIMS[name];
-  return animCache[name] = [...Array(A.n).keys()].map(i => {
-    const t = A.loop ? i / A.n : i / (A.n - 1);
-    const mat = humanShape(A.pose(t));
-    const m = buildOrganic(HL, HW, HH, mat, name === 'idle' && i === 0);
-    m.lift = mat.lift || 0;
-    return m;
-  });
+/* ---------- Cache frame + antrian build ----------
+   Frame dibangun saat pertama dibutuhkan. NPC memakai antrian (dibangun sedikit
+   demi sedikit tiap frame) supaya game tidak tersendat. */
+const FR = new Map(), QUEUE = [], QSET = new Set();
+function buildHumanFrame(sid, anim, i, part, views = false) {
+  const A = ANIMS[anim], t = A.loop ? i / A.n : i / Math.max(1, A.n - 1), st = STYLES[sid];
+  const sh = humanShape(A.pose(t), st, part);
+  const m = buildVox(sh.L, sh.W, sh.H, sh.mat, st.color, { bbox: sh.bbox, views });
+  m.lift = sh.lift; m.pelvisZ = sh.pelvisZ; m.yaw = sh.yaw; m.shadowOff = 2;
+  return m;
+}
+function hframe(sid, anim, i, part = 'all', sync = true) {
+  const k = sid + '|' + anim + '|' + part + '|' + i;
+  const m = FR.get(k);
+  if (m) return m;
+  if (sync) { const b = buildHumanFrame(sid, anim, i, part); FR.set(k, b); return b; }
+  if (!QSET.has(k)) { QSET.add(k); QUEUE.push([k, sid, anim, i, part]); }
+  return null;
+}
+function pumpQueue(ms) {
+  const t0 = performance.now();
+  while (QUEUE.length && performance.now() - t0 < ms) {
+    const [k, sid, anim, i, part] = QUEUE.shift();
+    QSET.delete(k);
+    if (!FR.has(k)) FR.set(k, buildHumanFrame(sid, anim, i, part));
+  }
+}
+function queueAnim(sid, anim, part = 'all') { for (let i = 0; i < ANIMS[anim].n; i++) hframe(sid, anim, i, part, false); }
+
+// Gabungkan badan bawah (dari gerakan jalan) + badan atas (dari serangan), per slice.
+// Tinggi pinggul disamakan dengan menggeser indeks slice badan atas.
+const COMP = new WeakMap();
+function composite(lower, upper) {
+  let m1 = COMP.get(lower); if (!m1) COMP.set(lower, m1 = new Map());
+  let c = m1.get(upper); if (c) return c;
+  const dz = Math.round(lower.pelvisZ - upper.pelvisZ), n = Math.max(lower.slices.length, upper.slices.length + dz);
+  const slices = [];
+  for (let z = 0; z < n; z++) {
+    const a = lower.slices[z], b = upper.slices[z - dz];
+    if (!a && !b) { slices.push(null); continue; }
+    const cv = makeCanvas(lower.L, lower.W), g = cv.getContext('2d');
+    if (a) g.drawImage(a, 0, 0);
+    if (b) g.drawImage(b, 0, 0);
+    slices.push(cv);
+  }
+  const shadow = makeCanvas(lower.L, lower.W), g = shadow.getContext('2d');
+  g.drawImage(lower.shadow, 0, 0); g.drawImage(upper.shadow, 0, 0);
+  c = { L: lower.L, W: lower.W, H: n, slices, shadow, lift: 0, yaw: upper.yaw || 0, shadowOff: 2 };
+  m1.set(upper, c);
+  return c;
 }
 
-function buildOrganic(L, W, H, mat, withViews = false) {
-  const grid = new Array(L * W * H);
-  const idx = (x, y, z) => (z * W + y) * L + x;
-  for (let z = 0; z < H; z++) for (let y = 0; y < W; y++) for (let x = 0; x < L; x++) grid[idx(x, y, z)] = mat(x, y, z);
-  const at = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= L || y >= W || z >= H) ? null : grid[idx(x, y, z)];
-  // normal = rata-rata arah ke tetangga kosong (radius 2) -> permukaan terasa halus
-  const shade = (x, y, z, m) => {
-    // voxel yang tertutup di 6 sisi tak terlihat -> tak perlu dihitung
-    if (at(x + 1, y, z) && at(x - 1, y, z) && at(x, y + 1, z) && at(x, y - 1, z) && at(x, y, z + 1) && at(x, y, z - 1)) return RAMPS[m][1];
-    let nx = 0, ny = 0, nz = 0;
-    for (let k = -2; k <= 2; k++) for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++)
-      if (!at(x + i, y + j, z + k)) { const w = 1 / (i * i + j * j + k * k || 1); nx += i * w; ny += j * w; nz += k * w; }
-    const l = Math.hypot(nx, ny, nz) || 1;
-    const d = (nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]) / l;
-    const v = 0.38 + 0.62 * Math.max(0, d);
-    return RAMPS[m][v < 0.5 ? 0 : v < 0.72 ? 1 : v < 0.9 ? 2 : 3];
+/* =====================================================================
+   3. KUCING KAMPUNG (organik, 4 frame jalan + 2 frame diam)
+   ===================================================================== */
+const CAT_KINDS = {
+  oren:  { fur: '#e8913a', fur2: '#b8621e', belly: '#f6e2c8', pattern: 'stripe' },
+  belang:{ fur: '#f2efe8', fur2: '#2a2a2a', belly: '#f2efe8', pattern: 'spot' },
+  hitam: { fur: '#2c2a30', fur2: '#1c1a20', belly: '#efece6', pattern: 'chest' },
+};
+function catShape(ph, k, sit) {
+  const L = 24, W = 12, H = 17, cy = 6;
+  const s = Math.sin(ph), c = Math.cos(ph);
+  const body = [11, cy, 7.2], head = [18.2, cy, 10.5];
+  const legsP = [[14.5, -1.4, 0], [14.5, 1.4, 1], [7.5, -1.4, 1], [7.5, 1.4, 0]];
+  const ramps = { fur: R(k.fur), fur2: R(k.fur2), belly: R(k.belly), eye: fixedRamp('#3a6a2a'), nose: fixedRamp('#e88a8a'), ear: R('#e8a0a0') };
+  const fill = (x, y, z) => {
+    const p = [x + 0.5, y + 0.5, z + 0.5];
+    const furMat = () => {
+      if (k.pattern === 'stripe' && x % 3 === 0) return 'fur2';
+      if (k.pattern === 'spot' && hash(x >> 2, y >> 2, z >> 2) < 0.35) return 'fur2';
+      if (k.pattern === 'chest' && p[0] > 15 && p[2] < 9 && Math.abs(p[1] - cy) < 1.5) return 'belly';
+      return 'fur';
+    };
+    // kepala + telinga + mata
+    const hd = sub(p, head);
+    if ((hd[0] / 3.2) ** 2 + (hd[1] / 3.0) ** 2 + (hd[2] / 2.7) ** 2 <= 1) {
+      if (hd[0] > 2.2 && Math.abs(hd[2] - 0.4) < 0.7 && Math.abs(Math.abs(hd[1]) - 1.2) < 0.55) return 'eye';
+      if (hd[0] > 2.6 && hd[2] < -0.3 && hd[2] > -1.3 && Math.abs(hd[1]) < 0.6) return 'nose';
+      return furMat();
+    }
+    for (const sy of [-1, 1]) if (capsule(p, [head[0], cy + sy * 1.6, head[2] + 1.8], [head[0] - 0.2, cy + sy * 1.9, head[2] + 4.2], 1.1, 0.25) >= 0) return 'fur';
+    // badan
+    if (((p[0] - body[0]) / 6) ** 2 + ((p[1] - body[1]) / 2.7) ** 2 + ((p[2] - body[2] - (sit ? -1 : 0)) / 2.7) ** 2 <= 1) return furMat();
+    // ekor (melengkung ke atas, bergoyang)
+    const sway = sit ? s * 1.2 : s * 0.8;
+    if (capsule(p, [5.4, cy, 8], [2.6, cy + sway, 10.5], 0.9, 0.8) >= 0 || capsule(p, [2.6, cy + sway, 10.5], [2.4, cy + sway * 1.8, 15], 0.8, 0.6) >= 0) return 'fur';
+    // kaki
+    for (const [lx, ly, ph2] of legsP) {
+      const sw = sit ? 0 : (ph2 ? s : -s) * 1.6;
+      if (capsule(p, [lx, cy + ly, 5.5], [lx + sw, cy + ly, 0.7], 0.95, 0.85) >= 0) return p[2] < 1.6 ? 'belly' : furMat();
+    }
+    return null;
   };
-  const m = buildModel(L, W, H, (x, y, z) => !!at(x, y, z), (x, y, z) => shade(x, y, z, at(x, y, z)));
-  if (!withViews) return m;
-  // tampak 4 sisi diproyeksikan dari voxel (untuk tutorial)
-  const proj = (w, h, fn) => {
-    const c = makeCanvas(w, h), g = c.getContext('2d');
-    for (let v = 0; v < h; v++) for (let u = 0; u < w; u++) { const col = fn(u, v); if (col) { g.fillStyle = col; g.fillRect(u, v, 1, 1); } }
-    return c;
+  const m = buildVox(L, W, H, fill, organicColor(mm => ramps[mm]));
+  m.shadowOff = 1;
+  return m;
+}
+const CAT_FRAMES = {};
+
+/* =====================================================================
+   4. LINGKUNGAN: perumahan & gang Indonesia
+   Semua dibuat prosedural sebagai voxel lalu di-stack.
+   Material = kode warna hex; warna akhir = tingkat terang sesuai sisi.
+   ===================================================================== */
+// Rumah: depan menghadap +x, teras di depan, atap genteng limasan/pelana, kadang ada toren air
+function makeHouse(o) {
+  const ov = 3, te = 12, d = o.d, w = o.w, wh = 38;
+  const L = d + ov * 2, W = w + ov * 2;
+  const roofN = o.gable ? Math.ceil(W / 4) : Math.ceil(Math.min(L, W) / 4);
+  const topK = o.gable ? Math.floor((W - 1) / 4) : Math.floor((Math.min(L, W) - 1) / 4);
+  const H = wh + roofN + (o.tank ? 16 : 1);
+  const bx0 = ov, bx1 = ov + d - te - 1, by0 = ov, by1 = ov + w - 1, tx1 = ov + d - 1;
+  const cyD = Math.floor((by0 + by1) / 2);
+  const tX = ov + 9, tY = ov + 9;
+  const kAt = (x, y) => Math.min(topK, Math.floor((o.gable ? Math.min(y, W - 1 - y) : Math.min(x, y, L - 1 - x, W - 1 - y)) / 2));
+  const tZ = wh + kAt(tX, tY) + 1;
+  const windowAt = (u, v, u0, u1, v0, v1) => {
+    if (u < u0 || u > u1 || v < v0 || v > v1) return null;
+    if (u === u0 || u === u1 || v === v0 || v === v1) return o.frame;
+    return ((u + v) % 6 === 0 || (u - v + 600) % 6 === 0) ? '#2a2a2a' : '#46647e';
   };
-  const first = (cells) => { for (const [x, y, z] of cells) { const mm = at(x, y, z); if (mm) return shade(x, y, z, mm); } return null; };
-  const range = (n, rev) => [...Array(n).keys()].map(i => rev ? n - 1 - i : i);
-  m.vc = {
-    top:   proj(L, W, (x, y) => first(range(H, true).map(z => [x, y, z]))),
-    side:  proj(L, H, (x, r) => first(range(W).map(y => [x, y, H - 1 - r]))),
-    front: proj(W, H, (c, r) => first(range(L, true).map(x => [x, W - 1 - c, H - 1 - r]))),
-    back:  proj(W, H, (c, r) => first(range(L).map(x => [x, c, H - 1 - r]))),
-  };
+  return buildVox(L, W, H, (x, y, z) => {
+    if (o.tank && z >= tZ) {
+      const dx = x - tX, dy = y - tY;
+      if (z < tZ + 3) return Math.abs(dx) === 3 && Math.abs(dy) === 3 ? '#5a5a5a' : null;
+      if (z === tZ + 3) return Math.abs(dx) <= 4 && Math.abs(dy) <= 4 ? '#6a6a6a' : null;
+      if (z <= tZ + 11) return dx * dx + dy * dy <= 12 ? o.tankC : null;
+      if (z === tZ + 12) return dx * dx + dy * dy <= 3 ? o.tankC : null;
+    }
+    if (z >= wh) {   // atap
+      const k = z - wh, ins = 2 * k;
+      if (k >= roofN) return null;
+      const inside = o.gable ? (y >= ins && y <= W - 1 - ins) : (x >= ins && x <= L - 1 - ins && y >= ins && y <= W - 1 - ins);
+      if (!inside) return null;
+      if (k === 0 && (x === 0 || y === 0 || x === L - 1 || y === W - 1)) return '#ece6d8';
+      if (k === topK) return o.ridge;
+      if (o.gable && (x === 0 || x === L - 1)) return '#ece6d8';
+      return ((o.gable ? x : x + y) % 3 === 0) ? o.roof2 : (k % 2 ? o.roof : o.roofB);
+    }
+    if (x > bx1 && x <= tx1 && y >= by0 && y <= by1) {   // teras
+      if (x >= tx1 - 2 && (y <= by0 + 2 || y >= by1 - 2)) return '#efebe2';
+      if (z === 0) return ((x + 1) % 6 === 0 || y % 6 === 0) ? '#c6bcab' : '#ddd5c6';
+      if (z <= 6 && x === tx1 && Math.abs(y - cyD) > 9) return z === 6 ? '#e8e2d4' : o.wall;
+      return null;
+    }
+    if (x < bx0 || x > bx1 || y < by0 || y > by1 || z >= wh) return null;
+    if (z <= 2) return o.plinth;
+    if (x === bx1) {   // dinding depan: pintu, jendela, roster
+      if (y >= cyD - 6 && y <= cyD + 6 && z <= 29) {
+        if (y === cyD - 6 || y === cyD + 6 || z === 29) return '#f2efe6';
+        if (y === cyD + 4 && z === 14) return '#e0c060';
+        return (z % 9 === 4 || y === cyD) ? o.door2 : o.door;
+      }
+      const wv = windowAt(y, z, by0 + 4, by0 + 15, 11, 26) || windowAt(y, z, by1 - 15, by1 - 4, 11, 26);
+      if (wv) return wv;
+      if (z >= 28 && z <= 31 && ((y >= by0 + 4 && y <= by0 + 15) || (y >= by1 - 15 && y <= by1 - 4))) return (y % 3 === 0 || z % 2 === 0) ? o.wall : '#4a4a4a';
+    }
+    if (y === by0 || y === by1) { const wv = windowAt(x, z, bx0 + 10, bx0 + 21, 11, 26); if (wv) return wv; }
+    if (x === bx0) { const wv = windowAt(y, z, cyD - 4, cyD + 4, 14, 24); if (wv) return wv; }
+    return o.wall;
+  }, boxHex);
+}
+
+// Pagar besi + tembok rendah. Memanjang di sumbu y, ada celah gerbang [g0,g1]
+function makeFence(len, iron, g0, g1) {
+  return buildVox(3, len, 21, (x, y, z) => {
+    if (y >= g0 && y <= g1) return null;
+    const post = y < 3 || y >= len - 3 || y % 16 < 3 || Math.abs(y - g0 + 1.5) < 2 || Math.abs(y - g1 - 1.5) < 2;
+    if (post) return z <= 20 ? (z === 20 ? '#cfc8b8' : '#e6e0d2') : null;
+    if (z <= 6) return '#d8d2c4';
+    if (z === 7) return '#bfb8aa';
+    if (x === 1 && (y % 3 === 0 || z === 19 || z === 13) && z <= 19) return iron;
+    return null;
+  }, boxHex);
+}
+
+// Tiang listrik beton + palang + isolator
+function makePole() {
+  const m = buildVox(4, 16, 80, (x, y, z) => {
+    if (z < 2 && x <= 3 && y >= 6 && y <= 9) return '#8f8b84';
+    if (x >= 1 && x <= 2 && y >= 7 && y <= 8 && z <= 75) return z % 18 === 0 ? '#8a867e' : '#a9a59c';
+    if (z >= 72 && z <= 73 && x >= 1 && x <= 2 && y >= 1 && y <= 14) return '#5a5a5a';
+    if (z === 74 && x >= 1 && x <= 2 && (y <= 2 || y >= 13)) return '#e8e8e0';
+    return null;
+  }, boxHex);
+  m.shadowOff = 6;
   return m;
 }
 
-const HUMAN = getAnim('idle')[0];
-const WALKERS = { robot: ROBOT_FRAMES, human: true };
-const ROBOT = ROBOT_FRAMES[0];
-
-const MODELS = { tree: [makeTree(1), makeTree(7), makeTree(13)], cone: makeCone(), tires: makeTires() };
-
-/* =====================================================================
-   3. RENDER: inti sprite stacking.
-   Gambar slice dari bawah ke atas, tiap slice digeser `spacing` px ke atas
-   layar, semuanya diputar dengan sudut yang sama di sekitar pusatnya.
-   ===================================================================== */
-function drawStack(ctx, model, x, y, angle, spacing = 1, scale = 1) {
-  // model.lift: tinggi lompat; seluruh tumpukan naik, bayangan tetap di tanah
-  const sx = Math.round(x), sy = Math.round(y - (model.lift || 0) * spacing * scale);
-  for (let i = 0; i < model.slices.length; i++) {
-    ctx.save();
-    ctx.translate(sx, sy - i * spacing * scale);
-    ctx.rotate(angle);
-    ctx.scale(scale, scale);
-    ctx.drawImage(model.slices[i], -model.L / 2, -model.W / 2);
-    ctx.restore();
-  }
+// Pohon mangga: kanopi bulat tidak beraturan + buah
+function makeMango(seed) {
+  const r = rng(seed), N = 56, H = 62, c = N / 2;
+  const blobs = [...Array(6)].map((_, i) => [c + (r() - 0.5) * 22, c + (r() - 0.5) * 22, 36 + r() * 12, 10 + r() * 5]);
+  blobs.push([c, c, 44, 14]);
+  const m = buildVox(N, N, H, (x, y, z) => {
+    const p = [x + 0.5, y + 0.5, z + 0.5];
+    if (capsule(p, [c, c, 0], [c, c, 30], 3.2, 2.2) >= 0) return '#6b4a2b';
+    for (const b of blobs.slice(0, 3)) if (capsule(p, [c, c, 22], [b[0], b[1], b[2] - 4], 1.6, 1.0) >= 0) return '#6b4a2b';
+    for (const [bx, by, bz, br] of blobs) {
+      const d = Math.hypot(p[0] - bx, p[1] - by, (p[2] - bz) * 1.15);
+      if (d <= br + (hash(x, y, z) - 0.5) * 2.4) return hash(x >> 1, y >> 1, z >> 1) < 0.035 && d > br - 2 ? '#c8c43a' : (hash(x >> 2, y >> 2, z >> 2) < 0.4 ? '#357a32' : '#3f8a3a');
+    }
+    return null;
+  }, organicHex);
+  m.shadowOff = 8;
+  return m;
+}
+// Pohon pisang: batang semu + daun panjang melengkung
+function makeBanana(seed) {
+  const r = rng(seed), N = 44, H = 40, c = N / 2;
+  const leaves = [...Array(7)].map((_, i) => { const a = i / 7 * TAU + r() * 0.5; return [Math.cos(a), Math.sin(a), 0.8 + r() * 0.4, i === 3 && r() < 0.7]; });
+  const m = buildVox(N, N, H, (x, y, z) => {
+    const p = [x + 0.5, y + 0.5, z + 0.5];
+    if (capsule(p, [c, c, 0], [c, c, 21], 2.8, 2.0) >= 0) return '#7c9a4a';
+    for (const [dx, dy, s, dead] of leaves) {
+      const px = p[0] - c, py = p[1] - c, a = px * dx + py * dy, b = -px * dy + py * dx;
+      if (a < 0 || a > 17 * s) continue;
+      const u = a / (17 * s), zc = 20 + 9 * u - 15 * u * u;
+      const hw = 2.4 * Math.sin(Math.PI * Math.min(1, u * 1.15)) + 0.3;
+      if (Math.abs(p[2] - zc) < 0.9 && Math.abs(b) < hw) {
+        if (Math.abs(b) > 1.2 && hash(x, y, z) < 0.22) return null;
+        if (dead) return '#a8884a';
+        return Math.abs(b) < 0.6 ? '#a8d26a' : '#6fb83f';
+      }
+    }
+    return null;
+  }, organicHex);
+  m.shadowOff = 6;
+  return m;
+}
+// Pot tanaman di teras
+function makePot(kind) {
+  return buildVox(14, 14, 22, (x, y, z) => {
+    const p = [x + 0.5, y + 0.5, z + 0.5], d = Math.hypot(p[0] - 7, p[1] - 7);
+    if (z <= 6 && d <= 3.6 + z * 0.12) return '#b5653a';
+    if (z === 7 && d <= 4.6) return '#a0552e';
+    if (kind === 0 && Math.hypot(p[0] - 7, p[1] - 7, (p[2] - 12) * 1.2) <= 5.5 + (hash(x, y, z) - 0.5) * 1.6) return hash(x, y, z) < 0.07 ? '#e2457a' : '#3f8f3f';
+    if (kind === 1) for (let k = 0; k < 7; k++) { const a = k / 7 * TAU; if (capsule(p, [7, 7, 7], [7 + Math.cos(a) * 3, 7 + Math.sin(a) * 3, 17 + (k % 3) * 2], 0.9, 0.5) >= 0) return k % 2 ? '#4a8a3a' : '#5a9a3a'; }
+    return null;
+  }, organicHex);
+}
+// Motor matic
+function makeMotor(col) {
+  const cy = 6;
+  const m = buildVox(34, 12, 25, (x, y, z) => {
+    const p = [x + 0.5, y + 0.5, z + 0.5];
+    for (const wx of [7, 27]) { const d = Math.hypot(p[0] - wx, p[2] - 5.5); if (d <= 5.5 && Math.abs(p[1] - cy) <= 1.6) return d > 3.2 ? '#1e1e22' : '#a8a8ae'; }
+    if (capsule(p, [27, cy, 5.5], [25.5, cy, 13], 0.9, 0.9) >= 0) return '#555555';
+    if (Math.hypot((p[0] - 9.5) / 7, (p[1] - cy) / 3.6, (p[2] - 15.6) / 1.8) <= 1) return '#222226';
+    if (Math.hypot((p[0] - 9) / 8.5, (p[1] - cy) / 4.4, (p[2] - 11) / 5) <= 1) return col;
+    if (p[0] >= 14 && p[0] <= 22 && Math.abs(p[1] - cy) <= 3.5 && p[2] >= 5 && p[2] <= 7.5) return '#2a2a2e';
+    if (Math.hypot((p[0] - 24) / 2.5, (p[1] - cy) / 4.4, (p[2] - 13) / 8) <= 1) return col;
+    if (sph(p, [27.2, cy, 18.5], 1.6)) return '#fff6d0';
+    if (capsule(p, [26, cy, 14], [26, cy, 21], 1.0, 1.0) >= 0 || capsule(p, [26, cy - 5.5, 21.5], [26, cy + 5.5, 21.5], 0.9, 0.9) >= 0) return '#2a2a2e';
+    if (sph(p, [25.5, cy - 4.5, 24], 1.1) || sph(p, [25.5, cy + 4.5, 24], 1.1)) return '#333338';
+    return null;
+  }, organicHex);
+  m.shadowOff = 3;
+  return m;
+}
+// Gerobak bakso dengan etalase kaca + tulisan BAKSO
+function makeGerobak() {
+  const tm = textMask('BAKSO', 1, 1);
+  const m = buildVox(38, 18, 32, (x, y, z) => {
+    for (const wy of [1, 16]) { if (y === wy || y === wy + 1) { const d = Math.hypot(x + 0.5 - 16, z + 0.5 - 6); if (d <= 5.6 && d >= 4.4) return '#2a2a2a'; if (d < 1.4) return '#8a8a8a'; if (d < 4.4 && (Math.abs(x + 0.5 - 16) < 0.6 || Math.abs(z + 0.5 - 6) < 0.6)) return '#9a9a9a'; } }
+    if (x >= 4 && x <= 31 && y >= 3 && y <= 14 && z >= 9 && z <= 19) {
+      if (y === 3 && x >= 7 && x < 7 + tm.w && tm.at(tm.w - 1 - (x - 7), 18 - z)) return '#d42a2a';
+      if (y === 14 && x >= 7 && x < 7 + tm.w && tm.at(x - 7, 18 - z)) return '#d42a2a';
+      return z === 9 || z === 19 ? '#1f4f96' : '#f2f2ee';
+    }
+    if (x >= 6 && x <= 22 && y >= 4 && y <= 13 && z >= 20 && z <= 29) {
+      const edge = (x === 6 || x === 22) + (y === 4 || y === 13) + (z === 29);
+      return edge >= 2 || z === 29 ? '#c8c8cc' : '#a8d8e8';
+    }
+    if (z === 30 && x >= 5 && x <= 23 && y >= 3 && y <= 14) return '#e8e8ea';
+    const dd = Math.hypot(x + 0.5 - 27, y + 0.5 - 8.5);
+    if (z >= 20 && z <= 27 && dd <= 3.6) return z === 27 ? '#9a9aa0' : '#c4c4ca';
+    if (x >= 32 && x <= 36 && (y === 4 || y === 13) && z === 17) return '#6a6a6a';
+    if (x === 33 && (y === 4 || y === 13) && z <= 16) return '#6a6a6a';
+    return null;
+  }, boxHex);
+  m.shadowOff = 3;
+  return m;
+}
+// Warung: toko kecil, terpal belang, renceng jajanan menggantung, papan nama
+function makeWarung(awn) {
+  const tm = textMask('WARUNG', 2, 1);
+  const L = 56, W = 60;
+  return buildVox(L, W, 50, (x, y, z) => {
+    if (x <= 35 && z <= 33) {
+      if (z <= 2) return '#8a7a68';
+      if (x === 35 && y >= 22 && y <= 37 && z <= 28) return y === 22 || y === 37 || z === 28 ? '#f2efe6' : '#6a4a2a';
+      return '#e8d8a8';
+    }
+    if (z >= 34 && z <= 41 && x <= 37) { const k = z - 34; return (y >= k * 2 && y <= W - 1 - k * 2) ? (y % 2 ? '#8a8f96' : '#9aa0a6') : null; }
+    if (x >= 36 && x <= 40 && z <= 28 && z % 7 !== 0) return ['#e23a3a', '#f2c22a', '#2aa65a', '#3a6ad0', '#f08a2a'][Math.floor(hash(y >> 1, z >> 2, 3) * 5)];
+    if (x >= 36 && x <= 40 && z <= 28) return '#8a5a30';
+    if (x >= 43 && x <= 48 && z <= 12 && y >= 4 && y <= 55) return z >= 9 ? '#9cc8d8' : '#8a5a30';
+    if (x === 49 && z >= 20 && z <= 30 && y >= 4 && y <= 55 && y % 3) return ['#e23a3a', '#f2c22a', '#2aa65a', '#3a6ad0', '#f08a2a', '#c23ac8'][(y / 3 | 0) % 6];
+    if (x >= 36 && x <= 53) {
+      const zt = 33 - Math.floor((x - 36) / 6);
+      if (z === zt || z === zt - 1) return Math.floor(y / 5) % 2 ? awn : '#f4f4f0';
+      if ((x === 52 || x === 53) && (y <= 1 || y >= W - 2) && z < zt - 1) return '#7a7a7a';
+    }
+    if (x >= 50 && x <= 51 && y >= 8 && y <= 51 && z >= 36 && z <= 47) {
+      const u = y - 8 - Math.floor((44 - tm.w) / 2), v = 46 - z;
+      if (x === 51 && tm.at(tm.w - 1 - u, v)) return '#c22a2a';
+      return '#f4f0e0';
+    }
+    if ((x === 50 || x === 51) && (y === 10 || y === 49) && z >= 30 && z < 36) return '#7a7a7a';
+    return null;
+  }, boxHex);
+}
+// Mushola dengan atap tumpang (bersusun) khas Indonesia + mustaka
+function makeMushola() {
+  const L = 98, W = 92, tm = textMask('MUSHOLA', 2, 1);
+  const bx0 = 6, bx1 = 83, by0 = 6, by1 = 85, cxr = (2 + 89) / 2, cyr = (2 + 89) / 2;
+  const tiers = [{ z0: 41, n: 12, ins: 0 }, { z0: 58, n: 8, ins: 22 }, { z0: 69, n: 6, ins: 34 }];
+  const walls = [{ z0: 53, z1: 57, ins: 26 }, { z0: 66, z1: 68, ins: 38 }];
+  const inRect = (x, y, ins) => x >= 2 + ins && x <= 89 - ins && y >= 2 + ins && y <= 89 - ins;
+  const archWin = (u, z, u0) => { const du = u - u0 - 4.5; return Math.abs(du) <= 4.5 && z >= 10 && z <= 26 + Math.sqrt(Math.max(0, 25 - du * du)); };
+  return buildVox(L, W, 90, (x, y, z) => {
+    if (z >= 41) {
+      // papan nama di atas teras depan
+      if (x >= 94 && x <= 95 && y >= 18 && y <= 73 && z >= 43 && z <= 54) {
+        const u = y - 18 - Math.floor((56 - tm.w) / 2), v = 53 - z;
+        if (x === 95 && tm.at(tm.w - 1 - u, v)) return '#f4f0e0';
+        return '#2f6b4a';
+      }
+      for (const t of tiers) if (z >= t.z0 && z < t.z0 + t.n) {
+        const k = z - t.z0, ins = t.ins + 2 * k;
+        if (!inRect(x, y, ins)) return null;
+        if (k === 0 && !inRect(x, y, ins + 1)) return '#e8e4da';
+        return (x + y) % 3 === 0 ? '#22553a' : (k % 2 ? '#2f6b4a' : '#2a6244');
+      }
+      for (const w of walls) if (z >= w.z0 && z <= w.z1) return inRect(x, y, w.ins) ? '#f2efe6' : null;
+      if (z >= 75 && z <= 88) {
+        const d = Math.hypot(x + 0.5 - cxr - 0.5, y + 0.5 - cyr - 0.5);
+        if (z <= 81 && d <= 2.6 - Math.abs(z - 78) * 0.25) return '#e0c050';
+        if (z > 81 && d <= 0.9) return '#e0c050';
+      }
+      return null;
+    }
+    if (x > bx1) {   // teras depan
+      if (z === 0) return (x % 6 === 0 || y % 6 === 0) ? '#c9c2b4' : '#e2dccf';
+      if ([8, 30, 60, 82].some(c => y >= c && y <= c + 2) && x >= 92 && x <= 94) return '#e8e4da';
+      if (z >= 38 && x <= 95) return '#2f6b4a';
+      return null;
+    }
+    if (x < bx0 || y < by0 || y > by1) return null;
+    if (z <= 3) return '#3f7f5a';
+    if (z >= 38) return '#3f7f5a';
+    if (x === bx1) {
+      const du = y - 45.5;
+      if (Math.abs(du) <= 8 && z <= 24 + Math.sqrt(Math.max(0, 64 - du * du))) return Math.abs(du) > 7 || z % 8 === 0 ? '#3f7f5a' : '#6a4020';
+    }
+    if (y === by0 || y === by1) for (const u0 of [14, 32, 50, 68]) if (archWin(x, z, u0)) return (x === u0 || x === u0 + 9 || z === 10) ? '#3f7f5a' : '#5a8a7a';
+    return '#f2efe6';
+  }, boxHex);
+}
+// Pos ronda: bale bambu, tiang, atap seng, kentongan
+function makePosRonda() {
+  return buildVox(40, 34, 44, (x, y, z) => {
+    const post = (x <= 2 || x >= 37) && (y <= 2 || y >= 31);
+    if (post && z <= 33) return '#7a5530';
+    if (z >= 8 && z <= 10 && x >= 2 && x <= 37 && y >= 2 && y <= 31) return y % 3 === 0 ? '#a88a48' : '#c8a860';
+    if (z >= 34 && z <= 41) { const k = z - 34; return y >= k * 2 && y <= 33 - k * 2 ? (y % 2 ? '#9aa0a6' : '#8a9096') : null; }
+    if (Math.hypot(x + 0.5 - 35, y + 0.5 - 17) <= 1.8 && z >= 20 && z <= 30) return z === 25 ? '#3a2a1a' : '#8a5a2a';
+    if (x === 35 && y === 17 && z > 30 && z <= 33) return '#3a3a3a';
+    return null;
+  }, boxHex);
+}
+// Gapura gang: tiang merah-putih + balok bertuliskan nama gang
+function makeGapura(name) {
+  const tm = textMask(name, 2, 2), W = 60, off = 3 + Math.floor((54 - tm.w) / 2);
+  return buildVox(6, W, 62, (x, y, z) => {
+    const pillar = y <= 5 || y >= W - 6;
+    if (pillar && z <= 55) return z < 3 ? '#8a8a8a' : (Math.floor(z / 8) % 2 ? '#d23a3a' : '#f2f2f2');
+    if (pillar && z > 55 && z <= 60) { const cy = y <= 5 ? 2.5 : W - 3.5; return Math.abs(x - 2.5) + Math.abs(y - cy) <= 60 - z ? '#d8b84a' : null; }
+    if (x >= 1 && x <= 4 && z >= 44 && z <= 57) {
+      if (z === 44 || z === 57) return '#d23a3a';
+      const v = 56 - z - 1;
+      if (x === 4 && tm.at(tm.w - 1 - (y - off), v)) return '#1f5f3a';
+      if (x === 1 && tm.at(y - off, v)) return '#1f5f3a';
+      return '#f4f4f0';
+    }
+    return null;
+  }, boxHex);
+}
+// Jemuran baju
+function makeJemuran(seed) {
+  const r = rng(seed), cols = ['#e23a3a', '#3a6ad0', '#f2c22a', '#f4f4f4', '#2aa65a', '#c25ac8', '#f08a2a'];
+  const clothes = [[5, 11], [13, 18], [20, 27], [29, 35]].map(([a, b]) => [a, b, cols[Math.floor(r() * cols.length)], 14 + Math.floor(r() * 5)]);
+  return buildVox(6, 40, 34, (x, y, z) => {
+    if ((y === 1 || y === 38) && x >= 2 && x <= 3) return '#8a8a8a';
+    if (z === 31 && x >= 2 && x <= 3 && y >= 1 && y <= 38) return '#dddddd';
+    if (x >= 2 && x <= 3) for (const [a, b, c, bot] of clothes) if (y >= a && y <= b && z >= bot && z <= 30) return (z >= 26 || (y > a && y < b)) ? c : null;
+    return null;
+  }, boxHex);
+}
+// Bendera merah putih di tiang bambu
+function makeBendera() {
+  return buildVox(4, 20, 58, (x, y, z) => {
+    if (x === 1 && y === 1) return z <= 57 ? '#c8b070' : null;
+    if (y >= 2 && y <= 17 && z >= 44 && z <= 55 && x === 1 + Math.round(Math.sin(y * 0.55))) return z >= 50 ? '#d42a2a' : '#f4f4f4';
+    return null;
+  }, boxHex);
+}
+// Gawang mini untuk lapangan
+function makeGoal() {
+  return buildVox(8, 30, 18, (x, y, z) => {
+    if ((y <= 1 || y >= 28) && x <= 1 && z <= 17) return '#f4f4f4';
+    if (z >= 16 && z <= 17 && x <= 1) return '#f4f4f4';
+    if (x >= 2 && (y <= 1 || y >= 28) && z <= 1) return '#f4f4f4';
+    if (x >= 2 && x <= 7 && y >= 2 && y <= 27 && ((x === 7 && z <= 15) || z === 15) && (y + z) % 2 === 0) return '#dddddd';
+    return null;
+  }, boxHex);
+}
+// Tong sampah
+function makeBin(col) {
+  return buildVox(10, 10, 14, (x, y, z) => {
+    const d = Math.hypot(x + 0.5 - 5, y + 0.5 - 5);
+    if (z <= 11 && d <= 4) return z % 4 === 0 ? '#2a2a2a' : col;
+    if (z >= 12 && d <= 4.4 - (z - 12)) return '#2a2a2a';
+    return null;
+  }, organicHex);
 }
 
-function drawShadow(ctx, model, x, y, angle, scale = 1) {
-  ctx.save();
-  ctx.globalAlpha = 0.28;
-  ctx.translate(Math.round(x) + 2 * scale, Math.round(y) + 2 * scale);
-  ctx.rotate(angle);
-  ctx.scale(scale, scale);
-  ctx.drawImage(model.shadow, -model.L / 2, -model.W / 2);
-  ctx.restore();
-}
-
 /* =====================================================================
-   4. GAME: lintasan, mobil, kamera
+   5. DUNIA: jalan aspal + selokan, 4 gang conblock, rumah berjajar,
+   warung, mushola, pos ronda, lapangan, tiang listrik & kabel.
    ===================================================================== */
-const WW = 760, WH = 560;           // ukuran dunia (piksel low-res)
-const TRACK_W = 46;
+const WW = 1960, WH = 1480;
+const ROAD_Y0 = 700, ROAD_Y1 = 772, SEL = 12, GW = 40, YARD = 26;
+const GANGS = [260, 760, 1260, 1700];
+const PARTS = [[50, ROAD_Y0 - SEL], [ROAD_Y1 + SEL, WH - 50]];
+const HGANG = [330, 1130];
+const GANG_NAMES = [['MELATI', 'DAHLIA'], ['MAWAR', 'KENANGA'], ['KAMBOJA', 'TERATAI'], ['ANGGREK', 'SEROJA']];
+const FIELD = [390, 820, 630, 990];
+// jenis permukaan: 0 tanah/rumput, 1 aspal, 2 conblock, 3 keramik halaman, 4 air selokan, 5 beton, 6 tanah lapangan
+const surf = new Uint8Array(WW * WH);
 const ground = makeCanvas(WW, WH), gctx = ground.getContext('2d');
-const surf = new Uint8Array(WW * WH); // 0 rumput, 1 aspal, 2 curb
+const objects = [], colliders = [], cables = [], npcs = [], cats = [], houses = [];
+function setSurf(x0, y0, x1, y1, t) {
+  x0 = Math.max(0, Math.round(x0)); y0 = Math.max(0, Math.round(y0)); x1 = Math.min(WW, Math.round(x1)); y1 = Math.min(WH, Math.round(y1));
+  for (let y = y0; y < y1; y++) surf.fill(t, y * WW + x0, y * WW + x1);
+}
+const surfAt = (x, y) => (x < 0 || y < 0 || x >= WW || y >= WH) ? 0 : surf[(y | 0) * WW + (x | 0)];
+function addBox(cx, cy, hw, hh) { colliders.push({ t: 'b', x: cx, y: cy, hw, hh }); }
+function addCircle(cx, cy, r) { colliders.push({ t: 'c', x: cx, y: cy, r }); }
+function addObj(model, x, y, a = 0, extra = {}) { const o = Object.assign({ model, x, y, a }, extra); objects.push(o); return o; }
+function vnoise(x, y, s) {
+  const gx = Math.floor(x / s), gy = Math.floor(y / s), fx = x / s - gx, fy = y / s - gy;
+  const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+  const a = hash(gx, gy, 5), b = hash(gx + 1, gy, 5), c = hash(gx, gy + 1, 5), d = hash(gx + 1, gy + 1, 5);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
 
-const ctrl = [[130, 130], [380, 85], [620, 120], [690, 260], [610, 430], [470, 360], [340, 470], [150, 440], [85, 290]];
-function spline(pts, steps) {
-  const out = [], n = pts.length;
-  for (let i = 0; i < n; i++) {
-    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
-    for (let s = 0; s < steps; s++) {
-      const t = s / steps, t2 = t * t, t3 = t2 * t;
-      out.push([0, 1].map(k => 0.5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3)));
+function buildWorld() {
+  const r = rng(20251117);
+  const pick = a => a[Math.floor(r() * a.length)];
+  // --- permukaan dasar ---
+  setSurf(0, ROAD_Y0, WW, ROAD_Y1, 1);
+  setSurf(0, ROAD_Y0 - SEL, WW, ROAD_Y0, 4); setSurf(0, ROAD_Y1, WW, ROAD_Y1 + SEL, 4);
+  setSurf(0, ROAD_Y0 - SEL, WW, ROAD_Y0 - SEL + 2, 5); setSurf(0, ROAD_Y0 - 2, WW, ROAD_Y0, 5);
+  setSurf(0, ROAD_Y1, WW, ROAD_Y1 + 2, 5); setSurf(0, ROAD_Y1 + SEL - 2, WW, ROAD_Y1 + SEL, 5);
+  for (const hy of HGANG) setSurf(GANGS[0], hy - GW / 2, GANGS[3], hy + GW / 2, 2);
+  for (const gx of GANGS) {
+    for (const [y0, y1] of PARTS) setSurf(gx - GW / 2, y0, gx + GW / 2, y1, 2);
+    setSurf(gx - GW / 2, ROAD_Y0 - SEL, gx + GW / 2, ROAD_Y0, 5);
+    setSurf(gx - GW / 2, ROAD_Y1, gx + GW / 2, ROAD_Y1 + SEL, 5);
+  }
+  setSurf(FIELD[0], FIELD[1], FIELD[2], FIELD[3], 6);
+  // selokan menghalangi kecuali di jembatan mulut gang
+  for (const yy of [ROAD_Y0 - SEL / 2, ROAD_Y1 + SEL / 2]) {
+    let x0 = 0;
+    for (const gx of [...GANGS, WW + GW]) { const x1 = gx - GW / 2; if (x1 > x0) addBox((x0 + x1) / 2, yy, (x1 - x0) / 2, SEL / 2 - 1); x0 = gx + GW / 2; }
+  }
+
+  // --- model rumah (beberapa varian dipakai berulang) ---
+  const walls = ['#a8dcc4', '#f0e2b6', '#f4b892', '#aecbe8', '#f2bccb', '#ecebe4', '#f2d878', '#c8e29a', '#d8c4f0'];
+  const roofs = [
+    { roof: '#b5532e', roofB: '#a64a28', roof2: '#8e3e22', ridge: '#7a3420' },
+    { roof: '#9c4a30', roofB: '#8e4229', roof2: '#74351f', ridge: '#5e2a18' },
+    { roof: '#4a6a9a', roofB: '#42608c', roof2: '#344c70', ridge: '#2a3c5a' },
+    { roof: '#7a7e84', roofB: '#6e7278', roof2: '#5a5e64', ridge: '#4a4e54' },
+    { roof: '#c46a3a', roofB: '#b45e32', roof2: '#984e28', ridge: '#7a3e20' },
+  ];
+  const doors = [['#7a4a2a', '#5e3820'], ['#5a3a2a', '#432a1e'], ['#8a5a3a', '#6e4630'], ['#2f4a6a', '#243a54']];
+  const variants = [];
+  for (let i = 0; i < 9; i++) {
+    const dd = pick(doors);
+    variants.push({ w: pick([56, 60, 64]), d: pick([60, 66]), wall: walls[i % walls.length], ...roofs[i % roofs.length],
+      door: dd[0], door2: dd[1], frame: pick(['#f2efe6', '#8a5a30', '#3a3a3a']), plinth: pick(['#8a8070', '#9a6a5a', '#6a6a6a']),
+      tank: r() < 0.55, tankC: pick(['#2d6cc4', '#e07a2a', '#3a9a5a']), gable: r() < 0.35 });
+  }
+  for (const v of variants) { v.model = makeHouse(v); v.model.shadowOff = 9; }
+  const ironCols = ['#2a6a4a', '#2a2a2a', '#e8e8e8', '#8a6a2a', '#3a4a7a'];
+  const fenceCache = {};
+  const fenceModel = (w, c) => fenceCache[w + c] || (fenceCache[w + c] = makeFence(w, c, Math.floor(w / 2) - 9, Math.floor(w / 2) + 9));
+  const pots = [makePot(0), makePot(1)];
+  const motorCols = ['#d23a3a', '#2a5ad0', '#222226', '#f2f2f2', '#e8a020'];
+  const motors = motorCols.map(makeMotor);
+  const bins = [makeBin('#2a7a4a'), makeBin('#2a5aa0')];
+
+  // --- rumah di kiri-kanan tiap gang, menghadap gang ---
+  for (const gx of GANGS) for (let pi = 0; pi < 2; pi++) for (const s of [-1, 1]) {
+    const [p0, p1] = PARTS[pi];
+    let y = pi === 0 ? p0 + 6 : p0 + 28;
+    const yEnd = pi === 0 ? p1 - 26 : p1;
+    while (true) {
+      const v = pick(variants), w = v.w;
+      if (y + w > yEnd) break;
+      const hg = HGANG.find(h => y < h + GW / 2 + 4 && y + w > h - GW / 2 - 4);
+      if (hg && !(s < 0 && gx === GANGS[0]) && !(s > 0 && gx === GANGS[3])) { y = hg + GW / 2 + 6; continue; }
+      const a = s > 0 ? Math.PI : 0;
+      const hx = gx + s * (GW / 2 + YARD + v.d / 2), hy = y + w / 2;
+      addObj(v.model, hx, hy, a, { kind: 'house' });
+      addBox(hx - 6 * Math.cos(a), hy, (v.d - 12) / 2, w / 2);
+      houses.push({ gx, s, pi, x: hx, y: hy, w, d: v.d });
+      const ex = gx + s * GW / 2, fx = gx + s * (GW / 2 + YARD);
+      setSurf(Math.min(ex, fx), y, Math.max(ex, fx), y + w, 3);
+      const fenceX = gx + s * (GW / 2 + 2.5), ic = pick(ironCols);
+      addObj(fenceModel(w, ic), fenceX, hy, 0, { kind: 'fence' });
+      addBox(fenceX, y + (w / 2 - 9) / 2, 1.5, (w / 2 - 9) / 2);
+      addBox(fenceX, y + w - (w / 2 - 9) / 2, 1.5, (w / 2 - 9) / 2);
+      if (r() < 0.65) { const px = gx + s * (GW / 2 + YARD - 6); for (const py of [y + 6, y + w - 6]) if (r() < 0.75) { addObj(pick(pots), px, py, r() * TAU); addCircle(px, py, 5); } }
+      if (r() < 0.4) { const mx = gx + s * (GW / 2 + 13), my = y + w * 0.22; addObj(pick(motors), mx, my, Math.PI / 2 + (r() - 0.5) * 0.4); addBox(mx, my, 6, 16); }
+      if (r() < 0.25) { const bx = gx + s * (GW / 2 - 6), by = y + 4; addObj(pick(bins), bx, by, 0); addCircle(bx, by, 5); }
+      y += w + 10 + Math.floor(r() * 8);
     }
   }
-  return out;
-}
-const path = spline(ctrl, 24);
 
-function buildGround() {
-  // Gambar dengan warna "kunci", lalu kuantisasi per piksel supaya tetap tajam (pixel-art)
-  gctx.fillStyle = '#00ff00'; gctx.fillRect(0, 0, WW, WH);
-  const stroke = (w, col, dash) => {
-    gctx.beginPath();
-    path.forEach(([x, y], i) => i ? gctx.lineTo(x, y) : gctx.moveTo(x, y));
-    gctx.closePath();
-    gctx.lineWidth = w; gctx.strokeStyle = col; gctx.lineJoin = 'round';
-    gctx.setLineDash(dash || []); gctx.stroke();
+  // --- bangunan khusus di tepi jalan ---
+  const warung1 = makeWarung('#2d6fc4'), warung2 = makeWarung('#e0782a');
+  addObj(warung1, 510, 650, Math.PI / 2, { kind: 'house' }); addBox(510, 640, 30, 18); addBox(510, 671, 27, 3);
+  addObj(warung2, 1010, 832, -Math.PI / 2, { kind: 'house' }); addBox(1010, 842, 30, 18); addBox(1010, 811, 27, 3);
+  const mus = makeMushola(); mus.shadowOff = 10;
+  addObj(mus, 1010, 637, Math.PI / 2, { kind: 'house' }); addBox(1010, 632, 40, 40);
+  const pos = makePosRonda(); pos.shadowOff = 6;
+  addObj(pos, 1450, 652, Math.PI / 2, { kind: 'house' }); addBox(1450, 652, 16, 18);
+  const ger = makeGerobak(); addObj(ger, 612, 674, Math.PI); addBox(612, 674, 18, 9);
+  const flag = makeBendera();
+  for (const [fx, fy] of [[1525, 676], [1088, 676], [430, 676], [1560, 800]]) { addObj(flag, fx, fy, Math.PI / 2); addCircle(fx, fy, 2); }
+  const goal = makeGoal();
+  addObj(goal, FIELD[0] + 6, (FIELD[1] + FIELD[3]) / 2, 0); addObj(goal, FIELD[2] - 6, (FIELD[1] + FIELD[3]) / 2, Math.PI);
+
+  // --- gapura di mulut gang ---
+  GANGS.forEach((gx, i) => {
+    const gTop = makeGapura(GANG_NAMES[i][0]), gBot = makeGapura(GANG_NAMES[i][1]);
+    gTop.shadowOff = 6; gBot.shadowOff = 6;
+    addObj(gTop, gx, ROAD_Y0 - SEL - 6, Math.PI / 2);
+    addObj(gBot, gx, ROAD_Y1 + SEL + 6, -Math.PI / 2);
+    for (const yy of [ROAD_Y0 - SEL - 6, ROAD_Y1 + SEL + 6]) { addBox(gx - 27, yy, 3, 3); addBox(gx + 27, yy, 3, 3); }
+  });
+
+  // --- tiang listrik + kabel ---
+  const pole = makePole();
+  const clear = (x, y, rad) => colliders.every(c => c.t === 'c' ? Math.hypot(c.x - x, c.y - y) > c.r + rad
+    : Math.abs(c.x - x) > c.hw + rad || Math.abs(c.y - y) > c.hh + rad);
+  const poleLine = (pts0, a) => {
+    let prev = null;
+    const pts = pts0.filter(([x, y]) => clear(x, y, 5));
+    for (const [x, y] of pts) {
+      addObj(pole, x, y, a); addCircle(x, y, 3);
+      const ends = [-6.5, 5.5].map(o => [x - Math.sin(a) * o, y + Math.cos(a) * o]);
+      if (prev) for (let k = 0; k < 2; k++) cables.push([prev[k], ends[k]]);
+      prev = ends;
+    }
   };
-  stroke(TRACK_W + 10, '#ffffff');
-  stroke(TRACK_W + 10, '#ff0000', [7, 7]);
-  stroke(TRACK_W, '#000000');
-  gctx.setLineDash([]);
-
-  const img = gctx.getImageData(0, 0, WW, WH), d = img.data;
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    const r = d[i], g = d[i + 1], b = d[i + 2];
-    const x = p % WW, y = (p / WW) | 0, n = hash(x, y, 3);
-    let col, s;
-    if (g > 150 && r < 120) { s = 0; col = n < 0.12 ? [92, 170, 62] : n < 0.55 ? [70, 148, 52] : n < 0.93 ? [60, 132, 46] : [44, 108, 38]; }
-    else if (r > 200 && g > 200) { s = 2; col = [240, 240, 240]; }
-    else if (r > 150) { s = 2; col = [214, 48, 48]; }
-    else { s = 1; col = n < 0.15 ? [74, 74, 80] : n < 0.9 ? [62, 62, 68] : [52, 52, 58]; }
-    surf[p] = s; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
+  for (const yy of [ROAD_Y0 - SEL - 5, ROAD_Y1 + SEL + 5]) {
+    const pts = [];
+    for (let x = 90; x < WW; x += 150) if (GANGS.every(g => Math.abs(x - g) > 45)) pts.push([x, yy]);
+    poleLine(pts, 0);
   }
-  // Garis start kotak-kotak
-  const [ax, ay] = path[0], [bx, by] = path[1];
-  const tl = Math.hypot(bx - ax, by - ay), tx = (bx - ax) / tl, ty = (by - ay) / tl;
-  for (let u = -TRACK_W / 2; u < TRACK_W / 2; u++) for (let v = 0; v < 6; v++) {
-    const x = Math.round(ax - ty * u + tx * v), y = Math.round(ay + tx * u + ty * v);
-    const k = (y * WW + x) * 4;
-    const c = ((Math.floor((u + 100) / 3) + Math.floor(v / 3)) % 2) ? 240 : 25;
-    d[k] = d[k + 1] = d[k + 2] = c;
+  for (const gx of GANGS) for (const [y0, y1] of PARTS) {
+    const pts = [];
+    for (let y = y0 + 70; y < y1 - 40; y += 160) if (HGANG.every(h => Math.abs(y - h) > 40)) pts.push([gx + 16, y]);
+    poleLine(pts, Math.PI / 2);
+  }
+
+  // --- pohon, jemuran di halaman belakang ---
+  const mangos = [makeMango(3), makeMango(11), makeMango(29)], bananas = [makeBanana(5), makeBanana(17)];
+  const jemuran = [makeJemuran(2), makeJemuran(9)];
+  const free = (x, y, rad) => colliders.every(c => c.t === 'c' ? Math.hypot(c.x - x, c.y - y) > c.r + rad
+    : Math.abs(c.x - x) > c.hw + rad || Math.abs(c.y - y) > c.hh + rad) && surfAt(x, y) === 0;
+  for (let i = 0; i < 1400; i++) {
+    const x = 20 + r() * (WW - 40), y = 20 + r() * (WH - 40);
+    if (y > ROAD_Y0 - 120 && y < ROAD_Y1 + 110 && GANGS.some((g, k) => k < 3 && x > g + 120 && x < GANGS[k + 1] - 120)) continue;
+    if (x > FIELD[0] - 10 && x < FIELD[2] + 10 && y > FIELD[1] - 10 && y < FIELD[3] + 10) continue;
+    const kind = r();
+    if (kind < 0.45 && free(x, y, 26)) { addObj(pick(mangos), x, y, r() * TAU); addCircle(x, y, 4); }
+    else if (kind < 0.85 && free(x, y, 18)) { addObj(pick(bananas), x, y, r() * TAU); addCircle(x, y, 3); }
+    else if (kind < 0.92 && free(x, y, 22)) { const a = r() < 0.5 ? 0 : Math.PI / 2; addObj(pick(jemuran), x, y, a); addCircle(x - Math.sin(a) * 18, y + Math.cos(a) * 18, 2); addCircle(x + Math.sin(a) * 18, y - Math.cos(a) * 18, 2); }
+  }
+  paintGround();
+}
+
+function paintGround() {
+  const img = gctx.createImageData(WW, WH), d = img.data;
+  const C = h => hexRGB(h);
+  const grass = ['#5f9a3e', '#6aa846', '#548d36', '#79b552'].map(C), soil = ['#9c7b52', '#8f6f48', '#a8885c'].map(C);
+  const asph = ['#4a4a50', '#45454b', '#515157'].map(C), con = ['#b4b0a6', '#a9a59b', '#bfbab0'].map(C), conRed = C('#b07a5a'), mortar = C('#8c8a84'), kerb = C('#d2cdc2');
+  const tile = C('#ddd5c6'), tile2 = C('#d5ccbc'), tileL = C('#c4baa8'), water = C('#3e4a36'), water2 = C('#56664a'), conc = C('#b8b3a8'), conc2 = C('#aaa59a');
+  const fieldC = ['#b08a5a', '#a88252', '#b89464'].map(C), line = C('#eeeeea'), dash = C('#d8d4c4');
+  const midY = (ROAD_Y0 + ROAD_Y1) / 2;
+  for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
+    const p = y * WW + x, t = surf[p], n = hash(x, y, 7);
+    let c;
+    if (t === 0) {
+      const g = vnoise(x, y, 46) + (vnoise(x, y, 9) - 0.5) * 0.35;
+      c = g > 0.5 ? grass[n < 0.12 ? 0 : n < 0.8 ? 1 : n < 0.95 ? 2 : 3] : soil[n < 0.3 ? 0 : n < 0.85 ? 1 : 2];
+    } else if (t === 1) {
+      c = asph[n < 0.7 ? 0 : n < 0.85 ? 1 : 2];
+      if (Math.abs(y - midY) < 1.5 && x % 30 < 14 && n < 0.85) c = dash;
+    } else if (t === 2) {
+      const row = Math.floor(y / 3), off = (row % 2) * 3;
+      const edge = surf[p - 1] !== 2 || surf[p + 1] !== 2 || surf[p - WW] !== 2 || surf[p + WW] !== 2 || surf[p - 2] !== 2 || surf[p + 2] !== 2;
+      if (edge) c = kerb;
+      else if (y % 3 === 0 || (x + off) % 6 === 0) c = mortar;
+      else { const b = hash(Math.floor((x + off) / 6), row, 9); c = b < 0.12 ? conRed : con[b < 0.5 ? 0 : b < 0.8 ? 1 : 2]; }
+    } else if (t === 3) {
+      c = (x % 8 === 0 || y % 8 === 0) ? tileL : (hash(x >> 3, y >> 3, 4) < 0.5 ? tile : tile2);
+    } else if (t === 4) c = n < 0.07 ? water2 : water;
+    else if (t === 5) c = n < 0.3 ? conc2 : conc;
+    else {
+      c = fieldC[n < 0.4 ? 0 : n < 0.8 ? 1 : 2];
+      const fx = x - FIELD[0], fy = y - FIELD[1], fw = FIELD[2] - FIELD[0], fh = FIELD[3] - FIELD[1];
+      if (fx < 3 || fy < 3 || fw - fx <= 3 || fh - fy <= 3 || Math.abs(fx - fw / 2) < 1.5 || Math.abs(Math.hypot(fx - fw / 2, fy - fh / 2) - 26) < 1.2) c = line;
+    }
+    const k = p * 4; d[k] = c[0]; d[k + 1] = c[1]; d[k + 2] = c[2]; d[k + 3] = 255;
   }
   gctx.putImageData(img, 0, 0);
 }
-buildGround();
 
-// Objek dunia
-const objects = [];
-(function placeObjects() {
-  const nearTrack = (x, y, r) => {
-    for (const [px, py] of path) if (Math.hypot(px - x, py - y) < r) return true;
-    return false;
-  };
-  let tries = 0;
-  while (objects.filter(o => o.kind === 'tree').length < 55 && tries++ < 4000) {
-    const x = 10 + hash(tries, 1, 9) * (WW - 20), y = 14 + hash(tries, 2, 9) * (WH - 20);
-    if (nearTrack(x, y, TRACK_W / 2 + 14)) continue;
-    if (objects.some(o => Math.hypot(o.x - x, o.y - y) < 18)) continue;
-    objects.push({ kind: 'tree', model: MODELS.tree[tries % 3], x, y, a: hash(tries, 3, 9) * 6.28, r: 4 });
+// Grid spasial untuk tabrakan
+const CELL = 128, cgrid = new Map();
+function indexColliders() {
+  for (const c of colliders) {
+    const hw = c.t === 'c' ? c.r : c.hw, hh = c.t === 'c' ? c.r : c.hh;
+    for (let gy = Math.floor((c.y - hh) / CELL); gy <= Math.floor((c.y + hh) / CELL); gy++)
+      for (let gx = Math.floor((c.x - hw) / CELL); gx <= Math.floor((c.x + hw) / CELL); gx++) {
+        const k = gx + ',' + gy; if (!cgrid.has(k)) cgrid.set(k, []); cgrid.get(k).push(c);
+      }
   }
-  // Cone di sisi dalam tikungan, tumpukan ban di sisi luar
-  for (let i = 12; i < path.length; i += 34) {
-    const [x0, y0] = path[i], [x1, y1] = path[(i + 1) % path.length];
-    const l = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / l, ny = (x1 - x0) / l;
-    const off = TRACK_W / 2 + 12;
-    objects.push({ kind: 'cone', model: MODELS.cone, x: x0 + nx * off, y: y0 + ny * off, a: 0, r: 3 });
-    objects.push({ kind: 'tires', model: MODELS.tires, x: x0 - nx * off, y: y0 - ny * off, a: 0, r: 5 });
-  }
-})();
+}
+// Dorong entitas (lingkaran radius r) keluar dari semua penghalang. Return true jika menabrak.
+function collide(e, r) {
+  let hit = false;
+  const seen = new Set();
+  for (let gy = Math.floor((e.y - r) / CELL); gy <= Math.floor((e.y + r) / CELL); gy++)
+    for (let gx = Math.floor((e.x - r) / CELL); gx <= Math.floor((e.x + r) / CELL); gx++) {
+      for (const c of cgrid.get(gx + ',' + gy) || []) {
+        if (seen.has(c)) continue; seen.add(c);
+        if (c.t === 'c') {
+          const dx = e.x - c.x, dy = e.y - c.y, d = Math.hypot(dx, dy), m = c.r + r;
+          if (d < m && d > 0.001) { e.x = c.x + dx / d * m; e.y = c.y + dy / d * m; hit = true; }
+        } else {
+          const qx = Math.max(c.x - c.hw, Math.min(c.x + c.hw, e.x)), qy = Math.max(c.y - c.hh, Math.min(c.y + c.hh, e.y));
+          const dx = e.x - qx, dy = e.y - qy, d = Math.hypot(dx, dy);
+          if (d < r) {
+            hit = true;
+            if (d > 0.001) { e.x = qx + dx / d * r; e.y = qy + dy / d * r; }
+            else { // di dalam kotak: keluar lewat sisi terdekat
+              const ox = c.hw - Math.abs(e.x - c.x), oy = c.hh - Math.abs(e.y - c.y);
+              if (ox < oy) e.x = c.x + Math.sign(e.x - c.x || 1) * (c.hw + r); else e.y = c.y + Math.sign(e.y - c.y || 1) * (c.hh + r);
+            }
+          }
+        }
+      }
+    }
+  e.x = Math.max(r, Math.min(WW - r, e.x)); e.y = Math.max(r, Math.min(WH - r, e.y));
+  return hit;
+}
 
-const car = { x: path[2][0], y: path[2][1], a: Math.atan2(path[3][1] - path[2][1], path[3][0] - path[2][0]), vx: 0, vy: 0 };
-const cam = { x: car.x, y: car.y, a: car.a + Math.PI / 2 };
+/* =====================================================================
+   6. PEMAIN, NPC, KUCING
+   ===================================================================== */
 const keys = { up: false, down: false, left: false, right: false, run: false };
-const opts = { rotCam: false, shadow: true, spacing: 1, char: 'car' };
-const bot = { x: 0, y: 0, a: 0, walk: 0, speed: 0, mode: 'stand', action: null, at: 0, phase: 0, anim: 'idle', frame: 0 };
+const opts = { rotCam: false, shadow: true, spacing: 1, char: 'human' };
+const car = { x: 640, y: 736, a: 0, vx: 0, vy: 0 };
+const bot = { x: 760, y: 736, a: Math.PI / 2, mode: 'stand', action: null, at: 0, phase: 0, anim: 'idle', frame: 0, moving: false, queued: null, hitDone: false, last: { fam: null, idx: -1, end: -9 }, time: 0 };
+const cam = { x: 760, y: 736, a: 0 };
 
-const gameCanvas = document.getElementById('game'), ctx = gameCanvas.getContext('2d');
-let VW = 240, VH = 320;
-function resizeGame() {
-  const w = innerWidth, h = innerHeight;
-  const px = Math.max(1, Math.round(Math.min(w, h) / 210));
-  VW = Math.ceil(w / px); VH = Math.ceil(h / px);
-  gameCanvas.width = VW; gameCanvas.height = VH;
-  gameCanvas.style.width = VW * px + 'px'; gameCanvas.style.height = VH * px + 'px';
-}
-addEventListener('resize', () => { resizeGame(); resizeTut(); });
-resizeGame();
+const LINES = {
+  ibuHijab: ['Mau ke mana, Mas?', 'Assalamualaikum!', 'Hati-hati, gangnya sempit.'],
+  ibuHijab2: ['Eh, Bu, sudah dengar kabar?', 'Harga cabai naik lagi, lho.', 'Mampir, Mas!'],
+  ibuDaster: ['Awas, baru disapu!', 'Pagi, Dek!', 'Jangan injak daunnya, ya.'],
+  bapakPeci: ['Monggo, mampir ngopi.', 'Nanti malam giliran ronda, ya.', 'Sudah makan, Nak?'],
+  kakek: ['Dulu gang ini masih sawah...', 'Hehe, sehat, Nak?'],
+  pakRT: ['Minggu kerja bakti, jangan lupa!', 'Tamu wajib lapor RT, ya.', 'Iuran sampah bulan ini, ya.'],
+  anakSD: ['Main bola, yuk!', 'Hore, pulang sekolah!', 'Kak, lihat layangan aku?'],
+  anakSDcw: ['Ayo main lompat tali!', 'Aku juara kelas, lho!'],
+  pemuda: ['Bro, mabar nanti malam?', 'Santai dulu, bos.', 'Wifi warung kencang, lho.'],
+  mbak: ['Permisi, Mas.', 'Mau ke warung, beli pulsa.'],
+  tukangBakso: ['Bakso! Bakso!', 'Pedas atau nggak, Mas?', 'Ting ting ting!'],
+};
+const HIT_LINES = ['Aduh!', 'Eh, kok mukul?!', 'Sakit, tahu!', 'Astaghfirullah!', 'Woi, apaan sih!'];
+const CAT_LINES = ['Meong!', 'Miaw~', 'Hssss!'];
+function say(e, text, dur = 2.6) { e.bubble = { text, until: bot.time + dur }; }
 
-function surfAt(x, y) {
-  x |= 0; y |= 0;
-  if (x < 0 || y < 0 || x >= WW || y >= WH) return 0;
-  return surf[y * WW + x];
-}
-
-function update(dt) {
-  if (WALKERS[opts.char]) return updateRobot(dt);
-  const fx = Math.cos(car.a), fy = Math.sin(car.a);
-  let fwd = car.vx * fx + car.vy * fy;         // kecepatan maju
-  let lat = -car.vx * fy + car.vy * fx;        // kecepatan menyamping (drift)
-  const s = surfAt(car.x, car.y);
-  const grass = s === 0;
-
-  if (keys.up) fwd += (grass ? 90 : 150) * dt;
-  if (keys.down) fwd -= (fwd > 0 ? 220 : 70) * dt;
-  const maxF = grass ? 55 : 125;
-  fwd = Math.max(-40, Math.min(maxF + (fwd > maxF ? (fwd - maxF) * 0.97 : 0), fwd));
-  fwd *= Math.pow(grass ? 0.35 : 0.72, dt);
-  lat *= Math.pow(grass ? 0.02 : 0.004, dt);    // grip ban
-
-  const steer = (keys.right - keys.left);
-  const turnRate = 2.6 * Math.min(1, Math.abs(fwd) / 45) * Math.sign(fwd || 1);
-  car.a += steer * turnRate * dt;
-  // efek drift: setir menambah slip menyamping
-  lat -= steer * Math.abs(fwd) * 0.45 * dt * (keys.up ? 1.6 : 1);
-
-  const nx = Math.cos(car.a), ny = Math.sin(car.a);
-  car.vx = nx * fwd - ny * lat;
-  car.vy = ny * fwd + nx * lat;
-  car.x += car.vx * dt; car.y += car.vy * dt;
-
-  // batas dunia & tabrakan sederhana
-  car.x = Math.max(8, Math.min(WW - 8, car.x));
-  car.y = Math.max(8, Math.min(WH - 8, car.y));
-  for (const o of objects) {
-    const dx = car.x - o.x, dy = car.y - o.y, dist = Math.hypot(dx, dy), min = o.r + 7;
-    if (dist < min && dist > 0) {
-      car.x = o.x + dx / dist * min; car.y = o.y + dy / dist * min;
-      const vn = (car.vx * dx + car.vy * dy) / dist;
-      if (vn < 0) { car.vx -= 1.5 * vn * dx / dist; car.vy -= 1.5 * vn * dy / dist; }
-    }
-  }
-
-  // jejak ban saat drift
-  if (Math.abs(lat) > 18 && !grass) {
-    gctx.fillStyle = 'rgba(25,25,28,0.55)';
-    for (const side of [-5, 5]) {
-      const wx = car.x - nx * 8 - ny * side, wy = car.y - ny * 8 + nx * side;
-      gctx.fillRect(wx | 0, wy | 0, 1, 1);
-    }
-  }
-
-  // kamera
-  const k = 1 - Math.pow(0.0005, dt);
-  cam.x += (car.x + car.vx * 0.35 - cam.x) * k;
-  cam.y += (car.y + car.vy * 0.35 - cam.y) * k;
-  const target = opts.rotCam ? car.a + Math.PI / 2 : 0;
-  let da = target - cam.a;
-  da = Math.atan2(Math.sin(da), Math.cos(da));
-  cam.a += da * (1 - Math.pow(0.02, dt));
-  if (!opts.rotCam) {  // jangan tampilkan area di luar dunia
-    const hw = VW / 2, hh = VH / 2;
-    cam.x = WW > VW ? Math.max(hw, Math.min(WW - hw, cam.x)) : WW / 2;
-    cam.y = WH > VH ? Math.max(hh, Math.min(WH - hh, cam.y)) : WH / 2;
-  }
-
-  document.getElementById('speed').textContent = Math.round(Math.abs(fwd) * 1.6) + ' km/j';
-}
-
-function updateRobot(dt) {
-  // gerak 8 arah relatif terhadap layar, lalu diubah ke koordinat dunia sesuai sudut kamera
-  let ix = keys.right - keys.left, iy = keys.down - keys.up;
-  const moving = ix || iy;
-  if (moving) {
-    const l = Math.hypot(ix, iy); ix /= l; iy /= l;
-    const c = Math.cos(cam.a), s = Math.sin(cam.a);
-    const wx = ix * c - iy * s, wy = ix * s + iy * c;
-    const target = Math.atan2(wy, wx);
-    let da = Math.atan2(Math.sin(target - bot.a), Math.cos(target - bot.a));
-    bot.a += da * Math.min(1, dt * 12);
-    let sp = surfAt(bot.x, bot.y) === 0 ? 34 : 42;
-    if (opts.char === 'human') sp *= humanSpeed();
-    bot.x += wx * sp * dt; bot.y += wy * sp * dt;
-    bot.walk += dt * 8;
-    bot.moving = true;
-  } else { bot.walk = 0; bot.moving = false; } // kembali ke pose diam
-  if (opts.char === 'human') humanAnimate(dt, moving);
-  bot.x = Math.max(8, Math.min(WW - 8, bot.x));
-  bot.y = Math.max(8, Math.min(WH - 8, bot.y));
-  for (const o of objects) {
-    const dx = bot.x - o.x, dy = bot.y - o.y, d = Math.hypot(dx, dy), min = o.r + 5;
-    if (d < min && d > 0) { bot.x = o.x + dx / d * min; bot.y = o.y + dy / d * min; }
-  }
-  const k = 1 - Math.pow(0.0005, dt);
-  cam.x += (bot.x - cam.x) * k; cam.y += (bot.y - cam.y) * k;
-  const ta = opts.rotCam ? bot.a + Math.PI / 2 : 0;
-  cam.a += Math.atan2(Math.sin(ta - cam.a), Math.cos(ta - cam.a)) * (1 - Math.pow(0.02, dt));
-  if (!opts.rotCam) {
-    const hw = VW / 2, hh = VH / 2;
-    cam.x = WW > VW ? Math.max(hw, Math.min(WW - hw, cam.x)) : WW / 2;
-    cam.y = WH > VH ? Math.max(hh, Math.min(WH - hh, cam.y)) : WH / 2;
-  }
-  document.getElementById('speed').textContent = opts.char === 'human' ? ANIMS[bot.anim].name : moving ? 'berjalan' : 'diam';
-}
-
-// ---- state machine animasi manusia ----
-const LOCO = { stand: ['walk', 'idle'], crouch: ['crouch', 'crouch'], crawl: ['crawl', 'crawl'] };
-function humanSpeed() {
-  if (bot.action && bot.action !== 'jump') return 0;          // diam saat memukul dll
-  if (bot.mode === 'crawl') return 0.35;
-  if (bot.mode === 'crouch') return 0.5;
-  return keys.run ? 2.1 : 1;
-}
-function humanAnimate(dt, moving) {
-  if (bot.action) {
-    const A = ANIMS[bot.action];
-    bot.at += dt;
-    const f = Math.floor(bot.at * A.fps);
-    if (f >= A.n) {
-      if (A.hold) { bot.anim = bot.action; bot.frame = A.n - 1; return; }   // jatuh: tetap terbaring
-      bot.action = null;
-    } else { bot.anim = bot.action; bot.frame = f; return; }
-  }
-  let name = LOCO[bot.mode][moving ? 0 : 1];
-  if (bot.mode === 'stand' && moving && keys.run) name = 'run';
-  const A = ANIMS[name];
-  if (moving || name === 'idle') bot.phase += dt * A.fps / A.n;
-  bot.anim = name;
-  bot.frame = (moving || name === 'idle') ? Math.floor(bot.phase * A.n) % A.n : 0;
+/* ---------- pemain ---------- */
+function startAction(name) {
+  bot.action = name; bot.at = 0; bot.hitDone = false; bot.queued = null;
+  if (bot.mode === 'crawl') bot.mode = 'stand';
+  if (ANIMS[name].kind === 'full' && name !== 'jump' && bot.mode === 'crouch') bot.mode = 'stand';
+  syncActionBar();
 }
 function doAction(a) {
   if (opts.char !== 'human') return;
-  if (a === 'crouch' || a === 'crawl') { bot.mode = bot.mode === a ? 'stand' : a; bot.action = null; syncActionBar(); return; }
-  if (bot.action === 'fall') { bot.action = null; return; }     // bangun lagi
-  if (bot.action && bot.action !== 'fall') return;
-  if (bot.mode !== 'stand' && a !== 'fall') bot.mode = 'stand';
-  bot.action = a; bot.at = 0; syncActionBar();
+  if (a === 'crouch' || a === 'crawl') { if (!bot.action || bot.action === 'fall') { bot.mode = bot.mode === a ? 'stand' : a; if (bot.action === 'fall') startAction('getup'); } syncActionBar(); return; }
+  if (bot.action === 'fall') { startAction('getup'); return; }
+  if (a === 'fall' || a === 'jump' || a === 'cast') { if (!bot.action) startAction(a); return; }
+  const list = COMBOS[a];
+  if (!list) return;
+  if (bot.action && FAMILY[bot.action] === a) {          // sedang menyerang: antre jurus berikutnya (combo)
+    if (bot.at > animDur(bot.action) * 0.4) bot.queued = list[(list.indexOf(bot.action) + 1) % list.length];
+    return;
+  }
+  if (bot.action) return;
+  const chain = bot.last.fam === a && bot.time - bot.last.end < 0.7;
+  startAction(list[chain ? (bot.last.idx + 1) % list.length : 0]);
 }
-function syncActionBar() {
-  document.querySelectorAll('#acts button[data-a]').forEach(b => b.classList.toggle('on', b.dataset.a === bot.mode || b.dataset.a === 'run' && keys.run));
+function humanSpeed() {
+  let base = bot.mode === 'crawl' ? 0.35 : bot.mode === 'crouch' ? 0.5 : keys.run ? 2.1 : 1;
+  if (bot.action) {
+    const A = ANIMS[bot.action];
+    base *= A.kind === 'upper' ? (keys.run ? 0.55 : 0.75) : (A.move ?? 0);
+  }
+  return base;
+}
+function updateHuman(dt) {
+  if (bot.action) {
+    const A = ANIMS[bot.action], dur = animDur(bot.action);
+    bot.at += dt;
+    if (A.hit && !bot.hitDone && bot.at >= A.hit.t * dur) { bot.hitDone = true; doHit(A.hit); }
+    if (bot.at >= dur) {
+      if (A.hold) bot.at = dur;
+      else {
+        const fam = FAMILY[bot.action];
+        if (fam) bot.last = { fam, idx: COMBOS[fam].indexOf(bot.action), end: bot.time };
+        if (bot.queued) startAction(bot.queued); else { bot.action = null; syncActionBar(); }
+      }
+    }
+  }
+  const loco = bot.mode === 'crawl' ? 'crawl' : bot.mode === 'crouch' ? 'crouch' : bot.moving ? (keys.run ? 'run' : 'walk') : 'idle';
+  const L = ANIMS[loco];
+  if (bot.moving || loco === 'idle') bot.phase += dt * L.fps / L.n;
+  bot.anim = loco;
+  bot.frame = (bot.moving || loco === 'idle') ? Math.floor(bot.phase * L.n) % L.n : 0;
+}
+function playerModel() {
+  if (opts.char === 'car') return CAR;
+  if (opts.char === 'robot') return ROBOT_FRAMES[bot.moving ? Math.floor(bot.phase * 4) % 4 : 0];
+  if (bot.action) {
+    const A = ANIMS[bot.action], f = Math.min(A.n - 1, Math.floor(bot.at * A.fps));
+    if (A.kind === 'upper' && (bot.moving || bot.mode === 'crouch')) {   // badan bawah jalan + badan atas menyerang
+      const lo = bot.mode === 'crouch' ? 'crouch' : keys.run ? 'run' : 'walk';
+      const lf = bot.moving ? Math.floor(bot.phase * ANIMS[lo].n) % ANIMS[lo].n : 0;
+      return composite(hframe('player', lo, lf, 'lower'), hframe('player', bot.action, f, 'upper'));
+    }
+    return hframe('player', bot.action, f);
+  }
+  return hframe('player', bot.anim, bot.frame);
+}
+function doHit(h) {
+  const fx = Math.cos(bot.a), fy = Math.sin(bot.a);
+  for (const n of npcs) {
+    const dx = n.x - bot.x, dy = n.y - bot.y, d = Math.hypot(dx, dy);
+    if (d > h.r + 6 || d < 0.01) continue;
+    if (Math.acos(Math.max(-1, Math.min(1, (dx * fx + dy * fy) / d))) > h.arc / 2 + 0.2) continue;
+    npcHit(n);
+  }
+  for (const c of cats) if (Math.hypot(c.x - bot.x, c.y - bot.y) < h.r + 10) catScare(c, true);
+}
+// gerak 8 arah relatif layar -> dunia (ikut sudut kamera)
+function inputDir() {
+  let ix = keys.right - keys.left, iy = keys.down - keys.up;
+  if (!ix && !iy) return null;
+  const l = Math.hypot(ix, iy); ix /= l; iy /= l;
+  const c = Math.cos(cam.a), s = Math.sin(cam.a);
+  return [ix * c - iy * s, ix * s + iy * c];
+}
+function updateWalker(dt) {
+  const d = inputDir();
+  bot.moving = false;
+  if (d) {
+    const sp = (surfAt(bot.x, bot.y) === 0 ? 38 : 46) * (opts.char === 'human' ? humanSpeed() : 1);
+    const target = Math.atan2(d[1], d[0]);
+    if (opts.char === 'robot' || !bot.action || ANIMS[bot.action].kind === 'upper' || bot.action === 'jump') {
+      bot.a += Math.atan2(Math.sin(target - bot.a), Math.cos(target - bot.a)) * Math.min(1, dt * 12);
+    }
+    if (sp > 0) { bot.x += d[0] * sp * dt; bot.y += d[1] * sp * dt; bot.moving = true; }
+  }
+  if (opts.char === 'robot' && bot.moving) bot.phase += dt * 2;
+  collide(bot, opts.char === 'robot' ? 9 : 7);
+  if (opts.char === 'human') updateHuman(dt);
+  for (const n of npcs) { const dx = bot.x - n.x, dy = bot.y - n.y, dd = Math.hypot(dx, dy); if (dd < 13 && dd > 0.01 && !n.zoff) { bot.x = n.x + dx / dd * 13; bot.y = n.y + dy / dd * 13; } }
+  document.getElementById('speed').textContent = opts.char === 'human' ? (bot.action ? ANIMS[bot.action].name : ANIMS[bot.anim].name) : bot.moving ? 'berjalan' : 'diam';
+}
+function updateCar(dt) {
+  const fx = Math.cos(car.a), fy = Math.sin(car.a);
+  let fwd = car.vx * fx + car.vy * fy, lat = -car.vx * fy + car.vy * fx;
+  const grass = surfAt(car.x, car.y) === 0;
+  if (keys.up) fwd += (grass ? 110 : 190) * dt;
+  if (keys.down) fwd -= (fwd > 0 ? 260 : 90) * dt;
+  const maxF = grass ? 60 : 165;
+  fwd = Math.max(-50, Math.min(maxF + Math.max(0, fwd - maxF) * 0.97, fwd));
+  fwd *= Math.pow(grass ? 0.35 : 0.72, dt);
+  lat *= Math.pow(0.004, dt);
+  const steer = keys.right - keys.left;
+  car.a += steer * 2.4 * Math.min(1, Math.abs(fwd) / 50) * Math.sign(fwd || 1) * dt;
+  lat -= steer * Math.abs(fwd) * 0.4 * dt;
+  const nx = Math.cos(car.a), ny = Math.sin(car.a);
+  car.vx = nx * fwd - ny * lat; car.vy = ny * fwd + nx * lat;
+  car.x += car.vx * dt; car.y += car.vy * dt;
+  const ox = car.x, oy = car.y;
+  if (collide(car, 13)) { car.vx = (car.x - ox) * 8 + car.vx * 0.3; car.vy = (car.y - oy) * 8 + car.vy * 0.3; }
+  for (const c of cats) if (Math.hypot(c.x - car.x, c.y - car.y) < 60) catScare(c, false);
+  if (Math.abs(lat) > 20 && !grass) {
+    gctx.fillStyle = 'rgba(25,25,28,0.5)';
+    for (const sd of [-10, 10]) gctx.fillRect((car.x - nx * 18 - ny * sd) | 0, (car.y - ny * 18 + nx * sd) | 0, 1, 1);
+  }
+  document.getElementById('speed').textContent = Math.round(Math.abs(fwd) * 0.6) + ' km/j';
+}
+
+/* ---------- NPC ---------- */
+function spawnNPCs() {
+  const mk = (style, x, y, beh, extra = {}) => { const n = Object.assign({ style, x, y, a: Math.PI / 2, beh, t: Math.random() * 3, state: 'ok', st: 0, wait: Math.random() * 2, target: null, greet: 2 + Math.random() * 4, home: [x, y], speed: 20 }, extra); npcs.push(n); return n; };
+  mk('ibuHijab', 260, 200, 'wander', { seg: [260, 80, 260, 650] });
+  mk('pakRT', 900, 736, 'wander', { seg: [120, 736, 1840, 736], speed: 18 });
+  mk('anakSD', 480, 900, 'wander', { area: FIELD, speed: 30, runner: true });
+  mk('anakSDcw', 560, 880, 'wander', { area: FIELD, speed: 26 });
+  mk('pemuda', 1260, 300, 'wander', { seg: [1260, 80, 1260, 650], speed: 22 });
+  mk('mbak', 1700, 1000, 'wander', { seg: [1700, 820, 1700, 1400] });
+  mk('ibuHijab2', 760, 1200, 'wander', { seg: [300, 1130, 1660, 1130], speed: 18 });
+  mk('tukangBakso', 600, 690, 'idle', { a: -Math.PI / 2, waver: true });
+  mk('bapakPeci', 1442, 645, 'sit', { a: Math.PI / 2, zoff: 11 });
+  mk('kakek', 1458, 660, 'sit', { a: Math.PI / 2 + 0.3, zoff: 11 });
+  mk('pemuda', 455, 676, 'sit', { a: Math.PI / 2, lines: ['Ngopi dulu, bro.', 'Gorengan masih anget!'] });
+  const h = houses.find(q => q.gx === 760 && q.s === -1 && q.pi === 0 && q.y > 380) || houses[0];
+  mk('ibuDaster', h.gx + h.s * (GW / 2 + 13), h.y + 12, 'sweep', { a: h.s > 0 ? Math.PI : 0 });
+  for (const n of npcs) hframe(n.style, 'idle', 0);   // frame cadangan dibuat langsung
+}
+function npcHit(n) {
+  if (n.state !== 'ok') return;
+  n.state = 'fall'; n.st = 0; n.t = 0; n.target = null;
+  n.a = Math.atan2(bot.y - n.y, bot.x - n.x);            // menghadap penyerang -> jatuh ke belakang
+  if (!n.zoff) { n.x -= Math.cos(n.a) * 8; n.y -= Math.sin(n.a) * 8; collide(n, 6); }
+  queueAnim(n.style, 'fall'); queueAnim(n.style, 'getup');
+  say(n, HIT_LINES[Math.floor(Math.random() * HIT_LINES.length)]);
+}
+function updateNPC(n, dt) {
+  n.t += dt;
+  const px = opts.char === 'car' ? car.x : bot.x, py = opts.char === 'car' ? car.y : bot.y;
+  const dp = Math.hypot(px - n.x, py - n.y);
+  if (n.state === 'fall') { n.st += dt; if (n.st > animDur('fall') + 1.4) { n.state = 'getup'; n.st = 0; n.t = 0; } return; }
+  if (n.state === 'getup') { n.st += dt; if (n.st > animDur('getup')) { n.state = 'ok'; n.t = 0; } return; }
+  n.greet -= dt;
+  if (dp < 48 && n.greet <= 0) {
+    const ls = n.lines || LINES[n.style];
+    say(n, ls[Math.floor(Math.random() * ls.length)]);
+    n.greet = 9 + Math.random() * 8;
+    if (n.beh === 'wander' || n.beh === 'idle') { n.look = 2.2; n.target = null; n.wait = 2.2; }
+  }
+  n.moving = false;
+  if (n.look > 0) { n.look -= dt; n.a = Math.atan2(py - n.y, px - n.x); }
+  if (n.beh === 'wander' && !(n.look > 0)) {
+    if (!n.target) {
+      if ((n.wait -= dt) <= 0) {
+        if (n.area) n.target = [n.area[0] + 10 + Math.random() * (n.area[2] - n.area[0] - 20), n.area[1] + 10 + Math.random() * (n.area[3] - n.area[1] - 20)];
+        else { const u = Math.random(), s = n.seg; n.target = [s[0] + (s[2] - s[0]) * u + (Math.random() - 0.5) * 12, s[1] + (s[3] - s[1]) * u + (Math.random() - 0.5) * 12]; }
+      }
+    } else {
+      const dx = n.target[0] - n.x, dy = n.target[1] - n.y, d = Math.hypot(dx, dy);
+      if (d < 3) { n.target = null; n.wait = 1 + Math.random() * 3.5; }
+      else {
+        const sp = n.speed * (n.runner && d > 60 ? 2 : 1);
+        n.running = n.runner && d > 60;
+        n.x += dx / d * sp * dt; n.y += dy / d * sp * dt; n.moving = true;
+        n.a += Math.atan2(Math.sin(Math.atan2(dy, dx) - n.a), Math.cos(Math.atan2(dy, dx) - n.a)) * Math.min(1, dt * 8);
+        const ox = n.x, oy = n.y;
+        if (collide(n, 6) && Math.hypot(n.x - ox, n.y - oy) > 0.3 && Math.random() < 0.02) n.target = null;
+      }
+    }
+  }
+  if (!n.zoff && dp < 13 && dp > 0.01) { n.x = px + (n.x - px) / dp * 13; n.y = py + (n.y - py) / dp * 13; }
+}
+function npcModel(n) {
+  let anim, f, A;
+  if (n.state === 'fall' || n.state === 'getup') { anim = n.state; A = ANIMS[anim]; f = Math.min(A.n - 1, Math.floor(n.st * A.fps)); }
+  else {
+    anim = n.moving ? (n.running ? 'run' : 'walk') : (n.beh === 'wander' || n.beh === 'idle') ? ((n.waver && n.look > 0) ? 'wave' : 'idle') : n.beh;
+    A = ANIMS[anim]; f = Math.floor(n.t * A.fps) % A.n;
+  }
+  const m = hframe(n.style, anim, f, 'all', n.state !== 'ok');   // jatuh/bangun: langsung dibangun
+  if (m) return (n.lastModel = m);
+  return n.lastModel || hframe(n.style, 'idle', 0);   // frame belum jadi: pakai frame terakhir
+}
+
+/* ---------- kucing ---------- */
+function spawnCats() {
+  for (const k in CAT_KINDS) {
+    CAT_FRAMES[k] = { walk: [0, 1, 2, 3].map(i => catShape(i / 4 * TAU, CAT_KINDS[k], false)), sit: [0, 1].map(i => catShape(i * Math.PI, CAT_KINDS[k], true)) };
+  }
+  const spots = [[260, 450], [760, 560], [1260, 900], [1700, 300], [560, 676], [1450, 690], [760, 1300]];
+  spots.forEach(([x, y], i) => cats.push({ kind: Object.keys(CAT_KINDS)[i % 3], x, y, a: Math.random() * TAU, home: [x, y], target: null, wait: Math.random() * 3, flee: 0, t: Math.random() * 5 }));
+}
+function catScare(c, hit) {
+  if (c.flee > 0.5) return;
+  const px = opts.char === 'car' ? car.x : bot.x, py = opts.char === 'car' ? car.y : bot.y;
+  const a = Math.atan2(c.y - py, c.x - px) + (Math.random() - 0.5) * 0.8;
+  c.target = [c.x + Math.cos(a) * 90, c.y + Math.sin(a) * 90]; c.flee = 1.6;
+  say(c, hit ? 'Hssss!' : CAT_LINES[Math.floor(Math.random() * 2)], 1.6);
+}
+function updateCat(c, dt) {
+  c.t += dt; c.flee -= dt; c.moving = false;
+  const px = opts.char === 'car' ? car.x : bot.x, py = opts.char === 'car' ? car.y : bot.y;
+  const dp = Math.hypot(px - c.x, py - c.y);
+  if (dp < 34 && (keys.run || bot.action) && opts.char === 'human') catScare(c, false);
+  if (!c.target) { if ((c.wait -= dt) <= 0) { const a = Math.random() * TAU, r = Math.random() * 60; c.target = [c.home[0] + Math.cos(a) * r, c.home[1] + Math.sin(a) * r]; } return; }
+  const dx = c.target[0] - c.x, dy = c.target[1] - c.y, d = Math.hypot(dx, dy);
+  if (d < 3) { c.target = null; c.wait = 2 + Math.random() * 5; if (c.flee > 0) c.home = [c.x, c.y]; return; }
+  const sp = c.flee > 0 ? 80 : 14;
+  c.x += dx / d * sp * dt; c.y += dy / d * sp * dt; c.moving = true;
+  c.a += Math.atan2(Math.sin(Math.atan2(dy, dx) - c.a), Math.cos(Math.atan2(dy, dx) - c.a)) * Math.min(1, dt * 10);
+  if (collide(c, 4) && Math.random() < 0.05) c.target = null;
+}
+const catModel = c => c.moving ? CAT_FRAMES[c.kind].walk[Math.floor(c.t * (c.flee > 0 ? 14 : 6)) % 4] : CAT_FRAMES[c.kind].sit[Math.floor(c.t * 1.2) % 2];
+
+/* =====================================================================
+   7. RENDER: tanah diputar kamera, semua objek diurutkan dari belakang
+   ke depan (posisi y di layar), lalu kabel listrik & balon dialog.
+   ===================================================================== */
+const gameCanvas = document.getElementById('game'), ctx = gameCanvas.getContext('2d');
+let VW = 240, VH = 320, PX = 2;
+function resizeGame() {
+  const w = innerWidth, h = innerHeight;
+  PX = Math.max(1, Math.round(Math.min(w, h) / 230));
+  VW = Math.ceil(w / PX); VH = Math.ceil(h / PX);
+  gameCanvas.width = VW; gameCanvas.height = VH;
+  gameCanvas.style.width = VW * PX + 'px'; gameCanvas.style.height = VH * PX + 'px';
+}
+const bubbleLayer = document.getElementById('bubbles'), bubblePool = [];
+
+function updateCamera(dt, tx, ty, ta) {
+  const k = 1 - Math.pow(0.0008, dt);
+  cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k;
+  const want = opts.rotCam ? ta + Math.PI / 2 : 0;
+  cam.a += Math.atan2(Math.sin(want - cam.a), Math.cos(want - cam.a)) * (1 - Math.pow(0.02, dt));
+  if (!opts.rotCam) {
+    const hw = VW / 2, hh = VH / 2;
+    cam.x = Math.max(hw, Math.min(WW - hw, cam.x)); cam.y = Math.max(hh, Math.min(WH - hh, cam.y));
+  }
 }
 
 function render() {
   ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = '#2f7734';
-  ctx.fillRect(0, 0, VW, VH);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#4f7f36'; ctx.fillRect(0, 0, VW, VH);
   const cx = Math.round(VW / 2), cy = Math.round(VH * (opts.rotCam ? 0.62 : 0.5));
-  const ca = Math.cos(-cam.a), sa = Math.sin(-cam.a);
+  const ca = Math.cos(-cam.a), sa = Math.sin(-cam.a), sp = opts.spacing;
+  const toScreen = (x, y) => { const dx = x - cam.x, dy = y - cam.y; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; };
 
-  // tanah (diputar bersama kamera)
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(-cam.a);
+  ctx.setTransform(ca, sa, -sa, ca, cx, cy);
   ctx.translate(-Math.round(cam.x), -Math.round(cam.y));
   ctx.drawImage(ground, 0, 0);
-  ctx.restore();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  // posisi layar tiap objek; sudut objek dikurangi sudut kamera
-  const player = WALKERS[opts.char]
-    ? { model: opts.char === 'human' ? getAnim(bot.anim)[bot.frame] : WALKERS[opts.char][Math.floor(bot.walk) % 4], x: bot.x, y: bot.y, a: bot.a }
-    : { model: CAR, x: car.x, y: car.y, a: car.a };
-  const list = objects.concat([player]).map(o => {
-    const dx = o.x - cam.x, dy = o.y - cam.y;
-    return { o, sx: cx + dx * ca - dy * sa, sy: cy + dx * sa + dy * ca };
-  }).filter(p => p.sx > -40 && p.sx < VW + 40 && p.sy > -40 && p.sy < VH + 60);
+  const list = [];
+  const push = (o, model, x, y, a, lift = 0, ent = null) => {
+    const [sx, sy] = toScreen(x, y), r = Math.max(model.L, model.W) * 0.75;
+    if (sx < -r || sx > VW + r || sy < -r || sy - (model.H + lift) * sp - r > VH) return;
+    list.push({ model, sx, sy, a: a - cam.a, lift, ent });
+  };
+  for (const o of objects) push(o, o.model, o.x, o.y, o.a);
+  for (const n of npcs) push(n, npcModel(n), n.x, n.y, n.a, n.zoff || 0, n);
+  for (const c of cats) push(c, catModel(c), c.x, c.y, c.a, 0, c);
+  const pl = opts.char === 'car' ? car : bot;
+  push(pl, playerModel(), pl.x, pl.y, pl.a, 0, pl);
+  list.sort((a, b) => a.sy - b.sy);
+  if (opts.shadow) for (const d of list) drawShadow(ctx, d.model, d.sx, d.sy - d.lift * sp, d.a);
+  for (const d of list) drawStack(ctx, d.model, d.sx, d.sy, d.a, sp, 1, d.lift);
 
-  list.sort((a, b) => a.sy - b.sy);  // urutkan dari belakang ke depan
+  // kabel listrik (di ketinggian puncak tiang)
+  ctx.fillStyle = 'rgba(28,28,34,0.85)';
+  const zc = 74 * sp;
+  for (const [a, b] of cables) {
+    const [x0, y0] = toScreen(a[0], a[1]), [x1, y1] = toScreen(b[0], b[1]);
+    if ((x0 < 0 && x1 < 0) || (x0 > VW && x1 > VW) || (y0 - zc < 0 && y1 - zc < 0) || (y0 - zc > VH && y1 - zc > VH)) continue;
+    const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
+    for (let i = 0; i <= n; i++) { const t = i / n; ctx.fillRect(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t - zc + 7 * 4 * t * (1 - t)), 1, 1); }
+  }
 
-  if (opts.shadow) for (const p of list) drawShadow(ctx, p.o.model, p.sx, p.sy, p.o.a - cam.a);
-  for (const p of list) drawStack(ctx, p.o.model, p.sx, p.sy, p.o.a - cam.a, opts.spacing);
+  // balon dialog (HTML, supaya teks tajam)
+  let bi = 0;
+  for (const d of list) {
+    const e = d.ent;
+    if (!e || !e.bubble || e.bubble.until < bot.time) continue;
+    let el = bubblePool[bi];
+    if (!el) { el = document.createElement('div'); el.className = 'bubble'; bubbleLayer.appendChild(el); bubblePool.push(el); }
+    if (el.textContent !== e.bubble.text) el.textContent = e.bubble.text;
+    el.style.display = '';
+    el.style.left = d.sx * PX + 'px';
+    el.style.top = (d.sy - (d.model.H + d.lift + 4) * sp) * PX + 'px';
+    bi++;
+  }
+  for (; bi < bubblePool.length; bi++) bubblePool[bi].style.display = 'none';
 }
 
-let last = performance.now();
+/* ---------- loop ---------- */
+let last = performance.now(), current = 'game', ready = false;
 function frame(t) {
   const dt = Math.min(0.05, (t - last) / 1000); last = t;
-  if (current === 'game') { update(dt); render(); }
-  else renderTut(t / 1000, dt);
+  if (ready) {
+    bot.time += dt;
+    if (current === 'game') {
+      if (opts.char === 'car') updateCar(dt); else updateWalker(dt);
+      for (const n of npcs) updateNPC(n, dt);
+      for (const c of cats) updateCat(c, dt);
+      const p = opts.char === 'car' ? car : bot;
+      updateCamera(dt, p.x + (opts.char === 'car' ? car.vx * 0.3 : 0), p.y + (opts.char === 'car' ? car.vy * 0.3 : 0), p.a);
+      render();
+    } else renderTut(t / 1000);
+    pumpQueue(current === 'game' ? 5 : 12);
+  }
   requestAnimationFrame(frame);
 }
 
 /* ---------- input ---------- */
 const KEYMAP = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
+const ACTKEY = { Space: 'jump', KeyJ: 'punch', KeyK: 'kick', KeyL: 'slash', KeyU: 'cast', KeyH: 'fall', KeyQ: 'crouch', KeyE: 'crawl' };
 addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
   if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; e.preventDefault(); }
-  const ACT = { Space: 'jump', KeyJ: 'punch', KeyK: 'kick', KeyL: 'slash', KeyU: 'cast', KeyH: 'fall', KeyQ: 'crouch', KeyE: 'crawl' };
-  if (ACT[e.code] && !e.repeat) { doAction(ACT[e.code]); e.preventDefault(); }
+  if (ACTKEY[e.code] && !e.repeat) { doAction(ACTKEY[e.code]); e.preventDefault(); }
   if (e.key === 'Shift') { keys.run = true; syncActionBar(); }
   if (e.code === 'KeyC') { opts.rotCam = !opts.rotCam; document.getElementById('optCam').checked = opts.rotCam; }
 });
@@ -1010,140 +1885,147 @@ document.querySelectorAll('.touch button').forEach(b => {
   const on = e => { e.preventDefault(); keys[k] = true; b.classList.add('down'); };
   const off = e => { e.preventDefault(); keys[k] = false; b.classList.remove('down'); };
   b.addEventListener('pointerdown', on);
-  b.addEventListener('pointerup', off);
-  b.addEventListener('pointercancel', off);
-  b.addEventListener('pointerleave', off);
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, off);
 });
-document.getElementById('optChar').onchange = e => {
-  opts.char = e.target.value;
-  if (WALKERS[opts.char]) { bot.x = car.x; bot.y = car.y + 16; bot.a = car.a; opts.rotCam = false; document.getElementById('optCam').checked = false; }
-  updateHelp(); syncActionBar();
-  e.target.blur();
-};
+function syncActionBar() {
+  document.querySelectorAll('#acts button[data-a]').forEach(b => b.classList.toggle('on', b.dataset.a === bot.mode || (b.dataset.a === 'run' && keys.run)));
+}
 document.querySelectorAll('#acts button').forEach(b => {
   const a = b.dataset.a;
   if (b.dataset.hold) {
     b.addEventListener('pointerdown', e => { e.preventDefault(); keys.run = true; syncActionBar(); });
     for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { keys.run = false; syncActionBar(); });
-  } else b.addEventListener('click', () => doAction(a));
+  } else b.addEventListener('pointerdown', e => { e.preventDefault(); doAction(a); });
 });
 function updateHelp() {
   document.body.classList.toggle('human', opts.char === 'human');
   document.getElementById('help').textContent = opts.char === 'car'
-    ? '← → / A D belok · ↑ / W gas · ↓ / S rem/mundur · C kamera'
-    : 'Panah / WASD jalan · C kamera';
+    ? '← → belok · ↑ gas · ↓ rem/mundur · C kamera'
+    : opts.char === 'robot' ? 'Panah / WASD jalan · C kamera'
+    : 'WASD jalan · Shift lari · J/K/L tekan berulang = combo · C kamera';
 }
+document.getElementById('optChar').onchange = e => {
+  const prev = opts.char === 'car' ? car : bot;
+  opts.char = e.target.value;
+  const now = opts.char === 'car' ? car : bot;
+  now.x = prev.x; now.y = prev.y; now.a = prev.a; car.vx = car.vy = 0;
+  bot.action = null; bot.mode = 'stand';
+  updateHelp(); syncActionBar(); e.target.blur();
+};
 document.getElementById('optCam').onchange = e => opts.rotCam = e.target.checked;
 document.getElementById('optShadow').onchange = e => opts.shadow = e.target.checked;
 document.getElementById('optSpace').oninput = e => opts.spacing = +e.target.value;
+document.getElementById('hudToggle').onclick = () => document.getElementById('hud').classList.toggle('min');
+if (innerWidth < 600) document.getElementById('hud').classList.add('min');
 
 /* =====================================================================
-   5. TUTORIAL: visualisasi 3 langkah dari video
+   8. TUTORIAL: model -> slice -> tumpuk & putar
    ===================================================================== */
 const STEPS = [
-  { title: () => tutChar === 'human' ? 'Manusia: bentuk organik dari voxel' : `Gambar ${({ car: 'mobil', robot: 'robot' })[tutChar]} dari 4 sisi`,
-    text: () => { const m = TUT_CHARS[tutChar].model; if (tutChar === 'human') return `Model organik (${m.L}×${m.W}×${m.H}): dibuat dari bola, elipsoid, dan kapsul, lalu tiap voxel diberi cahaya sesuai arah permukaannya (4 tingkat warna). Tampak 4 sisi di atas adalah hasil proyeksinya.`;
-      return `Atas, samping, depan, belakang. Ukurannya harus konsisten: panjang ${m.L}, lebar ${m.W}, tinggi ${m.H} piksel. Model 3D (voxel) didapat dari irisan keempat siluet ini.`; } },
-  { title: 'Tiap baris tampak samping menjadi satu slice',
-    text: () => { const h = TUT_CHARS[tutChar].model.H; return `Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. ${h} baris → ${h} gambar slice.` + ({ car: '', robot: ' Animasi jalan: buat beberapa set slice, kaki & tangan digeser maju-mundur tiap frame.', human: ' Gerakan: tiap frame = pose rangka (sudut sendi), dibangun ulang jadi set slice sendiri.' })[tutChar]; } },
+  { title: () => tutChar === 'human' ? 'Manusia: rangka + bentuk bulat' : `Gambar ${tutChar === 'car' ? 'mobil' : 'robot'} dari 4 sisi`,
+    text: () => { const m = tutModel(); return tutChar === 'human'
+      ? `Model organik ${m.L}×${m.W}×${m.H} voxel: kepala, rambut, badan, lengan & kaki dari elipsoid dan kapsul, lalu tiap voxel diberi cahaya. Tampak di atas adalah proyeksinya.`
+      : `Atas, samping, depan, belakang (${m.L}×${m.W}×${m.H}). Voxel ada jika keempat siluet sama-sama berisi di titik itu.`; } },
+  { title: 'Tiap lapisan tinggi menjadi satu slice',
+    text: () => `Baris ke-z dari tampak samping = lapisan ke-z, digambar sebagai tampak ATAS. ${tutModel().slices.length} lapisan → ${tutModel().slices.length} gambar slice.` },
   { title: 'Tumpuk slice berjarak 1 px lalu putar',
-    text: 'Gambar slice dari bawah ke atas; tiap slice digeser 1 px ke atas layar dan diputar dengan sudut yang sama. Geser "Jarak slice" untuk melihat tumpukannya terpisah.' },
+    text: () => tutChar === 'human'
+      ? 'Tiap frame gerakan = pose rangka berbeda = set slice sendiri. Serangan "badan atas" digabung dengan kaki yang sedang berjalan, slice per slice.'
+      : 'Gambar slice dari bawah ke atas; tiap slice digeser 1 px ke atas layar dan diputar dengan sudut sama.' },
 ];
-let step = 0, tutChar = 'car';
+let step = 0, tutChar = 'human', tutAngle = 0.5;
 const tutCanvas = document.getElementById('tutCanvas'), tctx = tutCanvas.getContext('2d');
-const TW = 200, TH = 170;
-let tutAngle = 30 * Math.PI / 180;
+const TW = 220, TH = 210;
 function resizeTut() {
   tutCanvas.width = TW; tutCanvas.height = TH;
-  const px = Math.max(1, Math.floor(Math.min((innerWidth - 24) / TW, (innerHeight - 290) / TH)));
+  const px = Math.max(1, Math.floor(Math.min((innerWidth - 24) / TW, (innerHeight - 300) / TH)));
   tutCanvas.style.width = TW * px + 'px'; tutCanvas.style.height = TH * px + 'px';
 }
-resizeTut();
-
-// Render tampak (string) ke canvas
+const VCACHE = {};
 function viewCanvas(rows, pal) {
   const c = makeCanvas(rows[0].length, rows.length), x = c.getContext('2d');
   rows.forEach((r, y) => [...r].forEach((ch, i) => { if (pal[ch]) { x.fillStyle = pal[ch]; x.fillRect(i, y, 1, 1); } }));
   return c;
 }
-const TUT_CHARS = {
-  car:   { model: CAR,   views: CAR_VIEWS,   pal: PAL },
-  robot: { model: ROBOT, views: ROBOT_VIEWS, pal: ROBOT_PAL, frames: ROBOT_FRAMES },
-  human: { model: HUMAN, anim: true },
-};
-for (const k in TUT_CHARS) {
-  const tc = TUT_CHARS[k];
-  if (tc.model.vc) { tc.vc = tc.model.vc; continue; }   // model organik: tampak hasil proyeksi
-  tc.vc = {};
-  for (const v of ['top', 'side', 'front', 'back']) tc.vc[v] = viewCanvas(tc.views[v], tc.pal);
+function tutModel() {
+  if (tutChar === 'car') return CAR;
+  if (tutChar === 'robot') return ROBOT;
+  const sid = document.getElementById('tStyle').value;
+  const k = 'v|' + sid;
+  return VCACHE[k] || (VCACHE[k] = buildHumanFrame(sid, 'idle', 0, 'all', true));
 }
-
+function tutViews() {
+  if (tutChar === 'human') return tutModel().vc;
+  const k = 'views|' + tutChar;
+  if (!VCACHE[k]) { const m = tutModel(), v = {}; for (const s of ['top', 'side', 'front', 'back']) v[s] = viewCanvas(m.views[s], m.pal); VCACHE[k] = v; }
+  return VCACHE[k];
+}
 function renderTut(t) {
   const c = tctx;
+  c.setTransform(1, 0, 0, 1, 0, 0);
   c.imageSmoothingEnabled = false;
   c.fillStyle = '#ffffff'; c.fillRect(0, 0, TW, TH);
+  const M = tutModel(), VC = tutViews(), L = M.L, W = M.W, H = M.slices.length;
   const blit = (img, x, y, s = 1) => c.drawImage(img, Math.round(x), Math.round(y), img.width * s, img.height * s);
-  const tc = TUT_CHARS[tutChar], M = tc.model, VC = tc.vc;
-  const L = M.L, W = M.W, H = M.H;
-
-  if (step === 0) {
-    // atas (diputar menghadap atas seperti di video), samping, depan, belakang — berjajar
-    const s = Math.min(2, Math.floor((TW - 30) / (W + L + W + W)), Math.floor((TH - 40) / Math.max(L, H)));
+  if (step === 0 && tutChar === 'human') {
+    // tampak depan besar supaya detail wajah terlihat, samping & belakang di kanan
+    const s = Math.max(1, Math.min(4, Math.floor((TH - 16) / H), Math.floor((TW - 20 - L * 2) / W)));
+    const x0 = Math.round((TW - (W * s + 8 + L * 2)) / 2), y0 = Math.round((TH - H * s) / 2);
+    blit(VC.front, x0, y0, s);
+    blit(VC.side, x0 + W * s + 8, y0, 2);
+    blit(VC.back, x0 + W * s + 8 + Math.round((L - W)), y0 + H * 2 + 6 > TH ? y0 : y0 + H * 2 + 6, 2);
+  } else if (step === 0) {
+    const s = Math.max(1, Math.min(3, Math.floor((TW - 30) / (W * 3 + L)), Math.floor((TH - 30) / Math.max(L, H))));
     const parts = [[VC.top, W, L, true], [VC.side, L, H], [VC.front, W, H], [VC.back, W, H]];
-    const total = parts.reduce((a, p) => a + p[1] * s, 0) + 8 * (parts.length - 1);
+    const total = parts.reduce((a, p) => a + p[1] * s, 0) + 6 * 3;
     let x = Math.round((TW - total) / 2);
     const base = Math.round(TH / 2 + Math.max(L, H) * s / 2);
     for (const [img, w, h, rot] of parts) {
       if (rot) { c.save(); c.translate(x + w * s / 2, base - h * s / 2); c.rotate(-Math.PI / 2); c.drawImage(img, -h * s / 2, -w * s / 2, h * s, w * s); c.restore(); }
       else blit(img, x, base - h * s, s);
       c.fillStyle = '#bbb'; c.fillRect(x, base + 4, w * s, 1);
-      x += w * s + 8;
+      x += w * s + 6;
     }
   } else if (step === 1) {
-    const z = Math.floor(t * 2.5) % H;               // baris yang sedang disorot
-    const row = H - 1 - z;
-    const s = H * 2 <= 60 ? 2 : 1;                   // model tinggi -> skala kecil
-    blit(VC.side, 8, 6, s);
-    c.fillStyle = 'rgba(255,200,0,0.45)';
-    c.fillRect(6, 6 + row * s, L * s + 4, s);
-    const ax = 14 + L * s, ay = 6 + row * s;
-    c.fillStyle = '#999';
-    c.fillRect(ax, ay, 90 - ax, 1);
-    c.fillRect(88, ay - 1, 1, 3);
-    // slice terpilih, diperbesar
-    const bs = Math.min(3, Math.floor(56 / W), Math.floor(100 / L));
-    c.fillStyle = '#eee'; c.fillRect(96, 4, L * bs + 4, W * bs + 4);
-    blit(M.slices[z], 98, 6, bs);
-    // semua slice di bawah
-    const cw = L + 4, ch = W + 6, per = Math.floor((TW - 8) / cw);
-    const gy0 = Math.max(6 + H * s, 8 + W * bs) + 8;
-    for (let i = 0; i < H; i++) {
-      const gx = 6 + (i % per) * cw, gy = gy0 + Math.floor(i / per) * ch;
-      c.fillStyle = i === z ? '#ffd24a' : '#eee';
-      c.fillRect(gx - 1, gy - 1, L + 2, W + 2);
-      blit(M.slices[i], gx, gy);
+    const z = Math.floor(t * 3) % H, row = H - 1 - z;
+    const s = H * 2 <= 90 ? 2 : 1;
+    blit(VC.side, 6, 6, s);
+    c.fillStyle = 'rgba(255,200,0,0.5)'; c.fillRect(4, 6 + row * s, L * s + 4, s);
+    const bs = Math.max(1, Math.min(3, Math.floor(90 / W), Math.floor(100 / L)));
+    const bx = TW - L * bs - 8;
+    c.fillStyle = '#999'; c.fillRect(12 + L * s, 6 + row * s, bx - 16 - L * s, 1);
+    c.fillStyle = '#eee'; c.fillRect(bx - 2, 4, L * bs + 4, W * bs + 4);
+    if (M.slices[z]) blit(M.slices[z], bx, 6, bs);
+    // contoh beberapa slice
+    const gy0 = Math.max(10 + H * s, 10 + W * bs) + 6, cs = L > 30 ? 0.5 : 1;
+    const cw = Math.ceil(L * cs) + 3, ch = Math.ceil(W * cs) + 3, per = Math.floor((TW - 8) / cw), rows = Math.max(1, Math.floor((TH - gy0 - 4) / ch));
+    const shown = Math.min(H, per * rows), stepZ = H / shown;
+    for (let i = 0; i < shown; i++) {
+      const zi = Math.floor(i * stepZ), gx = 4 + (i % per) * cw, gy = gy0 + Math.floor(i / per) * ch;
+      c.fillStyle = zi <= z && z < Math.floor((i + 1) * stepZ) ? '#ffd24a' : '#eee';
+      c.fillRect(gx - 1, gy - 1, Math.ceil(L * cs) + 2, Math.ceil(W * cs) + 2);
+      if (M.slices[zi]) c.drawImage(M.slices[zi], gx, gy, L * cs, W * cs);
     }
   } else {
     if (document.getElementById('tAuto').checked) {
-      tutAngle += 0.9 * (1 / 60);
+      tutAngle += 0.9 / 60;
       document.getElementById('tAngle').value = Math.round((tutAngle * 180 / Math.PI) % 360);
     }
     const sp = +document.getElementById('tSpace').value;
-    const s = (H - 1) * sp * 2 + W * 2 > TH - 10 ? 1 : 2;
-    const baseY = Math.round(TH / 2 + ((H - 1) * sp * s) / 2 + 4);
-    // robot/manusia: putar frame animasi jalan
     let model = M;
-    if (tc.frames) model = tc.frames[Math.floor(t * 6) % tc.frames.length];
-    if (tc.anim) {                                     // manusia: mainkan gerakan yang dipilih
-      const name = document.getElementById('tAnim').value, A = ANIMS[name], fr = getAnim(name);
-      const total = A.n + (A.loop ? 0 : Math.round(A.fps * 0.6));   // aksi: jeda sebentar sebelum diulang
-      model = fr[Math.min(A.n - 1, Math.floor(t * A.fps) % total)];
+    if (tutChar === 'robot') model = ROBOT_FRAMES[Math.floor(t * 6) % 4];
+    if (tutChar === 'human') {
+      const name = document.getElementById('tAnim').value, A = ANIMS[name], sid = document.getElementById('tStyle').value;
+      const total = A.n + (A.loop ? 0 : Math.round(A.fps * 0.6));
+      model = hframe(sid, name, Math.min(A.n - 1, Math.floor(t * A.fps) % total));
     }
-    drawShadow(c, model, TW / 2, baseY, tutAngle, s);   // bayangan tetap di tanah
+    const hgt = (model.H + (model.lift || 0)) * sp;
+    const s = hgt * 2 + Math.max(L, W) * 2 > TH - 6 ? 1 : 2;
+    const baseY = Math.round(TH / 2 + (hgt * s) / 2 - 4);
+    drawShadow(c, model, TW / 2, baseY, tutAngle, s);
     drawStack(c, model, TW / 2, baseY, tutAngle, sp, s);
   }
 }
-
 function setStep(i) {
   step = i;
   document.querySelectorAll('#tutCtl .btn').forEach(b => b.classList.toggle('on', +b.dataset.step === i));
@@ -1152,29 +2034,43 @@ function setStep(i) {
   document.getElementById('tutText').textContent = v(STEPS[i].text);
   document.getElementById('tutSliders').style.visibility = i === 2 ? 'visible' : 'hidden';
   document.getElementById('tAnimWrap').style.display = tutChar === 'human' ? '' : 'none';
+  document.getElementById('tStyleWrap').style.display = tutChar === 'human' ? '' : 'none';
 }
 document.querySelectorAll('#tutCtl .btn').forEach(b => b.onclick = () => setStep(+b.dataset.step));
 document.getElementById('tSpace').oninput = e => document.getElementById('tSpaceV').textContent = e.target.value;
 document.getElementById('tAngle').oninput = e => { document.getElementById('tAuto').checked = false; tutAngle = e.target.value * Math.PI / 180; };
-setStep(0);
 for (const k in ANIMS) document.getElementById('tAnim').add(new Option(ANIMS[k].name, k));
+for (const k in STYLES) document.getElementById('tStyle').add(new Option(STYLES[k].name, k));
 document.getElementById('tAnim').value = 'walk';
 document.getElementById('tChar').onchange = e => { tutChar = e.target.value; setStep(step); };
+document.getElementById('tStyle').onchange = () => setStep(step);
 
-/* ---------- tab ---------- */
-let current = 'game';
 function show(which) {
   current = which;
   document.getElementById('scrGame').classList.toggle('on', which === 'game');
   document.getElementById('scrTut').classList.toggle('on', which === 'tut');
   document.getElementById('tabGame').classList.toggle('on', which === 'game');
   document.getElementById('tabTut').classList.toggle('on', which === 'tut');
+  if (which === 'tut') setStep(step);
 }
 document.getElementById('tabGame').onclick = () => show('game');
 document.getElementById('tabTut').onclick = () => show('tut');
-if (location.hash === '#tut') show('tut');
+addEventListener('resize', () => { resizeGame(); resizeTut(); });
 
+/* ---------- start ---------- */
+resizeGame(); resizeTut(); updateHelp();
 requestAnimationFrame(frame);
+setTimeout(() => {
+  const t0 = performance.now();
+  buildWorld(); indexColliders(); spawnNPCs(); spawnCats();
+  for (const a of ['idle', 'walk', 'run']) queueAnim('player', a);
+  for (const a of ['walk', 'run']) queueAnim('player', a, 'lower');
+  hframe('player', 'idle', 0);
+  console.log('world built in', Math.round(performance.now() - t0), 'ms; objects', objects.length);
+  ready = true;
+  document.getElementById('loading').style.display = 'none';
+  if (location.hash === '#tut') show('tut');
+}, 30);
 </script>
 </body>
 </html>
