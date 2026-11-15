@@ -15,7 +15,7 @@ sapu, guling, motor/sepeda/mobil, rambut & peci/topi/helm).
 | [02-karakter.md](02-karakter.md) | Tokoh utama, 5 sahabat, 6 tokoh romance, rival, guru, geng motor |
 | [03-sistem.md](03-sistem.md) | Jadwal harian, mini game pelajaran, nilai & kenaikan kelas, berantem, geng, mini game luar, kerja sampingan, properti, hal-hal yang bikin nagih |
 | [04-peta.md](04-peta.md) | Denah kota & sekolah, daftar lokasi, ukuran untuk dibangun, urutan pembangunan |
-| [peta/](peta/) | Gambar peta (`peta_kota.png`, `peta_sekolah.png`, `peta_sekolah_lantai.png`) dan skrip `buat_peta.py` untuk menggambar ulang |
+| [peta/](peta/) | Peta kota, 4 denah wilayah, denah sekolah | [peta/](peta/) | Gambar peta (`peta_kota.png`, `peta_sekolah.png`, `peta_sekolah_lantai.png`) dan skrip `buat_peta.py` untuk menggambar ulang | lantai (PNG) dan skrip `peta_organik.py` + `buat_peta.py` untuk menggambar ulang |
 
 ## Pitch satu paragraf
 

@@ -1,45 +1,64 @@
 # Peta: Kota Wirabumi & SMA Negeri 3
 
 Semua ukuran dalam **petak**. **1 petak = 32 unit voxel** (kira-kira 1 meter di dunia game). Skala ini mengikuti demo
-sprite-stacking: tokoh ±36 unit, pintu 44, dinding 52, motor 34 panjang. Gambar dibuat oleh `peta/buat_peta.py`;
-ubah daftar zona di skrip itu lalu jalankan ulang (`python buat_peta.py`) kalau tata letaknya berubah.
+sprite-stacking: tokoh ±36 unit, pintu 44, dinding 52, motor 34 panjang. Peta kota & wilayah dibuat oleh `peta/peta_organik.py`, peta sekolah oleh `peta/buat_peta.py`;
+ubah koordinat di skrip lalu jalankan ulang kalau tata letaknya berubah.
 
-## Peta kota (220 x 150 petak)
+## Peta kota (260 x 180 petak)
 
 ![Peta kota Wirabumi](peta/peta_kota.png)
 
-Kota dibagi kotak-kotak blok oleh jalan raya (abu tua bergaris) dan jalan kampung/gang (abu muda). Sungai Kali Cendana di
-selatan memisahkan kota dari Jalan Lingkar Selatan (sirkuit balap). Bukit di utara untuk sepeda turunan dan tempat romantis.
+Kota sengaja **tidak berbentuk kotak-kotak**. Jalan mengikuti sungai, bukit, dan rel; tiap wilayah punya pola rumah sendiri,
+jadi pemain langsung tahu sedang di mana hanya dari bentuk jalannya. Gambar dibuat oleh `peta/peta_organik.py`
+(rumah di sepanjang gang ditempatkan otomatis dengan seed tetap).
 
-| No | Lokasi | Fungsi utama | Terbuka |
+### Tujuh wilayah
+
+| Wilayah | Suasana | Pola jalan & bangunan | Denah detail |
 |---|---|---|---|
-| 1 | **SMA Negeri 3 Wirabumi** | Pusat cerita, pelajaran, ekskul (peta terpisah di bawah) | Bab 1 |
-| 2 | **Perumahan Gang Kenanga** | Rumah Om Darto (kamar pemain), tetangga, misi warga. Bisa memakai ulang scene gang perumahan yang sudah ada. | Bab 1 |
-| 3 | **Warkop Simpang** | Properti utama, berubah bentuk sesuai level, pusat malam hari | Bab 2 |
-| 4 | **Kos-kosan Bu Narti** | Properti investasi kelas XII, sumber gosip | Bab 2 (beli: kelas XII) |
-| 5 | **Pasar Wirabumi & terminal angkot** | Belanja bahan warkop, kerja subuh, Laras, angkot sebagai transport cepat | Bab 1 |
-| 6 | **Alun-alun** | Pasar malam Sabtu, ngamen, kencan, upacara kota 17-an | Bab 1 |
-| 7 | **Masjid Agung** | Landmark, event Ramadan (ngabuburit, bukber) | Bab 1 |
-| 8 | **Puskesmas & kantor polisi** | Respawn kalau pingsan (biaya), Bab 9, urusan razia | Bab 1 |
-| 9 | **Ruko Pelita** | Warnet, kafe, toko buku, karaoke; lokasi Warkop level 4 | Kelas X sem. 2 |
-| 10 | **Bengkel Mas Fajar** | Upgrade motor/sepeda, kerja montir, properti bengkel | Bab 3 |
-| 11 | **Plaza Wirabumi** | Mal kecil & bioskop (kencan, baju) | Kelas X sem. 2 |
-| 12 | **Lapangan bola kampung & GOR kota** | Futsal kampung, liga Minggu | Bab 4 |
-| 13 | **STM Karya Bangsa** | Sekolah rival, wilayah Serigala Besi | Bab 3 |
-| 14 | **Lahan proyek PT Graha Megantara** | Konflik utama kelas XI-XII, set piece Bab 13 | Bab 10 |
-| 15 | **Gudang tua markas Lampu Kota** | Markas geng, latihan, properti markas | Bab 3 |
-| 16 | **Kampung Bantaran** | Pangkalan ojek, rute kopi malam, banjir musim hujan | Bab 2 |
-| 17 | **Stasiun Wirabumi** | Pembuka game, perjalanan study tour | Bab 1 |
-| 18 | **Bukit Cemara** | Balap sepeda turunan | Kelas X sem. 2 |
-| 19 | **Menara pemancar** | Tempat nongkrong malam rahasia, arc Tegar, romance Arga | Bab 3 |
-| 20 | **Kebun teh & danau kecil** | Mancing, kencan, foto | Kelas X sem. 2 |
-| 21 | **Perumahan elite Bukit Asri** | Rumah Bram, misi menyelinap Bab 13 | Bab 6 |
-| 22 | **Taman kota & skatepark** | Nongkrong, misi sampingan, romance Rizal | Bab 1 |
-| 23 | **Lapangan basket umum** | Basket 3x3, romance Dimas | Bab 1 |
-| - | **Jalan Lingkar Selatan** | Balap resmi (Minggu) & liar (malam) | Bab 9 (liar: Bab 3) |
+| **Perkampungan Kenanga** | Rumah pemain, warkop, akrab, ramai anak kecil & ibu-ibu | Gang sempit berkelok dan bercabang, rumah rapat dan miring-miring, setapak tembus | [wilayah_1_perkampungan.png](peta/wilayah_1_perkampungan.png) |
+| **Perumahan Bukit Asri** | Elite, sepi, dijaga satpam | Jalan lebar melengkung mengikuti lereng, cul-de-sac berbundaran, rumah besar berhalaman | [wilayah_2_perumahan.png](peta/wilayah_2_perumahan.png) |
+| **Pusat Kota & Jalan Raya** | Paling ramai, macet, lampu toko malam | Jalan raya melengkung, simpang lampu merah, ruko berderet, alun-alun bundar | [wilayah_3_pusat_kota.png](peta/wilayah_3_pusat_kota.png) |
+| **Bantaran Kali** | Padat, sederhana, rawan banjir, wilayah geng | Gang menyusuri kali, rumah panggung, satu jembatan utama + jembatan bambu | [wilayah_4_bantaran.png](peta/wilayah_4_bantaran.png) |
+| **Selatan** (seberang kali) | Terbuka, keras, wilayah rival | STM, lahan proyek berpagar seng, sirkuit Jalan Lingkar, sawah | [wilayah_4_bantaran.png](peta/wilayah_4_bantaran.png) |
+| **Kawasan Sekolah** | Seragam di mana-mana pagi & siang | Satu kompleks besar di Jl. Merdeka, taman kota & lapangan basket di sampingnya | [peta_sekolah.png](peta/peta_sekolah.png) |
+| **Perbukitan Utara** | Sejuk, sepi, romantis | Jalan tanah & setapak di antara hutan, menara pemancar, kebun teh & danau | (cukup dari peta kota) |
 
-**Jarak kira-kira** (untuk merasakan ritme): rumah ke sekolah ±45 petak (jalan kaki ±40 detik, sepeda ±15 detik, motor
-±8 detik). Ujung ke ujung kota ±220 petak (motor ±40 detik). Angkot dari terminal = pindah cepat ke halte tertentu.
+### Denah per wilayah
+
+![Perkampungan Kenanga](peta/wilayah_1_perkampungan.png)
+
+![Perumahan Bukit Asri](peta/wilayah_2_perumahan.png)
+
+![Pusat kota & jalan raya](peta/wilayah_3_pusat_kota.png)
+
+![Bantaran kali & selatan](peta/wilayah_4_bantaran.png)
+
+### Lokasi penting (nomor di peta kota)
+
+| No | Lokasi | Wilayah | Terbuka |
+|---|---|---|---|
+| 1 | SMA Negeri 3 Wirabumi | Kawasan Sekolah | Bab 1 |
+| 2 | Stasiun Wirabumi | Barat, dekat rel | Bab 1 |
+| 3 | Warkop Simpang & rumah Om Darto | Perkampungan | Bab 1-2 |
+| 4 | Alun-alun (pasar malam Sabtu) | Pusat Kota | Bab 1 |
+| 5 | Masjid Agung | Pusat Kota | Bab 1 |
+| 6 | Pasar Wirabumi & terminal angkot | Pusat Kota | Bab 1 |
+| 7 | Ruko Pelita & bengkel Mas Fajar | Pusat Kota | Bab 3 |
+| 8 | Plaza Wirabumi (mal & bioskop) | Pusat Kota | Kelas X sem. 2 |
+| 9 | Rumah Bram | Perumahan | Bab 6 |
+| 10 | Gudang markas Lampu Kota | Bantaran | Bab 3 |
+| 11 | Lapangan bola kampung | Perkampungan/Bantaran | Bab 4 |
+| 12 | STM Karya Bangsa | Selatan | Bab 3 |
+| 13 | Lahan proyek PT Graha Megantara | Selatan | Bab 10 |
+| 14 | Jalan Lingkar (sirkuit) | Selatan | Bab 9 (liar: Bab 3) |
+| 15 | Menara pemancar | Perbukitan | Bab 3 |
+| 16 | Jalur sepeda turunan Bukit Cemara | Perbukitan | Kelas X sem. 2 |
+| 17 | Kebun teh & danau | Perbukitan | Kelas X sem. 2 |
+| 18 | Taman kota & lapangan basket umum | Kawasan Sekolah | Bab 1 |
+
+**Jarak kira-kira**: rumah ke sekolah ±70 petak (jalan kaki ±60 detik, sepeda ±20 detik, motor ±10 detik). Ujung ke ujung
+kota ±260 petak (motor ±45 detik). Angkot dari terminal = pindah cepat antar wilayah.
 
 ## Peta sekolah (76 x 52 petak)
 
@@ -87,7 +106,7 @@ selatan memisahkan kota dari Jalan Lingkar Selatan (sirkuit balap). Bukit di uta
 
 ## Urutan pembangunan peta (saran)
 
-1. **Prototipe 1 (inti)**: Gang Kenanga + Warkop Simpang lv1-2 + jalan ke sekolah + halaman sekolah (gerbang, lapangan, kantin)
+1. **Prototipe 1 (inti)**: Perkampungan Kenanga + Warkop Simpang lv1-2 + jalan ke sekolah + halaman sekolah (gerbang, lapangan, kantin)
    + 1 ruang kelas. Cukup untuk loop: sekolah pagi, satu mini game pelajaran, kopi keliling sore, warkop malam.
 2. **Prototipe 2**: Gedung B penuh, Gedung A lt1 (BK untuk hukuman), parkiran, pasar, alun-alun. Tambah berantem dan rapor.
 3. **Prototipe 3**: Bengkel, gudang markas, Kampung Bantaran, Jalan Lingkar (balap). Tambah geng motor dan motor.
