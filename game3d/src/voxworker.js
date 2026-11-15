@@ -2,10 +2,12 @@
 // supaya game tidak tersendat saat tokoh baru muncul.
 import { STYLES, ANIMS, humanShape, buildVox, R, fixedRamp, organicColor } from './voxlib.js';
 import { NPC_STYLES } from './npc_styles.js';
+import { EXTRA_STYLES } from './npc_extra.js';
 
 // Gaya tokoh SMA: ramp warna dibuat sama seperti loop STYLES di renderer lama.
-for (const id in NPC_STYLES) {
-  const st = { ...NPC_STYLES[id] }, r = {};
+const ALL = { ...NPC_STYLES, ...EXTRA_STYLES };
+for (const id in ALL) {
+  const st = { ...ALL[id] }, r = {};
   r.skin = R(st.skin); r.nose = [r.skin[0], r.skin[0], r.skin[1], r.skin[1]];
   r.hair = R(st.hair || '#222222'); r.hair2 = r.hair.map(c => c.map(v => Math.round(v * 0.72))); r.brow = [r.hair[0], r.hair[0], r.hair[0], r.hair[1]];
   r.tie = R(st.tie || '#e83a5a'); r.helmet = R(st.helmet || '#2fa04a'); r.visor = R('#2a3440'); r.phone = fixedRamp('#1e2230'); r.stubble = [r.skin[0], r.skin[1], r.skin[1], r.skin[2]];

@@ -19,6 +19,8 @@
   #mapWrap { top: max(10px, env(safe-area-inset-top)); right: 12px; width: 132px; height: 132px; border: 3px solid #2a2014; border-radius: 50%; overflow: hidden; background: #9ab878; }
   #fade { position: fixed; inset: 0; background: #000; opacity: 0; transition: opacity .3s; pointer-events: none; }
   #bubbles div { position: fixed; left: 0; top: 0; pointer-events: none; white-space: nowrap; font-size: 13px; }
+  .tag.filler { color: #e8e8d8; font-weight: normal; }
+  .bubble.filler { background: #fffbe8; }
   .tag { color: #fff; font-weight: bold; text-shadow: 0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000; }
   .bubble { background: #fff; color: #222; padding: 5px 9px; border-radius: 8px; border: 2px solid #222; max-width: 220px; white-space: normal !important; text-shadow: none; }
   #menu { position: fixed; top: max(150px, calc(env(safe-area-inset-top) + 150px)); right: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
@@ -44,6 +46,7 @@
 <div id="mapWrap" class="hud"><canvas id="map" width="132" height="132"></canvas></div>
 <div id="menu"><button id="btnMenu">⚙ Menu</button><div id="menuItems" style="display:contents">
   <button id="btnFollow" title="C">Kamera ikut</button>
+  <button id="btnPitch" title="V">Sudut</button>
   <button id="btnMap" title="M">Peta</button>
   <button id="btnQuality">Grafik</button>
   <button id="btnPx">Pixel</button>
@@ -53,7 +56,7 @@
 <div id="toast" class="hud"></div>
 <div id="bubbles"></div>
 <div id="fps" class="hud"></div>
-<div id="help" class="hud">WASD/panah: jalan · Shift: lari · Spasi: aksi<br>Q/E atau seret mouse: putar kamera · roda: zoom · C: kamera ikut · M: peta</div>
+<div id="help" class="hud">WASD/panah: jalan · Shift: lari · Spasi: aksi<br>Q/E atau seret mouse: putar & miringkan kamera · V: sudut · roda: zoom · C: kamera ikut · M: peta</div>
 <div id="joy"><div id="knob"></div></div>
 <div id="camPad"><button id="btnL">⟲</button><button id="btnR">⟳</button></div>
 <div id="pad"><button id="btnRun">Lari</button><button id="btnAct">Aksi</button></div>

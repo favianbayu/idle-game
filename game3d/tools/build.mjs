@@ -5,7 +5,7 @@ import path from 'path';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const worker = await build({ entryPoints: [path.join(root, 'src/voxworker.js')], bundle: true, write: false, format: 'iife', minify: true });
 const main = await build({
-  entryPoints: [path.join(root, 'src/main.js')], bundle: true, write: false, format: 'iife', minify: true, target: 'es2020',
+  entryPoints: [path.join(root, 'src/main.js')], bundle: true, write: false, format: 'iife', minify: !process.env.DEV, target: 'es2020',
   define: { __WORKER_SRC__: JSON.stringify(worker.outputFiles[0].text) }, loader: { '.json': 'json' },
 });
 const html = fs.readFileSync(path.join(root, 'src/index.template.html'), 'utf8')

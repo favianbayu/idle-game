@@ -44,6 +44,8 @@ export function preload(sid, anims, prio = 0) { if (!META) return; for (const a 
 
 // warna voxel tokoh sudah membawa cahaya (organicColor), jadi pakai bahan tanpa lampu: sama persis dengan sprite lama
 export const CHAR_MAT = new THREE.MeshBasicMaterial({ vertexColors: true });
+// pemain digambar SETELAH siluetnya, supaya siluet hanya muncul di bagian yang tertutup bangunan (bukan menimpa badannya sendiri)
+const CHAR_MAT_TOP = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 1 });
 // siluet tokoh saat tertutup bangunan (digambar hanya di bagian yang terhalang)
 export const XRAY_MAT = new THREE.MeshBasicMaterial({ color: 0x2a3a6a, transparent: true, opacity: 0.45, depthFunc: THREE.GreaterDepth, depthWrite: false });
 
@@ -53,7 +55,7 @@ export class Character {
     this.group = new THREE.Group();
     this.mesh = new THREE.Mesh(undefined, CHAR_MAT); this.mesh.castShadow = true; this.mesh.visible = false;
     this.group.add(this.mesh);
-    if (o.xray) { this.xray = new THREE.Mesh(undefined, XRAY_MAT); this.xray.renderOrder = 10; this.xray.visible = false; this.group.add(this.xray); }
+    if (o.xray) { this.xray = new THREE.Mesh(undefined, XRAY_MAT); this.xray.renderOrder = 10; this.xray.visible = false; this.group.add(this.xray); this.mesh.material = CHAR_MAT_TOP; this.mesh.renderOrder = 11; }
     // bayangan bulat (murah, selalu ada walau bayangan matahari dimatikan)
     this.blob = new THREE.Mesh(BLOB_G, BLOB_M); this.blob.rotation.x = -Math.PI / 2; this.blob.position.y = 0.02; this.blob.renderOrder = 1;
     this.group.add(this.blob);
@@ -76,4 +78,4 @@ export class Character {
   }
 }
 const BLOB_G = new THREE.CircleGeometry(0.42, 12);
-const BLOB_M = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false });
+const BLOB_M = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.16, depthWrite: false });

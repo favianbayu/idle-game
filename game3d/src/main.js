@@ -2,6 +2,9 @@
 // Render di resolusi rendah lalu diperbesar tanpa haluskan (nearest) -> tetap terasa pixel/voxel.
 import * as THREE from 'three';
 import { buildKota, buildSekolah, Collision, SCHOOL_OX } from './world.js';
+import { WATER_T } from './kota.js';
+import { L } from './buildings.js';
+import { SMALL } from './veg.js';
 import { initChars, onCharsReady, Character, preload, styleName } from './chars.js';
 import { LINES, NPCS } from './npcs.js';
 
@@ -9,9 +12,11 @@ import { LINES, NPCS } from './npcs.js';
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 const SAVE_KEY = 'lonceng-pulang-3d';
 const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
-const opt = Object.assign({ px: 0, quality: isTouch ? 1 : 2, follow: false, zoom: 2, minimap: !isTouch, fps: true }, saved?.opt || {});
+const opt = Object.assign({ px: 0, quality: isTouch ? 1 : 2, follow: false, zoom: 2, pitch: 1, minimap: !isTouch, fps: true }, saved?.opt || {});
 const QUALITY = [{ name: 'Rendah', shadow: 0 }, { name: 'Sedang', shadow: 1024, ext: 22 }, { name: 'Tinggi', shadow: 2048, ext: 30 }];
 const ZOOMS = [7, 10, 14, 20];
+const PITCHES = [0.42, 0.62, 0.85];   // sudut kamera: rendah (lebih miring), sedang, tinggi (top-down)
+const PITCH_NAMES = ['Rendah', 'Sedang', 'Tinggi'];
 
 /* ------------------------------------------------------------------ renderer */
 const canvas = document.getElementById('game');
@@ -36,6 +41,7 @@ function applyQuality() {
     if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
   }
   scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
+  for (const im of SMALL) im.visible = opt.quality > 0;
 }
 let pxSize = 3;
 function resize() {
@@ -52,7 +58,7 @@ const kota = buildKota(scene, collision);
 const sekolah = buildSekolah(scene, collision);
 initChars(__WORKER_SRC__);
 
-const SPAWN = { x: kota.warkop.x + 2, z: kota.warkop.y + 2.5 };
+const SPAWN = (() => { const [x, z] = L(kota.darto.xf, -0.4, kota.darto.d / 2 + 0.5); return { x, z }; })();
 const player = { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, heading: Math.PI / 2, run: false, area: 'kota' };
 if (saved?.p) Object.assign(player, saved.p);
 const raka = new Character('raka', { xray: true, prio: 10 });
@@ -61,13 +67,23 @@ scene.add(raka.group);
 const npcs = [];
 onCharsReady(() => {
   preload('raka', ['idle', 'walk', 'run'], 10);
-  for (const n of NPCS) {
-    const home = n.at === 'warkop' ? { x: kota.warkop.x + n.dx, z: kota.warkop.y + n.dz } : n.at === 'darto' ? { x: kota.darto.x + n.dx, z: kota.darto.y + n.dz } : n.school ? { x: SCHOOL_OX + n.x, z: n.z } : { x: n.x, z: n.z };
+  const byRegion = {};
+  for (const h of kota.houses) if (!h.special) (byRegion[h.region] || (byRegion[h.region] = [])).push(h);
+  NPCS.forEach((n, idx) => {
+    let home;
+    const H = n.home;
+    if (H === 'darto' && kota.darto) { const [x, z] = L(kota.darto.xf, n.dx, n.dz); home = { x, z }; }
+    else if (H === 'musala') { const h = kota.houses.find(h => h.special === 'musala'); if (h) { const [x, z] = L(h.xf, 1.5, 3.6); home = { x, z }; } }
+    else if (H.house) { const arr = byRegion[H.house] || []; const h = arr[H.n % Math.max(1, arr.length)]; if (h) { const [x, z] = L(h.xf, 0.6, h.d / 2 + (h.yard ? 1.6 : 0.7)); home = { x, z }; } }
+    else if (H.school) home = { x: SCHOOL_OX + H.x, z: H.z };
+    else home = { x: H.x, z: H.z };
+    if (!home) return;
     const c = new Character(n.sid); scene.add(c.group);
     const p = collision.resolve({ x: home.x, z: home.z }, 0.3);
-    npcs.push({ ...n, c, home, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: Math.random() * 3, heading: Math.random() * 6, say: null });
+    home = { x: p.x, z: p.z };
+    npcs.push({ ...n, key: 'n' + idx, name: n.name || styleName(n.sid), c, home, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: Math.random() * 3, heading: Math.random() * 6, say: null, greetT: 0 });
     preload(n.sid, ['idle'], 1);
-  }
+  });
 });
 
 /* ------------------------------------------------------------------ input */
@@ -79,6 +95,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyE') rotateCam(1);
   if (e.code === 'KeyC') toggleFollow();
   if (e.code === 'KeyM') toggleMinimap();
+  if (e.code === 'KeyV') cyclePitch();
   if (e.code === 'Space' || e.code === 'KeyF' || e.code === 'Enter') { act(); e.preventDefault(); }
   if (e.code === 'Equal' || e.code === 'NumpadAdd') zoom(-1);
   if (e.code === 'Minus' || e.code === 'NumpadSubtract') zoom(1);
@@ -87,10 +104,11 @@ addEventListener('keyup', e => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
 
 const joy = { x: 0, y: 0, id: null, ox: 0, oy: 0 };
-const cam = { yaw: saved?.yaw ?? 0.6, yawT: saved?.yaw ?? 0.6, dist: ZOOMS[opt.zoom], distT: ZOOMS[opt.zoom], pitch: 0.92, x: player.x, z: player.z, manualT: 0 };
+const cam = { yaw: saved?.yaw ?? 0.6, yawT: saved?.yaw ?? 0.6, dist: ZOOMS[opt.zoom], distT: ZOOMS[opt.zoom], pitch: PITCHES[opt.pitch], pitchT: PITCHES[opt.pitch], x: player.x, z: player.z, manualT: 0 };
 function rotateCam(d) { cam.yawT = Math.round(cam.yawT / (Math.PI / 4)) * (Math.PI / 4) + d * Math.PI / 4; cam.manualT = 1.5; }
 function zoom(d) { opt.zoom = Math.max(0, Math.min(ZOOMS.length - 1, opt.zoom + d)); cam.distT = ZOOMS[opt.zoom]; }
 function toggleFollow() { opt.follow = !opt.follow; ui.follow.classList.toggle('on', opt.follow); toast(opt.follow ? 'Kamera: ikut karakter' : 'Kamera: bebas (Q/E putar)'); }
+function cyclePitch() { opt.pitch = (opt.pitch + 1) % PITCHES.length; cam.pitchT = PITCHES[opt.pitch]; $('btnPitch').textContent = 'Sudut: ' + PITCH_NAMES[opt.pitch]; toast('Sudut kamera: ' + PITCH_NAMES[opt.pitch]); }
 function toggleMinimap() { opt.minimap = !opt.minimap; ui.mapWrap.style.display = opt.minimap ? '' : 'none'; }
 
 // mouse: seret = putar kamera, roda = zoom. Sentuh: joystick kiri, dua jari = putar + cubit zoom.
@@ -98,7 +116,7 @@ const touches = new Map();
 let drag = null, pinch = null;
 canvas.addEventListener('pointerdown', e => {
   canvas.setPointerCapture(e.pointerId);
-  if (e.pointerType === 'mouse') { drag = { x: e.clientX }; return; }
+  if (e.pointerType === 'mouse') { drag = { x: e.clientX, y: e.clientY }; return; }
   touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (touches.size === 1 && e.clientX < innerWidth * 0.5) {
     joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
@@ -112,7 +130,7 @@ canvas.addEventListener('pointerdown', e => {
   }
 });
 canvas.addEventListener('pointermove', e => {
-  if (e.pointerType === 'mouse') { if (drag && e.buttons) { cam.yawT -= (e.clientX - drag.x) * 0.008; cam.manualT = 1.5; drag.x = e.clientX; } return; }
+  if (e.pointerType === 'mouse') { if (drag && e.buttons) { cam.yawT -= (e.clientX - drag.x) * 0.008; cam.pitchT = Math.max(0.3, Math.min(1.2, cam.pitchT + (e.clientY - drag.y) * 0.004)); cam.manualT = 1.5; drag.x = e.clientX; drag.y = e.clientY; } return; }
   if (!touches.has(e.pointerId)) return;
   touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (e.pointerId === joy.id) {
@@ -124,6 +142,7 @@ canvas.addEventListener('pointermove', e => {
     const [a, b] = [...touches.values()];
     const ang = Math.atan2(b.y - a.y, b.x - a.x), d = Math.hypot(b.x - a.x, b.y - a.y);
     cam.yawT -= ang - pinch.ang; pinch.ang = ang; cam.manualT = 1.5;
+    const my = (a.y + b.y) / 2; if (pinch.my != null) cam.pitchT = Math.max(0.3, Math.min(1.2, cam.pitchT + (my - pinch.my) * 0.005)); pinch.my = my;
     cam.distT = Math.max(ZOOMS[0], Math.min(ZOOMS.at(-1), pinch.dist * pinch.d / d));
   } else if (drag && drag.id === e.pointerId) { cam.yawT -= (e.clientX - drag.x) * 0.012; cam.manualT = 1.5; drag.x = e.clientX; }
 });
@@ -152,7 +171,7 @@ const menu = $('menu'); menu.classList.toggle('closed', isTouch);
 tap($('btnMenu'), () => menu.classList.toggle('closed'));
 tap(ui.run, () => { ui.run.classList.toggle('on'); player.run = ui.run.classList.contains('on'); });
 tap($('btnL'), () => rotateCam(-1)); tap($('btnR'), () => rotateCam(1));
-tap(ui.follow, toggleFollow); tap($('btnMap'), toggleMinimap);
+tap(ui.follow, toggleFollow); tap($('btnPitch'), cyclePitch); $('btnPitch').textContent = 'Sudut: ' + PITCH_NAMES[opt.pitch]; tap($('btnMap'), toggleMinimap);
 tap($('btnZoomIn'), () => zoom(-1)); tap($('btnZoomOut'), () => zoom(1));
 tap(ui.quality, () => { opt.quality = (opt.quality + 1) % 3; applyQuality(); ui.quality.textContent = 'Grafik: ' + QUALITY[opt.quality].name; });
 tap($('btnPx'), () => { opt.px = opt.px >= 5 ? 0 : (opt.px || pxSize) + 1; resize(); $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto'); });
@@ -162,11 +181,11 @@ function toast(t) { ui.toast.textContent = t; ui.toast.style.opacity = 1; toastT
 
 /* ------------------------------------------------------------------ interaksi */
 const ENTER_SCHOOL = { x: 109, z: 63.5 };   // depan gerbang SMA 3 di peta kota
-const EXIT_SCHOOL = { x: SCHOOL_OX + 37, z: 49.6 };
+const EXIT_SCHOOL = { x: SCHOOL_OX + 39, z: 58.2 };   // trotoar depan gerbang (guide 83)
 let target = null;
 function findTarget() {
   let best = null, bd = 1e9;
-  for (const n of npcs) { const d = Math.hypot(n.x - player.x, n.z - player.z); if (d < 1.9 && d < bd) { bd = d; best = { kind: 'npc', n, label: 'Ngobrol: ' + styleName(n.sid) }; } }
+  for (const n of npcs) { const d = Math.hypot(n.x - player.x, n.z - player.z); if (d < 1.9 && d < bd) { bd = d; best = { kind: 'npc', n, label: 'Ngobrol: ' + n.name }; } }
   if (best) return best;
   if (player.area === 'kota') {
     if (Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Masuk SMA Negeri 3' };
@@ -178,13 +197,13 @@ let fading = 0;
 function act() {
   if (!target || fading) return;
   if (target.kind === 'npc') {
-    const n = target.n, lines = LINES[n.sid] || ['Halo!'];
+    const n = target.n, lines = LINES[n.filler ? n.name : n.sid] || ['Halo!'];
     n.say = { text: lines[n.line = ((n.line ?? -1) + 1) % lines.length], t: 3.5 };
     n.heading = Math.atan2(player.z - n.z, player.x - n.x); n.wait = 4; n.tx = n.x; n.tz = n.z;
   } else if (target.kind === 'go') {
     fading = 1; ui.fade.style.opacity = 1;
     setTimeout(() => {
-      if (target.to === 'sekolah') Object.assign(player, { x: EXIT_SCHOOL.x, z: EXIT_SCHOOL.z - 2.5, heading: -Math.PI / 2, area: 'sekolah' });
+      if (target.to === 'sekolah') Object.assign(player, { x: EXIT_SCHOOL.x, z: EXIT_SCHOOL.z - 4.2, heading: -Math.PI / 2, area: 'sekolah' });
       else Object.assign(player, { x: ENTER_SCHOOL.x, z: ENTER_SCHOOL.z + 1.5, heading: Math.PI / 2, area: 'kota' });
       cam.x = player.x; cam.z = player.z; cam.yaw = cam.yawT = 0;
       ui.fade.style.opacity = 0; fading = 0;
@@ -196,12 +215,12 @@ function act() {
 const mctx = ui.map.getContext('2d');
 function drawMinimap() {
   const S = 132, sc = 3;   // 3 piksel per petak di minimap
-  const img = player.area === 'kota' ? kota.groundTex : sekolah.groundTex, ox = player.area === 'kota' ? 0 : SCHOOL_OX;
-  const k = img.width / (player.area === 'kota' ? 260 : 76);
+  const inK = player.area === 'kota', img = inK ? kota.groundTex : sekolah.groundTex, ox = inK ? 0 : SCHOOL_OX + sekolah.gx0, oz = inK ? 0 : sekolah.gz0;
+  const k = img.width / (inK ? 260 : sekolah.gw);
   mctx.save(); mctx.fillStyle = '#9ab878'; mctx.fillRect(0, 0, S, S);
   mctx.translate(S / 2, S / 2); mctx.rotate(cam.yaw);
   mctx.imageSmoothingEnabled = false;
-  mctx.drawImage(img, (player.x - ox) * k - S / sc / 2 * k * 1.5, player.z * k - S / sc / 2 * k * 1.5, S / sc * k * 1.5, S / sc * k * 1.5, -S * 0.75, -S * 0.75, S * 1.5, S * 1.5);
+  mctx.drawImage(img, (player.x - ox) * k - S / sc / 2 * k * 1.5, (player.z - oz) * k - S / sc / 2 * k * 1.5, S / sc * k * 1.5, S / sc * k * 1.5, -S * 0.75, -S * 0.75, S * 1.5, S * 1.5);
   mctx.fillStyle = '#ffd84a';
   for (const n of npcs) { const dx = (n.x - player.x) * sc, dz = (n.z - player.z) * sc; if (Math.abs(dx) < S && Math.abs(dz) < S) mctx.fillRect(dx - 1.5, dz - 1.5, 3, 3); }
   if (player.area === 'kota') { mctx.fillStyle = '#e04040'; for (const m of kota.marks) { const dx = (m.x - player.x) * sc, dz = (m.y - player.z) * sc; if (Math.abs(dx) < S && Math.abs(dz) < S) mctx.fillRect(dx - 2, dz - 2, 4, 4); } }
@@ -227,10 +246,10 @@ function updatePlayer(dt) {
   const wx = (fx * -iy + rx * ix), wz = (fz * -iy + rz * ix);
   const k = 1 - Math.exp(-dt * 14);
   player.vx += (wx * sp - player.vx) * k; player.vz += (wz * sp - player.vz) * k;
-  tmp.x = player.x + player.vx * dt; tmp.z = player.z + player.vz * dt;
-  collision.resolve(tmp, 0.28);
-  if (collision.blockedMask(tmp.x, tmp.z)) { tmp.x = player.x; tmp.z = player.z; }
-  player.x = tmp.x; player.z = tmp.z;
+  const np = collision.move(player, player.x + player.vx * dt, player.z + player.vz * dt, 0.28);
+  // kecepatan nyata (supaya animasi berhenti saat menabrak dinding)
+  if (dt > 0) { player.vx = (np.x - player.x) / dt; player.vz = (np.z - player.z) / dt; }
+  player.x = np.x; player.z = np.z;
   const v = Math.hypot(player.vx, player.vz);
   if (l > 0.1) {
     const want = Math.atan2(wz, wx); let d = want - player.heading; d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -253,9 +272,8 @@ function updateNPC(n, dt) {
     const tx = n.tx - n.x, tz = n.tz - n.z, d = Math.hypot(tx, tz);
     if (d < 0.2) { n.wait = 2 + Math.random() * 5; const a = Math.random() * 6.28, r = Math.random() * (n.roam ?? 3); n.tx = n.home.x + Math.cos(a) * r; n.tz = n.home.z + Math.sin(a) * r; }
     else {
-      const s = 1.1 * dt; const p = { x: n.x + tx / d * s, z: n.z + tz / d * s };
-      collision.resolve(p, 0.26);
-      if (collision.blockedMask(p.x, p.z) || Math.hypot(p.x - n.x, p.z - n.z) < s * 0.3) { n.tx = n.x; n.tz = n.z; }
+      const s = 1.1 * dt; const p = collision.move(n, n.x + tx / d * s, n.z + tz / d * s, 0.26);
+      if (Math.hypot(p.x - n.x, p.z - n.z) < s * 0.3) { n.tx = n.x; n.tz = n.z; }
       n.x = p.x; n.z = p.z; n.heading = Math.atan2(tz, tx); moving = true;
     }
   }
@@ -264,6 +282,8 @@ function updateNPC(n, dt) {
   n.c.heading = n.heading; n.c.play(moving ? 'walk' : 'idle');
   n.c.group.position.set(n.x, 0, n.z); n.c.update(dt);
   if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
+  n.greetT -= dt;
+  if (n.filler && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 3) { const ls = LINES[n.name] || ['Halo!']; n.say = { text: ls[Math.floor(Math.random() * ls.length)], t: 3 }; n.greetT = 30; }
 }
 
 const v3 = new THREE.Vector3();
@@ -282,8 +302,8 @@ function drawBubbles() {
   for (const n of npcs) {
     if (!n.c.group.visible) continue;
     const d = Math.hypot(n.x - player.x, n.z - player.z);
-    if (n.say) show(n.sid, n.x, 2.0, n.z, n.say.text, 'bubble');
-    else if (d < 6) show(n.sid, n.x, 1.85, n.z, styleName(n.sid), 'tag');
+    if (n.say) show(n.key, n.x, 2.0, n.z, n.say.text, n.filler ? 'bubble filler' : 'bubble');
+    else if (d < 6) show(n.key, n.x, 1.85, n.z, n.name, n.filler ? 'tag filler' : 'tag');
   }
   for (const [k, el] of bubbleEls) if (!seen.has(k)) { el.remove(); bubbleEls.delete(k); }
 }
@@ -303,6 +323,8 @@ function loop(now) {
   }
   cam.yaw += (cam.yawT - cam.yaw) * Math.min(1, dt * 8);
   cam.dist += (cam.distT - cam.dist) * Math.min(1, dt * 8);
+  cam.pitch += (cam.pitchT - cam.pitch) * Math.min(1, dt * 8);
+  WATER_T.value += dt;
   const lk = Math.min(1, dt * 10); cam.x += (player.x - cam.x) * lk; cam.z += (player.z - cam.z) * lk;
   // layar tegak (HP portrait): mundurkan kamera supaya lebar pandang tetap cukup
   const dist = cam.dist * (camera.aspect < 1 ? Math.pow(1 / camera.aspect, 0.6) : 1);

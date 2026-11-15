@@ -13,9 +13,10 @@ dibangun ulang di Three.js (GPU) supaya kamera berputar tidak lag lagi.
 | Putar kamera | Q / E, seret mouse | tombol ⟲ ⟳, geser dua jari |
 | Zoom | roda mouse, + / − | cubit dua jari |
 | Kamera ikut karakter | C | Menu → Kamera ikut |
+| Sudut kamera (Rendah / Sedang / Tinggi) | V, seret mouse naik-turun | tombol Sudut, geser dua jari naik-turun |
 | Peta mini | M | Menu → Peta |
 
-Menu juga punya **Grafik** (Rendah: tanpa bayangan matahari, Sedang, Tinggi) dan **Pixel** (besar piksel; auto menyesuaikan layar).
+Menu juga punya **Grafik** (Rendah: tanpa bayangan matahari dan rumput kecil, Sedang, Tinggi) dan **Pixel** (besar piksel; auto menyesuaikan layar).
 Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
 
 ## Kenapa sekarang ringan
@@ -37,10 +38,18 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   dan pintunya menghadap jalan terdekat. Bangunan kunci punya model sendiri: SMA 3, stasiun, Masjid Agung (kubah + menara),
   Pasar, Plaza, rumah Bram (kolam renang), gudang markas Lampu Kota, STM, menara pemancar, lahan proyek berpagar seng,
   Warkop Simpang (gerobak kopi level 1) dan rumah Om Darto.
-- **SMA Negeri 3 (76 x 52 petak)** dari `peta/buat_peta.py`: Gedung A (2 lt), B (3 lt, pintu tiap kelas), C (2 lt),
-  aula seng hijau, musala berkubah, kantin 6 lapak, toilet/gudang, Gedung Lama berlumut + menara lonceng, greenhouse,
-  lapangan upacara + tiang bendera, lapangan basket & futsal, beringin + bangku, parkiran motor & guru, pagar keliling,
-  gerbang + pos satpam, warung Mak Iyah di luar pagar utara. Masuk lewat gerbang SMA 3 di kota (Aksi).
+- **Rumah & jalan**: rumah kampung (K1-K6), perumahan berpagar (P1-P4), ruko (R1-R3) dan rumah panggung ditata ulang
+  di sepanjang jalan dengan halaman, jalur masuk, dan jarak antar-rumah, semua menghadap jalan. Jalan punya aspal/paving,
+  marka, kanstin, zebra cross, selokan gang, tiang listrik dan lampu jalan. Tanaman: pohon per wilayah, bambu, kelapa,
+  pisang, padi, kebun teh, semak, bunga, rumput.
+- **SMA Negeri 3** mengikuti `guide/83-sekolah-luar.md` (lahan 76 x 53.5 di dalam pagar + trotoar + Jl. Merdeka):
+  Gedung A bentuk U dengan portiko pelana, tiang putih, papan nama hijau-emas; Gedung B 3 lantai dengan menara tangga,
+  3 gevel, jam, pagar balkon biru/hijau/merah per angkatan; Gedung C atap gergaji + mural; aula atap lengkung;
+  musala kubah tosca + menara + tempat wudu; kantin 6 lapak warna-warni + pelataran meja panjang; toilet/gudang;
+  Gedung Lama berlumut + menara lonceng; greenhouse & bedeng; lapangan upacara (mimbar, tiang bendera, titik barisan),
+  basket & futsal; beringin dengan akar gantung + bangku melingkar; selasar beratap; plaza + kolam air mancur;
+  gapura + pos satpam bulat; parkiran motor berkanopi, parkir guru, taman mading + rak sepeda; pagar bata+besi
+  dengan lampu; titik loncat ke warung Mak Iyah. Masuk lewat gerbang SMA 3 di kota (Aksi).
 - Tokoh dari `karakter/npc_styles.js` (Om Darto, Cici, Bimo, Laras, Mas Fajar, Bram, Kobar, Tegar, Nadia, Sekar, Pak Ujang, dll.)
   berkeliaran di tempatnya masing-masing dan bisa diajak ngobrol.
 
@@ -52,5 +61,5 @@ npm run build        # -> index.html (satu file)
 npm run peta         # ekspor ulang peta kota kalau peta_organik.py berubah (butuh Python + shapely + Pillow)
 ```
 
-Kode: `src/main.js` (loop, kamera, input, UI), `src/world.js` (kota & sekolah), `src/geom.js` (penggabung mesh),
+Kode: `src/main.js` (loop, kamera, input, UI), `src/kota.js` (kota, jalan, tanah), `src/buildings.js` (tipe rumah), `src/world.js` (sekolah), `src/common.js` (tabrakan, bahan, pola tanah), `src/veg.js` (tanaman), `src/geom.js` (penggabung mesh),
 `src/chars.js` + `src/voxworker.js` (tokoh), `src/voxlib.js` (diekstrak dari `sprite-stacking/index.html`), `src/npcs.js`.
