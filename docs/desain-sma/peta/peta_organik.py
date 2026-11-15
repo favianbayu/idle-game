@@ -76,6 +76,7 @@ class Map:
         self.d = ImageDraw.Draw(self.im, "RGBA")
         self.blocked = []
         self.roads = []
+        self.forests = []
         self.legend = []
         self.title, self.sub = title, sub
         self.rng = random.Random(seed)
@@ -250,6 +251,11 @@ class Map:
                 self.bldg(cx, cy, w, h, a, self.rng.choice(C[roofs]))
                 placed += 1
 
+    def forest(self, pts, n, tint=(78, 120, 64), r=(1.0, 2.0)):
+        poly = self.area(pts, tint, alpha=120)
+        self.forests.append((poly, n, r))
+        return poly
+
     def trees(self, region, n, r=(0.8, 1.6), block=False):
         minx, miny, maxx, maxy = region.bounds
         tries = 0; placed = 0
@@ -359,25 +365,50 @@ def peta_kota():
     m.sawah([(2, 120), (22, 118), (28, 150), (40, 176), (2, 176)], 15)
     m.sawah([(40, 146), (100, 150), (118, 176), (48, 176)], -10)
     m.river([(0, 116), (24, 124), (52, 120), (80, 132), (110, 140), (140, 136), (170, 140), (210, 141), (260, 136)], 6)
+    hutan_jati = m.forest([(202, 98), (226, 96), (258, 100), (258, 134), (232, 134), (204, 128)], 0)
+    hutan_pinus = m.forest([(2, 14), (36, 14), (58, 22), (60, 40), (36, 40), (20, 44), (4, 40)], 0, tint=(70, 112, 70))
+    # TPU (makam)
+    makam = m.area([(184, 104), (200, 102), (202, 122), (186, 124)], (176, 186, 150), smooth=False, outline=(120, 120, 100), block=True)
+    for i in range(6):
+        for j in range(8):
+            x, y = 187 + i * 2.4, 105 + j * 2.2
+            m.d.rectangle((x * m.s, y * m.s, (x + 1) * m.s, (y + 0.5) * m.s), fill=(236, 236, 228), outline=(130, 130, 120))
     m.rail([(9, 0), (11, 50), (15, 100), (19, 140), (23, 180)])
     raya = m.road([(0, 80), (30, 76), (62, 84), (96, 88), (128, 84), (160, 92), (196, 88), (230, 94), (260, 92)], "raya", name="Jl. Raya Wirabumi")
     merdeka = m.road([(128, 84), (125, 68), (118, 52), (121, 36), (132, 22), (138, 0)], "jalan", 4, name="Jl. Merdeka")
     selatan = m.road([(108, 88), (111, 106), (116, 124), (120, 140), (130, 160), (150, 178)], "jalan", 4)
-    m.road([(121, 36), (150, 30), (180, 26), (205, 20), (228, 12)], "jalan", 3)           # ke kebun teh
-    m.road([(118, 46), (98, 36), (84, 24), (76, 10)], "gang", 2.2)                        # ke menara
-    m.road([(132, 22), (110, 16), (86, 10), (60, 14), (40, 8)], "setapak", 1.6)           # jalur sepeda bukit
-    perum = m.road([(196, 88), (204, 72), (214, 60), (226, 50), (238, 40)], "jalan", 3.5)
-    m.road([(214, 60), (200, 50), (192, 40)], "jalan", 3); m.road([(226, 50), (240, 62), (248, 72)], "jalan", 3)
-    g1 = m.road([(34, 77), (36, 88), (30, 98), (38, 108)], "gang")
-    g2 = m.road([(60, 83), (56, 94), (62, 102), (74, 108)], "gang")
+    m.road([(121, 36), (150, 30), (180, 26), (205, 20), (228, 12), (244, 8), (260, 6)], "jalan", 3)   # ke kebun teh, terus ke luar kota
+    m.road([(118, 46), (98, 36), (84, 24), (76, 13), (72, 12.4)], "gang", 2.2)            # ke menara, tembus ke jalur sepeda
+    m.road([(132, 22), (110, 16), (86, 10), (60, 14), (40, 8), (20, 13), (0, 11)], "setapak", 1.6)  # jalur sepeda bukit, tembus ke barat
+    m.road([(110, 16), (106, 9), (102, 5)], "setapak", 1.2)                                # ke gua kapur
+    m.road([(15, 60), (13, 46), (18, 34), (28, 26), (40, 8)], "gang", 2)                   # stasiun ke bumi perkemahan
+    perum = m.road([(196, 88), (204, 72), (214, 60), (226, 50), (238, 40), (250, 32), (260, 30)], "jalan", 3.5)
+    m.road([(214, 60), (200, 50), (192, 40), (186, 32), (182, 27)], "jalan", 3)          # tembus ke jalan kebun teh
+    m.road([(226, 50), (240, 62), (248, 72), (254, 77), (260, 80)], "jalan", 3)
+    m.road([(150, 30), (154, 42), (164, 51), (180, 55), (200, 50)], "jalan", 3)           # jalan GOR, sekolah ke perumahan
+    g1 = m.road([(34, 77), (36, 88), (30, 98), (38, 108), (38, 113)], "gang")
+    g2 = m.road([(60, 83), (56, 94), (62, 102), (74, 108), (76, 116.5)], "gang")
     g3 = m.road([(36, 88), (46, 92), (56, 94)], "gang"); g4 = m.road([(30, 98), (44, 104), (62, 102)], "gang")
-    g5 = m.road([(46, 79), (44, 66), (52, 60)], "gang"); g6 = m.road([(72, 86), (80, 96), (78, 106)], "gang")
-    ban = m.road([(30, 112), (50, 114), (74, 118), (98, 126), (113, 124)], "gang")
-    stm = m.road([(120, 142), (146, 150), (170, 154), (192, 152)], "jalan", 3)
+    g5 = m.road([(46, 79), (44, 66), (52, 60), (66, 54), (84, 58), (97, 69)], "gang")    # tembus ke belakang sekolah
+    g6 = m.road([(72, 86), (80, 96), (78, 106), (84, 110), (96, 112), (110, 108)], "gang")
+    ban = m.road([(0, 104), (14, 108), (30, 112), (50, 114), (74, 118), (98, 126), (113, 124)], "gang")
+    m.road([(14, 108), (20, 121), (26, 136), (30, 156), (34, 180)], "setapak", 1.4)       # pematang + rakit penyeberangan
+    stm = m.road([(120, 142), (146, 150), (170, 154), (192, 152), (195, 162)], "jalan", 3)
     m.road([(170, 166), (200, 163), (236, 166), (247, 172), (226, 177.5), (190, 177.5), (168, 173)], "raya", 3.5, closed=True)
+    m.road([(247, 172), (254, 170), (260, 169)], "jalan", 3)                              # sirkuit ke luar kota
+    m.road([(130, 160), (140, 168), (155, 170), (169, 170)], "jalan", 3)                  # jalan selatan ke sirkuit
     m.road([(15, 60), (24, 66), (34, 77)], "jalan", 3)  # stasiun ke kampung
     m.road([(96, 88), (98, 70), (104, 64)], "jalan", 3)   # pintu belakang sekolah
-    m.road([(160, 92), (166, 104), (170, 112)], "gang")
+    m.road([(160, 92), (166, 104), (172, 114), (176, 126), (180, 140), (184, 152), (194, 157)], "jalan", 3)  # jembatan timur
+    m.road([(230, 94), (232, 104), (226, 116), (234, 128), (248, 124), (260, 120)], "jalan", 3)  # jalan hutan jati
+    m.road([(226, 116), (212, 112), (206, 102), (214, 98), (232, 104)], "setapak", 1.3, closed=False)  # setapak hutan
+    m.road([(234, 128), (244, 132), (252, 130)], "setapak", 1.3)
+    m.road([(30, 156), (44, 162), (57, 164)], "setapak", 1.3)                              # ke kandang sapi
+    m.road([(115, 118), (122, 117), (128, 117)], "jalan", 2.6)                             # ke pasar loak
+    m.road([(176, 126), (171, 125), (167, 125)], "jalan", 2.6)                             # ke pabrik es
+    m.road([(174, 118), (180, 115), (184, 114)], "gang", 2)                                # ke TPU
+    m.road([(28, 26), (40, 29), (48, 30)], "setapak", 1.2)                                 # ke curug
+    m.road([(232, 104), (235, 108), (236, 110.5)], "setapak", 1.1)                          # ke rumah pohon
     m.draw_roads()
     # bangunan kunci (besar)
     m.bldg(110, 54, 18, 12, -8, (238, 226, 200))     # sekolah (blok)
@@ -393,6 +424,25 @@ def peta_kota():
     m.area([(196, 147), (226, 147), (228, 159), (198, 160)], (190, 186, 176), smooth=False, outline=(110, 100, 90), block=True)
     m.bldg(224, 56, 6, 5, 25, (120, 80, 72))          # rumah Bram
     m.bldg(84, 18, 3, 3, 0, (170, 170, 180))          # menara
+    m.bldg(168, 44, 12, 7, -6, (150, 200, 150))       # GOR kota
+    m.area([(158, 50), (164, 49), (164.5, 54), (158.5, 54.5)], C["water"], smooth=False, block=True, outline=(255, 255, 255))  # kolam renang
+    m.ellipse_area(30, 28, 7, 5, (196, 214, 150), outline=(120, 150, 90))      # bumi perkemahan
+    for x, y in ((27, 27), (31, 30), (34, 26)):
+        m.d.polygon(m.P([(x - 1, y + 0.8), (x + 1, y + 0.8), (x, y - 0.8)]), fill=(214, 120, 70), outline=(90, 50, 30))
+    m.ellipse_area(52, 30, 3, 2.2, C["water"], outline=C["water_edge"])          # curug & kolam
+    m.bldg(102, 5, 4, 2.5, 0, (90, 84, 78))           # gua kapur (mulut gua)
+    m.area([(128, 112), (146, 110), (148, 122), (130, 124)], (200, 180, 150), smooth=False, outline=(120, 100, 80), block=True)  # pasar loak
+    for i in range(5):
+        m.bldg(131 + i * 3.2, 115, 2.4, 2, 0, [(200, 90, 80), (90, 140, 200), (220, 180, 80), (120, 170, 110), (170, 120, 180)][i])
+    m.bldg(162, 124, 10, 6, 4, (170, 176, 184))       # pabrik es tua
+    m.bldg(246, 98, 10, 5, 0, (200, 200, 210))        # terminal bus antarkota
+    m.ellipse_area(70, 49, 4, 2.6, C["water"], outline=C["water_edge"])          # kolam pemancingan
+    m.bldg(236, 112, 2.5, 2.5, 30, (150, 110, 70))    # rumah pohon
+    m.bldg(250, 128, 4, 3, -10, (130, 110, 90))       # pondok penebang
+    m.area([(178, 137), (186, 137), (186, 143), (178, 143)], (150, 150, 160), smooth=False, outline=(80, 80, 90))  # jembatan timur
+    m.area([(19, 120), (23, 120), (23, 125), (19, 125)], (180, 140, 90), smooth=False, outline=(90, 60, 30))     # rakit
+    m.area([(56, 160), (72, 158), (74, 168), (58, 170)], (196, 170, 120), smooth=False, outline=(120, 90, 60), block=True)  # kandang
+    m.bldg(64, 164, 6, 3.5, 4, (170, 110, 80))
     # rumah otomatis
     reg_k = Polygon([(22, 60), (60, 58), (84, 66), (92, 80), (86, 100), (66, 110), (34, 110), (22, 92)])
     for g in (g1, g2, g3, g4, g5, g6):
@@ -415,6 +465,8 @@ def peta_kota():
     reg_s = Polygon([(124, 140), (200, 140), (256, 150), (256, 178), (126, 178)])
     m.houses_along(stm, reg_s, spacing=(3, 6), skip=0.4)
     m.trees(bukit, 260, (1.2, 2.4))
+    m.trees(hutan_jati, 170, (1.1, 2.0))
+    m.trees(hutan_pinus, 90, (1.0, 1.8))
     m.trees(Polygon([(0, 30), (260, 30), (260, 180), (0, 180)]), 260, (0.9, 1.8))
     # nama wilayah
     m.district(52, 70, "PERKAMPUNGAN\nKENANGA (W1)")
@@ -424,11 +476,14 @@ def peta_kota():
     m.district(214, 132, "SELATAN: STM, PROYEK,\nSIRKUIT (W4)")
     m.district(104, 44, "KAWASAN SEKOLAH")
     m.district(150, 10, "PERBUKITAN UTARA")
+    m.district(232, 118, "HUTAN JATI\nTIMUR")
+    m.text(30, 20, "Hutan Pinus Cemara", 12, True, (240, 250, 230))
+    m.text(193, 100, "TPU Bhakti", 11, True, (40, 50, 30))
     m.text(60, 146, "sawah", 13, True, (60, 90, 40))
     m.text(42, 117, "Kali Cendana", 12, True, (20, 60, 110))
     # penanda
     pts = [
-        (110, 62, "SMA Negeri 3 Wirabumi (denah: peta_sekolah.png)"), (19, 64, "Stasiun Wirabumi (pembuka game)"),
+        (110, 62, "SMA Negeri 3 Wirabumi (denah: sekolah_luar/)"), (19, 64, "Stasiun Wirabumi (pembuka game)"),
         (46, 86, "Warkop Simpang & rumah Om Darto"), (146, 76, "Alun-alun (pasar malam Sabtu)"),
         (146, 60, "Masjid Agung"), (114, 98, "Pasar Wirabumi & terminal angkot"),
         (170, 84, "Ruko Pelita, bengkel Mas Fajar"), (178, 98, "Plaza Wirabumi (mal & bioskop)"),
@@ -437,12 +492,20 @@ def peta_kota():
         (212, 153, "Lahan proyek PT Graha Megantara"), (207, 171, "Jalan Lingkar: sirkuit balap"),
         (84, 22, "Menara pemancar (spot rahasia)"), (60, 14, "Jalur sepeda turunan Bukit Cemara"),
         (214, 12, "Kebun teh & danau (mancing, kencan)"), (126, 46, "Taman kota & lapangan basket umum"),
+        (168, 40, "GOR Kota & kolam renang umum"), (193, 113, "TPU Bhakti (pemakaman)"),
+        (236, 112, "Rumah pohon tua (Hutan Jati)"), (250, 128, "Pondok penebang terbengkalai"),
+        (30, 32, "Bumi perkemahan Hutan Pinus"), (52, 27, "Curug Cemara (air terjun kecil)"),
+        (102, 5, "Gua Kapur (rahasia)"), (138, 108, "Pasar loak & lapak rongsok"),
+        (162, 129, "Pabrik es tua (kosong)"), (246, 104, "Terminal bus antarkota"),
+        (70, 49, "Kolam pemancingan Pak Haji"), (182, 136, "Jembatan Timur (Bab 7+)"),
+        (21, 128, "Rakit penyeberangan & pematang"), (66, 158, "Kandang sapi & gubuk sawah"),
     ]
     for i, (x, y, t) in enumerate(pts, 1):
         m.mark(x, y, i, t)
     m.finish("peta_kota.png", [
         "Jalan abu tua bergaris = jalan raya (mobil, angkot, motor). Abu muda = jalan biasa. Krem = gang kampung (motor & sepeda). Cokelat = jalan tanah/setapak.",
         "Tidak ada blok kotak: jalan mengikuti sungai, bukit, dan rel. Tiap wilayah punya pola rumah sendiri: kampung padat & miring-miring, perumahan berhalaman dan rapi, ruko berderet di jalan raya.",
+        "Hampir tidak ada jalan buntu: gang tembus ke gang lain, jalan utama terus sampai tepi peta (keluar kota).",
     ])
 
 

@@ -28,6 +28,7 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 | 82 | Interior kota | Rumah, warkop, markas, toko, dan bangunan lain yang bisa dimasuki |
 | 83 | Sekolah dari luar | Denah tapak baru, tampak tiap gedung, halaman, lapangan, parkiran |
 | 84 | Habit NPC sekolah | Jadwal per jam, kelompok, kebiasaan siswa & guru, reaksi kerumunan |
+| 85 | Jalan tembus & area baru | Aturan jalan tanpa buntu, hutan, 14 tempat baru dan kait ceritanya |
 
 Dokumen yang sudah ada sebelumnya (`01-cerita.md` sampai `06-event.md`, peta, bangunan, sprite) tetap berlaku. Guide ini
 memperdalam dan, kalau ada yang beda, **guide ini yang dipakai**.
