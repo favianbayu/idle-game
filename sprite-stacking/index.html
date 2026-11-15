@@ -721,6 +721,7 @@ function hairAt(hs, dx, dy, dz, face) {
 }
 
 // part: 'all' | 'upper' (badan atas + kepala + tangan + properti) | 'lower' (pinggul + kaki)
+const PROPS = new Set(['orb', 'hilt', 'blade', 'phone', 'stick', 'bristle']);   // boleh menyentuh/menembus tanah
 function humanShape(P0, st, part = 'all') {
   const P = Object.assign({}, POSE0, P0), S = st.scale;
   const L = Math.ceil(27 * S), W = Math.ceil(19 * S), H = Math.ceil(40 * S);
@@ -909,6 +910,17 @@ function humanShape(P0, st, part = 'all') {
   if (P.phone > 0.5) sp.push([phone1, 1.5]);
   const lo = [0, 1, 2].map(i => Math.min(...sp.map(([c, r]) => c[i] - r * S)) - 1);
   const hi = [0, 1, 2].map(i => Math.max(...sp.map(([c, r]) => c[i] + r * S)) + 1);
+  // Grounding di atas memakai bola kepala kasar; rambut/topi/helm bisa lebih besar dan tenggelam
+  // ke tanah saat guling terbalik. Cari voxel tubuh terendah (properti seperti sapu boleh menapak)
+  // lalu angkat seluruh frame supaya tidak terpotong tanah. Dicek dgn seluruh tubuh, jadi sama untuk badan atas/bawah.
+  let sink = 0;
+  for (let z = Math.floor(lo[2]); z < 0 && !sink; z++)
+    for (let y = Math.floor(lo[1]); y <= Math.ceil(hi[1]) && !sink; y++) for (let x = Math.floor(lo[0]); x <= Math.ceil(hi[0]); x++) {
+      p[0] = x + 0.5; p[1] = y + 0.5; p[2] = z + 0.5;
+      const m = upperFn(p, x, y, z) || lowerFn(p, x, y, z);
+      if (m && !PROPS.has(m)) { sink = -z; break; }
+    }
+  lo[2] += sink; hi[2] += sink;
   // Grid menyesuaikan isi frame (pedang, sapu, guling, terbaring) tanpa terpotong.
   // Titik tengah tetap di (L/2, W/2) supaya semua frame berputar di poros yang sama.
   const hx = Math.ceil(Math.max(L / 2 - lo[0], hi[0] - L / 2)), hy = Math.ceil(Math.max(W / 2 - lo[1], hi[1] - W / 2));
@@ -916,8 +928,8 @@ function humanShape(P0, st, part = 'all') {
   const L2 = L + ox * 2, W2 = W + oy * 2, H2 = Math.max(H, Math.ceil(hi[2]) + 1);
   const bbox = [Math.max(0, Math.floor(lo[0] + ox)), Math.max(0, Math.floor(lo[1] + oy)), Math.max(0, Math.floor(lo[2])),
                 Math.min(L2 - 1, Math.ceil(hi[0] + ox)), Math.min(W2 - 1, Math.ceil(hi[1] + oy)), H2 - 1];
-  const mat2 = ox || oy ? (x, y, z) => mat(x - ox, y - oy, z) : mat;
-  return { mat: mat2, L: L2, W: W2, H: H2, bbox, lift: P.jump * S, pelvisZ: pelvis[2], yaw: P.yaw, buttZ };
+  const mat2 = ox || oy || sink ? (x, y, z) => mat(x - ox, y - oy, z - sink) : mat;
+  return { mat: mat2, L: L2, W: W2, H: H2, bbox, lift: P.jump * S, pelvisZ: pelvis[2] + sink, yaw: P.yaw, buttZ: buttZ + sink };
 }
 
 /* ---------- Gerakan ----------
