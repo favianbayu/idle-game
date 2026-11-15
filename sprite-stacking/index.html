@@ -46,6 +46,7 @@
   <canvas id="game"></canvas>
   <div id="hud">
     <div id="speed">0 km/j</div>
+    <label>Karakter <select id="optChar"><option value="car">Mobil</option><option value="robot">Robot</option></select></label>
     <label><input type="checkbox" id="optCam"> Kamera ikut berputar</label>
     <label><input type="checkbox" id="optShadow" checked> Bayangan</label>
     <label>Jarak slice <input type="range" id="optSpace" min="1" max="6" step="1" value="1"></label>
@@ -61,6 +62,7 @@
   <canvas id="tutCanvas"></canvas>
   <p id="tutText"></p>
   <div id="tutCtl">
+    <select id="tChar"><option value="car">Mobil</option><option value="robot">Robot</option></select>
     <button class="btn on" data-step="0">1. Gambar 4 sisi</button>
     <button class="btn" data-step="1">2. Baris → slice</button>
     <button class="btn" data-step="2">3. Tumpuk & putar</button>
@@ -154,6 +156,110 @@ const CAR_VIEWS = {
   ],
 };
 
+// ---------- Karakter kedua: robot (x = depan-belakang, depan di kanan) ----------
+const ROBOT_PAL = {
+  K: '#1d1a24', // outline
+  S: '#e8a33c', // body oranye
+  s: '#b8742a', // oranye gelap
+  D: '#3d4250', // sendi/kaki
+  M: '#c9d1dc', // lutut metal
+  V: '#1b2a3a', // visor
+  E: '#5ff2ff', // mata
+  P: '#5ff2ff', // lampu dada
+  r: '#ff4a4a', // lampu antena
+};
+// Ukuran: panjang 10 (x), lebar 14 (y), tinggi 22 (z)
+const ROBOT_VIEWS = {
+  side: [
+    '....rr....',
+    '.KKKKKKKKK',
+    '.KSSSSSSVK',
+    '.KSSSSSSVK',
+    '.KSSSSSSEK',
+    '.KKKKKKKKK',
+    '...KDDK...',
+    '..KKKKKKK.',
+    '..KSKSKSK.',
+    '..KSKSKSK.',
+    '..KSKSKSK.',
+    '..KSKsKSK.',
+    '..KsKsKsK.',
+    '..KKKDKKK.',
+    '...KDDK...',
+    '...KDDK...',
+    '...KDDK...',
+    '...KMMK...',
+    '...KDDK...',
+    '...KDDK...',
+    '...KSSSK..',
+    '...KKKKK..',
+  ],
+  top: [
+    '..........',
+    '....KKK...',
+    '....KSK...',
+    '.KKKKKKKKK',
+    '.KSSSSSSSK',
+    '.KSSSSSSSK',
+    '.KSSrrSSSK',
+    '.KSSrrSSSK',
+    '.KSSSSSSSK',
+    '.KSSSSSSSK',
+    '.KKKKKKKKK',
+    '....KSK...',
+    '....KKK...',
+    '..........',
+  ],
+  front: [
+    '......rr......',
+    '...KKKKKKKK...',
+    '...KSSSSSSK...',
+    '...KVVVVVVK...',
+    '...KVEVVEVK...',
+    '...KKKKKKKK...',
+    '.....KDDK.....',
+    '.KKKKKKKKKKKK.',
+    '.KSKSSSSSSKSK.',
+    '.KSKSSPPSSKSK.',
+    '.KSKSSPPSSKSK.',
+    '.KsKSSSSSSKsK.',
+    '.KsKssssssKsK.',
+    '.KDKKKKKKKKDK.',
+    '...KDK..KDK...',
+    '...KDK..KDK...',
+    '...KDK..KDK...',
+    '...KMK..KMK...',
+    '...KDK..KDK...',
+    '...KDK..KDK...',
+    '...KSK..KSK...',
+    '...KKK..KKK...',
+  ],
+  back: [
+    '......rr......',
+    '...KKKKKKKK...',
+    '...KSSSSSSK...',
+    '...KSssssSK...',
+    '...KSssssSK...',
+    '...KKKKKKKK...',
+    '.....KDDK.....',
+    '.KKKKKKKKKKKK.',
+    '.KSKssssssKSK.',
+    '.KSKsDDDDsKSK.',
+    '.KSKsDDDDsKSK.',
+    '.KsKssssssKsK.',
+    '.KsKssssssKsK.',
+    '.KDKKKKKKKKDK.',
+    '...KDK..KDK...',
+    '...KDK..KDK...',
+    '...KDK..KDK...',
+    '...KMK..KMK...',
+    '...KDK..KDK...',
+    '...KDK..KDK...',
+    '...KSK..KSK...',
+    '...KKK..KKK...',
+  ],
+};
+
 /* =====================================================================
    2. MEMBANGUN SLICE
    Model = grid voxel L×W×H. Slice ke-z = gambar tampak-atas dari lapisan z.
@@ -194,22 +300,26 @@ function buildModel(L, W, H, solid, color) {
   return { L, W, H, slices, shadow };
 }
 
-function buildFromViews(v) {
+// warp(x,y,z) -> x sumber: dipakai untuk animasi (menggeser kaki/tangan per frame)
+function buildFromViews(v, pal = PAL, warp = null) {
   const L = v.top[0].length, W = v.top.length, H = v.side.length;
+  const sx = warp || ((x) => x);
   const at = (rows, r, c) => (rows[r] && rows[r][c]) || '.';
   const top   = (x, y)    => at(v.top, y, x);
   const side  = (x, z)    => at(v.side, H - 1 - z, x);
   const front = (y, z)    => at(v.front, H - 1 - z, W - 1 - y); // dilihat dari depan: kiri pengamat = kanan mobil
   const back  = (y, z)    => at(v.back, H - 1 - z, y);
-  const solid = (x, y, z) => top(x, y) !== '.' && side(x, z) !== '.' && front(y, z) !== '.' && back(y, z) !== '.';
-  const color = (x, y, z, e) => {
+  const solid0 = (x, y, z) => top(x, y) !== '.' && side(x, z) !== '.' && front(y, z) !== '.' && back(y, z) !== '.';
+  const solid = (x, y, z) => solid0(sx(x, y, z), y, z);
+  const color = (x0, y, z, e) => {
+    const x = sx(x0, y, z);
     let ch;
     if (e.yp || e.yn)      ch = side(x, z);   // tepi kiri/kanan -> warna tampak samping
     else if (e.xp)         ch = front(y, z);  // tepi depan
     else if (e.xn)         ch = back(y, z);   // tepi belakang
     else if (e.top)        ch = top(x, y);    // permukaan atas -> warna tampak atas
     else                   ch = side(x, z);   // bagian dalam (hampir tak terlihat)
-    return PAL[ch] || PAL.K;
+    return pal[ch] || pal.K;
   };
   const m = buildModel(L, W, H, solid, color);
   m.views = v;
@@ -267,6 +377,21 @@ function makeTires() {
 }
 
 const CAR = buildFromViews(CAR_VIEWS);
+CAR.views = CAR_VIEWS; CAR.pal = PAL;
+
+// Animasi jalan: 4 frame. Kaki kiri/kanan dan tangan diayun berlawanan arah (geser x).
+const ROBOT_FRAMES = [0, 1, 0, -1].map(swing => {
+  const m = buildFromViews(ROBOT_VIEWS, ROBOT_PAL, (x, y, z) => {
+    const left = y < 7 ? 1 : -1;
+    if (z <= 7)               return x - Math.round(swing * left * 2 * (8 - z) / 8);  // kaki: makin bawah makin jauh
+    if (z <= 13 && (y <= 2 || y >= 11)) return x + Math.round(swing * left * 2 * (14 - z) / 6); // tangan
+    return x;
+  });
+  m.pal = ROBOT_PAL;
+  return m;
+});
+const ROBOT = ROBOT_FRAMES[0];
+const CHARS = { car: CAR, robot: ROBOT };
 const MODELS = { tree: [makeTree(1), makeTree(7), makeTree(13)], cone: makeCone(), tires: makeTires() };
 
 /* =====================================================================
@@ -384,7 +509,8 @@ const objects = [];
 const car = { x: path[2][0], y: path[2][1], a: Math.atan2(path[3][1] - path[2][1], path[3][0] - path[2][0]), vx: 0, vy: 0 };
 const cam = { x: car.x, y: car.y, a: car.a + Math.PI / 2 };
 const keys = { up: false, down: false, left: false, right: false };
-const opts = { rotCam: false, shadow: true, spacing: 1 };
+const opts = { rotCam: false, shadow: true, spacing: 1, char: 'car' };
+const bot = { x: 0, y: 0, a: 0, walk: 0, speed: 0 };
 
 const gameCanvas = document.getElementById('game'), ctx = gameCanvas.getContext('2d');
 let VW = 240, VH = 320;
@@ -405,6 +531,7 @@ function surfAt(x, y) {
 }
 
 function update(dt) {
+  if (opts.char === 'robot') return updateRobot(dt);
   const fx = Math.cos(car.a), fy = Math.sin(car.a);
   let fwd = car.vx * fx + car.vy * fy;         // kecepatan maju
   let lat = -car.vx * fy + car.vy * fx;        // kecepatan menyamping (drift)
@@ -467,6 +594,37 @@ function update(dt) {
   document.getElementById('speed').textContent = Math.round(Math.abs(fwd) * 1.6) + ' km/j';
 }
 
+function updateRobot(dt) {
+  // gerak 8 arah relatif terhadap layar, lalu diubah ke koordinat dunia sesuai sudut kamera
+  let ix = keys.right - keys.left, iy = keys.down - keys.up;
+  const moving = ix || iy;
+  if (moving) {
+    const l = Math.hypot(ix, iy); ix /= l; iy /= l;
+    const c = Math.cos(cam.a), s = Math.sin(cam.a);
+    const wx = ix * c - iy * s, wy = ix * s + iy * c;
+    const target = Math.atan2(wy, wx);
+    let da = Math.atan2(Math.sin(target - bot.a), Math.cos(target - bot.a));
+    bot.a += da * Math.min(1, dt * 12);
+    const sp = surfAt(bot.x, bot.y) === 0 ? 34 : 42;
+    bot.x += wx * sp * dt; bot.y += wy * sp * dt;
+    bot.walk += dt * 8;
+  } else bot.walk = Math.round(bot.walk / 2) * 2; // kembali ke pose diam
+  bot.x = Math.max(8, Math.min(WW - 8, bot.x));
+  bot.y = Math.max(8, Math.min(WH - 8, bot.y));
+  for (const o of objects) {
+    const dx = bot.x - o.x, dy = bot.y - o.y, d = Math.hypot(dx, dy), min = o.r + 5;
+    if (d < min && d > 0) { bot.x = o.x + dx / d * min; bot.y = o.y + dy / d * min; }
+  }
+  const k = 1 - Math.pow(0.0005, dt);
+  cam.x += (bot.x - cam.x) * k; cam.y += (bot.y - cam.y) * k;
+  if (!opts.rotCam) {
+    const hw = VW / 2, hh = VH / 2;
+    cam.x = WW > VW ? Math.max(hw, Math.min(WW - hw, cam.x)) : WW / 2;
+    cam.y = WH > VH ? Math.max(hh, Math.min(WH - hh, cam.y)) : WH / 2;
+  }
+  document.getElementById('speed').textContent = moving ? 'berjalan' : 'diam';
+}
+
 function render() {
   ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = '#2f7734';
@@ -483,7 +641,10 @@ function render() {
   ctx.restore();
 
   // posisi layar tiap objek; sudut objek dikurangi sudut kamera
-  const list = objects.concat([{ model: CAR, x: car.x, y: car.y, a: car.a, isCar: true }]).map(o => {
+  const player = opts.char === 'robot'
+    ? { model: ROBOT_FRAMES[Math.floor(bot.walk) % 4], x: bot.x, y: bot.y, a: bot.a }
+    : { model: CAR, x: car.x, y: car.y, a: car.a };
+  const list = objects.concat([player]).map(o => {
     const dx = o.x - cam.x, dy = o.y - cam.y;
     return { o, sx: cx + dx * ca - dy * sa, sy: cy + dx * sa + dy * ca };
   }).filter(p => p.sx > -40 && p.sx < VW + 40 && p.sy > -40 && p.sy < VH + 60);
@@ -519,6 +680,11 @@ document.querySelectorAll('.touch button').forEach(b => {
   b.addEventListener('pointercancel', off);
   b.addEventListener('pointerleave', off);
 });
+document.getElementById('optChar').onchange = e => {
+  opts.char = e.target.value;
+  if (opts.char === 'robot') { bot.x = car.x; bot.y = car.y + 16; bot.a = car.a; opts.rotCam = false; document.getElementById('optCam').checked = false; }
+  e.target.blur();
+};
 document.getElementById('optCam').onchange = e => opts.rotCam = e.target.checked;
 document.getElementById('optShadow').onchange = e => opts.shadow = e.target.checked;
 document.getElementById('optSpace').oninput = e => opts.spacing = +e.target.value;
@@ -527,14 +693,14 @@ document.getElementById('optSpace').oninput = e => opts.spacing = +e.target.valu
    5. TUTORIAL: visualisasi 3 langkah dari video
    ===================================================================== */
 const STEPS = [
-  { title: 'Gambar mobil dari 4 sisi',
-    text: 'Atas, samping, depan, belakang. Ukurannya harus konsisten: panjang 28, lebar 14, tinggi 11 piksel. Model 3D (voxel) didapat dari irisan keempat siluet ini.' },
+  { title: () => `Gambar ${tutChar === 'car' ? 'mobil' : 'robot'} dari 4 sisi`,
+    text: () => { const m = TUT_CHARS[tutChar].model; return `Atas, samping, depan, belakang. Ukurannya harus konsisten: panjang ${m.L}, lebar ${m.W}, tinggi ${m.H} piksel. Model 3D (voxel) didapat dari irisan keempat siluet ini.`; } },
   { title: 'Tiap baris tampak samping menjadi satu slice',
-    text: 'Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. 11 baris → 11 gambar slice.' },
+    text: () => { const h = TUT_CHARS[tutChar].model.H; return `Baris ke-z dari tampak samping = lapisan ke-z. Slice itu digambar sebagai tampak ATAS dari lapisan tersebut. ${h} baris → ${h} gambar slice.` + (tutChar === 'robot' ? ' Animasi jalan: buat beberapa set slice, kaki & tangan digeser maju-mundur tiap frame.' : ''); } },
   { title: 'Tumpuk slice berjarak 1 px lalu putar',
     text: 'Gambar slice dari bawah ke atas; tiap slice digeser 1 px ke atas layar dan diputar dengan sudut yang sama. Geser "Jarak slice" untuk melihat tumpukannya terpisah.' },
 ];
-let step = 0;
+let step = 0, tutChar = 'car';
 const tutCanvas = document.getElementById('tutCanvas'), tctx = tutCanvas.getContext('2d');
 const TW = 200, TH = 170;
 let tutAngle = 30 * Math.PI / 180;
@@ -546,50 +712,65 @@ function resizeTut() {
 resizeTut();
 
 // Render tampak (string) ke canvas
-function viewCanvas(rows) {
+function viewCanvas(rows, pal) {
   const c = makeCanvas(rows[0].length, rows.length), x = c.getContext('2d');
-  rows.forEach((r, y) => [...r].forEach((ch, i) => { if (PAL[ch]) { x.fillStyle = PAL[ch]; x.fillRect(i, y, 1, 1); } }));
+  rows.forEach((r, y) => [...r].forEach((ch, i) => { if (pal[ch]) { x.fillStyle = pal[ch]; x.fillRect(i, y, 1, 1); } }));
   return c;
 }
-const VC = { top: viewCanvas(CAR_VIEWS.top), side: viewCanvas(CAR_VIEWS.side), front: viewCanvas(CAR_VIEWS.front), back: viewCanvas(CAR_VIEWS.back) };
+const TUT_CHARS = {
+  car:   { model: CAR,   views: CAR_VIEWS,   pal: PAL },
+  robot: { model: ROBOT, views: ROBOT_VIEWS, pal: ROBOT_PAL, frames: ROBOT_FRAMES },
+};
+for (const k in TUT_CHARS) {
+  const tc = TUT_CHARS[k];
+  tc.vc = {};
+  for (const v of ['top', 'side', 'front', 'back']) tc.vc[v] = viewCanvas(tc.views[v], tc.pal);
+}
 
 function renderTut(t) {
   const c = tctx;
   c.imageSmoothingEnabled = false;
   c.fillStyle = '#ffffff'; c.fillRect(0, 0, TW, TH);
   const blit = (img, x, y, s = 1) => c.drawImage(img, Math.round(x), Math.round(y), img.width * s, img.height * s);
+  const tc = TUT_CHARS[tutChar], M = tc.model, VC = tc.vc;
+  const L = M.L, W = M.W, H = M.H;
 
   if (step === 0) {
-    // atas (diputar menghadap atas seperti di video), samping, depan, belakang
-    const s = 2, y0 = 30;
-    c.save(); c.translate(10 + 14 * s / 2 + 4, y0 + 28 * s / 2); c.rotate(-Math.PI / 2);
-    c.drawImage(VC.top, -28 * s / 2, -14 * s / 2, 28 * s, 14 * s); c.restore();
-    blit(VC.side, 52, y0 + 28 - 11, s);
-    blit(VC.front, 120, y0 + 28 - 11, s);
-    blit(VC.back, 156, y0 + 28 - 11, s);
-    // label pakai piksel kecil (garis bawah warna)
-    c.fillStyle = '#bbb';
-    [[12, 32], [52, 56], [120, 28], [156, 28]].forEach(([x, w]) => c.fillRect(x, y0 + 64, w, 1));
+    // atas (diputar menghadap atas seperti di video), samping, depan, belakang — berjajar
+    const s = Math.min(2, Math.floor((TW - 30) / (W + L + W + W)), Math.floor((TH - 40) / Math.max(L, H)));
+    const parts = [[VC.top, W, L, true], [VC.side, L, H], [VC.front, W, H], [VC.back, W, H]];
+    const total = parts.reduce((a, p) => a + p[1] * s, 0) + 8 * (parts.length - 1);
+    let x = Math.round((TW - total) / 2);
+    const base = Math.round(TH / 2 + Math.max(L, H) * s / 2);
+    for (const [img, w, h, rot] of parts) {
+      if (rot) { c.save(); c.translate(x + w * s / 2, base - h * s / 2); c.rotate(-Math.PI / 2); c.drawImage(img, -h * s / 2, -w * s / 2, h * s, w * s); c.restore(); }
+      else blit(img, x, base - h * s, s);
+      c.fillStyle = '#bbb'; c.fillRect(x, base + 4, w * s, 1);
+      x += w * s + 8;
+    }
   } else if (step === 1) {
-    const z = Math.floor(t * 2.5) % CAR.H;          // baris yang sedang disorot
-    const row = CAR.H - 1 - z;
-    const s = 2;
-    blit(VC.side, 8, 8, s);
+    const z = Math.floor(t * 2.5) % H;               // baris yang sedang disorot
+    const row = H - 1 - z;
+    const s = H * 2 <= 60 ? 2 : 1;                   // model tinggi -> skala kecil
+    blit(VC.side, 8, 6, s);
     c.fillStyle = 'rgba(255,200,0,0.45)';
-    c.fillRect(6, 8 + row * s, 28 * s + 4, s);
-    // panah
+    c.fillRect(6, 6 + row * s, L * s + 4, s);
+    const ax = 14 + L * s, ay = 6 + row * s;
     c.fillStyle = '#999';
-    c.fillRect(70, 8 + row * s, 22, 1);
-    c.fillRect(90, 8 + row * s - 1, 1, 3);
+    c.fillRect(ax, ay, 90 - ax, 1);
+    c.fillRect(88, ay - 1, 1, 3);
     // slice terpilih, diperbesar
-    c.fillStyle = '#eee'; c.fillRect(100, 6, 28 * 3 + 4, 14 * 3 + 4);
-    blit(CAR.slices[z], 102, 8, 3);
+    const bs = Math.min(3, Math.floor(56 / W), Math.floor(100 / L));
+    c.fillStyle = '#eee'; c.fillRect(96, 4, L * bs + 4, W * bs + 4);
+    blit(M.slices[z], 98, 6, bs);
     // semua slice di bawah
-    for (let i = 0; i < CAR.H; i++) {
-      const gx = 6 + (i % 6) * 32, gy = 70 + Math.floor(i / 6) * 24;
+    const cw = L + 4, ch = W + 6, per = Math.floor((TW - 8) / cw);
+    const gy0 = Math.max(6 + H * s, 8 + W * bs) + 8;
+    for (let i = 0; i < H; i++) {
+      const gx = 6 + (i % per) * cw, gy = gy0 + Math.floor(i / per) * ch;
       c.fillStyle = i === z ? '#ffd24a' : '#eee';
-      c.fillRect(gx - 1, gy - 1, 30, 16);
-      blit(CAR.slices[i], gx, gy);
+      c.fillRect(gx - 1, gy - 1, L + 2, W + 2);
+      blit(M.slices[i], gx, gy);
     }
   } else {
     if (document.getElementById('tAuto').checked) {
@@ -597,25 +778,28 @@ function renderTut(t) {
       document.getElementById('tAngle').value = Math.round((tutAngle * 180 / Math.PI) % 360);
     }
     const sp = +document.getElementById('tSpace').value;
-    const s = 2;
-    const baseY = Math.round(TH / 2 + ((CAR.H - 1) * sp * s) / 2 + 4);
-    // bayangan di tanah tetap di bawah
-    drawShadow(c, CAR, TW / 2, baseY, tutAngle, s);
-    drawStack(c, CAR, TW / 2, baseY, tutAngle, sp, s);
+    const s = (H - 1) * sp * 2 + W * 2 > TH - 10 ? 1 : 2;
+    const baseY = Math.round(TH / 2 + ((H - 1) * sp * s) / 2 + 4);
+    // robot: putar frame animasi jalan
+    const model = tc.frames ? tc.frames[Math.floor(t * 6) % tc.frames.length] : M;
+    drawShadow(c, model, TW / 2, baseY, tutAngle, s);   // bayangan tetap di tanah
+    drawStack(c, model, TW / 2, baseY, tutAngle, sp, s);
   }
 }
 
 function setStep(i) {
   step = i;
   document.querySelectorAll('#tutCtl .btn').forEach(b => b.classList.toggle('on', +b.dataset.step === i));
-  document.getElementById('tutTitle').textContent = STEPS[i].title;
-  document.getElementById('tutText').textContent = STEPS[i].text;
+  const v = f => typeof f === 'function' ? f() : f;
+  document.getElementById('tutTitle').textContent = v(STEPS[i].title);
+  document.getElementById('tutText').textContent = v(STEPS[i].text);
   document.getElementById('tutSliders').style.visibility = i === 2 ? 'visible' : 'hidden';
 }
 document.querySelectorAll('#tutCtl .btn').forEach(b => b.onclick = () => setStep(+b.dataset.step));
 document.getElementById('tSpace').oninput = e => document.getElementById('tSpaceV').textContent = e.target.value;
 document.getElementById('tAngle').oninput = e => { document.getElementById('tAuto').checked = false; tutAngle = e.target.value * Math.PI / 180; };
 setStep(0);
+document.getElementById('tChar').onchange = e => { tutChar = e.target.value; setStep(step); };
 
 /* ---------- tab ---------- */
 let current = 'game';

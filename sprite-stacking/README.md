@@ -33,3 +33,10 @@ for (let i = 0; i < slices.length; i++) {
 - Urutkan objek berdasarkan posisi y di layar sebelum digambar (yang jauh dulu).
 - Bayangan = gabungan semua slice (siluet), digambar transparan di tanah.
 - Pohon, cone, dan tumpukan ban dibuat prosedural dengan fungsi voxel (`makeTree`, `makeCone`, `makeTires`).
+
+## Karakter kedua: robot + animasi jalan
+- `ROBOT_VIEWS` / `ROBOT_PAL`: robot 10×14×22 digambar dari 4 sisi dengan cara yang sama.
+- Animasi = beberapa set slice. `buildFromViews(views, pal, warp)` menerima `warp(x,y,z)`
+  yang menggeser sumber x per voxel: kaki kiri/kanan dan tangan diayun berlawanan arah.
+  4 frame (`ROBOT_FRAMES`) diputar saat berjalan.
+- Di demo pilih **Karakter → Robot** (gerak 8 arah). Di tab Cara Kerja ada pilihan karakter juga.
