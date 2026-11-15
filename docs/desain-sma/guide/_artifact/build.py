@@ -1,13 +1,17 @@
 """Gabung semua segmen guide/*.md jadi satu halaman HTML (sidebar per segmen)."""
-import json, pathlib, re, html
+import json, pathlib, re, html, base64
 root = pathlib.Path(__file__).resolve().parent.parent
 segs = []
 for p in sorted(root.glob('[0-9][0-9]-*.md')):
     txt = p.read_text(encoding='utf-8')
     title = re.search(r'^# (.+)$', txt, re.M).group(1)
+    def img(m):
+        f = (root / m.group(2)).resolve()
+        return '![%s](data:image/png;base64,%s)' % (m.group(1), base64.b64encode(f.read_bytes()).decode())
+    txt = re.sub(r'!\[([^\]]*)\]\(([^)]+\.png)\)', img, txt)
     segs.append({'id': p.stem, 'file': p.name, 'title': title, 'md': txt})
 groups = [('00', 'Dasar'), ('1', 'NPC utama cewek'), ('2', 'NPC utama cowok'), ('3', 'NPC pendukung & dunia'),
-          ('4', 'Obrolan & konsekuensi'), ('5', 'Pelajaran'), ('6', 'Upgrade & uang'), ('7', 'Animasi')]
+          ('4', 'Obrolan & konsekuensi'), ('5', 'Pelajaran'), ('6', 'Upgrade & uang'), ('7', 'Animasi'), ('8', 'Peta & interior')]
 data = json.dumps(segs, ensure_ascii=False).replace('</', '<\\/')
 page = r'''<!DOCTYPE html>
 <html lang="id"><head><meta charset="utf-8">
@@ -38,7 +42,8 @@ code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px}
 pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow-x:auto;white-space:pre-wrap;position:relative}pre code{background:none;padding:0}
 pre button{position:absolute;top:6px;right:6px;font:12px Inter;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:2px 8px;cursor:pointer}
 blockquote{border-left:3px solid var(--acc);margin:10px 0;padding:2px 14px;color:var(--mut);font-style:italic}
-a{color:var(--acc)}.pn{display:flex;justify-content:space-between;margin-top:40px;gap:12px}.pn a{padding:8px 12px;border:1px solid var(--line);border-radius:8px;text-decoration:none}
+a{color:var(--acc)}article img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:zoom-in}
+#zoom{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:20;overflow:auto;cursor:zoom-out}#zoom.on{display:block}#zoom img{display:block;margin:20px auto;max-width:none;border:none}.pn{display:flex;justify-content:space-between;margin-top:40px;gap:12px}.pn a{padding:8px 12px;border:1px solid var(--line);border-radius:8px;text-decoration:none}
 #menu{display:none}
 @media (max-width:760px){body{display:block}nav{position:fixed;z-index:5;transform:translateX(-100%);transition:.2s}nav.open{transform:none}
 #menu{display:block;position:fixed;top:10px;left:10px;z-index:6;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit}
@@ -47,7 +52,7 @@ article{padding:56px 18px 60px}main{height:auto}}
 <button id="menu">☰ Segmen</button>
 <nav id="nav"><h1>Lonceng Pulang</h1><div class="sub">Guide desain · __N__ segmen</div>
 <input id="q" placeholder="Cari di semua segmen..." aria-label="Cari"><div id="list"></div></nav>
-<main id="main"><article id="doc"></article></main>
+<div id="zoom"></div><main id="main"><article id="doc"></article></main>
 <script>
 const SEGS=__DATA__;const GROUPS=__GROUPS__;
 const list=document.getElementById('list'),doc=document.getElementById('doc'),q=document.getElementById('q'),nav=document.getElementById('nav');
@@ -63,6 +68,7 @@ function show(){const id=cur(),i=SEGS.findIndex(s=>s.id===id),s=SEGS[i];
  const pv=SEGS[i-1],nx=SEGS[i+1];doc.insertAdjacentHTML('beforeend','<div class="pn">'+(pv?'<a href="#'+pv.id+'">← '+pv.title+'</a>':'<span></span>')+(nx?'<a href="#'+nx.id+'">'+nx.title+' →</a>':'')+'</div>');
  const t=q.value.trim();if(t){const w=document.createTreeWalker(doc,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){if(n.nodeValue.toLowerCase().includes(t.toLowerCase())){n.parentElement.scrollIntoView({block:'center'});break}}}else document.getElementById('main').scrollTop=0;
  render(q.value.trim());nav.classList.remove('open')}
+doc.addEventListener('click',e=>{if(e.target.tagName==='IMG'){const z=document.getElementById('zoom');z.innerHTML='';z.appendChild(e.target.cloneNode());z.classList.add('on')}});document.getElementById('zoom').onclick=e=>e.currentTarget.classList.remove('on');
 q.oninput=()=>render(q.value.trim());document.getElementById('menu').onclick=()=>nav.classList.toggle('open');
 addEventListener('hashchange',show);show();
 </script></body></html>'''

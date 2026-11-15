@@ -23,6 +23,9 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 | 61 | Keuangan | Mata uang, pemasukan, pengeluaran, tabungan, utang, harga |
 | 70 | Animasi berantem | Kontrol, combo, kuncian, senjata improvisasi, keroyokan, bos |
 | 71 | Animasi game | Semua gerakan: jalan, kerja, sekolah, sosial, kendaraan, emosi |
+| 80 | Peta & denah | Peta kota, 4 denah wilayah, denah sekolah |
+| 81 | Interior sekolah | Denah dalam semua gedung sekolah, ukuran untuk gameplay |
+| 82 | Interior kota | Rumah, warkop, markas, toko, dan bangunan lain yang bisa dimasuki |
 
 Dokumen yang sudah ada sebelumnya (`01-cerita.md` sampai `06-event.md`, peta, bangunan, sprite) tetap berlaku. Guide ini
 memperdalam dan, kalau ada yang beda, **guide ini yang dipakai**.
