@@ -10,6 +10,18 @@ perumahan dan gang di Indonesia. Buka `index.html` di browser, tanpa build.
 - **Naik/Turun**: tombol hijau muncul saat dekat motor, sepeda, atau mobil. Saat berkendara, joystick menunjuk arah tujuan.
 - Keyboard: WASD/panah, Shift lari, J/K/L serang, Spasi lompat, R guling, F naik/turun, G joget, T hormat, Y lambai, B duduk, C kamera.
 
+## Kamera & zoom
+- Tombol kamera (kanan atas): **Lurus**, **Serong 45°**, atau **Ikut putar** (keyboard: C).
+- Zoom − / + (kanan atas, roda mouse, atau tombol −/+ keyboard): 50% sampai 200%.
+
+## Performa
+- **Impostor**: benda statis (rumah, pohon, pagar, gapura) dirender sekali menjadi satu gambar jadi per sudut kamera
+  (`drawStackCached`), jadi tiap frame cukup 1 drawImage, bukan puluhan slice. Cache LRU maks 700 gambar.
+- Mode "Ikut putar": sudut kamera dibulatkan ke 3,75°. Selama kamera masih berputar, slice digambar langsung;
+  setelah stabil, gambar jadi dibuat dan dipakai ulang.
+- Tanah hanya digambar di area yang terlihat; kabel listrik = satu path; frame animasi dibangun di waktu senggang
+  (`requestIdleCallback`), termasuk semua jurus pemain.
+
 ## Cara kerja sprite stacking
 1. Buat model voxel L×W×H: dari 4 gambar tampak (mobil, robot) atau dari bentuk prosedural
    (manusia, rumah, pohon).
@@ -33,7 +45,7 @@ perumahan dan gang di Indonesia. Buka `index.html` di browser, tanpa build.
 - Tokoh & kendaraan punya bayangan memanjang searah matahari.
 
 ## Skala
-Tokoh dewasa ±36 voxel. Pintu 44, dinding 52, atap ±24, pagar 27, motor (jok ±21), sepeda (jok ±24), mobil 84×42×33.
+Tokoh dewasa ±36 voxel (kaki chibi ±12). Pintu 44, dinding 52, atap ±24, pagar 27, motor 34 panjang (jok 14), sepeda 34 (sadel 16), mobil ±67×34×26, gerobak bakso ±31 tinggi, pedang 11 unit.
 
 ## Manusia (±36 voxel)
 - `STYLES`: tiap tokoh punya warna kulit, rambut (`spiky` jabrik, `short`, `sidepart` belah samping, `curly` keriting,

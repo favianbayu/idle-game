@@ -14,12 +14,15 @@
   .screen { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; }
   .screen.on { display: flex; }
   #scrGame { align-items: flex-start; justify-content: flex-start; }
-  #game { filter: saturate(0.92) contrast(1.04); }
   #hud { position: fixed; top: 52px; left: 8px; background: #000a; padding: 7px 9px; border-radius: 8px; font-size: 12px; z-index: 4; }
   #hud label { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
   #hud input[type=range] { width: 80px; }
   #hud.min label { display: none; }
   #hudToggle { background: none; border: 0; color: #fff; font: inherit; padding: 0; cursor: pointer; text-decoration: underline; opacity: .75; }
+  #zoomBox { position: fixed; right: 8px; top: 52px; z-index: 5; display: flex; align-items: center; gap: 4px; background: #000a; border-radius: 18px; padding: 3px; font-size: 11px; }
+  #zoomBox button { width: 30px; height: 30px; border-radius: 50%; border: 0; background: #ffffff22; color: #fff; font: 700 18px system-ui; }
+  #zoomBox #camBtn { width: auto; border-radius: 15px; padding: 0 10px; font: 600 11px system-ui; }
+  #zoomLbl { min-width: 34px; text-align: center; }
   /* joystick kiri */
   #joyZone { position: fixed; left: 0; bottom: 0; width: 48%; height: 62%; z-index: 3; touch-action: none; }
   #joyBase { position: fixed; left: 90px; top: calc(100% - 110px); width: 116px; height: 116px; transform: translate(-50%,-50%); border-radius: 50%; background: radial-gradient(circle, #ffffff1a 0, #ffffff0c 62%, #ffffff30 63%, #ffffff10 72%); border: 2px solid #ffffff44; pointer-events: none; z-index: 4; opacity: .75; }
@@ -44,7 +47,7 @@
   #moreMenu.open { display: grid; }
   #moreMenu button { position: static; width: 64px; height: 40px; border-radius: 10px; font-size: 11px; }
   #help { position: fixed; top: 52px; left: 50%; transform: translateX(-50%); background: #000a; padding: 4px 10px; border-radius: 8px; font-size: 11px; max-width: min(560px, 60vw); text-align: center; z-index: 4; display: none; }
-  body.desk #help { display: block; }
+  @media (min-width: 900px) { body.desk #help { display: block; top: auto; bottom: 8px; } }
   #bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
   .bubble { position: absolute; transform: translate(-50%, -100%); background: #fffef6; color: #222; font: 600 12px/1.25 system-ui; padding: 4px 8px; border-radius: 9px; border: 2px solid #2a2a2a; white-space: nowrap; max-width: 220px; }
   .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -5px; border: 5px solid transparent; border-top-color: #2a2a2a; }
@@ -74,10 +77,11 @@
   <div id="hud">
     <div><span id="speed">-</span> · <button id="hudToggle">opsi</button></div>
     <label>Rambut <select id="optHair"></select></label>
-    <label><input type="checkbox" id="optCam"> Kamera ikut berputar</label>
+    <label>Kamera <select id="optCam"><option value="straight">Lurus</option><option value="diag">Serong 45°</option><option value="follow">Ikut putar</option></select></label>
     <label><input type="checkbox" id="optShadow" checked> Bayangan tokoh</label>
     <label>Jarak slice <input type="range" id="optSpace" min="1" max="6" step="1" value="1"></label>
   </div>
+  <div id="zoomBox"><button id="camBtn">Lurus</button><button id="zoomOut">−</button><span id="zoomLbl">100%</span><button id="zoomIn">+</button></div>
   <div id="joyZone"></div>
   <div id="joyBase"><div id="joyKnob"></div></div>
   <button id="rideBtn" data-a="ride" style="display:none">Naik</button>
@@ -96,7 +100,7 @@
     <button data-a="salute">Hormat</button><button data-a="wave">Lambai</button><button data-a="sitDown">Duduk</button>
     <button data-a="fall">Jatuh</button>
   </div>
-  <div id="help">WASD jalan · Shift lari · J pukul · K tendang · L pedang (tekan berulang = combo) · Spasi lompat · R guling · F naik/turun · G joget · C kamera</div>
+  <div id="help">WASD jalan · Shift lari · J pukul · K tendang · L pedang (tekan berulang = combo) · Spasi lompat · R guling · F naik/turun · G joget · C kamera · −/+ zoom</div>
 </div>
 
 <!-- ============ TUTORIAL ============ -->
@@ -476,6 +480,30 @@ function drawStack(ctx, m, x, y, angle, spacing = 1, scale = 1, extraLift = 0) {
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
+/* Impostor: tumpukan benda statis dirender SEKALI ke satu kanvas untuk sudut kamera tertentu,
+   lalu tiap frame cukup 1 drawImage (bukan puluhan slice). Sangat mempercepat FPS. */
+// Cache LRU: maksimal IMP_MAX gambar jadi (memori tetap terkendali saat kamera berputar)
+const IMPOSTOR = new Map(), MODEL_ID = new WeakMap(), IMP_MAX = 700;
+let modelSeq = 0;
+function drawStackCached(ctx, m, x, y, angle, spacing, create = true) {
+  let id = MODEL_ID.get(m); if (id === undefined) MODEL_ID.set(m, id = modelSeq++);
+  const k = id + '|' + Math.round(angle * 1000) + '|' + spacing;
+  let im = IMPOSTOR.get(k);
+  if (im) { IMPOSTOR.delete(k); IMPOSTOR.set(k, im); }
+  else if (!create) return drawStack(ctx, m, x, y, angle, spacing);   // kamera sedang berputar: jangan buat cache dulu
+  else {
+    const c = Math.abs(Math.cos(angle)), s = Math.abs(Math.sin(angle));
+    const hx = Math.ceil(m.L / 2 * c + m.W / 2 * s) + 2, hy = Math.ceil(m.L / 2 * s + m.W / 2 * c) + 2;
+    const up = Math.ceil(((m.lift || 0) + m.slices.length) * spacing);
+    const cv = makeCanvas(hx * 2, hy * 2 + up), g = cv.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    drawStack(g, m, hx, hy + up, angle, spacing);
+    im = { cv, ox: hx, oy: hy + up };
+    IMPOSTOR.set(k, im);
+    if (IMPOSTOR.size > IMP_MAX) IMPOSTOR.delete(IMPOSTOR.keys().next().value);
+  }
+  ctx.drawImage(im.cv, Math.round(x) - im.ox, Math.round(y) - im.oy);
+}
 function drawShadow(ctx, m, x, y, angle, scale = 1) {
   const off = (m.shadowOff || 2) * scale, a = angle + (m.yaw || 0);
   const c = Math.cos(a) * scale, s = Math.sin(a) * scale;
@@ -509,9 +537,9 @@ function textMask(str, sc, gap) {
    Warna diambil dari sisi yang terlihat.
    ===================================================================== */
 // Perbesar gambar tampak k kali (supaya ukurannya cocok dengan dunia baru)
-function upViews(v, k) {
-  const u = r => [...r].map(c => c.repeat(k)).join('');
-  const rows = a => a.flatMap(r => Array(k).fill(u(r)));
+function upViews(v, k) {   // k boleh pecahan (sampling tetangga terdekat)
+  const u = r => { const n = Math.round(r.length * k); let o = ''; for (let i = 0; i < n; i++) o += r[Math.floor(i / k)]; return o; };
+  const rows = a => { const n = Math.round(a.length * k), o = []; for (let i = 0; i < n; i++) o.push(u(a[Math.floor(i / k)])); return o; };
   return { side: rows(v.side), top: rows(v.top), front: rows(v.front), back: rows(v.back) };
 }
 // warp(x,y,z) -> x sumber: untuk animasi (menggeser kaki/tangan per frame)
@@ -533,7 +561,7 @@ function buildFromViews(v, pal, warp = null) {
   m.views = v; m.pal = pal;
   return m;
 }
-const CAR_VIEWS2 = upViews(CAR_VIEWS, 3);
+const CAR_VIEWS2 = upViews(CAR_VIEWS, 2.4);   // ±67×34×26: seimbang dengan tokoh chibi
 const CAR = buildFromViews(CAR_VIEWS2, PAL);
 CAR.shadowOff = 4;
 
@@ -738,7 +766,7 @@ function humanShape(P0, st, part = 'all') {
   const hs = st.hairStyle, bs = st.bottomStyle;
   // titik-titik properti dihitung sekali (bukan per voxel)
   const hilt0 = add(Rr.hand, bd, -1.2 * S), hilt1 = add(Rr.hand, bd, 1.0 * S), guardC = add(Rr.hand, bd, 1.3 * S);
-  const blade0 = add(Rr.hand, bd, 1.6 * S), blade1 = add(Rr.hand, bd, 14 * S);
+  const blade0 = add(Rr.hand, bd, 1.6 * S), blade1 = add(Rr.hand, bd, 11 * S);
   const stick0 = add(Rr.hand, brd, -3 * S), stick1 = add(Rr.hand, brd, 10 * S), br0 = add(Rr.hand, brd, 9.5 * S), br1 = add(Rr.hand, brd, 14 * S);
   const neck0 = add(neck, up, -0.6 * S), neck1 = add(neck, hu, 1.4 * S);
   const phone0 = add(Rr.hand, norm(sub(Rr.hand, Rr.elbow)), 0.4 * S), phone1 = add(phone0, hu, 1.8 * S);
@@ -774,7 +802,7 @@ function humanShape(P0, st, part = 'all') {
       if (capsule(p, hilt0, hilt1, 0.65 * S, 0.65 * S) >= 0) return 'hilt';
       const qx = p[0] - guardC[0], qy = p[1] - guardC[1], qz = p[2] - guardC[2], al = qx * bd[0] + qy * bd[1] + qz * bd[2];
       if (Math.abs(al) < 0.45 * S && Math.hypot(qx - bd[0] * al, qy - bd[1] * al, qz - bd[2] * al) < 1.9 * S) return 'hilt';
-      if (capsule(p, blade0, blade1, 1.3 * S, 0.6 * S) >= 0) return 'blade';
+      if (capsule(p, blade0, blade1, 1.15 * S, 0.55 * S) >= 0) return 'blade';
     }
     if (P.phone > 0.5 && capsule(p, phone0, phone1, 0.8 * S, 0.8 * S) >= 0) return 'phone';
     if (P.broom > 0.5) {
@@ -875,7 +903,7 @@ function humanShape(P0, st, part = 'all') {
   for (const a of arms) sp.push([a.sh, 2], [a.elbow, 2], [a.hand, 2]);
   const lr = bs === 'sarung' || bs === 'skirt' ? 3.8 : 2.4;
   for (const l of legs) sp.push([l.hip, lr], [l.knee, lr], [l.ankle, lr], [l.toe, 2.2]);
-  if (P.sword > 0.5) sp.push([add(Rr.hand, bd, 14 * S), 1.4], [add(Rr.hand, bd, -1.2 * S), 1.2], [add(Rr.hand, bd, 1.3 * S), 2]);
+  if (P.sword > 0.5) sp.push([add(Rr.hand, bd, 11 * S), 1.4], [add(Rr.hand, bd, -1.2 * S), 1.2], [add(Rr.hand, bd, 1.3 * S), 2]);
   if (P.broom > 0.5) sp.push([add(Rr.hand, brd, 14 * S), 3], [add(Rr.hand, brd, -3 * S), 1]);
   if (P.orb > 0) sp.push([orbPos, P.orb + 0.5]);
   if (P.phone > 0.5) sp.push([phone1, 1.5]);
@@ -943,9 +971,9 @@ const ANIMS = {
   scratch:{ name: 'Garuk kepala', kind: 'upper', n: 6, fps: 8, loop: true, pose: t => ({ arR: 2.2, elR: 2.1 + 0.15 * sinT(t), spR: 0.75, hp: -0.1, hy: -0.15 }) },
   stretch:{ name: 'Peregangan', kind: 'full', n: 10, fps: 6, pose: keyed([[0, {}], [0.4, { arL: 3.0, arR: 3.0, elL: 0.1, elR: 0.1, spL: 0.25, spR: 0.25, lean: -0.15, hp: 0.25 }], [0.7, { lean: -0.2 }], [1, {}]]) },
   // --- naik kendaraan ---
-  rideMotor: { name: 'Naik motor', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.12, thL: 1.35, thR: 1.35, knL: 1.45, knR: 1.45, arL: 1.05, arR: 1.05, elL: 0.45, elR: 0.45, spL: 0.3, spR: 0.3, hp: -0.1 + 0.02 * sinT(t) }) },
-  pedal:  { name: 'Mengayuh', kind: 'full', n: 8, fps: 8, stride: 40, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
-    return { lean: 0.28, hp: -0.2, thL: 1.15 + 0.42 * s, thR: 1.15 - 0.42 * s, knL: 1.45 + 0.5 * c, knR: 1.45 - 0.5 * c, arL: 1.0, arR: 1.0, elL: 0.35, elR: 0.35, spL: 0.25, spR: 0.25, sy: 0.15 * s }; } },
+  rideMotor: { name: 'Naik motor', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.3 + 0.02 * sinT(t), thL: 1.3, thR: 1.3, knL: 1.3, knR: 1.3, ftL: -0.2, ftR: -0.2, arL: 1.2, arR: 1.2, elL: 0.15, elR: 0.15, spL: 0.18, spR: 0.18 }) },
+  pedal:  { name: 'Mengayuh', kind: 'full', n: 8, fps: 8, stride: 30, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.55, hp: -0.4, thL: 0.95 + 0.4 * s, thR: 0.95 - 0.4 * s, knL: 1.3 + 0.5 * c, knR: 1.3 - 0.5 * c, arL: 0.92, arR: 0.92, elL: 0.05, elR: 0.05, spL: 0.15, spR: 0.15, sy: 0.15 * s }; } },
   // --- emote pemain ---
   dance:  { name: 'Joget', kind: 'full', move: 0, n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
     return { sy: 0.55 * s, tw: 0.3 * s, hy: 0.3 * s, lean: 0.05, knL: 0.3 + 0.35 * Math.max(0, s), knR: 0.3 + 0.35 * Math.max(0, -s), thL: 0.15 * Math.max(0, s), thR: 0.15 * Math.max(0, -s),
@@ -1248,62 +1276,64 @@ function makePot(kind) {
     return null;
   }, organicHex, { runs: true });
 }
-// Kendaraan (organik). m.seat = posisi dudukan relatif pusat (x) dan tinggi (z)
+// Kendaraan (organik), ukuran disesuaikan tokoh chibi (kaki ±12 voxel):
+// motor 34 panjang, jok setinggi 14; sepeda 34 panjang, sadel 16. m.seat = posisi jok relatif pusat.
 function makeMotor(col) {
-  const cy = 8;
-  const m = buildVox(44, 16, 32, (x, y, z) => {
+  const cy = 6;
+  const m = buildVox(34, 12, 23, (x, y, z) => {
     const p = [x + 0.5, y + 0.5, z + 0.5];
-    for (const wx of [9, 35]) { const d = Math.hypot(p[0] - wx, p[2] - 7); if (d <= 7 && Math.abs(p[1] - cy) <= 2) return d > 4 ? '#1e1e22' : '#a8a8ae'; }
-    if (capsule(p, [35, cy, 7], [32, cy, 17], 1.1, 1.1) >= 0) return '#555555';
-    if (Math.hypot((p[0] - 12.5) / 8.8, (p[1] - cy) / 4.5, (p[2] - 19.6) / 2.2) <= 1) return '#222226';
-    if (Math.hypot((p[0] - 12) / 10.5, (p[1] - cy) / 5.4, (p[2] - 14) / 6.2) <= 1) return col;
-    if (p[0] >= 18 && p[0] <= 28 && Math.abs(p[1] - cy) <= 4.4 && p[2] >= 6 && p[2] <= 9.5) return '#2a2a2e';
-    if (Math.hypot((p[0] - 30.5) / 3, (p[1] - cy) / 5.4, (p[2] - 16.5) / 10) <= 1) return col;
-    if (sph(p, [34, cy, 23.5], 2)) return '#fff6d0';
-    if (capsule(p, [33, cy, 18], [33, cy, 27], 1.2, 1.2) >= 0 || capsule(p, [33, cy - 7, 27.5], [33, cy + 7, 27.5], 1.1, 1.1) >= 0) return '#2a2a2e';
-    if (sph(p, [32.5, cy - 5.5, 30.5], 1.3) || sph(p, [32.5, cy + 5.5, 30.5], 1.3)) return '#333338';
+    for (const wx of [7, 27]) { const d = Math.hypot(p[0] - wx, p[2] - 5); if (d <= 5 && Math.abs(p[1] - cy) <= 1.5) return d > 3 ? '#1e1e22' : '#a8a8ae'; }
+    if (capsule(p, [27, cy, 5], [25, cy, 13], 0.9, 0.9) >= 0) return '#555555';
+    if (Math.hypot((p[0] - 12) / 6, (p[1] - cy) / 3.3, (p[2] - 13.6) / 1.4) <= 1) return '#222226';
+    if (Math.hypot((p[0] - 11) / 8, (p[1] - cy) / 4.2, (p[2] - 10) / 4.4) <= 1) return col;
+    if (p[0] >= 15 && p[0] <= 21 && Math.abs(p[1] - cy) <= 3.4 && p[2] >= 4 && p[2] <= 6) return '#2a2a2e';
+    if (Math.hypot((p[0] - 23) / 2.2, (p[1] - cy) / 4.2, (p[2] - 11) / 6.5) <= 1) return col;
+    if (sph(p, [25.6, cy, 15.5], 1.3)) return '#fff6d0';
+    if (capsule(p, [24.5, cy, 12], [24.5, cy, 18], 0.9, 0.9) >= 0 || capsule(p, [24.5, cy - 5.5, 18.5], [24.5, cy + 5.5, 18.5], 0.8, 0.8) >= 0) return '#2a2a2e';
+    if (sph(p, [24, cy - 4.5, 20.8], 0.9) || sph(p, [24, cy + 4.5, 20.8], 0.9)) return '#333338';
     return null;
   }, organicHex);
-  m.seat = { x: 12.5 - 22, z: 21 }; m.shadowOff = 3;
+  m.seat = { x: 12 - 17, z: 14 }; m.shadowOff = 2;
   return m;
 }
 function makeBike(col) {
-  const cy = 6;
-  const m = buildVox(46, 14, 32, (x, y, z) => {
+  const cy = 5;
+  const m = buildVox(34, 10, 21, (x, y, z) => {
     const p = [x + 0.5, y + 0.5, z + 0.5];
-    for (const wx of [9, 36]) {
-      const d = Math.hypot(p[0] - wx, p[2] - 8.5), ay = Math.abs(p[1] - cy);
-      if (ay <= 0.8 && d <= 8.5 && d >= 7.0) return '#1e1e22';
-      if (ay <= 0.6 && d < 7 && (d < 1.3 || Math.abs(Math.sin(Math.atan2(p[2] - 8.5, p[0] - wx) * 4)) < 0.12)) return '#b8b8c0';
+    for (const wx of [7, 27]) {
+      const d = Math.hypot(p[0] - wx, p[2] - 6), ay = Math.abs(p[1] - cy);
+      if (ay <= 0.7 && d <= 6 && d >= 5) return '#1e1e22';
+      if (ay <= 0.5 && d < 5 && (d < 1 || Math.abs(Math.sin(Math.atan2(p[2] - 6, p[0] - wx) * 4)) < 0.14)) return '#b8b8c0';
     }
-    const tubes = [[[9, cy, 8.5], [18, cy, 11]], [[18, cy, 11], [16, cy, 23]], [[17, cy, 21], [31, cy, 22]], [[18, cy, 11], [31, cy, 20]], [[36, cy, 8.5], [31, cy, 25]], [[9, cy, 8.5], [16.5, cy, 21]]];
-    for (const [a, b] of tubes) if (capsule(p, a, b, 0.75, 0.75) >= 0) return col;
-    if (capsule(p, [31, cy - 6, 26], [31, cy + 6, 26], 0.7, 0.7) >= 0) return '#2a2a2e';
-    if (Math.hypot((p[0] - 15.5) / 3.2, (p[1] - cy) / 1.8, (p[2] - 24) / 1.0) <= 1) return '#222226';
-    if (Math.hypot(p[0] - 18, p[2] - 11) < 2.6 && Math.abs(p[1] - cy - 1.2) < 0.6) return '#8a8a90';
-    if (p[0] >= 37 && p[0] <= 43 && Math.abs(p[1] - cy) <= 3.5 && p[2] >= 18 && p[2] <= 24 && ((x + z) % 2 === 0 || p[2] < 19 || Math.abs(p[1] - cy) > 3)) return '#a8a8ae';
+    const tubes = [[[7, cy, 6], [14, cy, 7]], [[14, cy, 7], [12.5, cy, 15]], [[13, cy, 14], [23, cy, 15.5]], [[14, cy, 7], [23, cy, 14]], [[27, cy, 6], [23.5, cy, 17]], [[7, cy, 6], [13, cy, 14]]];
+    for (const [a, b] of tubes) if (capsule(p, a, b, 0.6, 0.6) >= 0) return col;
+    if (capsule(p, [23.5, cy - 4.5, 18], [23.5, cy + 4.5, 18], 0.6, 0.6) >= 0) return '#2a2a2e';
+    if (Math.hypot((p[0] - 12) / 2.4, (p[1] - cy) / 1.4, (p[2] - 16) / 0.8) <= 1) return '#222226';
+    if (Math.hypot(p[0] - 14, p[2] - 7) < 2 && Math.abs(p[1] - cy - 1) < 0.5) return '#8a8a90';
+    if (p[0] >= 28 && p[0] <= 32 && Math.abs(p[1] - cy) <= 2.8 && p[2] >= 13 && p[2] <= 17 && ((x + z) % 2 === 0 || p[2] < 14 || Math.abs(p[1] - cy) > 2.3)) return '#a8a8ae';
     return null;
   }, organicHex);
-  m.seat = { x: 15.5 - 23, z: 24 }; m.shadowOff = 2;
+  m.seat = { x: 12 - 17, z: 16 }; m.shadowOff = 2;
   return m;
 }
+// Gerobak bakso: meja kira-kira setinggi pinggang-dada tokoh
 function makeGerobak() {
-  const tm = textMask('BAKSO', 2, 1);
-  return env(48, 24, 42, (x, y, z) => {
-    for (const wy of [1, 22]) { if (y === wy || y === wy + 1 - 2 * (wy > 10)) { const d = Math.hypot(x + 0.5 - 20, z + 0.5 - 8); if (d <= 7.2 && d >= 5.6) return '#2a2a2a'; if (d < 1.6) return '#8a8a8a'; if (d < 5.6 && (Math.abs(x + 0.5 - 20) < 0.6 || Math.abs(z + 0.5 - 8) < 0.6)) return '#9a9a9a'; } }
-    if (x >= 5 && x <= 39 && y >= 3 && y <= 20 && z >= 11 && z <= 25) {
-      if (y === 3 && x >= 8 && x < 8 + tm.w && tm.at(tm.w - 1 - (x - 8), 23 - z)) return '!#c82a2a';
-      if (y === 20 && x >= 8 && x < 8 + tm.w && tm.at(x - 8, 23 - z)) return '!#c82a2a';
-      return z === 11 || z === 25 ? '#1f4f96' : '#ece9e0';
+  const tm = textMask('BAKSO', 1, 1);
+  return env(36, 18, 31, (x, y, z) => {
+    for (const wy of [1, 16]) if (y === wy) { const d = Math.hypot(x + 0.5 - 15, z + 0.5 - 5.5); if (d <= 5.5 && d >= 4.3) return '#2a2a2a'; if (d < 1.2) return '#8a8a8a'; if (d < 4.3 && (Math.abs(x + 0.5 - 15) < 0.6 || Math.abs(z + 0.5 - 5.5) < 0.6)) return '#9a9a9a'; }
+    if (x >= 3 && x <= 29 && y >= 2 && y <= 15 && z >= 8 && z <= 18) {
+      if (y === 2 && x >= 6 && x < 6 + tm.w && tm.at(tm.w - 1 - (x - 6), 16 - z)) return '!#c82a2a';
+      if (y === 15 && x >= 6 && x < 6 + tm.w && tm.at(x - 6, 16 - z)) return '!#c82a2a';
+      return z === 8 || z === 18 ? '#1f4f96' : '#ece9e0';
     }
-    if (x >= 7 && x <= 28 && y >= 4 && y <= 19 && z >= 26 && z <= 37) {
-      const edge = (x === 7 || x === 28) + (y === 4 || y === 19) + (z === 37);
-      return edge >= 2 || z === 37 ? '#c4c4c8' : '!#a8d0dc';
+    if (x >= 4 && x <= 20 && y >= 3 && y <= 14 && z >= 19 && z <= 26) {
+      const edge = (x === 4 || x === 20) + (y === 3 || y === 14) + (z === 26);
+      return edge >= 2 || z === 26 ? '#c4c4c8' : '!#a8d0dc';
     }
-    if (z === 38 && x >= 6 && x <= 29 && y >= 3 && y <= 20) return '#e2e2e4';
-    if (z >= 26 && z <= 35 && Math.hypot(x + 0.5 - 34, y + 0.5 - 11.5) <= 4.4) return z === 35 ? '#9a9aa0' : '#c0c0c6';
-    if (x >= 40 && x <= 46 && (y === 5 || y === 18) && z === 22) return '#6a6a6a';
-    if (x === 42 && (y === 5 || y === 18) && z <= 21) return '#6a6a6a';
+    if (z === 27 && x >= 3 && x <= 21 && y >= 2 && y <= 15) return '#e2e2e4';
+    if (z >= 19 && z <= 25 && Math.hypot(x + 0.5 - 25, y + 0.5 - 8.5) <= 3.3) return z === 25 ? '#9a9aa0' : '#c0c0c6';
+    if (x >= 30 && x <= 34 && (y === 4 || y === 13) && z === 16) return '#6a6a6a';
+    if (x === 31 && (y === 4 || y === 13) && z <= 15) return '#6a6a6a';
     return null;
   });
 }
@@ -1547,9 +1577,9 @@ function buildWorld() {
       addObj(fenceModel(w, ic), fenceX, hy, 0, { body: [0, 0, 1.5, w / 2] });
       addBox(fenceX, y + (w / 2 - gap) / 2, 1.5, (w / 2 - gap) / 2);
       addBox(fenceX, y + w - (w / 2 - gap) / 2, 1.5, (w / 2 - gap) / 2);
-      if (r() < 0.65) { const px = gx + s * (GW / 2 + YARD - 7); for (const py of [y + 7, y + w - 7]) if (r() < 0.75) { addObj(pick(pots), px, py, r() * TAU); addCircle(px, py, 6); } }
+      if (r() < 0.65) { const px = gx + s * (GW / 2 + YARD - 7); for (const py of [y + 7, y + w - 7]) if (r() < 0.75) { addObj(pick(pots), px, py, Math.floor(r() * 4) * TAU / 4); addCircle(px, py, 6); } }
       const vr = r();
-      if (vr < 0.4) vehicles.push(newVehicle('motor', pick(motorModels), gx + s * (GW / 2 + 15), y + w * 0.2, Math.PI / 2 + (r() - 0.5) * 0.4));
+      if (vr < 0.4) vehicles.push(newVehicle('motor', pick(motorModels), gx + s * (GW / 2 + 14), y + w * 0.2, Math.PI / 2 + (r() - 0.5) * 0.4));
       else if (vr < 0.55) vehicles.push(newVehicle('bike', pick(bikeModels), gx + s * (GW / 2 + 15), y + w * 0.2, Math.PI / 2 + (r() - 0.5) * 0.4));
       if (r() < 0.25) { const bx = gx + s * (GW / 2 - 7), by = y + 5; addObj(pick(bins), bx, by, 0); addCircle(bx, by, 6); }
       y += w + 12 + Math.floor(r() * 10);
@@ -1564,7 +1594,7 @@ function buildWorld() {
   addObj(mus, 1200, 820, Math.PI / 2, { body: mus.body }); addBox(1200, 820 + mus.body[0], mus.body[3], mus.body[2]);
   const pos = makePosRonda();
   const posObj = addObj(pos, 1780, 850, Math.PI / 2, { body: pos.body, id: 'pos' }); addBox(1780, 850, 22, 25);
-  addObj(makeGerobak(), 702, 870, Math.PI, { body: [0, 0, 24, 12] }); addBox(702, 870, 24, 11);
+  addObj(makeGerobak(), 700, 872, Math.PI, { body: [0, 0, 18, 9] }); addBox(700, 872, 18, 9);
   const flag = makeBendera();
   for (const [fx, fy] of [[560, 878], [1290, 878], [1700, 878], [1860, 1006]]) { addObj(flag, fx, fy, Math.PI / 2); addCircle(fx, fy, 2); }
   const goal = makeGoal();
@@ -1604,7 +1634,7 @@ function buildWorld() {
   }
 
   // --- kendaraan tambahan ---
-  vehicles.push(newVehicle('car', CAR, 420, 942, 0));
+  vehicles.push(newVehicle('car', CAR, 420, 945, 0));
   vehicles.push(newVehicle('bike', bikeModels[1], 520, 1278, 0));
   vehicles.push(newVehicle('motor', motorModels[1], 1660, 1012, 0));
 
@@ -1617,8 +1647,8 @@ function buildWorld() {
     if (y > ROAD_Y0 - 160 && y < ROAD_Y1 + 130 && GANGS.some((g, k) => k < 3 && x > g + 150 && x < GANGS[k + 1] - 150)) continue;
     if (x > FIELD[0] - 14 && x < FIELD[2] + 14 && y > FIELD[1] - 14 && y < FIELD[3] + 30) continue;
     const kind = r();
-    if (kind < 0.42 && free(x, y, 32)) { addObj(pick(mangos), x, y, r() * TAU, { tree: 10 }); addCircle(x, y, 5); }
-    else if (kind < 0.84 && free(x, y, 22)) { addObj(pick(bananas), x, y, r() * TAU, { tree: 6 }); addCircle(x, y, 4); }
+    if (kind < 0.42 && free(x, y, 32)) { addObj(pick(mangos), x, y, Math.floor(r() * 8) * TAU / 8, { tree: 10 }); addCircle(x, y, 5); }
+    else if (kind < 0.84 && free(x, y, 22)) { addObj(pick(bananas), x, y, Math.floor(r() * 8) * TAU / 8, { tree: 6 }); addCircle(x, y, 4); }
     else if (kind < 0.9 && free(x, y, 28)) { const a = r() < 0.5 ? 0 : Math.PI / 2; addObj(pick(jemuran), x, y, a, { body: [0, 0, 4, 25] }); addCircle(x - Math.sin(a) * 23, y + Math.cos(a) * 23, 2); addCircle(x + Math.sin(a) * 23, y - Math.cos(a) * 23, 2); }
   }
   paintGround();
@@ -1748,7 +1778,7 @@ function collideVehicles(e, r, skip) {
   for (const v of vehicles) {
     if (v === skip) continue;
     const c = Math.cos(v.a), s = Math.sin(v.a);
-    for (const off of v.kind === 'car' ? [-24, 0, 24] : [-11, 11]) {
+    for (const off of v.kind === 'car' ? [-18, 0, 18] : [-8, 8]) {
       const cx = v.x + c * off, cy = v.y + s * off, dx = e.x - cx, dy = e.y - cy, d = Math.hypot(dx, dy), m = v.rad + r;
       if (d < m && d > 0.001) { e.x = cx + dx / d * m; e.y = cy + dy / d * m; }
     }
@@ -1760,7 +1790,7 @@ function collideVehicles(e, r, skip) {
    ===================================================================== */
 const keys = { up: false, down: false, left: false, right: false, run: false };
 const joy = { x: 0, y: 0, active: false };
-const opts = { rotCam: false, shadow: true, spacing: 1 };
+const opts = { cam: 'straight', shadow: true, spacing: 1, zoomI: 3 };
 const bot = { x: 760, y: 944, a: Math.PI / 2, vx: 0, vy: 0, mode: 'stand', action: null, at: 0, phase: 0, anim: 'idle', frame: 0,
   moving: false, speed: 0, queued: null, hitDone: false, last: { fam: null, idx: -1, end: -9 }, time: 0, riding: null, emote: null };
 const cam = { x: 760, y: 944, a: 0 };
@@ -1788,9 +1818,9 @@ function say(e, text, dur = 2.6) { e.bubble = { text, until: bot.time + dur }; }
 
 /* ---------- kendaraan ---------- */
 const VSPEC = {
-  motor: { max: 170, acc: 150, turn: 2.6, rad: 7, anim: 'rideMotor' },
-  bike:  { max: 95, acc: 75, turn: 2.8, rad: 6, anim: 'pedal' },
-  car:   { max: 190, acc: 140, turn: 2.0, rad: 20, anim: null },
+  motor: { max: 160, acc: 140, turn: 2.8, rad: 5, anim: 'rideMotor' },
+  bike:  { max: 90, acc: 70, turn: 3.0, rad: 4.5, anim: 'pedal' },
+  car:   { max: 180, acc: 130, turn: 2.2, rad: 15, anim: null },
 };
 function newVehicle(kind, model, x, y, a) { return { kind, model, x, y, a, v: 0, rider: null, rad: VSPEC[kind].rad, phase: 0 }; }
 // Gaya game mobile: joystick menunjuk arah tujuan, makin jauh didorong makin kencang
@@ -1808,7 +1838,7 @@ function driveVehicle(v, dir, mag, dt) {
   v.v += Math.sign(want - v.v) * Math.min(Math.abs(want - v.v), acc * dt);
   if (surfAt(v.x, v.y) === 0) v.v *= Math.pow(0.4, dt);
   v.x += Math.cos(v.a) * v.v * dt; v.y += Math.sin(v.a) * v.v * dt;
-  const c = Math.cos(v.a), s = Math.sin(v.a), half = v.kind === 'car' ? 32 : 14;
+  const c = Math.cos(v.a), s = Math.sin(v.a), half = v.kind === 'car' ? 24 : 10;
   let hit = false;
   for (const off of [half, -half]) {
     const p = { x: v.x + c * off, y: v.y + s * off }, bx = p.x, by = p.y;
@@ -1818,18 +1848,18 @@ function driveVehicle(v, dir, mag, dt) {
   v.phase += Math.abs(v.v) * dt;
   if (v.kind === 'car' && Math.abs(v.v) > 80 && dir && Math.abs(Math.atan2(Math.sin(Math.atan2(dir[1], dir[0]) - v.a), Math.cos(Math.atan2(dir[1], dir[0]) - v.a))) > 0.6) {
     gctx.fillStyle = 'rgba(25,25,28,0.45)';
-    for (const sd of [-15, 15]) gctx.fillRect((v.x - c * 30 - s * sd) | 0, (v.y - s * 30 + c * sd) | 0, 1, 1);
+    for (const sd of [-12, 12]) gctx.fillRect((v.x - c * 24 - s * sd) | 0, (v.y - s * 24 + c * sd) | 0, 1, 1);
   }
 }
 function nearVehicle() {
   if (bot.riding) return bot.riding;
   let best = null, bd = 1e9;
-  for (const v of vehicles) { if (v.rider) continue; const d = Math.hypot(v.x - bot.x, v.y - bot.y); if (d < (v.kind === 'car' ? 54 : 32) && d < bd) { bd = d; best = v; } }
+  for (const v of vehicles) { if (v.rider) continue; const d = Math.hypot(v.x - bot.x, v.y - bot.y); if (d < (v.kind === 'car' ? 44 : 26) && d < bd) { bd = d; best = v; } }
   return best;
 }
 function toggleRide() {
   if (bot.riding) {
-    const v = bot.riding, c = Math.cos(v.a), s = Math.sin(v.a), side = v.kind === 'car' ? 32 : 18;
+    const v = bot.riding, c = Math.cos(v.a), s = Math.sin(v.a), side = v.kind === 'car' ? 26 : 14;
     bot.x = v.x + s * side; bot.y = v.y - c * side; bot.a = v.a; v.rider = null; v.v = 0; bot.riding = null; bot.vx = bot.vy = 0;
     collide(bot, 7);
   } else {
@@ -2088,9 +2118,10 @@ const catModel = c => c.moving ? CAT_FRAMES[c.kind].walk[Math.floor(c.t * (c.fle
    ===================================================================== */
 const gameCanvas = document.getElementById('game'), ctx = gameCanvas.getContext('2d');
 let VW = 240, VH = 320, PX = 2;
+const ZOOMS = [0.5, 0.65, 0.8, 1, 1.25, 1.6, 2];
 function resizeGame() {
   const w = innerWidth, h = innerHeight;
-  PX = Math.max(1, Math.round(Math.min(w, h) / 240));
+  PX = Math.max(0.5, Math.min(w, h) / 240 * ZOOMS[opts.zoomI]);   // zoom = ukuran piksel di layar
   VW = Math.ceil(w / PX); VH = Math.ceil(h / PX);
   gameCanvas.width = VW; gameCanvas.height = VH;
   gameCanvas.style.width = VW * PX + 'px'; gameCanvas.style.height = VH * PX + 'px';
@@ -2100,9 +2131,10 @@ const bubbleLayer = document.getElementById('bubbles'), bubblePool = [];
 function updateCamera(dt, tx, ty, ta) {
   const k = 1 - Math.pow(0.0008, dt);
   cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k;
-  const want = opts.rotCam ? ta + Math.PI / 2 : 0;
-  cam.a += Math.atan2(Math.sin(want - cam.a), Math.cos(want - cam.a)) * (1 - Math.pow(0.02, dt));
-  if (!opts.rotCam) { const hw = VW / 2, hh = VH / 2; cam.x = Math.max(hw, Math.min(WW - hw, cam.x)); cam.y = Math.max(hh, Math.min(WH - hh, cam.y)); }
+  const want = opts.cam === 'follow' ? ta + Math.PI / 2 : opts.cam === 'diag' ? Math.PI / 4 : 0;
+  const da = Math.atan2(Math.sin(want - cam.a), Math.cos(want - cam.a));
+  cam.a = Math.abs(da) < 0.002 ? want : cam.a + da * (1 - Math.pow(0.02, dt));   // kunci tepat agar impostor bisa dipakai
+  if (opts.cam === 'straight' && cam.a === 0) { const hw = VW / 2, hh = VH / 2; cam.x = WW > VW ? Math.max(hw, Math.min(WW - hw, cam.x)) : WW / 2; cam.y = WH > VH ? Math.max(hh, Math.min(WH - hh, cam.y)) : WH / 2; }
 }
 // bayangan tokoh/kendaraan: siluet memanjang searah matahari
 function drawSunShadow(m, sx, sy, a, h) {
@@ -2120,18 +2152,26 @@ function render() {
   ctx.imageSmoothingEnabled = false;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = '#5c7a40'; ctx.fillRect(0, 0, VW, VH);
-  const cx = Math.round(VW / 2), cy = Math.round(VH * (opts.rotCam ? 0.62 : 0.5));
-  const ca = Math.cos(-cam.a), sa = Math.sin(-cam.a), sp = opts.spacing;
+  const cx = Math.round(VW / 2), cy = Math.round(VH * (opts.cam === 'follow' ? 0.62 : 0.5));
+  // mode putar: sudut kamera dibulatkan ke 3,75° supaya gambar jadi (impostor) bisa dipakai ulang
+  const CQ = Math.PI / 48, camA = opts.cam === 'follow' ? Math.round(cam.a / CQ) * CQ : cam.a;
+  const ca = Math.cos(-camA), sa = Math.sin(-camA), sp = opts.spacing;
   const toScreen = (x, y) => { const dx = x - cam.x, dy = y - cam.y; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; };
+  // tanah: hanya bagian yang terlihat
+  const rad = Math.ceil(Math.hypot(VW, VH) / 2) + 4, rx0 = Math.max(0, Math.floor(cam.x - rad)), ry0 = Math.max(0, Math.floor(cam.y - rad));
+  const rw = Math.min(WW, Math.ceil(cam.x + rad)) - rx0, rh = Math.min(WH, Math.ceil(cam.y + rad)) - ry0;
   ctx.setTransform(ca, sa, -sa, ca, cx, cy);
   ctx.translate(-Math.round(cam.x), -Math.round(cam.y));
-  ctx.drawImage(ground, 0, 0);
+  if (rw > 0 && rh > 0) ctx.drawImage(ground, rx0, ry0, rw, rh, rx0, ry0, rw, rh);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const fixedCam = opts.cam === 'follow' || cam.a === 0 || cam.a === Math.PI / 4;
+  if (camA !== lastCamA) { lastCamA = camA; camStable = 0; }
+  const makeCache = camStable > 0.2;
 
   const list = [];
   const visible = (m, sx, sy, lift) => { const r = Math.max(m.L, m.W) * 0.75; return !(sx < -r || sx > VW + r || sy + r < 0 || sy - (m.H + lift) * sp - r > VH); };
   const boxKey = (o, sy, b) => {   // kunci = titik paling depan (y layar terbesar) dari kotak tapak
-    const a = o.a - cam.a, [, cy2] = toScreen(o.x + b[0] * Math.cos(o.a) - b[1] * Math.sin(o.a), o.y + b[0] * Math.sin(o.a) + b[1] * Math.cos(o.a));
+    const a = o.a - camA, [, cy2] = toScreen(o.x + b[0] * Math.cos(o.a) - b[1] * Math.sin(o.a), o.y + b[0] * Math.sin(o.a) + b[1] * Math.cos(o.a));
     return cy2 + Math.abs(b[2] * Math.sin(a)) + Math.abs(b[3] * Math.cos(a));
   };
   for (const o of objects) {
@@ -2139,16 +2179,16 @@ function render() {
     if (!visible(m, sx, sy, 0)) { o.key = sy; continue; }
     o.key = o.body ? boxKey(o, sy, o.body) : sy;
     const big = m.L > 30 || m.H > 40;
-    list.push({ model: o.base, sx, sy, a: o.a - cam.a, lift: 0, key: o.key, big });
+    list.push({ model: o.base, sx, sy, a: o.a - camA, lift: 0, key: o.key, big, stat: true });
     if (o.top) {
       const tk = o.tree ? sy + m.L * 0.3 : o.beam ? sy + 36 : boxKey(o, sy, [0, 0, m.L / 2, m.W / 2]) + 0.5;
-      list.push({ model: o.top, sx, sy, a: o.a - cam.a, lift: 0, key: tk, big: true });
+      list.push({ model: o.top, sx, sy, a: o.a - camA, lift: 0, key: tk, big: true, stat: true });
     }
   }
   const dyn = (ent, m, x, y, a, lift, key, shadowH) => {
     const [sx, sy] = toScreen(x, y);
     if (!visible(m, sx, sy, lift)) return null;
-    const d = { model: m, sx, sy, a: a - cam.a, lift, key: key ?? sy, ent, shadowH };
+    const d = { model: m, sx, sy, a: a - camA, lift, key: key ?? sy, ent, shadowH };
     list.push(d); return d;
   };
   for (const v of vehicles) {
@@ -2179,19 +2219,21 @@ function render() {
   }
   for (const d of list) {
     if (d.fade) ctx.globalAlpha = 0.42;
-    drawStack(ctx, d.model, d.sx, d.sy, d.a, sp, 1, d.lift);
+    if (d.stat && fixedCam) drawStackCached(ctx, d.model, d.sx, d.sy, d.a, sp, makeCache);    // 1 drawImage per benda
+    else drawStack(ctx, d.model, d.sx, d.sy, d.a, sp, 1, d.lift);
     if (d.fade) ctx.globalAlpha = 1;
   }
 
   // kabel listrik di ketinggian puncak tiang
-  ctx.fillStyle = 'rgba(30,30,36,0.8)';
+  ctx.strokeStyle = 'rgba(30,30,36,0.75)'; ctx.lineWidth = 1;
+  ctx.beginPath();
   const zc = CABLE_Z * sp;
   for (const [a, b] of cables) {
     const [x0, y0] = toScreen(a[0], a[1]), [x1, y1] = toScreen(b[0], b[1]);
     if ((x0 < 0 && x1 < 0) || (x0 > VW && x1 > VW) || (y0 - zc < 0 && y1 - zc < 0) || (y0 - zc > VH && y1 - zc > VH)) continue;
-    const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
-    for (let i = 0; i <= n; i++) { const t = i / n; ctx.fillRect(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t - zc + 9 * 4 * t * (1 - t)), 1, 1); }
+    ctx.moveTo(x0, y0 - zc); ctx.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 - zc + 18, x1, y1 - zc);   // kabel melengkung
   }
+  ctx.stroke();
   // balon dialog (HTML supaya teks tajam)
   let bi = 0;
   for (const d of list) {
@@ -2207,11 +2249,11 @@ function render() {
 }
 
 /* ---------- loop ---------- */
-let last = performance.now(), current = 'game', ready = false;
+let last = performance.now(), current = 'game', ready = false, lastCamA = 0, camStable = 1;
 function frame(t) {
   const dt = Math.min(0.05, (t - last) / 1000); last = t;
   if (ready) {
-    bot.time += dt;
+    bot.time += dt; camStable += dt;
     if (current === 'game') {
       updatePlayer(dt);
       for (const n of npcs) updateNPC(n, dt);
@@ -2221,7 +2263,7 @@ function frame(t) {
       render();
       updateRideButton();
     } else renderTut(t / 1000);
-    pumpQueue(current === 'game' ? 5 : 12);
+    if (!window.requestIdleCallback) pumpQueue(current === 'game' ? 4 : 12);
   }
   requestAnimationFrame(frame);
 }
@@ -2237,7 +2279,9 @@ addEventListener('keydown', e => {
   if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; e.preventDefault(); }
   if (ACTKEY[e.code] && !e.repeat) { doAction(ACTKEY[e.code]); e.preventDefault(); }
   if (e.key === 'Shift') { keys.run = true; syncActionBar(); }
-  if (e.code === 'KeyC') { opts.rotCam = !opts.rotCam; document.getElementById('optCam').checked = opts.rotCam; }
+  if (e.code === 'KeyC') { const order = ['straight', 'diag', 'follow']; setCam(order[(order.indexOf(opts.cam) + 1) % 3]); }
+  if (e.key === '-' || e.key === '_') zoomBy(-1);
+  if (e.key === '=' || e.key === '+') zoomBy(1);
 });
 addEventListener('keyup', e => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; if (e.key === 'Shift') { keys.run = false; syncActionBar(); } });
 
@@ -2280,9 +2324,18 @@ function updateRideButton() {
   rideBtn.style.display = v ? '' : 'none';
   if (v) rideBtn.textContent = bot.riding ? 'Turun' : 'Naik ' + (v.kind === 'car' ? 'mobil' : v.kind === 'motor' ? 'motor' : 'sepeda');
 }
-document.getElementById('optCam').onchange = e => opts.rotCam = e.target.checked;
+const CAM_NAMES = { straight: 'Lurus', diag: 'Serong', follow: 'Ikut putar' };
+function setCam(m) { opts.cam = m; document.getElementById('optCam').value = m; document.getElementById('camBtn').textContent = CAM_NAMES[m]; }
+document.getElementById('camBtn').addEventListener('pointerdown', e => { e.preventDefault(); const o = ['straight', 'diag', 'follow']; setCam(o[(o.indexOf(opts.cam) + 1) % 3]); });
+document.getElementById('optCam').onchange = e => { setCam(e.target.value); e.target.blur(); };
+function zoomBy(d) { opts.zoomI = Math.max(0, Math.min(ZOOMS.length - 1, opts.zoomI + d)); resizeGame(); document.getElementById('zoomLbl').textContent = Math.round(ZOOMS[opts.zoomI] * 100) + '%'; }
+document.getElementById('zoomIn').addEventListener('pointerdown', e => { e.preventDefault(); zoomBy(1); });
+document.getElementById('zoomOut').addEventListener('pointerdown', e => { e.preventDefault(); zoomBy(-1); });
+gameCanvas.addEventListener('wheel', e => { e.preventDefault(); zoomBy(e.deltaY > 0 ? -1 : 1); }, { passive: false });
+// bangun frame animasi di waktu senggang browser (tidak mengganggu FPS)
+if (window.requestIdleCallback) { const idle = d => { if (ready) while (QUEUE.length && d.timeRemaining() > 6) pumpQueue(1); requestIdleCallback(idle, { timeout: 500 }); }; requestIdleCallback(idle); }
 document.getElementById('optShadow').onchange = e => opts.shadow = e.target.checked;
-document.getElementById('optSpace').oninput = e => opts.spacing = +e.target.value;
+document.getElementById('optSpace').oninput = e => { opts.spacing = +e.target.value; };
 document.getElementById('hudToggle').onclick = () => document.getElementById('hud').classList.toggle('min');
 const HAIRS = { spiky: 'Jabrik', short: 'Pendek', sidepart: 'Belah samping', curly: 'Keriting', buzz: 'Cepak', mohawk: 'Mohawk', bob: 'Bob', long: 'Panjang', ponytail: 'Kuncir', twintail: 'Kuncir dua', bun: 'Sanggul', bald: 'Botak', cap: 'Topi', peci: 'Peci', helmet: 'Helm', hijab: 'Hijab' };
 const hairSel = document.getElementById('optHair');
@@ -2444,6 +2497,9 @@ setTimeout(() => {
   hframe('player', 'idle', 0);
   for (const a of ['walk', 'idle', 'run']) queueAnim('player', a);
   for (const a of ['walk', 'run']) queueAnim('player', a, 'lower');
+  // frame serangan dibangun di waktu senggang supaya tidak tersendat saat pertama dipakai
+  for (const a of ['jab', 'straight', 'hook', 'uppercut', 'slashH', 'slashV', 'thrust', 'cast', 'salute', 'waveOnce']) { queueAnim('player', a); queueAnim('player', a, 'upper'); }
+  for (const a of ['kickFront', 'kickHigh', 'spin', 'jump', 'roll', 'crouch', 'rideMotor', 'pedal']) queueAnim('player', a);
   console.log('world built in', Math.round(performance.now() - t0), 'ms; objects', objects.length, 'vehicles', vehicles.length);
   ready = true;
   document.getElementById('loading').style.display = 'none';
