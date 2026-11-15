@@ -252,29 +252,31 @@ function humanShape(P0, st, part = 'all') {
   const cy = W / 2;
   const up = [Math.sin(P.lean), 0, Math.cos(P.lean)], fwd = [Math.cos(P.lean), 0, -Math.sin(P.lean)];
   const pelvis = [L / 2 - S + P.px * S, cy + P.sy * S, 0];
-  const neck = add(pelvis, up, 7.8 * S);
+  // proporsi lebih natural (±6 kepala): kepala lebih kecil, badan & kaki lebih panjang, anggota badan lebih ramping
+  const HS = 0.84, TL = 1.16, LL = 1.26, AL = 1.2;
+  const neck = add(pelvis, up, 7.8 * TL * S);
   const ha = P.lean + P.hp, hu = [Math.sin(ha), 0, Math.cos(ha)];
   const hf = [Math.cos(ha) * Math.cos(P.hy), Math.sin(P.hy), -Math.sin(ha) * Math.cos(P.hy)], hsd = [-Math.sin(P.hy), Math.cos(P.hy), 0];
-  const head = add(neck, hu, 4.6 * S);
+  const head = add(neck, hu, (4.6 * HS + 0.5) * S);
   const arms = [-1, 1].map(s => {
     const k = s < 0 ? 'L' : 'R', a = P['ar' + k], el = P['el' + k], sp = P['sp' + k];
-    const sh = add(add(pelvis, up, 6.6 * S), [-s * 3.3 * S * Math.sin(P.tw), s * 3.3 * S * Math.cos(P.tw), 0]);
+    const sh = add(add(pelvis, up, 6.6 * TL * S), [-s * 3.25 * S * Math.sin(P.tw), s * 3.25 * S * Math.cos(P.tw), 0]);
     const dir = (ang, b) => [Math.sin(ang) * Math.cos(b), s * Math.sin(b), -Math.cos(ang) * Math.cos(b)];
-    const elbow = add(sh, dir(a, sp), 3.3 * S);
-    const hand = add(elbow, dir(a + el, sp * 0.5), 3.1 * S);
+    const elbow = add(sh, dir(a, sp), 3.3 * AL * S);
+    const hand = add(elbow, dir(a + el, sp * 0.5), 3.1 * AL * S);
     return { sh, elbow, hand };
   });
   const legs = [-1, 1].map(s => {
     const k = s < 0 ? 'L' : 'R', th = P['th' + k], kn = P['kn' + k];
     const hip = add(add(pelvis, up, -0.3 * S), [0, s * 1.7 * S, 0]);
-    const knee = add(hip, limb(th), 4.4 * S);
-    const ankle = add(knee, limb(th - kn), 4.3 * S);
+    const knee = add(hip, limb(th), 4.4 * LL * S);
+    const ankle = add(knee, limb(th - kn), 4.3 * LL * S);
     const toe = add(ankle, limb(th - kn + Math.PI / 2 + P['ft' + k]), 1.7 * S);
     return { hip, knee, ankle, toe };
   });
   // Grounding: geser badan supaya titik terendah menyentuh tanah
-  const butt = add(pelvis, up, -1.0 * S), chest = add(pelvis, up, 3.0 * S);
-  const gp = [[butt, 0.5], [chest, 2.1], [neck, 2.0], [head, 4.0]];
+  const butt = add(pelvis, up, -1.0 * S), chest = add(pelvis, up, 3.0 * TL * S);
+  const gp = [[butt, 0.5], [chest, 2.1], [neck, 2.0], [head, 4.0 * HS]];
   for (const a of arms) gp.push([a.elbow, 1.2], [a.hand, 1.25]);
   for (const l of legs) gp.push([l.knee, 1.5], [l.ankle, 1.25], [l.toe, 1.15]);
   const shift = -Math.min(...gp.map(([p, r]) => p[2] - r * S));
@@ -336,7 +338,7 @@ function humanShape(P0, st, part = 'all') {
     }
     // kepala (koordinat lokal kepala, satuan unit)
     const vx = p[0] - head[0], vy = p[1] - head[1], vz = p[2] - head[2];
-    const dx = (vx * hf[0] + vy * hf[1] + vz * hf[2]) / S, dy = (vx * hsd[0] + vy * hsd[1]) / S, dz = (vx * hu[0] + vz * hu[2]) / S;
+    const dx = (vx * hf[0] + vy * hf[1] + vz * hf[2]) / S / HS, dy = (vx * hsd[0] + vy * hsd[1]) / S / HS, dz = (vx * hu[0] + vz * hu[2]) / S / HS;
     const inHead = (dx / 3.9) ** 2 + (dy / 3.7) ** 2 + (dz / 4.0) ** 2 <= 1;
     const face = hs === 'hijab'
       ? dx > 0.6 && (dy / 2.7) ** 2 + ((dz + 0.8) / 2.6) ** 2 <= 1
@@ -358,15 +360,15 @@ function humanShape(P0, st, part = 'all') {
     if (hm) return hm === 1 ? strand() : hm;
     // lengan
     for (const a of arms) {
-      if (sph(p, a.hand, 1.3 * S)) return 'skin';
-      const t1 = capsule(p, a.sh, a.elbow, 1.35 * S, 1.15 * S);
+      if (sph(p, a.hand, 1.05 * S)) return 'skin';
+      const t1 = capsule(p, a.sh, a.elbow, 1.2 * S, 1.0 * S);
       if (t1 >= 0) return (st.sleeves === 'long' || t1 < 0.7) ? topMat(x, y, z, 0, 9, 1) : 'skin';
-      const t2 = capsule(p, a.elbow, a.hand, 1.15 * S, 1.0 * S);
+      const t2 = capsule(p, a.elbow, a.hand, 1.0 * S, 0.85 * S);
       if (t2 >= 0) return (st.sleeves === 'long' && t2 < 0.8) ? topMat(x, y, z, 0, 9, 1) : 'skin';
     }
     // badan atas
     const wx = p[0] - pelvis[0], wy0 = p[1] - pelvis[1], wz = p[2] - pelvis[2];
-    const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / 9;
+    const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / (9 * TL);
     if (t >= 0.2 && t <= 1) {
       let ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
       if (t > 0.72) { const k = Math.sqrt(Math.max(0, 1 - ((t - 0.72) / 0.3) ** 2)); ry *= 0.55 + 0.45 * k; rx *= 0.6 + 0.4 * k; }
@@ -397,7 +399,7 @@ function humanShape(P0, st, part = 'all') {
       } else if (capsule(p, l.ankle, l.toe, 1.3 * S, 1.15 * S) >= 0) return 'shoe';
     }
     const wx = p[0] - pelvis[0], wy = p[1] - pelvis[1], wz = p[2] - pelvis[2];
-    const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / 9;
+    const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / (9 * TL);
     if (t >= 0 && t < 0.2) {
       const ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
       if (((wx * fwd[0] + wz * fwd[2]) / S / rx) ** 2 + (wy / S / ry) ** 2 <= 1) return bottomMat(x, y, z);
@@ -409,8 +411,8 @@ function humanShape(P0, st, part = 'all') {
       if (((p[0] - xc) / hx) ** 2 + ((p[1] - cy) / hy) ** 2 <= 1) return bottomMat(x, y, z);
     }
     for (const l of legs) {
-      if (capsule(p, l.hip, l.knee, 1.65 * S, 1.4 * S) >= 0) return (bs === 'pants' || bs === 'shorts') ? 'bottom' : 'skin';
-      const t2 = capsule(p, l.knee, l.ankle, 1.4 * S, 1.2 * S);
+      if (capsule(p, l.hip, l.knee, 1.55 * S, 1.2 * S) >= 0) return (bs === 'pants' || bs === 'shorts') ? 'bottom' : 'skin';
+      const t2 = capsule(p, l.knee, l.ankle, 1.2 * S, 1.0 * S);
       if (t2 >= 0) return bs === 'pants' || (bs === 'shorts' && t2 < 0.12) ? 'bottom' : 'skin';
     }
     return null;
@@ -424,7 +426,7 @@ function humanShape(P0, st, part = 'all') {
     return m;
   };
   // kotak batas supaya hanya area tubuh yang dihitung
-  const sp = [[pelvis, 4.6], [neck, 4.2], [head, 6.8], [add(head, hu, -7 * S), 5.2]];
+  const sp = [[pelvis, 4.6], [neck, 4.2], [head, 6.8 * HS], [add(head, hu, -7 * HS * S), 5.2 * HS]];
   for (const a of arms) sp.push([a.sh, 2], [a.elbow, 2], [a.hand, 2]);
   const lr = bs === 'sarung' || bs === 'skirt' ? 3.8 : 2.4;
   for (const l of legs) sp.push([l.hip, lr], [l.knee, lr], [l.ankle, lr], [l.toe, 2.2]);

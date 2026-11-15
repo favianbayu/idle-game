@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { buildKota, buildSekolah, Collision, SCHOOL_OX } from './world.js';
 import { WATER_T } from './kota.js';
 import { L } from './buildings.js';
-import { SMALL } from './veg.js';
+import { SMALL, WIND } from './veg.js';
 import { initChars, onCharsReady, Character, preload, styleName } from './chars.js';
 import { LINES, NPCS } from './npcs.js';
 
@@ -180,7 +180,7 @@ let toastT = 0;
 function toast(t) { ui.toast.textContent = t; ui.toast.style.opacity = 1; toastT = 2.2; }
 
 /* ------------------------------------------------------------------ interaksi */
-const ENTER_SCHOOL = { x: 109, z: 63.5 };   // depan gerbang SMA 3 di peta kota
+const ENTER_SCHOOL = { x: 109 + kota.smaShift.x, z: 63.5 + kota.smaShift.z };   // depan gerbang SMA 3 di peta kota
 const EXIT_SCHOOL = { x: SCHOOL_OX + 39, z: 58.2 };   // trotoar depan gerbang (guide 83)
 let target = null;
 function findTarget() {
@@ -324,7 +324,7 @@ function loop(now) {
   cam.yaw += (cam.yawT - cam.yaw) * Math.min(1, dt * 8);
   cam.dist += (cam.distT - cam.dist) * Math.min(1, dt * 8);
   cam.pitch += (cam.pitchT - cam.pitch) * Math.min(1, dt * 8);
-  WATER_T.value += dt;
+  WATER_T.value += dt; WIND.value += dt;
   const lk = Math.min(1, dt * 10); cam.x += (player.x - cam.x) * lk; cam.z += (player.z - cam.z) * lk;
   // layar tegak (HP portrait): mundurkan kamera supaya lebar pandang tetap cukup
   const dist = cam.dist * (camera.aspect < 1 ? Math.pow(1 / camera.aspect, 0.6) : 1);

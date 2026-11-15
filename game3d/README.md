@@ -42,6 +42,11 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   di sepanjang jalan dengan halaman, jalur masuk, dan jarak antar-rumah, semua menghadap jalan. Jalan punya aspal/paving,
   marka, kanstin, zebra cross, selokan gang, tiang listrik dan lampu jalan. Tanaman: pohon per wilayah, bambu, kelapa,
   pisang, padi, kebun teh, semak, bunga, rumput.
+- **Kendaraan** (`src/vehicles.js`): motor bebek & matic (garpu, spion, knalpot, plat, helm), sepeda (rangka berlian,
+  jari-jari, keranjang), mobil sedan / MPV / pikap / angkot (kaca miring, lampu, gril, spion, plat).
+- Tidak ada bangunan, pohon, atau benda yang menumpuk di permukaan jalan: rumah dicek terhadap jarak ke tepi jalan,
+  bangunan kunci digeser otomatis kalau tapaknya menyentuh jalan, marka jalan diputus di setiap simpang.
+- Tanaman bergoyang pelan tertiup angin (shader); pohon, semak, bunga, rumput punya gumpalan daun & warna bertingkat.
 - **SMA Negeri 3** mengikuti `guide/83-sekolah-luar.md` (lahan 76 x 53.5 di dalam pagar + trotoar + Jl. Merdeka):
   Gedung A bentuk U dengan portiko pelana, tiang putih, papan nama hijau-emas; Gedung B 3 lantai dengan menara tangga,
   3 gevel, jam, pagar balkon biru/hijau/merah per angkatan; Gedung C atap gergaji + mural; aula atap lengkung;

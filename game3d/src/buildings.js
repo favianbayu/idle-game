@@ -1,5 +1,6 @@
 // Model bangunan per tipe, mengikuti 05-bangunan.md (K1-K6 kampung, P1-P4 perumahan, R1-R3 ruko,
 // rumah panggung bantaran). Bingkai lokal: lebar w di sumbu x, dalam d di sumbu z, DEPAN = +z (menghadap jalan).
+import * as V from './vehicles.js';
 import { col, shade, mix } from './geom.js';
 import { FLOOR, hash, pick, facade, colLocal, GLASS, GLASS2, FRAME } from './common.js';
 
@@ -14,17 +15,9 @@ const rot = (xf, da) => ({ x: xf.x, z: xf.z, y: xf.y, a: xf.a + da });
 const at = (xf, lx, lz, da = 0, y) => { const [x, z] = L(xf, lx, lz); return { x, z, a: xf.a + da, y: y ?? xf.y }; };
 
 /* ---------- potongan kecil */
-export function motor(m, xf, c = '#3a6a8a') {
-  m.box(xf, 0, 0.14, 0, 0.32, 0.4, 1.3, col(c)); m.box(xf, 0, 0.5, -0.15, 0.28, 0.1, 0.55, col('#1e1e22'));
-  m.box(xf, 0, 0.5, 0.5, 0.42, 0.25, 0.08, col('#2a2a2e'));
-  for (const s of [-1, 1]) m.box(xf, 0, 0, s * 0.5, 0.1, 0.38, 0.38, col('#26262a'));
-}
-export function car(m, xf, c = '#e8e8e8') {
-  const cc = col(c);
-  m.box(xf, 0, 0.18, 0, 1.5, 0.6, 3.2, cc); m.box(xf, 0, 0.78, -0.2, 1.36, 0.5, 1.7, GLASS2); m.box(xf, 0, 1.28, -0.2, 1.3, 0.06, 1.6, cc);
-  for (const [x, z] of [[-0.7, 1], [0.7, 1], [-0.7, -1.05], [0.7, -1.05]]) m.box(xf, x, 0, z, 0.2, 0.45, 0.5, col('#222226'));
-  m.box(xf, 0, 0.42, 1.61, 1.2, 0.12, 0.04, col('#f6f0c8'));
-}
+// kendaraan detail ada di vehicles.js; jenis dipilih dari posisi supaya bervariasi tapi tetap
+export function motor(m, xf, c = '#3a6a8a') { const r = hash(Math.round(xf.x * 7), Math.round(xf.z * 7)); V.motor(m, xf, c, r < 0.45 ? 'matic' : 'bebek', { helmet: r > 0.8 ? pick(['#e8e8e8', '#2a2a2e', '#c83a3a'], r * 9 % 1) : null }); }
+export function car(m, xf, c = '#e8e8e8', kind) { const r = hash(Math.round(xf.x * 5), Math.round(xf.z * 5)); V.car(m, xf, c, kind || (r < 0.5 ? 'mpv' : r < 0.85 ? 'sedan' : 'pikap'), { cargo: '#c8a060' }); }
 function chair(m, xf, c = '#d23a3a') { m.box(xf, 0, 0, 0, 0.42, 0.4, 0.42, col(c)); m.box(xf, 0, 0.4, -0.18, 0.42, 0.4, 0.06, col(c)); }
 function jemuran(m, xf, lx, lz, len, seed) {
   for (const s of [-1, 1]) m.box(xf, lx + s * len / 2, 0, lz, 0.08, 1.5, 0.08, col('#7a6448'));
@@ -41,14 +34,24 @@ function gableX(m, xf, lx, y, lz, w, d, h, c, wall, ov = 0.22) { m.gable(at(xf, 
 function body(m, xf, lx, lz, w, d, h, wall, plinth = 0.15) {
   m.box(xf, lx, 0, lz, w + 0.04, plinth, d + 0.04, shade(wall, 0.7));
   m.box(xf, lx, plinth, lz, w, h - plinth, d, wall);
+  // tiang sudut (kolom praktis) + balok ring di bawah atap + noda lembap di kaki dinding
+  const trim = mix(wall, col('#f4f0e6'), 0.45);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.box(xf, lx + sx * (w / 2 - 0.05), plinth, lz + sz * (d / 2 - 0.05), 0.14, h - plinth, 0.14, trim);
+  m.box(xf, lx, h - 0.14, lz, w + 0.06, 0.14, d + 0.06, trim);
+  m.box(xf, lx, plinth, lz, w + 0.012, 0.18, d + 0.012, shade(wall, 0.86));
 }
 function door(m, xf, lx, lz, c, side = 0) {   // pintu menempel di dinding depan (z = lz)
   m.box(xf, lx, 0, lz + 0.03, 0.56, 1.42, 0.06, FRAME); m.box(xf, lx, 0, lz + 0.05, 0.48, 1.36, 0.06, c);
   m.box(xf, lx + 0.15, 0.65, lz + 0.09, 0.05, 0.05, 0.04, col('#d8c060'));
+  m.box(xf, lx, 0.95, lz + 0.085, 0.3, 0.3, 0.02, shade(c, 0.8)); m.box(xf, lx, 0.32, lz + 0.085, 0.3, 0.4, 0.02, shade(c, 0.8));   // panel pintu
+  m.box(xf, lx, 0, lz + 0.2, 0.8, 0.07, 0.3, col('#b8b2a6'));   // anak tangga
+  m.box(xf, lx, 1.42, lz + 0.03, 0.72, 0.08, 0.08, FRAME);   // ambang atas
 }
 function win(m, xf, lx, y, lz, w = 0.62, h = 0.74, glass = GLASS) {
   m.box(xf, lx, y - 0.05, lz + 0.025, w + 0.1, h + 0.1, 0.05, FRAME); m.box(xf, lx, y, lz + 0.05, w, h, 0.05, glass);
-  m.box(xf, lx, y + h / 2 - 0.02, lz + 0.08, w, 0.04, 0.02, FRAME);
+  m.box(xf, lx, y + h / 2 - 0.02, lz + 0.08, w, 0.04, 0.02, FRAME); m.box(xf, lx, y - 0.02, lz + 0.08, 0.04, h, 0.02, FRAME);
+  m.box(xf, lx, y - 0.1, lz + 0.08, w + 0.2, 0.05, 0.12, shade(FRAME, 0.9));   // ambang jendela
+  m.box(xf, lx, y + h - 0.16, lz + 0.06, w * 0.96, 0.14, 0.02, col(pick(['#e8d8a8', '#c87a6a', '#8ab0c8', '#e8e0d0'], hash(Math.round(lx * 10), Math.round(y * 10)))));   // gorden
 }
 function nako(m, xf, lx, y, lz, w = 0.7) {   // jendela nako (bilah kaca)
   m.box(xf, lx, y - 0.05, lz + 0.025, w + 0.1, 0.84, 0.05, col('#7a4a2a'));

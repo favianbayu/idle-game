@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { Chunks, col, shade, mix } from './geom.js';
 import { hash, pick, MAT, GLASS, GLASS2, FRAME, makePatterns, PAT } from './common.js';
 import { plant } from './veg.js';
+import * as V from './vehicles.js';
 export { Collision } from './common.js';
 export { buildKota } from './kota.js';
 
@@ -511,12 +512,7 @@ export function buildSekolah(scene, C) {
   }
 
   /* ======================= PARKIRAN MOTOR SISWA (kanopi bergelombang) ======================= */
-  const motor = (x, z, a, c) => {
-    const m = at(x, z), xf = XF(x, z, a);
-    m.box(xf, 0, 0.14, 0, 1.5, 0.42, 0.34, c); m.box(xf, -0.25, 0.56, 0, 0.6, 0.12, 0.3, col('#1e1e22'));
-    m.box(xf, 0.62, 0.5, 0, 0.1, 0.45, 0.5, col('#3a3a3e'));
-    for (const s of [-1, 1]) m.box(xf, s * 0.58, 0, 0, 0.42, 0.42, 0.12, col('#2a2a2a'));
-  };
+  const motor = (x, z, a, c, i = 0) => V.motor(at(x, z), XF(x, z, a), c, hash(i, 77) < 0.5 ? 'matic' : 'bebek', { helmet: hash(i, 78) < 0.25 ? pick(['#e8e8e8', '#2a2a2e', '#c83a3a', '#f0c020'], hash(i, 79)) : null });
   {
     const mc = ['#2a2a2e', '#c83a3a', '#2a6ac0', '#e8e8e8', '#3a9a6a', '#1e1e22', '#8a8a90'];
     for (let r = 0; r < 3; r++) {
@@ -526,26 +522,23 @@ export function buildSekolah(scene, C) {
       for (let x = 5.1; x <= xe; x += (xe - 5.2) / 4) post(x, z0 + 1.0, 2.2, col('#6a7078'), 0.12);
       for (let i = 0; i < 16; i++) {
         const x = 5.5 + i * 1.45; if (x > xe - 0.5 || hash(i, r + 30) < 0.18) continue;
-        motor(x, z0 + 1.0, Math.PI / 2 + (hash(i, r) - 0.5) * 0.15, col(pick(mc, hash(i, r + 40))));
+        motor(x, z0 + 1.0, Math.PI + (hash(i, r) - 0.5) * 0.2, pick(mc, hash(i, r + 40)), i * 3 + r);
         C.box(OX + x, z0 + 1.0, 0.2, 0.78);
       }
     }
     // tempat cuci motor: keran & ember
     post(29.2, 44.6, 0.9, col('#8a8a90'), 0.1); bx(29.0, 44.75, 29.3, 44.85, 0.75, 0.06, col('#c0c0c8'));
     cyl(28.6, 45.1, 0.22, 0, 0.32, col('#2a8ae0'), 8); cyl(27.6, 46.0, 0.2, 0, 0.3, col('#e8c040'), 8);
-    motor(27.8, 45.4, 0.1, col('#c83a3a')); C.box(OX + 27.8, 45.4, 0.78, 0.2);
+    motor(27.8, 45.4, Math.PI / 2 + 0.1, '#c83a3a', 5); C.box(OX + 27.8, 45.4, 0.78, 0.2);
   }
 
   /* ======================= PARKIR GURU (6 mobil) ======================= */
   {
     const cc = ['#f2f2f0', '#9a9aa0', '#b83a3a', '#3f6fa8', '#2a2a2a', '#f2f2f0'];
     for (let i = 0; i < 6; i++) {
-      const x = 50 + i * 2.3 + 1.15, z = 47.7, xf = XF(x, z, Math.PI / 2), m = at(x, z), c = col(cc[i]);
+      const x = 50 + i * 2.3 + 1.15, z = 47.7;
       if (i === 4) continue;   // satu slot kosong
-      m.box(xf, 0, 0.22, 0, 3.4, 0.62, 1.55, c); m.box(xf, -0.15, 0.84, 0, 1.9, 0.5, 1.45, c);
-      m.box(xf, 0.5, 0.86, 0, 0.6, 0.44, 1.46, GLASS); m.box(xf, -1.05, 0.86, 0, 0.3, 0.42, 1.46, GLASS); m.box(xf, -0.15, 0.88, 0, 1.2, 0.36, 1.47, GLASS);
-      for (const sx of [-1.1, 1.1]) for (const sz of [-0.7, 0.7]) m.box(xf, sx, 0, sz, 0.55, 0.45, 0.18, col('#1e1e20'));
-      m.box(xf, 1.71, 0.4, 0.5, 0.04, 0.12, 0.3, col('#fff4c0')); m.box(xf, 1.71, 0.4, -0.5, 0.04, 0.12, 0.3, col('#fff4c0'));
+      V.car(at(x, z), XF(x, z, Math.PI), cc[i], ['mpv', 'sedan', 'sedan', 'mpv', '', 'pikap'][i], { cargo: '#c8a060' });
       C.box(OX + x, z, 0.8, 1.72);
     }
     for (let i = 0; i < 7; i++) bx(50 + i * 2.3 - 0.15, 49.4, 50 + i * 2.3 + 0.15, 49.7, 0, 0.12, col('#e8e0c0'));   // stopper
@@ -560,7 +553,7 @@ export function buildSekolah(scene, C) {
     // rak sepeda 8 slot + 2 sepeda
     bx(67, 50, 74.2, 50.12, 0.45, 0.06, col('#9aa0a6'));
     for (let i = 0; i < 8; i++) bx(67.3 + i * 0.9, 49.7, 67.38 + i * 0.9, 50.4, 0, 0.5, col('#9aa0a6'));
-    for (const [i, c] of [[1, '#2a8ae0'], [4, '#e04a4a']]) { const x = 67.34 + i * 0.9, m = at(x, 50), xf = XF(x, 50.05, Math.PI / 2); m.box(xf, 0, 0, 0, 1.4, 0.5, 0.06, col('#2a2a2a')); m.box(xf, 0, 0.45, 0, 0.9, 0.08, 0.08, col(c)); m.box(xf, -0.25, 0.6, 0, 0.3, 0.06, 0.18, col('#1e1e22')); }
+    for (const [i, c] of [[1, '#2a8ae0'], [4, '#e04a4a'], [6, '#3a9a5a']]) { const x = 67.34 + i * 0.9; V.sepeda(at(x, 50), XF(x, 50.05, Math.PI), c, { basket: i === 4 }); }
     solid(67, 49.7, 74.2, 50.4);
     for (const x of [68, 71.5, 75]) { bx(x - 0.6, 52.3, x + 0.6, 52.7, 0.4, 0.06, col('#8a5a34')); bx(x - 0.5, 52.4, x - 0.4, 52.6, 0, 0.4, col('#6a4a30')); bx(x + 0.4, 52.4, x + 0.5, 52.6, 0, 0.4, col('#6a4a30')); solid(x - 0.6, 52.3, x + 0.6, 52.7); }
   }
@@ -591,7 +584,7 @@ export function buildSekolah(scene, C) {
   const veg = [];
   const shade16 = [[15, 47.5], [31, 43.6], [47, 43.6], [64.5, 44.5], [3.5, 14], [14.5, 9.5], [63, 31.5], [22.5, 29],
     [76, 31], [77, 36.2], [51, 15], [27, 15], [15.5, 30], [69.6, 30.4], [76, 41.5], [3.5, 31.5]];
-  shade16.forEach(([x, z], i) => { veg.push({ k: 'bulat', x: OX + x, z, s: 0.75 + hash(i, 3) * 0.25, a: hash(i, 4) * 6 }); C.circle(OX + x, z, 0.3); });
+  shade16.forEach(([x, z], i) => { veg.push({ k: i % 3 ? 'ketapang' : 'bulat', x: OX + x, z, s: 0.75 + hash(i, 3) * 0.25, a: hash(i, 4) * 6 }); C.circle(OX + x, z, 0.3); });
   // hutan kecil di belakang & kebun di samping (luar pagar)
   for (let i = 0; i < 34; i++) { const x = -10 + hash(i, 1) * 100, z = -9 + hash(i, 2) * 6.5; if (x > 27 && x < 40) continue; veg.push({ k: hash(i, 3) < 0.5 ? 'cemara' : 'bulat', x: OX + x, z, s: 0.7 + hash(i, 5) * 0.5, a: hash(i, 4) * 6 }); C.circle(OX + x, z, 0.3); }
   for (let i = 0; i < 26; i++) { const s = i % 2 ? -1 : 1, x = s < 0 ? -2 - hash(i, 4) * 8 : 80 + hash(i, 4) * 10, z = hash(i, 5) * 52; veg.push({ k: pick(['bulat', 'pisang', 'bulat', 'kelapa'], hash(i, 7)), x: OX + x, z, s: 0.7 + hash(i, 6) * 0.4, a: hash(i, 8) * 6 }); C.circle(OX + x, z, 0.3); }

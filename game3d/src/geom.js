@@ -42,6 +42,7 @@ export class Merger {
     const x0 = lx - sx / 2, x1 = lx + sx / 2, z0 = lz - sz / 2, z1 = lz + sz / 2, y0 = ly, y1 = ly + sy;
     const N = v => tn(xf, v);
     const top = o.top || c, side = c;
+    if (globalThis.__TRACE && ly < 1.5) globalThis.__TRACE.push({ p: [T(x0, 0, z0), T(x1, 0, z0), T(x1, 0, z1), T(x0, 0, z1), T(lx, 0, lz)], st: new Error().stack.split('\n').slice(2, 5).join(' ') });
     this.quad([T(x0, y1, z1), T(x1, y1, z1), T(x1, y1, z0), T(x0, y1, z0)], N([0, 1, 0]), top);
     this.quad([T(x0, y0, z1), T(x1, y0, z1), T(x1, y1, z1), T(x0, y1, z1)], N([0, 0, 1]), side);
     this.quad([T(x1, y0, z0), T(x0, y0, z0), T(x0, y1, z0), T(x1, y1, z0)], N([0, 0, -1]), side);
@@ -59,6 +60,19 @@ export class Merger {
     const w = wallC || shade(c, 0.9);
     this.poly([T(x1 - ov, ly, z1 - ov), T(x1 - ov, ly, z0 + ov), T(x1 - ov, y1, lz)], w);
     this.poly([T(x0 + ov, ly, z0 + ov), T(x0 + ov, ly, z1 - ov), T(x0 + ov, y1, lz)], w);
+    // baris genteng (garis gelap sejajar bubungan) + nok di bubungan + lisplang di tepi
+    if (sx > 0.8 && h > 0.25) {
+      const rows = Math.max(2, Math.round((sz / 2) / 0.32)), L = 0.012, ny = (sz / 2 + ov), lift = (t, zz, side) => { const k = Math.hypot(h, ny), nY = ny / k * L, nZ = h / k * L * side; return [zz, nY, nZ]; };
+      for (const side of [1, -1]) {
+        const zE = side > 0 ? z1 : z0, [, nY, nZ] = lift(0, 0, side), lc = shade(c, side > 0 ? 0.84 : 0.66);
+        for (let i = 1; i < rows; i++) {
+          const t0 = i / rows, t1 = t0 + 0.045, zA = zE + (lz - zE) * t0, zB = zE + (lz - zE) * t1, yA = ly + h * t0, yB = ly + h * t1;
+          const q = [T(x0, yA + nY, zA + nZ), T(x1, yA + nY, zA + nZ), T(x1, yB + nY, zB + nZ), T(x0, yB + nY, zB + nZ)];
+          this.poly(side > 0 ? q : [q[1], q[0], q[3], q[2]], lc);
+        }
+      }
+      this.box(xf, lx, y1 - 0.06, lz, sx + ov * 2 + 0.04, 0.12, 0.16, shade(c, 0.62));
+    }
     // sisi bawah atap (supaya tidak bolong saat dilihat dari bawah/samping)
     this.poly([T(x1, ly, z1), T(x0, ly, z1), T(x0, y1, lz), T(x1, y1, lz)], shade(c, 0.5));
     this.poly([T(x0, ly, z0), T(x1, ly, z0), T(x1, y1, lz), T(x0, y1, lz)], shade(c, 0.5));
@@ -74,6 +88,8 @@ export class Merger {
     this.poly([T(x1, ly, z0), T(x0, ly, z0), A, B], shade(c, 0.75));
     this.poly([T(x1, ly, z1), T(x1, ly, z0), B], shade(c, 0.88));
     this.poly([T(x0, ly, z0), T(x0, ly, z1), A], shade(c, 0.82));
+    if (r > 0.2) this.box(xf, lx, y1 - 0.06, lz, r * 2 + 0.1, 0.12, 0.14, shade(c, 0.62));   // nok
+    this.box(xf, lx, ly - 0.08, lz, sx + ov * 2, 0.08, sz + ov * 2, shade(c, 0.5), { bottom: true });   // tepi/lisplang
   }
   // kubah berundak (gaya voxel)
   dome(xf, lx, ly, lz, r, c, steps = 5) {
