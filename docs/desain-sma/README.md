@@ -14,7 +14,10 @@ sapu, guling, motor/sepeda/mobil, rambut & peci/topi/helm).
 | [01-cerita.md](01-cerita.md) | Premis, alur kelas X sampai XII per bab, cabang cerita, dan 6 ending |
 | [02-karakter.md](02-karakter.md) | Tokoh utama, 5 sahabat, 6 tokoh romance, rival, guru, geng motor |
 | [03-sistem.md](03-sistem.md) | Jadwal harian, mini game pelajaran, nilai & kenaikan kelas, berantem, geng, mini game luar, kerja sampingan, properti, hal-hal yang bikin nagih |
-| [04-peta.md](04-peta.md) | Denah kota & sekolah, daftar lokasi, ukuran untuk dibangun, urutan pembangunan |
+| [04-peta.md](04-peta.md) | Peta kota 7 wilayah, 4 denah wilayah, denah sekolah, daftar lokasi, urutan pembangunan |
+| [05-bangunan.md](05-bangunan.md) | Gaya, warna (kode hex), bentuk, ukuran, dan detail setiap bangunan & tipe rumah per wilayah |
+| [06-event.md](06-event.md) | Event harian, mingguan, sekolah, kalender tahunan, acak, sosial, geng, usaha, rahasia, dan ulang tahun tokoh |
+| [karakter/](karakter/README.md) | Kartu 34 tokoh: sprite voxel (dirender dari renderer asli), portrait, baju, gerak khas, jadwal; plus `npc_styles.js` |
 | [peta/](peta/) | Peta kota, 4 denah wilayah, denah sekolah & lantai (PNG) dan skrip `peta_organik.py` + `buat_peta.py` untuk menggambar ulang |
 
 ## Pitch satu paragraf
