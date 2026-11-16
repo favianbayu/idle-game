@@ -306,7 +306,7 @@ function hairAt(hs, dx, dy, dz, face) {
       return 0;
     }
     case 'bobclip':
-      if (dx > 1.8 && dz > 1.6 && dz < 2.3 && dy > 1.2 && dy < 3.0) return 'clip';
+      if (dx > 1.8 && dz > 1.6 && dz < 2.3 && dy > 1.2 && dy < 3.0 && ((dx + 0.5) / 5.0) ** 2 + (dy / 4.9) ** 2 + ((dz - 0.1) / 5.1) ** 2 <= 1) return 'clip';   // jepit hanya di permukaan rambut
       return !face && dz > -3.5 && ((dx + 0.5) / 4.7) ** 2 + (dy / 4.6) ** 2 + ((dz - 0.1) / 4.8) ** 2 <= 1 ? 1 : 0;
     case 'halfup': {                                                                         // ikal sebahu, setengah diikat ke atas
       const b = hash(Math.round(dx * 1.3), Math.round(dy * 1.3), Math.round(dz * 1.3));
@@ -610,7 +610,9 @@ function humanShape(P0, st, part = 'all') {
   const bbox = [Math.max(0, Math.floor(lo[0] + ox)), Math.max(0, Math.floor(lo[1] + oy)), Math.max(0, Math.floor(lo[2])),
                 Math.min(L2 - 1, Math.ceil(hi[0] + ox)), Math.min(W2 - 1, Math.ceil(hi[1] + oy)), H2 - 1];
   const mat2 = ox || oy || sink ? (x, y, z) => mat(x - ox, y - oy, z - sink) : mat;
-  return { mat: mat2, L: L2, W: W2, H: H2, bbox, lift: P.jump * S, pelvisZ: pelvis[2] + sink, yaw: P.yaw, buttZ: buttZ + sink, buttX: butt[0] - L / 2 };
+  return { mat: mat2, L: L2, W: W2, H: H2, bbox, lift: P.jump * S, pelvisZ: pelvis[2] + sink, yaw: P.yaw, buttZ: buttZ + sink, buttX: butt[0] - L / 2,
+    // titik tangan & pergelangan kaki relatif terhadap pantat [maju, naik] (voxel): untuk mencocokkan setang/pijakan kendaraan
+    joints: { hands: arms.map(a => [a.hand[0] - butt[0], a.hand[2] - butt[2] + 0.6 * S]), ankles: legs.map(l => [l.ankle[0] - butt[0], l.ankle[2] - butt[2] + 0.6 * S]) } };
 }
 
 /* ---------- Gerakan ----------
@@ -664,12 +666,12 @@ const ANIMS = {
   scratch:{ name: 'Garuk kepala', kind: 'upper', n: 6, fps: 8, loop: true, pose: t => ({ arR: 2.2, elR: 2.1 + 0.15 * sinT(t), spR: 0.75, hp: -0.1, hy: -0.15 }) },
   stretch:{ name: 'Peregangan', kind: 'full', n: 10, fps: 6, pose: keyed([[0, {}], [0.4, { arL: 3.0, arR: 3.0, elL: 0.1, elR: 0.1, spL: 0.25, spR: 0.25, lean: -0.15, hp: 0.25 }], [0.7, { lean: -0.2 }], [1, {}]]) },
   // --- naik kendaraan ---
-  rideMotor: { name: 'Naik motor', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.3 + 0.02 * sinT(t), thL: 1.3, thR: 1.3, knL: 1.3, knR: 1.3, ftL: -0.2, ftR: -0.2, arL: 1.2, arR: 1.2, elL: 0.15, elR: 0.15, spL: 0.18, spR: 0.18 }) },
-  rideScooter: { name: 'Naik skuter', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.3, hp: -0.22 + 0.02 * sinT(t), thL: 1.45, thR: 1.45, knL: 1.45, knR: 1.45, ftL: -0.1, ftR: -0.1, arL: 1.0, arR: 1.0, elL: 0.45, elR: 0.45, spL: 0.2, spR: 0.2 }) },
-  rideSport: { name: 'Naik motor sport', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.62, hp: -0.55 + 0.02 * sinT(t), thL: 1.7, thR: 1.7, knL: 2.3, knR: 2.3, ftL: 0.2, ftR: 0.2, arL: 1.25, arR: 1.25, elL: 0.3, elR: 0.3, spL: 0.22, spR: 0.22 }) },
-  rideTrail: { name: 'Naik trail', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.25 + 0.02 * sinT(t), thL: 1.2, thR: 1.2, knL: 1.5, knR: 1.5, ftL: -0.1, ftR: -0.1, arL: 1.15, arR: 1.15, elL: 0.55, elR: 0.55, spL: 0.4, spR: 0.4 }) },
+  rideMotor: { name: 'Naik motor', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.3 + 0.02 * sinT(t), thL: 1.3, thR: 1.3, knL: 1.3, knR: 1.3, ftL: -0.2, ftR: -0.2, arL: 0.85, arR: 0.85, elL: 0.3, elR: 0.3, spL: 0.18, spR: 0.18 }) },
+  rideScooter: { name: 'Naik skuter', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.3, hp: -0.22 + 0.02 * sinT(t), thL: 1.45, thR: 1.45, knL: 1.45, knR: 1.45, ftL: -0.1, ftR: -0.1, arL: 0.8, arR: 0.8, elL: 0.45, elR: 0.45, spL: 0.2, spR: 0.2 }) },
+  rideSport: { name: 'Naik motor sport', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.62, hp: -0.55 + 0.02 * sinT(t), thL: 1.7, thR: 1.7, knL: 2.3, knR: 2.3, ftL: 0.2, ftR: 0.2, arL: 0.9, arR: 0.9, elL: 0.3, elR: 0.3, spL: 0.22, spR: 0.22 }) },
+  rideTrail: { name: 'Naik trail', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.25 + 0.02 * sinT(t), thL: 1.2, thR: 1.2, knL: 1.5, knR: 1.5, ftL: -0.1, ftR: -0.1, arL: 0.95, arR: 0.95, elL: 0.5, elR: 0.5, spL: 0.4, spR: 0.4 }) },
   pedalUp: { name: 'Mengayuh santai', kind: 'full', n: 8, fps: 7, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
-    return { lean: 0.3, hp: -0.15, thL: 1.05 + 0.42 * s, thR: 1.05 - 0.42 * s, knL: 1.35 + 0.55 * c, knR: 1.35 - 0.55 * c, ftL: -0.1, ftR: -0.1, arL: 1.0, arR: 1.0, elL: 0.45, elR: 0.45, spL: 0.18, spR: 0.18, sy: 0.08 * s }; } },
+    return { lean: 0.3, hp: -0.15, thL: 1.05 + 0.42 * s, thR: 1.05 - 0.42 * s, knL: 1.35 + 0.55 * c, knR: 1.35 - 0.55 * c, ftL: -0.1, ftR: -0.1, arL: 0.8, arR: 0.8, elL: 0.4, elR: 0.4, spL: 0.18, spR: 0.18, sy: 0.08 * s }; } },
   passenger: { name: 'Dibonceng', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.12, hp: 0.02 * sinT(t), thL: 1.4, thR: 1.4, knL: 1.5, knR: 1.5, ftL: -0.3, ftR: -0.3, arL: 0.75, arR: 0.75, elL: 0.6, elR: 0.6, spL: 0.3, spR: 0.3, hy: 0.25 }) },
   motoLean: { name: 'Motor menikung', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.5, hp: -0.35, sy: -0.8, thL: 1.3, thR: 1.2, knL: 1.3, knR: 1.4, ftL: -0.2, ftR: -0.2, arL: 1.2, arR: 1.25, elL: 0.15, elR: 0.25, spL: 0.25, spR: 0.12, hy: -0.2 }) },
   pedal:  { name: 'Mengayuh', kind: 'full', n: 8, fps: 8, stride: 30, loop: true, pose: t => { const s = sinT(t), c = cosT(t);

@@ -7,7 +7,7 @@ import * as V from './vehicles.js';
 import { animInfo } from './chars.js';
 
 const WG = new Map();
-const wheelGeo = (w) => { const k = [w.r, w.w, w.op.spokes, w.op.rim5, w.op.n, w.op.t, w.op.rim && w.op.rim.join()].join('|'); if (!WG.has(k)) WG.set(k, V.wheelGeo(Merger, w.r, w.w, w.op)); return WG.get(k); };
+const wheelGeo = (w) => { const k = [w.r0, w.k, w.w, w.op.spokes, w.op.rim5, w.op.knob, w.op.t, w.op.tire && w.op.tire.join(), w.op.rim && w.op.rim.join()].join('|'); if (!WG.has(k)) WG.set(k, V.wheelGeo(Merger, w.r0, w.w, w.op, w.k)); return WG.get(k); };
 let CRANK = null;
 const BODY = new Map();
 
@@ -24,14 +24,16 @@ export function makeRide(type, kind, color, o = {}) {
   }
   const group = new THREE.Group(), body = new THREE.Mesh(entry.geo, MAT.world); body.castShadow = true; group.add(body);
   const wm = entry.wheels.map(w => { const me = new THREE.Mesh(wheelGeo(w), MAT.world); me.position.set(w.x, w.y, w.z); me.castShadow = true; group.add(me); return { me, r: w.r }; });
-  const fit = type === 'motor' ? V.MOTOR_FIT[kind] : type === 'sepeda' ? V.BIKE_FIT[kind] : null;
+  const fit = type === 'motor' ? V.MOTOR_FIT[kind] : type === 'sepeda' ? V.BIKE_FIT[kind] : null, K = V.VK[type] || 1;
+  // titik jok/boncengan/engkol dalam satuan dunia (model kendaraan sudah dikecilkan K)
+  const seat = fit && { y: fit.seat[0] * K, x: fit.seat[1] * K }, back = fit && fit.back && { y: fit.back[0] * K, x: fit.back[1] * K };
   let crank = null;
-  if (type === 'sepeda') { crank = new THREE.Mesh(CRANK || (CRANK = V.crankGeo(Merger)), MAT.world); crank.position.set(0, fit.crank[0], fit.crank[1]); group.add(crank); }
+  if (type === 'sepeda') { crank = new THREE.Mesh(CRANK || (CRANK = V.crankGeo(Merger, K)), MAT.world); crank.position.set(0, fit.crank[0] * K, fit.crank[1] * K); group.add(crank); }
   return {
-    type, kind, group, fit, anim: fit && fit.anim, crank,
+    type, kind, group, fit, seat, back, anim: fit && fit.anim, crank,
     spin(d) { for (const w of wm) w.me.rotation.x += d / w.r; },
     // tokoh duduk di jok: model tokoh menghadap +x, kendaraan menghadap +z
-    mount(ch, back = false) { ch.heading = Math.PI / 2; ch.seat = { y: (back ? fit.back : fit.seat)[0], x: (back ? fit.back : fit.seat)[1] }; ch.blob.visible = false; ch.play(back ? 'passenger' : fit.anim); group.add(ch.group); },
+    mount(ch, rear = false) { ch.heading = Math.PI / 2; ch.seat = { ...(rear ? back : seat) }; ch.blob.visible = false; ch.play(rear ? 'passenger' : fit.anim); group.add(ch.group); },
     syncCrank(ch) { const a = crank && animInfo(ch.anim); if (a) crank.rotation.x = -((ch.t * a.fps / a.n) % 1) * Math.PI * 2 + 1.2; },
   };
 }

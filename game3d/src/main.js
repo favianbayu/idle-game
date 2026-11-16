@@ -75,7 +75,7 @@ function toggleRide() {
   ride = (ride + 1) % RIDES.length; if (player.area !== 'kota') ride = 0;
   RIDES.forEach((R, i) => R && (R.r.group.visible = i === ride));
   const R = RIDES[ride];
-  raka.seat = R ? { y: R.r.fit.seat[0], x: R.r.fit.seat[1] } : null; raka.blob.scale.setScalar(R ? 1.6 : 1); player.emote = null;
+  raka.seat = R ? { ...R.r.seat } : null; raka.blob.scale.setScalar(R ? 1.6 : 1); player.emote = null;
   toast(R ? 'Naik ' + R.name.toLowerCase() + ' (Naik/R lagi: ganti/turun)' : 'Jalan kaki');
 }
 // gaya (emote) pemain: tombol 1-9, 0 atau tombol Gaya (HP). Berhenti saat bergerak.

@@ -62,7 +62,7 @@ export class Merger {
     const x0 = lx - sx / 2, x1 = lx + sx / 2, z0 = lz - sz / 2, z1 = lz + sz / 2, y0 = ly, y1 = ly + sy;
     const N = v => tn(xf, v);
     const top = o.top || c, side = c;
-    if (globalThis.__TRACE && ly < 1.5) globalThis.__TRACE.push({ p: [T(x0, 0, z0), T(x1, 0, z0), T(x1, 0, z1), T(x0, 0, z1), T(lx, 0, lz)], y0: (xf.y || 0) + y0, y1: (xf.y || 0) + y1, veh: globalThis.__VEHCUR || 0, st: new Error().stack.split('\n').slice(2, 5).join(' ') });
+    if (globalThis.__TRACE && ly < 1.5) globalThis.__TRACE.push({ p: [T(x0, 0, z0), T(x1, 0, z0), T(x1, 0, z1), T(x0, 0, z1), T(lx, 0, lz)], y0: (xf.y || 0) + y0 * (xf.k || 1), y1: (xf.y || 0) + y1 * (xf.k || 1), veh: globalThis.__VEHCUR || 0, st: new Error().stack.split('\n').slice(2, 5).join(' ') });
     this.quad([T(x0, y1, z1), T(x1, y1, z1), T(x1, y1, z0), T(x0, y1, z0)], N([0, 1, 0]), top);
     this.quad([T(x0, y0, z1), T(x1, y0, z1), T(x1, y1, z1), T(x0, y1, z1)], N([0, 0, 1]), side);
     this.quad([T(x1, y0, z0), T(x0, y0, z0), T(x0, y1, z0), T(x1, y1, z0)], N([0, 0, -1]), side);
@@ -130,6 +130,7 @@ export class Merger {
 }
 function tf(xf, x, y, z) {
   const c = xf.c ?? (xf.c = Math.cos(xf.a || 0)), s = xf.s ?? (xf.s = Math.sin(xf.a || 0));
+  const k = xf.k || 1; x *= k; y *= k; z *= k;   // xf.k: skala seragam (kendaraan dikecilkan supaya pas dengan tokoh)
   return [xf.x + x * c - z * s, (xf.y || 0) + y, xf.z + x * s + z * c];
 }
 function tn(xf, v) {
