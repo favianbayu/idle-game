@@ -71,6 +71,14 @@ export const PLACE_SIGNS = [
   ['kandang', 'KANDANG SAPI', 'NENEK SARI', '#6a4a24', '#f6e8c0', '#c8a060'], ['pondok', 'DILARANG MASUK', '', '#c8c0a8', '#b82a2a', '#b82a2a'],
   ['bengkel', 'BENGKEL', 'MAS FAJAR', '#1a1a1a', '#f6c81a', '#f6c81a'], ['markas', 'LAMPU KOTA', '', '#1a1a1a', '#f6c81a', '#f6c81a'],
   ['warkop', 'WARKOP SIMPANG', 'KOPI • GORENGAN', '#2f6a3a', '#ffffff', '#f6c81a'],
+  // papan nama bangunan kunci (guide 91)
+  ['sma', 'SMA NEGERI 3 WIRABUMI', 'TERAKREDITASI A', '#2f6a4a', '#f0d27a', '#f0d27a'], ['stasiun', 'WIRABUMI', '+312 M', '#f6f4ec', '#1e1e1e', '#3a6a4a'],
+  ['masjid', 'MASJID AGUNG', 'AL-IKHLAS', '#2f6a4a', '#ffffff', '#e0b84a'], ['pasar', 'PASAR WIRABUMI', 'PASAR TERTIB, PEMBELI NYAMAN', '#2a6ac0', '#ffffff', '#f2d23a'],
+  ['plaza', 'PLAZA WIRABUMI', 'BIOSKOP LT 3', '#2a1a4a', '#f2c230', '#ff6ab0'], ['stm', 'STM KARYA BANGSA', '', '#2a2a3a', '#e8e8e8', '#d23a3a'],
+  ['bram', 'NO. 1', 'KELUARGA MEGANTARA', '#2a2a2e', '#e0c060', '#e0c060'], ['proyek', 'SEGERA DIBANGUN', 'GRAHA MEGANTARA SUPERBLOK', '#1e3a6a', '#ffffff', '#f2c230'],
+  ['lingkar', 'HATI-HATI', 'BALAP LIAR - PIDANA', '#f2d23a', '#1a1a1a', '#d23a3a'], ['menara', 'BAHAYA', 'TEGANGAN TINGGI', '#f2d23a', '#d23a3a', '#1a1a1a'],
+  ['alun', 'ALUN-ALUN', 'WIRABUMI', '#2f6a3a', '#ffffff', '#f2d23a'], ['musala', 'MUSALA', 'AL-HIDAYAH', '#2f6a4a', '#ffffff', '#e0b84a'],
+  ['kenanga', 'GANG KENANGA', 'SELAMAT DATANG • RW 07', '#d23a3a', '#ffffff', '#f2f2ee'],
   // usaha yang bisa dimasuki (guide 92)
   ['warnet', 'NEBULA NET', 'WARNET • GAME ONLINE', '#2a1a4a', '#d8c8ff', '#7affff'], ['kafe', 'KAFE SENJA', 'KOPI • LIVE AKUSTIK', '#3a2a1e', '#f6e0b0', '#f2a23a'],
   ['karaoke', 'KARAOKE', 'SUARA EMAS', '#5a1a4a', '#ffe08a', '#ff6ab0'], ['bank', 'BANK WIRA', 'ATM 24 JAM', '#1e4a8a', '#ffffff', '#f2c230'],

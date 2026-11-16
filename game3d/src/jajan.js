@@ -40,7 +40,7 @@ export function makeJajan({ scene, kota, collision, player, Character, npcs, sho
   function spotNear(ax, az) {
     for (let r = 2; r < 12; r += 0.7) for (let k = 0; k < 16; k++) {
       const a = k / 16 * Math.PI * 2 + r, x = ax + Math.cos(a) * r, z = az + Math.sin(a) * r, rd = M.roadDist(x, z);
-      if (rd < 0.95 || rd > 1.7 || !free(x, z, 0.9) || doorNear(x, z) || inSpecial(x, z) || nearHouse(x, z) || (kota.trees || []).some(t => Math.hypot(t.x - x, t.z - z) < 2.6) || carts.some(c => Math.hypot(c.x - x, c.z - z) < 8)) continue;
+      if (rd < 0.95 || rd > 1.7 || !free(x, z, 0.9) || doorNear(x, z) || inSpecial(x, z) || nearHouse(x, z) || (kota.standSigns || []).some(t => Math.hypot(t.x - x, t.z - z) < 3.5) || (kota.trees || []).some(t => Math.hypot(t.x - x, t.z - z) < 2.6) || carts.some(c => Math.hypot(c.x - x, c.z - z) < 8)) continue;
       const e = 0.3, gx = M.roadDist(x + e, z) - M.roadDist(x - e, z), gz = M.roadDist(x, z + e) - M.roadDist(x, z - e);
       if (Math.hypot(gx, gz) < 1e-3) continue;
       const fa = Math.atan2(-gz, -gx);   // arah ke jalan
