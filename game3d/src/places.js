@@ -180,7 +180,12 @@ export function buildPlaces({ ch, thin, K, M, C, veg, SB, S, occ, waterMat, BED,
     out.doors.push({ id: 'pondok', name: 'Masuk pondok', ...pt(t, -0.5, d / 2 + 0.5), h: t.a + Math.PI / 2 }); }
 
   /* ---------------- bumi perkemahan (23): tenda, api unggun, tiang bendera, gapura bambu */
-  { const A = area(30, 28), cx = 30, cz = 28.5;
+  { const A = area(30, 28);
+    // pusat kemah: cari lahan terdekat ke titik peta yang seluruh lingkaran tendanya bebas dari jalan & air
+    const clear = (x, z) => { for (let a = 0; a < 6.28; a += 0.3) for (const k of [0, 0.5, 1]) { const px = x + Math.cos(a) * 6.8 * k, pz = z + Math.sin(a) * 5.4 * k; if (M.roadDist(px, pz) < 0.8 || M.waterAt(px, pz) || M.railAt(px, pz)) return false; } return true; };
+    let cx = 30, cz = 28.5;
+    if (!clear(cx, cz)) { let done = false; for (let r = 1; r <= 16 && !done; r += 1) for (let k = 0; k < 24; k++) { const t = k / 24 * 6.28, x = 30 + Math.cos(t) * r, z = 28.5 + Math.sin(t) * r; if (clear(x, z)) { cx = x; cz = z; done = true; break; } } }
+    if (globalThis.__TRACEON) console.log('kemah at', cx.toFixed(1), cz.toFixed(1));
     const tent = (x, z, a, c) => { const t = { x, z, a }, mm = ch.at(x, z), w = 1.6, l = 2.0, h = 1.15;
       mm.poly2([P(t, -w / 2, 0, -l / 2), P(t, -w / 2, 0, l / 2), P(t, 0, h, l / 2), P(t, 0, h, -l / 2)], c);
       mm.poly2([P(t, w / 2, 0, l / 2), P(t, w / 2, 0, -l / 2), P(t, 0, h, -l / 2), P(t, 0, h, l / 2)], shade(c, 0.85));
@@ -190,7 +195,7 @@ export function buildPlaces({ ch, thin, K, M, C, veg, SB, S, occ, waterMat, BED,
       for (const sd of [-1, 1]) mm.box(t, 0, 0, sd * (l / 2 + 0.05), 0.04, h + 0.15, 0.04, C_('#5a5a5a'));
       cl(t, 0, 0, w, l); };
     const cols = ['#e8782a', '#3a8a4a', '#3a6ab4', '#d8c040', '#c83a3a', '#7a4a9a'];
-    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + 0.3, x = cx + Math.cos(a) * 4.2, z = cz + Math.sin(a) * 3.0; if (A && !inPoly(x, z, A.pts)) continue; tent(x, z, Math.atan2(cz - z, cx - x) - Math.PI / 2, C_(cols[i])); }
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + 0.3, x = cx + Math.cos(a) * 4.2, z = cz + Math.sin(a) * 3.0; tent(x, z, Math.atan2(cz - z, cx - x) - Math.PI / 2, C_(cols[i])); }
     { const t = { x: cx, z: cz, a: 0 }, mm = ch.at(cx, cz);   // api unggun
       for (let i = 0; i < 9; i++) { const a = i / 9 * 6.28; mm.box({ x: cx + Math.cos(a) * 0.45, z: cz + Math.sin(a) * 0.45, a }, 0, 0, 0, 0.22, 0.16, 0.2, C_('#8a8680')); }
       for (let i = 0; i < 4; i++) mm.box({ ...t, a: i * 0.8 }, 0, 0.08, 0, 0.7, 0.1, 0.1, C_('#5a3a22'));
@@ -217,7 +222,7 @@ export function buildPlaces({ ch, thin, K, M, C, veg, SB, S, occ, waterMat, BED,
   /* ---------------- curug Cemara (24): tebing batu berlumut + air terjun ke kolam kecil */
   { const A = area(52, 30);
     if (A) {
-      const zs = A.pts.map(p => p[1]), xs = A.pts.map(p => p[0]), top = Math.min(...zs), x0 = Math.min(...xs), x1 = Math.max(...xs), mx = (x0 + x1) / 2;
+      const zs = A.pts.map(p => p[1]), top = Math.min(...zs), xs = A.pts.filter(p => p[1] < top + 2.2).map(p => p[0]), x0 = Math.min(...xs), x1 = Math.max(...xs), mx = (x0 + x1) / 2;   // tebing hanya selebar ujung danau di kaki curug
       for (let x = x0 - 2.5; x <= x1 + 2.5; x += 0.9) {
         const r = hash(Math.round(x * 7), 31), h = 3.0 + r * 1.6 - Math.abs(x - mx) * 0.18, z = top - 1.6 - r * 0.6;
         const t = { x, z, a: (r - 0.5) * 0.3 }, mm = ch.at(x, z);
@@ -330,9 +335,10 @@ export function buildPlaces({ ch, thin, K, M, C, veg, SB, S, occ, waterMat, BED,
   /* ---------------- kolam pemancingan Pak Haji (29): dermaga kayu, saung, papan nama */
   { const A = area(70, 49);
     if (A) {
-      const pts = A.pts, cx = pts.reduce((s, p) => s + p[0], 0) / pts.length, cz = pts.reduce((s, p) => s + p[1], 0) / pts.length;
-      for (let i = 0; i < 6; i++) {   // dermaga di 6 arah: cari tepi kolam dengan menyusuri sinar dari tengah
-        const ang = i / 6 * Math.PI * 2 + 0.25; let r = 0.5; while (r < 12 && inPoly(cx + Math.cos(ang) * r, cz + Math.sin(ang) * r, pts)) r += 0.1;
+      const pts = A.pts, cx = 67, cz = 45;   // bagian danau yang lebar (ujung hilir); ujung hulu = kolam curug
+      for (let i = 0; i < 7; i++) {   // dermaga di 7 arah: cari tepi kolam dengan menyusuri sinar dari tengah
+        const ang = i / 7 * Math.PI * 2 + 0.25; let r = 0.5; while (r < 9 && inPoly(cx + Math.cos(ang) * r, cz + Math.sin(ang) * r, pts)) r += 0.1;
+        if (r >= 9) continue;   // sinar ke arah sungai kecil menuju curug: tidak ada tepi dekat
         const nx = -Math.cos(ang), nz = -Math.sin(ang);
         {
           const ex = cx - nx * r, ez = cz - nz * r, t = { x: ex + nx * 0.3, z: ez + nz * 0.3, a: Math.atan2(nz, nx) }, mm = ch.at(t.x, t.z);

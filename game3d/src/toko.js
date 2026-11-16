@@ -70,7 +70,7 @@ export function rukoShop(m, S, xf, type, o) {
     else if (rr < 0.35) rolling(m, xf, ux, d / 2, uw);                                    // toko tutup
     else { rolling(m, xf, ux, d / 2, uw, 0.25); m.box(xf, ux, 0.12, d / 2 - 0.25, uw, 1.4, 0.05, shade(wall, 0.45)); goods(m, xf, ux, 0.2, d / 2 - 0.15, uw - 0.2, 3, o.seed + u * 7); }   // rolling door terangkat: isi toko terlihat
     // papan nama per unit
-    board(m, S, xf, ux, H - 0.02, d / 2, uw + 0.1, 0.46, S.kinds.shop[shopFor(hash(o.seed, 30 + u))]);
+    board(m, S, xf, ux, H - 0.02, d / 2, uw + 0.1, 0.46, o.cell || S.kinds.shop[shopFor(hash(o.seed, 30 + u))]);
   }
   // lantai atas
   for (let f = 1; f < floors; f++) {
@@ -148,7 +148,7 @@ export function warung(m, S, xf, o) {
   goods(m, xf, -w / 4, 0.85, d / 2 + 0.3, w / 2 - 0.4, 1, o.seed + 3);
   m.box(xf, w / 4, 0, d / 2 + 0.9, w / 2 - 0.2, 0.36, 0.3, col('#7a5a3a'));                // bangku panjang
   awning(m, xf, 0, 1.85, d / 2, w + 0.2, 1.2, col(pick(['#2a6ac0', '#d8302a', '#2a8a4a'], r(1))), WHITE, 0.25);
-  board(m, S, xf, 0, H + 0.05, d / 2 - 0.05, w - 0.2, 0.42, S.kinds.shop[pick([15, 9, 21, 22, 19], r(2))]);
+  board(m, S, xf, 0, H + 0.05, d / 2 - 0.05, w - 0.2, 0.42, o.owner != null ? S.kinds.warung[o.owner] : S.kinds.shop[pick([15, 9, 21, 22, 19], r(2))]);
   for (let i = 0; i < 4; i++) m.box(xf, w / 2 + 0.25, 0, -d / 2 + 0.5 + i * 0.32, 0.28, 0.42, 0.28, col('#3a7ac0'));   // galon kosong
   // toples kerupuk di atas etalase, pisang & kerupuk tergantung, krat teh botol, karung beras, tabung gas, papan harga
   for (let i = 0; i < 3; i++) { const x = -w / 4 - 0.45 + i * 0.45; m.box(xf, x, 1.15, d / 2 + 0.3, 0.26, 0.3, 0.26, mix(GLASS2, col('#ffffff'), 0.65)); m.box(xf, x, 1.17, d / 2 + 0.3, 0.2, 0.2, 0.2, col(pick(['#f2e2b0', '#e8a040', '#d85a3a', '#f2c8a0'], hash(o.seed, i + 40)))); m.box(xf, x, 1.45, d / 2 + 0.3, 0.28, 0.05, 0.28, col('#d8302a')); }

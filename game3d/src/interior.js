@@ -6,6 +6,7 @@ import { Merger, col, shade, mix } from './geom.js';
 import { MAT, hash, pick } from './common.js';
 import { L } from './buildings.js';
 import { CATALOG } from './shop.js';
+import { WARUNGS } from './signs.js';
 
 const OX = 700, OZ = 30, GAP = 40;
 const C = c => col(c);
@@ -14,11 +15,16 @@ const GOODS = ['#e85a5a', '#f2c230', '#3a7ac0', '#6ab85a', '#f2f2f2', '#e8823a',
 // papan tulisan (kanvas) untuk nama toko & poster di dalam ruangan
 function textPlane(lines, w, h, bg, fg, px = 64) {
   const cv = document.createElement('canvas'), k = 128; cv.width = Math.round(w * k); cv.height = Math.round(h * k);
-  const g = cv.getContext('2d'); g.fillStyle = bg; g.fillRect(0, 0, cv.width, cv.height);
-  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
-  const L2 = [].concat(lines); L2.forEach((t, i) => { g.font = `bold ${i ? px * 0.55 : px}px Trebuchet MS, sans-serif`; g.fillText(t, cv.width / 2, cv.height * (i + 0.5) / L2.length); });
+  const g = cv.getContext('2d'); g.textAlign = 'center'; g.textBaseline = 'middle';
+  const draw = (lines, bg, fg) => {
+    g.fillStyle = bg; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = fg;
+    const L2 = [].concat(lines); L2.forEach((t, i) => { g.font = `bold ${i ? px * 0.55 : px}px Trebuchet MS, sans-serif`; g.fillText(t, cv.width / 2, cv.height * (i + 0.5) / L2.length, cv.width - 8); });
+  };
+  draw(lines, bg, fg);
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter;
-  return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex }));
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex }));
+  mesh.userData.redraw = (lines, bg2, fg2) => { draw(lines, bg2, fg2); tex.needsUpdate = true; };
+  return mesh;
 }
 
 export function makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast }) {
@@ -115,7 +121,8 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
   /* ---------------- NPC di dalam ruangan */
   function addNPC(R, sid, name, lx, lz, lines, roam = 0.4, extra = {}) {
     const c = new Character(sid); scene.add(c.group); const x = R.ox + lx, z = R.oz + lz;
-    npcs.push({ sid, name, filler: true, lines, c, home: { x, z }, x, z, tx: x, tz: z, wait: Math.random() * 3, heading: Math.PI / 2, say: null, greetT: Math.random() * 6, roam, key: 'in' + R.id + npcs.length, area: 'dalam', ...extra });
+    const n = { sid, name, filler: true, lines, c, home: { x, z }, x, z, tx: x, tz: z, wait: Math.random() * 3, heading: Math.PI / 2, say: null, greetT: Math.random() * 6, roam, key: 'in' + R.id + npcs.length, area: 'dalam', ...extra };
+    npcs.push(n); return n;
   }
   const restOK = { t: -99 };
   const sleep = () => acts.doAct('lie', 3.2, () => { player.fx.hp = fight.maxHP(); toast('Tidur sebentar... Nyawa pulih penuh. (Tersimpan)'); fight.gain('nyali', 0.5); });
@@ -202,10 +209,29 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     R.solid(P(2.0, 1.75), 1.3, 0.5); R.solid(P(2.45, -0.35), 0.3, 1.0);
     for (let i = 0; i < 4; i++) m.box(P(-1.8 + i * 0.25, 0.3), 0, 1.6, 0, 0.12, 0.35, 0.12, C('#f2d23a'));   // pisang tergantung
     stool(m, P(0.2, 1.8), '#3a7ac0'); stool(m, P(-0.6, 1.8), '#e8302a');
-    R.sign('back', ['WARUNG BU IJAH', 'sedia gas • galon • pulsa'], 1.3, 2.05, 2.2, 0.38, '#e85a2a', '#ffffff', 40);
+    const board = R.sign('back', ['WARUNG BU IJAH', 'GAS • GALON • PULSA'], 1.3, 2.05, 2.2, 0.38, '#e85a2a', '#ffffff', 40);
     R.sign('left', ['ES TEH 3RB', 'GORENGAN 1RB'], 1.6, 1.9, 1.0, 0.5, '#2a2014', '#f2d23a', 40);
-    R.spot(-0.2, 1.6, 1.0, 'Jajan / jual ikan ke Bu Ijah', () => shop.open({ title: 'Warung Bu Ijah', sub: 'Bisa ngutang? Nggak.', items: CATALOG.warung, sellFish: true, thanks: 'Makasih, Nak!' }));
-    addNPC(R, 'ibuDaster', 'Bu Ijah', -0.4, -0.3, ['Mau beli apa, Nak?', 'Ikanmu Ibu beli, buat digoreng.', 'Om Darto sehat?'], 0.5);
+    // satu ruangan dipakai semua warung; pemilik, papan nama, obrolan & barang andalan diganti tiap masuk pintu yang berbeda
+    const keeper = addNPC(R, 'ibuDaster', 'Bu Ijah', -0.4, -0.3, [], 0.5), bodies = { ibuDaster: keeper.c };
+    let owner = WARUNGS[0], oi = 0;
+    R.setOwner = i => {
+      oi = i ?? 0; owner = WARUNGS[oi] || WARUNGS[0];
+      const [t, sub, bg, fg, , sid, name] = owner, nick = name.split(' ')[0];
+      R.name = t.split(' ').map(w => w[0] + w.slice(1).toLowerCase()).join(' ') + (/MADURA|SINAR/.test(t) ? ' (' + name + ')' : '');
+      board.userData.redraw([t, sub], bg, fg);
+      if (keeper.sid !== sid) {
+        keeper.c.group.visible = false;
+        if (!bodies[sid]) { bodies[sid] = new Character(sid); scene.add(bodies[sid].group); }
+        keeper.c = bodies[sid]; keeper.c.group.visible = true; keeper.sid = sid;
+      }
+      keeper.name = name; keeper.x = keeper.tx = keeper.home.x; keeper.z = keeper.tz = keeper.home.z; keeper.say = null;
+      const self = { Bu: 'Ibu', Mak: 'Mak', Mbak: 'Mbak', Pak: 'Bapak', Mbah: 'Mbah', Koh: 'Engkoh', Cak: 'Cak', Mas: 'Mas' }[nick] || 'Saya';
+      keeper.lines = oi === 0 ? ['Mau beli apa, Nak?', 'Ikanmu Ibu beli, buat digoreng.', 'Om Darto sehat?']
+        : [`Mau beli apa? ${self} ada ${sub.toLowerCase().split(' • ')[0]}.`, pick(['Ikan hasil mancing juga ' + self.toLowerCase() + ' terima.', 'Jangan lupa bayar ya, hehe.', 'Udah pulang sekolah?', 'Hati-hati di jalan, banyak motor ngebut.', 'Belanja di sini lebih murah dari Indomurah!'], hash(oi, 3)),
+          pick(['Kenal Bu Ijah? Warungnya deket rumah Om Darto.', 'Anak SMA 3 ya? Seragamnya keliatan.', 'Dulu ' + self.toLowerCase() + ' juga suka main bola di lapangan kampung.', 'Kemarin ada yang nyari Bang Jaka di sini.'], hash(oi, 7))];
+    };
+    R.spot(-0.2, 1.6, 1.0, 'Jajan / jual ikan', () => shop.open({ title: R.name, sub: oi === 0 ? 'Bisa ngutang? Nggak.' : owner[1].toLowerCase(), items: CATALOG.warung, sellFish: true, thanks: oi === 0 ? 'Makasih, Nak!' : pick(['Makasih ya!', 'Mampir lagi ya!', 'Nuwun, Mas!', 'Matur suwun!'], hash(oi, 9)) }));
+    R.setOwner(0);
     finish(R); R.doorLabel = 'Masuk warung';
   }
 
@@ -345,10 +371,9 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
   if (kota.darto) { const D = kota.darto, [x, z] = L(D.xf, -0.6, D.d / 2 + 0.55); put('rumah', x, z, D.xf.a + Math.PI / 2); }
   for (const h of kota.houses) {
     if (h.type === 'MM') { const [x, z] = L(h.xf, 0.3, h.d / 2 + 0.5); put('indomurah', x, z, h.xf.a + Math.PI / 2); }
-    else if (h.type === 'R7') { const [x, z] = L(h.xf, 0, h.d / 2 + 0.55); put('warung', x, z, h.xf.a + Math.PI / 2); }
+    else if (h.type === 'R7') { const [x, z] = L(h.xf, 0, h.d / 2 + 0.55), W = WARUNGS[h.owner || 0]; put('warung', x, z, h.xf.a + Math.PI / 2, 'Masuk warung ' + W[6]); outDoors.at(-1).owner = h.owner || 0; }
+    else if (h.bengkel) { const [x, z] = L(h.xf, h.type === 'R3' ? -h.w / 4 : 0, h.d / 2 + 0.5); put('bengkel', x, z, h.xf.a + Math.PI / 2); }
   }
-  { let best = null, bd = 9; for (const h of kota.houses) if (h.type[0] === 'R' && h.type !== 'R7') { const d = Math.hypot(h.xf.x - 170, h.xf.z - 86); if (d < bd) { bd = d; best = h; } }
-    if (best) { const [x, z] = L(best.xf, 0, best.d / 2 + 0.5); put('bengkel', x, z, best.xf.a + Math.PI / 2); } }
   const g = kota.specials?.gudang; if (g) { const [x, z] = L({ x: g.x, z: g.y, a: g.a }, -0.6, g.h / 2 + 0.5); put('markas', x, z, g.a + Math.PI / 2); }
   for (const d of kota.places?.doors || []) if (rooms[d.id]) put(d.id, d.x, d.z, d.h);
 
@@ -363,7 +388,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
       if (player.area === 'kota') {
         let best = null, bd = 1.5;
         for (const o of outDoors) { const d = Math.hypot(o.x - player.x, o.z - player.z); if (d < bd) { bd = d; best = o; } }
-        if (best) { const R = rooms[best.id]; return { kind: 'warp', label: best.label, to: { x: R.exit.x, z: R.exit.z, heading: -Math.PI / 2, area: 'dalam' }, after: () => { back = { x: best.x, z: best.z, heading: best.h }; cur = R; } }; }
+        if (best) { const R = rooms[best.id]; return { kind: 'warp', label: best.label, to: { x: R.exit.x, z: R.exit.z, heading: -Math.PI / 2, area: 'dalam' }, after: () => { back = { x: best.x, z: best.z, heading: best.h, owner: best.owner }; cur = R; R.setOwner?.(best.owner); } }; }
       } else if (player.area === 'dalam' && cur) {
         if (Math.hypot(cur.exit.x - player.x, cur.exit.z - player.z) < 0.9) return { kind: 'warp', label: 'Keluar', to: { ...(back || { x: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[0] : 40, z: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[1] : 90, heading: 0 }), area: 'kota' }, after: () => { cur = null; } };
         for (const s of cur.spots) if (Math.hypot(s.x - player.x, s.z - player.z) < s.r) return { kind: 'act', label: s.label, fn: s.fn };

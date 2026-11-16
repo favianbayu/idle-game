@@ -72,6 +72,38 @@ export const PLACE_SIGNS = [
   ['bengkel', 'BENGKEL', 'MAS FAJAR', '#1a1a1a', '#f6c81a', '#f6c81a'], ['markas', 'LAMPU KOTA', '', '#1a1a1a', '#f6c81a', '#f6c81a'],
   ['warkop', 'WARKOP SIMPANG', 'KOPI • GORENGAN', '#2f6a3a', '#ffffff', '#f6c81a'],
 ];
+// warung kelontong (R7): tiap warung punya pemilik sendiri. [papan, keterangan, latar, huruf, aksen, sid NPC, nama pemilik]
+// indeks 0 = Warung Bu Ijah (yang paling dekat rumah Om Darto), sisanya dibagi ke warung lain
+export const WARUNGS = [
+  ['WARUNG BU IJAH', 'GAS • GALON • PULSA', '#e85a2a', '#ffffff', '#f2d23a', 'ibuDaster', 'Bu Ijah'],
+  ['WARUNG PAK SLAMET', 'SEMBAKO • ES BATU', '#2a6a3a', '#ffffff', '#f2d23a', 'bapakPeci', 'Pak Slamet'],
+  ['WARUNG MADURA', 'CAK MAMAT • BUKA 24 JAM', '#1a5a2a', '#ffffff', '#e8302a', 'pemuda', 'Cak Mamat'],
+  ['WARUNG MBAK WULAN', 'JAJANAN • ES DINGIN', '#e88ab8', '#ffffff', '#7a1a4a', 'mbak', 'Mbak Wulan'],
+  ['TOKO SINAR JAYA', 'KOH LIEM • SEMBAKO', '#b8141e', '#f6d24a', '#f6d24a', 'kakek', 'Koh Liem'],
+  ['WARUNG BU ROMLAH', 'BERAS • MINYAK • GULA', '#2a5aa8', '#ffffff', '#f2c230', 'ibuHijab', 'Bu Romlah'],
+  ['WARUNG PAK KARDI', 'KOPI • GORENGAN', '#3a2418', '#f2d29a', '#e8823a', 'pakRT', 'Pak Kardi'],
+  ['WARUNG BU DARSIH', 'NASI UDUK PAGI', '#f6f2e6', '#2a6a2a', '#d0282e', 'ibuHijab2', 'Bu Darsih'],
+  ['WARUNG MAK ONAH', 'TERIMA TITIP KUE', '#f2c230', '#5a2a0a', '#d0282e', 'ibuDaster', 'Mak Onah'],
+  ['WARUNG MAS JOKO', 'PULSA • KUOTA', '#1a2a5a', '#7ad8ff', '#ffffff', 'pemuda', 'Mas Joko'],
+  ['WARUNG BU YATI', 'ES TEH • MIE REBUS', '#c8782a', '#ffffff', '#3a2418', 'ibuHijab', 'Bu Yati'],
+  ['WARUNG PAK DARNO', 'GAS & GALON ANTAR', '#3a9a5a', '#ffffff', '#ffffff', 'bapakPeci', 'Pak Darno'],
+  ['WARUNG MBAK TINI', 'JAJANAN ANAK', '#f28a1a', '#ffffff', '#7a1a0a', 'remaja', 'Mbak Tini'],
+  ['WARUNG BU SRI', 'SAYUR • BUMBU DAPUR', '#5a8a3a', '#ffffff', '#f2d23a', 'ibuHijab2', 'Bu Sri'],
+  ['WARUNG MBAH MIN', 'SEDIA SEGALA', '#8a6a3a', '#ffffff', '#f2c230', 'kakek', 'Mbah Min'],
+  ['WARUNG BU TUTI', 'ES BUAH • KOLAK', '#d0282e', '#f2d23a', '#f2d23a', 'ibuDaster', 'Bu Tuti'],
+  ['WARUNG MADURA', 'CAK SHOLEH • 24 JAM', '#1a5a2a', '#ffffff', '#f2d23a', 'pemuda', 'Cak Sholeh'],
+  ['WARUNG BU NINING', 'ATK • FOTOKOPI', '#f6f6f2', '#e85a2a', '#2a6ac0', 'ibuHijab', 'Bu Nining'],
+  ['WARUNG PAK KARTO', 'ROKOK • KOPI • ES', '#4a3a24', '#f6e8c0', '#e0b050', 'bapakPeci', 'Pak Karto'],
+  ['WARUNG MBAK YUNI', 'SEBLAK • CIMOL', '#c83a6a', '#ffffff', '#f2d23a', 'mbak', 'Mbak Yuni'],
+  ['WARUNG BU WARSIH', 'BERAS • TELUR', '#2a3a8a', '#f2c230', '#ffffff', 'ibuHijab2', 'Bu Warsih'],
+  ['WARUNG PAK HARJO', 'TAMBAL BAN • BENSIN', '#f2c230', '#1a1a1a', '#d0282e', 'pakRT', 'Pak Harjo'],
+  ['WARUNG BU ENDANG', 'LOTEK • GADO-GADO', '#6a8a3a', '#ffffff', '#f2d23a', 'ibuDaster', 'Bu Endang'],
+  ['WARUNG MAS AGUS', 'ES KOPI SUSU', '#e8dcc8', '#4a2a1a', '#2a6a3a', 'pemuda', 'Mas Agus'],
+  ['WARUNG BU MARNI', 'GORENGAN ANGET', '#e8a040', '#3a2418', '#d0282e', 'ibuHijab', 'Bu Marni'],
+  ['WARUNG BU KOKOM', 'SEMBAKO MURAH', '#3ab0d8', '#ffffff', '#ffffff', 'ibuHijab2', 'Bu Kokom'],
+  ['WARUNG MBAK LINA', 'MINUMAN DINGIN', '#7a2a9a', '#ffffff', '#f2c230', 'mbak', 'Mbak Lina'],
+  ['WARUNG MBAH WAGI', 'KOPI TUBRUK', '#5a3a22', '#f2d29a', '#f2d29a', 'kakek', 'Mbah Wagi'],
+];
 export const MM = { name: 'Indomurah', tag: 'MUDAH • MURAH • DEKAT', blue: '#1f4fb0', red: '#d8202a', yellow: '#f6c81a' };
 
 /* ------------------------------------------------------------------ atlas kanvas */
@@ -154,6 +186,10 @@ function buildAtlas() {
     if (sub) { ptext(g, ox, oy, k, t, CW / 2, 6, CW - 8, 4, fg, { s: scaleFor(t, CW - 8, 4) }); ptext(g, ox, oy, k, sub, CW / 2, 35, CW - 8, 1, ac === bg ? fg : ac, { s: 1 }); }
     else ptext(g, ox, oy, k, t, CW / 2, 4 + (40 - 7 * scaleFor(t, CW - 8, 4)) / 2, CW - 8, 4, fg, { s: scaleFor(t, CW - 8, 4) });
   });
+  idx.warung = WARUNGS.map(([t, sub, bg, fg, ac]) => add((g, ox, oy, k) => {
+    R(g, ox, oy, k, 0, 0, CW, CH, bg); R(g, ox, oy, k, 0, 0, CW, 3, ac); R(g, ox, oy, k, 0, CH - 3, CW, 3, ac);
+    ptext(g, ox, oy, k, t, CW / 2, 6, CW - 8, 4, fg, { s: scaleFor(t, CW - 8, 4) }); ptext(g, ox, oy, k, sub, CW / 2, 35, CW - 8, 1, ac === bg ? fg : ac, { s: 1 });
+  }));
   const rows = Math.ceil(cells.length / COLS), W0 = CW * COLS, H0 = THREE.MathUtils.ceilPowerOfTwo(rows * CH);
   const mips = [];
   for (let l = 0, w = W0, h = H0; w >= 1 || h >= 1; l++, w >>= 1, h >>= 1) {

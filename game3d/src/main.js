@@ -97,7 +97,7 @@ let ride = 0;
 function placeParked() {
   for (const [i, R] of RIDES.entries()) if (R && i !== ride) {
     const sp = garage.spot[i]; R.holder.add(R.r.group);
-    R.holder.position.set(sp.x, 0, sp.z); R.holder.rotation.y = -sp.h; R.holder.visible = !!garage.owned[i] && sp.area === player.area;
+    R.holder.position.set(sp.x, sp.area === 'kota' ? kota.groundY(sp.x, sp.z) : 0, sp.z); R.holder.rotation.y = -sp.h; R.holder.visible = !!garage.owned[i] && sp.area === player.area;
   }
 }
 function mount(i) {
@@ -181,6 +181,32 @@ onCharsReady(() => {
     npcs.push({ sid, name: PNAMES[i % PNAMES.length], filler: true, linesKey: 'parkir', parkir: true, path, roam: 0, key: 'p' + i, c, home: { x: p.x, z: p.z }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: Math.random() * 3, heading: sp.a + Math.PI / 2, say: null, greetT: Math.random() * 10 });
   });
   preload('tukangParkir', ['idle', 'walk', 'wave'], 1);
+  // pejalan kaki: menyusuri trotoar jalan raya bolak-balik, sesekali berhenti (tidak turun ke badan jalan)
+  const WSIDS = ['ibuHijab', 'bapakPeci', 'mbak', 'pemuda', 'ibuDaster', 'kakek', 'remaja', 'ibuHijab2', 'ojol', 'anakSD', 'pakRT', 'anakSDcw'];
+  const WNAMES = ['Bu Wati', 'Pak Joko', 'Mbak Sinta', 'Mas Dani', 'Bu Enok', 'Mbah Karso', 'Dewi', 'Bu Lilis', 'Bang Ojol', 'Fikri', 'Pak Hadi', 'Nisa', 'Bu Tarmi', 'Pak Usman', 'Mbak Ayu', 'Mas Rendi', 'Bu Iyem', 'Kakek Sabar'];
+  const WLINES = ['Mau ke pasar, Dek.', 'Panas banget hari ini, ya.', 'Jalan kaki aja, sehat.', 'Hati-hati nyebrang, Dek.', 'Nunggu angkot lewat.', 'Abis dari bank, antre panjang.', 'Lewat trotoar aja, jalan raya rame.'];
+  const walkExt = (n, dt) => {
+    const pdx = player.x - n.x, pdz = player.z - n.z;
+    if (n.stopT > 0 || pdx * pdx + pdz * pdz < 0.5) { n.stopT -= dt; n.anim = n.stopT > 0 ? n.idleA : 'idle'; return; }
+    const tgt = n.path[n.k + n.dir];
+    if (!tgt) { n.dir *= -1; n.stopT = 1 + Math.random() * 3; n.idleA = pick3(['idle', 'look', 'phone', 'idle']); return; }
+    const dx = tgt.x - n.x, dz = tgt.z - n.z, d = Math.hypot(dx, dz), st = n.spd * dt;
+    if (d <= st) { n.x = tgt.x; n.z = tgt.z; n.k += n.dir; if (Math.random() < 0.012) { n.stopT = 2 + Math.random() * 4; n.idleA = pick3(['look', 'phone', 'idle', 'stretch']); } }
+    else { n.x += dx / d * st; n.z += dz / d * st; n.heading = Math.atan2(dz, dx); }
+    n.anim = 'walk';
+  };
+  const WP = (kota.walkPaths || []).slice().sort((a, b) => b.length - a.length), used = [];
+  let wi = 0;
+  for (const path of WP) {
+    if (wi >= 18) break;
+    const mid = path[path.length >> 1]; if (used.some(u => Math.hypot(u.x - mid.x, u.z - mid.z) < 14)) continue; used.push(mid);
+    for (let r = 0; r < (path.length > 70 ? 2 : 1) && wi < 18; r++, wi++) {
+      const sid = WSIDS[wi % WSIDS.length], c = new Character(sid); scene.add(c.group);
+      const k = Math.floor((r + 0.3 + Math.random() * 0.4) / 2 * path.length) % path.length, p = path[k];
+      npcs.push({ sid, name: WNAMES[wi % WNAMES.length], filler: true, lines: [WLINES[wi % WLINES.length], WLINES[(wi * 3 + 2) % WLINES.length]], roam: 0, key: 'w' + wi, c, home: { x: p.x, z: p.z }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: 0, heading: 0, say: null, greetT: Math.random() * 10,
+        path, k, dir: Math.random() < 0.5 ? 1 : -1, spd: sid === 'kakek' ? 0.7 : 0.95 + Math.random() * 0.3, stopT: Math.random() * 2, idleA: 'idle', ext: walkExt });
+    }
+  }
 });
 
 /* ------------------------------------------------------------------ input */
@@ -430,7 +456,8 @@ function updatePlayer(dt) {
   if (RD) { raka.play(RD.r.anim); RD.r.spin(v * dt); }
   else if (sw) raka.play(moveA ? 'swim' : 'tread');
   else raka.play(lock || ac.anim || player.emote || (v > 3.2 ? 'run' : v > 0.35 ? 'walk' : 'idle'));
-  raka.group.position.set(player.x, 0, player.z);
+  { const gy = player.area === 'kota' && !player.swim ? kota.groundY(player.x, player.z) : 0; player.gy = (player.gy ?? gy) + (gy - (player.gy ?? gy)) * Math.min(1, dt * 18); }
+  raka.group.position.set(player.x, player.gy, player.z);
   raka.update(RD ? (RD.r.type === 'sepeda' ? dt * Math.min(1.6, v / 2.5) : dt) : dt);
   if (RD) RD.r.syncCrank(raka);
   return v;
@@ -453,7 +480,7 @@ function updateNPC(n, dt) {
   if (far) return;
   if (fight.updateNPC(n, dt)) return;
   if (n.ext) {   // NPC dengan perilaku sendiri (anak main bola): posisi & animasi diatur modulnya
-    n.ext(n, dt); n.c.heading = n.heading; n.c.play(n.anim || 'idle'); n.c.group.position.set(n.x, 0, n.z); n.c.update(dt);
+    n.ext(n, dt); n.c.heading = n.heading; n.c.play(n.anim || 'idle'); n.c.group.position.set(n.x, kota.groundY(n.x, n.z), n.z); n.c.update(dt);
     if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
     return;
   }
@@ -476,7 +503,7 @@ function updateNPC(n, dt) {
   // jangan tembus pemain
   const pd = Math.hypot(dx, dz); if (pd < 0.55 && pd > 1e-4) { n.x = player.x + dx / pd * 0.55; n.z = player.z + dz / pd * 0.55; }
   n.c.heading = n.heading; n.c.play(moving ? 'walk' : n.say && !n.filler ? 'talk' : n.idle || 'idle');
-  n.c.group.position.set(n.x, 0, n.z); n.c.update(dt);
+  n.c.group.position.set(n.x, !n.area || n.area === 'kota' ? kota.groundY(n.x, n.z) : 0, n.z); n.c.update(dt);
   if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
   n.greetT -= dt;
   if (n.parkir && ride && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 4) { n.say = { text: pick3(['Parkir sini, Mas! Aman!', 'Sini, sini, masih kosong!', 'Helmnya dititip sini aja, Mas.']), t: 3 }; n.greetT = 20; n.idle = 'wave'; n.wait = 3; }
