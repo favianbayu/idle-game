@@ -61,6 +61,17 @@ export const LEDS = [
   ['TERIMA KASIH ATAS KUNJUNGAN ANDA • ', '#ffb21a'], ['BELI 2 GRATIS 1 • HEMAT • ', '#3aff5a'],
 ];
 // minimarket parodi
+export const PLACE_SIGNS = [
+  ['gor', 'GOR KOTA', 'WIRABUMI', '#1f4f8a', '#ffffff', '#f6c81a'], ['kolam', 'KOLAM RENANG', 'UMUM • 5RB', '#2a8ac8', '#ffffff', '#ffffff'],
+  ['tpu', 'TPU BHAKTI', 'PEMAKAMAN UMUM', '#2a3a2a', '#f2eee0', '#c8c0a0'], ['loak', 'PASAR LOAK', 'BARANG BEKAS', '#8a3a1a', '#f6e0a0', '#f6c81a'],
+  ['es', 'PABRIK ES', 'SALJU ABADI', '#6a6a62', '#c8c4b4', '#8a5a3a'], ['terminal', 'TERMINAL BUS', 'ANTARKOTA', '#1a5a3a', '#ffffff', '#f6c81a'],
+  ['pancing', 'PEMANCINGAN', 'PAK HAJI', '#2a6a8a', '#ffffff', '#f6c81a'], ['kemah', 'BUMI PERKEMAHAN', 'HUTAN PINUS', '#5a3a1a', '#f6e8c0', '#c8a060'],
+  ['curug', 'CURUG CEMARA', 'HATI-HATI LICIN', '#4a3a24', '#f6e8c0', '#e0b050'], ['gua', 'GUA KAPUR', 'AWAS BATU LICIN', '#4a3a24', '#f6e8c0', '#e04a3a'],
+  ['jembatan', 'JEMBATAN TIMUR', 'PT GRAHA MEGANTARA', '#3a3a40', '#f2f2ee', '#e0b84a'], ['rakit', 'RAKIT', 'SEKALI NYEBRANG 2RB', '#6a4a24', '#ffffff', '#f6c81a'],
+  ['kandang', 'KANDANG SAPI', 'NENEK SARI', '#6a4a24', '#f6e8c0', '#c8a060'], ['pondok', 'DILARANG MASUK', '', '#c8c0a8', '#b82a2a', '#b82a2a'],
+  ['bengkel', 'BENGKEL', 'MAS FAJAR', '#1a1a1a', '#f6c81a', '#f6c81a'], ['markas', 'LAMPU KOTA', '', '#1a1a1a', '#f6c81a', '#f6c81a'],
+  ['warkop', 'WARKOP SIMPANG', 'KOPI • GORENGAN', '#2f6a3a', '#ffffff', '#f6c81a'],
+];
 export const MM = { name: 'Indomurah', tag: 'MUDAH • MURAH • DEKAT', blue: '#1f4fb0', red: '#d8202a', yellow: '#f6c81a' };
 
 /* ------------------------------------------------------------------ atlas kanvas */
@@ -136,6 +147,13 @@ function buildAtlas() {
   idx.pos = add((g, ox, oy, k) => { R(g, ox, oy, k, 0, 0, CW, CH, '#1f3f7a'); ptext(g, ox, oy, k, 'POS SATPAM', CW / 2, 10, CW - 8, 4, '#ffffff'); });
   idx.lapor = add((g, ox, oy, k) => { R(g, ox, oy, k, 0, 0, CW, CH, '#f2f2ee'); R(g, ox, oy, k, 0, 0, CW, 4, '#d0282e');
     ptext(g, ox, oy, k, 'TAMU WAJIB', CW / 2, 8, CW - 8, 3, '#d0282e'); ptext(g, ox, oy, k, 'LAPOR 1X24 JAM', CW / 2, 32, CW - 8, 2, '#1a1a1a'); });
+  // papan nama tempat baru (guide 85): [kunci, judul, sub, latar, huruf, aksen]
+  idx.txt = {};
+  for (const [key, t, sub, bg, fg, ac] of PLACE_SIGNS) idx.txt[key] = add((g, ox, oy, k) => {
+    R(g, ox, oy, k, 0, 0, CW, CH, bg); R(g, ox, oy, k, 0, 0, CW, 3, ac); R(g, ox, oy, k, 0, CH - 3, CW, 3, ac);
+    if (sub) { ptext(g, ox, oy, k, t, CW / 2, 6, CW - 8, 4, fg, { s: scaleFor(t, CW - 8, 4) }); ptext(g, ox, oy, k, sub, CW / 2, 35, CW - 8, 1, ac === bg ? fg : ac, { s: 1 }); }
+    else ptext(g, ox, oy, k, t, CW / 2, 4 + (40 - 7 * scaleFor(t, CW - 8, 4)) / 2, CW - 8, 4, fg, { s: scaleFor(t, CW - 8, 4) });
+  });
   const rows = Math.ceil(cells.length / COLS), W0 = CW * COLS, H0 = THREE.MathUtils.ceilPowerOfTwo(rows * CH);
   const mips = [];
   for (let l = 0, w = W0, h = H0; w >= 1 || h >= 1; l++, w >>= 1, h >>= 1) {

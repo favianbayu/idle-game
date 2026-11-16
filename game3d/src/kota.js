@@ -8,11 +8,16 @@ import { PAL, L, kampung, panggung, perum, ruko, motor, car, P1CAR } from './bui
 import { plant } from './veg.js';
 import { buildTraffic } from './traffic.js';
 import { SignBatch } from './signs.js';
+import { buildPlaces } from './places.js';
 import { rukoShop, hotelKos, kantor, warung, minimarket, lahanParkir, parkedMotors } from './toko.js';
 
 const PX = 16;   // piksel tekstur tanah per petak (1 piksel = 2 voxel)
 // indeks area dicari dari warnanya (urutan di peta_organik.py bisa berubah)
 const eqc = (a, c) => a.color[0] === c[0] && a.color[1] === c[1] && a.color[2] === c[2];
+// kolam renang umum lama (bidang air kecil) menabrak jalan: dihapus, diganti kolam renang buatan di samping GOR Kota (places.js)
+{ const i = KOTA.areas.findIndex(a => a.pts.every(p => p[0] > 157 && p[0] < 165 && p[1] > 48 && p[1] < 55)); if (i > 6) KOTA.areas.splice(i, 1);
+  const g = KOTA.bldgs.find(b => Math.round(b.x) === 168 && Math.round(b.y) === 44);
+  if (g) { const c = Math.cos(g.a), sn = Math.sin(g.a), lx = 10.6, lz = 0.2; KOTA.bldgs.push({ x: g.x + lx * c - lz * sn, y: g.y + lx * sn + lz * c, w: 7.6, h: 6.4, a: g.a, kolam: true }); } }
 const AREA = (() => {
   const A = KOTA.areas, idx = c => A.map((a, i) => eqc(a, c) ? i : -1).filter(i => i >= 0);
   const green = idx([178, 208, 132]);
@@ -26,7 +31,7 @@ const AREA = (() => {
 roadTapers(KOTA);
 export const REGIONS = ['Perbukitan Utara', 'Perkampungan Kenanga', 'Pusat Kota', 'Kawasan Sekolah', 'Perumahan Bukit Asri', 'Bantaran Kali', 'Selatan'];
 const REGION_KEY = ['bukit', 'kampung', 'pusat', 'sekolah', 'perum', 'bantaran', 'selatan'];
-const SPECIAL = { '110,54': 'sma', '19,58': 'stasiun', '146,64': 'masjid', '114,98': 'pasar', '178,98': 'plaza', '50,131': 'gudang', '150,158': 'stm', '224,56': 'bram', '84,18': 'menara' };
+const SPECIAL = { '110,54': 'sma', '19,58': 'stasiun', '146,64': 'masjid', '114,98': 'pasar', '178,98': 'plaza', '50,131': 'gudang', '150,158': 'stm', '224,56': 'bram', '84,18': 'menara', '168,44': 'gor', '162,124': 'pabrik', '246,98': 'terminal', '64,164': 'kandang' };
 
 /* ------------------------------------------------------------------ geometri polyline */
 function resample(pts, step = 0.25) {
@@ -242,6 +247,55 @@ function plan(K, M, regionAt, occ, reserve) {
   return houses;
 }
 
+// setiap bangunan harus menghadap ruang terbuka yang tersambung ke jalan: pintu tidak boleh langsung menghadap dinding
+// bangunan lain, dan dari depan pintu harus ada jalur bebas bangunan ke jalan. Kalau gagal, bangunan diputar
+// (180 derajat dulu, lalu 90 derajat bila tapaknya muat); kalau tetap buntu, bangunan dihapus (lahan jadi kebun).
+function fixAccess(houses, specials, M, occ, reserve, W, H) {
+  const R = 2, gw = W * R, gh = H * R, B = new Int32Array(gw * gh).fill(-1);
+  const cell = (x, z) => { const i = Math.floor(x * R), j = Math.floor(z * R); return i < 0 || j < 0 || i >= gw || j >= gh ? -1 : j * gw + i; };
+  const foot = (xf, w, d, fn) => { const c = Math.cos(xf.a), sn = Math.sin(xf.a); for (let u = -w / 2; u <= w / 2 + 1e-6; u += 0.3) for (let v = -d / 2; v <= d / 2 + 1e-6; v += 0.3) fn(xf.x + u * c - v * sn, xf.z + u * sn + v * c); };
+  const stamp = (h, id) => foot(h.xf, h.w + 0.1, h.d + 0.1, (x, z) => { const k = cell(x, z); if (k >= 0) B[k] = id; });
+  houses.forEach((h, i) => stamp(h, i));
+  for (const b of Object.values(specials)) foot({ x: b.x, z: b.y, a: b.a }, b.w, b.h, (x, z) => { const k = cell(x, z); if (k >= 0) B[k] = 1e6; });
+  const solid = (x, z, self) => { const k = cell(x, z); return k < 0 || (B[k] >= 0 && B[k] !== self) || M.waterAt(x, z) || M.railAt(x, z); };
+  // panjang jalur (petak) dari depan pintu ke jalan, Infinity bila buntu
+  const access = (h, id, a) => {
+    const xf = { ...h.xf, a }, c = Math.cos(a), sn = Math.sin(a), at = (lx, lz) => [xf.x + lx * c - lz * sn, xf.z + lx * sn + lz * c];
+    for (const lz of [0.35, 0.8, 1.3]) for (const lx of [-0.4, 0, 0.4]) { const [x, z] = at(lx, h.d / 2 + lz); if (solid(x, z, id)) return Infinity; }
+    const [sx, sz] = at(0, h.d / 2 + 0.6), k0 = cell(sx, sz); if (k0 < 0) return Infinity;
+    const seen = new Set([k0]); let q = [k0], depth = 0;
+    while (q.length && depth < 70 && seen.size < 6000) {
+      const nq = [];
+      for (const k of q) {
+        const i = k % gw, j = (k - i) / gw, x = (i + 0.5) / R, z = (j + 0.5) / R;
+        if (M.roadDist(x, z) < 0.15) return depth / R;
+        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const ni = i + di, nj = j + dj, nk = nj * gw + ni; if (ni < 0 || nj < 0 || ni >= gw || nj >= gh || seen.has(nk)) continue;
+          seen.add(nk); if (!solid((ni + 0.5) / R, (nj + 0.5) / R, id)) nq.push(nk);
+        }
+      }
+      q = nq; depth++;
+    }
+    return Infinity;
+  };
+  const fits = (h, id, a) => { let ok = true; foot({ ...h.xf, a }, h.w + 0.1, h.d + 0.1, (x, z) => { if (ok && (solid(x, z, id) || M.roadDist(x, z) < 0.1 || reserve(x, z))) ok = false; }); return ok; };
+  let turned = 0, removed = 0;
+  for (let id = houses.length - 1; id >= 0; id--) {
+    const h = houses[id]; if (h.special) continue;
+    const a0 = h.xf.a, cur = access(h, id, a0);
+    if (cur < 14) continue;
+    let best = null;
+    for (const da of [Math.PI, Math.PI / 2, -Math.PI / 2]) {
+      const a = a0 + da; if (da !== Math.PI && !fits(h, id, a)) continue;
+      const l = access(h, id, a); if (l < 14 && (!best || l < best.l)) best = { a, l };
+    }
+    if (best) { foot(h.xf, h.w + 0.1, h.d + 0.1, (x, z) => { const k = cell(x, z); if (k >= 0 && B[k] === id) B[k] = -1; }); h.xf.a = best.a; h.yard = null; stamp(h, id); occ.rect(h.xf, 0, 0, h.w + 0.3, h.d + 0.3, (x, z) => occ.set(x, z)); turned++; }
+    else { foot(h.xf, h.w + 0.1, h.d + 0.1, (x, z) => { const k = cell(x, z); if (k >= 0 && B[k] === id) B[k] = -2; }); h.dead = true; removed++; }
+  }
+  for (let i = houses.length - 1; i >= 0; i--) if (houses[i].dead) houses.splice(i, 1);
+  if (globalThis.__TRACEON) console.log('fixAccess turned', turned, 'removed', removed, 'of', houses.length + removed);
+}
+
 /* ------------------------------------------------------------------ cat tanah */
 function paintGround(K, houses, M, specials) {
   const [W, H] = K.size, s = PX, cv = document.createElement('canvas'); cv.width = W * s; cv.height = H * s;
@@ -299,7 +353,7 @@ function paintGround(K, houses, M, specials) {
     else if (type[0] === 'R') quad(xf, 0, d / 2 + setback / 2 + 0.2, w + 0.02, setback + 0.8, h.back ? PAT.semen : PAT.tile);
     else { quad(xf, 0, 0, w + 0.4, d + 0.4, PAT.semen); quad(xf, 0, d / 2 + setback / 2 + 0.2, Math.min(1.4, w * 0.4), setback + 0.8, type === 'B' ? PAT.dirt : PAT.semen); }
   }
-  for (const b of Object.values(specials)) { const xf = { x: b.x, z: b.y, a: b.a }; quad(xf, 0, 0, b.w + 3, b.h + 3, b.pave || PAT.paving); }
+  for (const b of Object.values(specials)) { const xf = { x: b.x, z: b.y, a: b.a }; quad(xf, 0, 0, b.w + 3, b.h + 3, typeof b.pave === 'string' ? PAT[b.pave] : b.pave || PAT.paving); }
   // JALAN: selokan (kampung) -> bahu -> permukaan bertekstur -> marka
   for (const r of K.roads) if (r.kind === 'gang' || r.kind === 'jalan') { g.strokeStyle = '#4e5a5a'; strokeRoad(g, r, s, 1.0); g.strokeStyle = '#a8a49a'; strokeRoad(g, r, s, 0.55); }
   for (const r of K.roads) if (r.kind === 'raya') { g.strokeStyle = '#8a8a86'; strokeRoad(g, r, s, 0.7); }
@@ -353,7 +407,8 @@ export function buildKota(scene, C) {
   C.mask(M.block);
   const regionAt = (x, z) => { for (let i = 1; i <= 6; i++) if (inPoly(x, z, K.areas[i].pts)) return REGION_KEY[i]; return z < 34 ? 'bukit' : null; };
   const specials = {};
-  for (const b of K.bldgs) { const sp = SPECIAL[Math.round(b.x) + ',' + Math.round(b.y)]; if (sp) specials[sp] = { ...b }; }
+  for (const b of K.bldgs) { const sp = b.kolam ? 'kolam' : SPECIAL[Math.round(b.x) + ',' + Math.round(b.y)]; if (sp) specials[sp] = { ...b }; }
+  if (specials.kandang) specials.kandang.pave = 'dirt';
   // geser bangunan kunci sedikit kalau tapaknya (plus pelataran 1 petak) menyentuh permukaan jalan
   const clearOf = (b, x, y) => { const c = Math.cos(b.a), sn = Math.sin(b.a); for (let u = -b.w / 2 - 1; u <= b.w / 2 + 1; u += 0.5) for (let v = -b.h / 2 - 1; v <= b.h / 2 + 1; v += 0.5) if (M.roadDist(x + u * c - v * sn, y + u * sn + v * c) < 0.15) return false; return true; };
   const PIN = { sma: [-5, 0] };   // SMA dipatok: jalan depan sekolah dirutekan menyusuri pagarnya
@@ -395,6 +450,7 @@ export function buildKota(scene, C) {
     for (const [x, z] of best.pts) occ.set(x, z);
   }
   const musala = near(30, 100).find(h => h !== darto && h.w >= 4); if (musala) musala.special = 'musala';
+  fixAccess(houses, specials, M, occ, reserve, W, H);
 
   // tanah
   // tanah dipotong jadi beberapa tekstur <= 2048 px (batas aman GPU HP), tiap potong satu bidang
@@ -441,8 +497,10 @@ export function buildKota(scene, C) {
       }
     }
   }
-  specialBuildings(ch, specials, C, veg, M);
   const thin = new Chunks(32);   // tiang & kabel: bayangannya jadi garis pecah-pecah di tanah, jadi tidak membuat bayangan
+  specialBuildings(ch, specials, C, veg, M);
+  const places = buildPlaces({ ch, thin, K, M, C, veg, SB, S: specials, occ, waterMat, BED, SURF });
+  if (places.wetMesh) scene.add(places.wetMesh);
   streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin);
   const portal = perumGate(ch, K, M, C, occ, SB, scene);
   if (globalThis.__TRACE) { globalThis.__BOXES = globalThis.__TRACE; globalThis.__ROAD = globalThis.__TRACE.filter(t => t.p.some(([x, , z]) => M.roadDist(x, z) < -0.12 && !M.waterAt(x, z) && x > 0 && z > 0 && x < W && z < H)); globalThis.__TRACE = null; }
@@ -459,7 +517,7 @@ export function buildKota(scene, C) {
   plant(scene, veg);
   const traffic = buildTraffic(scene, K, C, M);
   return {
-    traffic, signs, parkir, portal, posSatpam: portal?.pos, M,
+    traffic, signs, parkir, portal, posSatpam: portal?.pos, M, places, specials,
     regionAt: (x, z) => { const r = regionAt(x, z); return r ? REGIONS[REGION_KEY.indexOf(r)] : 'Wirabumi'; },
     regionKey: regionAt, labels: K.labels,
     marks: K.marks.map(m => ({ ...m, name: m.desc.replace(/\s*\(.*$/, '') })),
@@ -594,7 +652,10 @@ function specialBuildings(ch, S, C, veg, M) {
     facade(m, xf, w, d, 0, 2, { door: true, doorC: col('#8a5a34'), ww: 1, glass: GLASS2 }); facade(m, xf, w, d, 1, 2, { ww: 1, glass: GLASS2 });
     for (const s of [-1, -0.33, 0.33, 1]) m.box(xf, s * (w / 2 - 0.4), 0, d / 2 + 0.4, 0.4, 2 * FLOOR, 0.4, col('#ffffff'));
     m.hip(xf, 0, 2 * FLOOR, 0, w, d, 2.4, col('#2a2c30'));
-    m.box(xf, w / 2 + 2.2, 0, 0, 3.2, 0.12, d, col('#e8e4dc')); m.box(xf, w / 2 + 2.2, 0.12, 0, 2.6, 0.02, d - 0.6, col('#4aa8d8'));   // kolam renang
+    // kolam renang pribadi di samping rumah: pilih sisi yang tidak menyentuh jalan, kalau dua-duanya kena taruh di belakang
+    const poolOK = (lx, lz, sx, sz) => [-1, 0, 1].every(u => [-1, 0, 1].every(v => M.roadDist(...L(xf, lx + u * sx / 2, lz + v * sz / 2)) > 0.4));
+    const pool = [[w / 2 + 2.2, 0, 3.2, d], [-w / 2 - 2.2, 0, 3.2, d], [0, -d / 2 - 2.2, w, 3.2]].find(q => poolOK(...q));
+    if (pool) { const [px, pz, sx, sz] = pool; m.box(xf, px, 0, pz, sx, 0.12, sz, col('#e8e4dc')); m.box(xf, px, 0.12, pz, sx - 0.6, 0.02, sz - 0.6, col('#4aa8d8')); }
     for (let i = 0; i < 3; i++) car(m, { x: L(xf, -w / 2 + 1.2 + i * 2, d / 2 + 2.6)[0], z: L(xf, -w / 2 + 1.2 + i * 2, d / 2 + 2.6)[1], a: xf.a }, ['#2a2a2e', '#e8e8e8', '#a83a3a'][i]);
     cl(xf, 0, 0, w, d); for (let i = 0; i < 3; i++) cl(xf, -w / 2 + 1.2 + i * 2, d / 2 + 2.6, 1.5, 3.2);
   });
@@ -873,6 +934,12 @@ function riverMesh(K) {
     const pts = K.areas[k].pts, tris = THREE.ShapeUtils.triangulateShape(pts.map(p => new THREE.Vector2(p[0], p[1])), []);
     for (const [i0, i1, i2] of tris) m.poly2([[pts[i0][0], SURF, pts[i0][1]], [pts[i1][0], SURF, pts[i1][1]], [pts[i2][0], SURF, pts[i2][1]]], c);
   }
+  const mat = waterMat();
+  const mesh = new THREE.Mesh(m.build(), mat); mesh.renderOrder = 2;
+  return mesh;
+}
+export const WATER_T = { value: 0 };
+export function waterMat() {
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide });
   mat.onBeforeCompile = sh => {
     sh.uniforms.uT = WATER_T;
@@ -884,10 +951,9 @@ function riverMesh(K) {
         diffuseColor.rgb += step(1.75, w) * vec3(0.35, 0.4, 0.42);
         diffuseColor.a = 0.62 + step(1.75, w) * 0.3;`);
   };
-  const mesh = new THREE.Mesh(m.build(), mat); mesh.renderOrder = 2;
-  return mesh;
+  return mat;
 }
-export const WATER_T = { value: 0 };
+
 
 /* ------------------------------------------------------------------ tanaman */
 function vegetation(K, M, occ, regionAt, veg, reserve, C) {

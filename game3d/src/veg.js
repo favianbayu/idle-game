@@ -100,6 +100,15 @@ T.pagarHidup = m => {   // skala x = panjang: badan membulat dari 3 gumpalan
   for (let i = 0; i < 3; i++) blob(m, -0.33 + i * 0.33, 0.32, 0, 0.26, 0.32, 0.25, lo, hi, 40 + i, false);
   m.box(O, 0, 0, 0, 0.95, 0.5, 0.36, lo, { top: hi });
 };
+// kamboja (pohon makam): batang abu-abu bercabang menggarpu, rumpun daun di ujung, bunga putih-kuning
+T.kamboja = m => {
+  const bark = col('#8a8478'), lo = col('#3a7a3a'), hi = col('#6aa84e');
+  trunk(m, [[0, 0, 0], [0.05, 0.7, 0], [0, 1.0, 0]], 0.13, 0.1, bark);
+  for (let i = 0; i < 4; i++) { const a = i * 1.6 + 0.3, x = Math.cos(a) * 0.6, z = Math.sin(a) * 0.6, y = 1.6 + (i % 2) * 0.25;
+    trunk(m, [[0, 0.95, 0], [x * 0.5, 1.3, z * 0.5], [x, y, z]], 0.08, 0.05, bark);
+    blob(m, x, y + 0.12, z, 0.42, 0.22, 0.42, lo, hi, 70 + i, false);
+    for (let k = 0; k < 4; k++) { const b = k * 1.57 + i, r = 0.28; m.addGeo(ICO0, { x: x + Math.cos(b) * r, y: y + 0.28, z: z + Math.sin(b) * r, s: 0.06 }, col('#f8f6ee')); m.addGeo(ICO0, { x: x + Math.cos(b) * r, y: y + 0.32, z: z + Math.sin(b) * r, s: 0.025 }, col('#f6d040')); } }
+};
 // bunga: helai daun + kuntum low-poly; 'bunga:#warna' memberi warna kuntum
 const flower = (m, pc) => {
   for (let i = 0; i < 6; i++) frond(m, [0, 0.02, 0], i * 1.05, 0.22, 0.05, 0.1, i % 2 ? col('#4a8a44') : col('#5c9e50'), 2, { rise: 0.9, taper: true });
