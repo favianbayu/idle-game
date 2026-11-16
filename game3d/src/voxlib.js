@@ -165,7 +165,7 @@ for (const id in STYLES) { const st = STYLES[id]; st.ramps = makeRamps(st); st.c
 const POSE0 = {
   lean: 0.03, hp: 0, thL: 0, thR: 0, knL: 0.1, knR: 0.1,
   arL: 0.08, arR: 0.08, elL: 0.25, elR: 0.25, spL: 0.12, spR: 0.12,
-  tw: 0, px: 0, jump: 0, yaw: 0, sword: 0, swa: 0, orb: 0, broom: 0, bsw: 0,
+  tw: 0, px: 0, jump: 0, yaw: 0, sword: 0, swa: 0, orb: 0, broom: 0, bsw: 0, rod: 0, rpa: 0.6,
   hy: 0,          // kepala menoleh kiri/kanan
   sy: 0,          // pinggul bergeser ke samping (goyang saat jalan/joget)
   ftL: 0, ftR: 0, // sudut telapak kaki (tumit/jinjit)
@@ -324,7 +324,7 @@ function hairAt(hs, dx, dy, dz, face) {
 }
 
 // part: 'all' | 'upper' (badan atas + kepala + tangan + properti) | 'lower' (pinggul + kaki)
-const PROPS = new Set(['orb', 'hilt', 'blade', 'phone', 'stick', 'bristle']);   // boleh menyentuh/menembus tanah
+const PROPS = new Set(['orb', 'hilt', 'blade', 'phone', 'stick', 'bristle', 'rod', 'line']);   // boleh menyentuh/menembus tanah
 function humanShape(P0, st, part = 'all') {
   const P = Object.assign({}, POSE0, P0), S = st.scale;
   const L = Math.ceil(27 * S), W = Math.ceil(19 * S), H = Math.ceil(40 * S);
@@ -374,6 +374,8 @@ function humanShape(P0, st, part = 'all') {
   const hilt0 = add(Rr.hand, bd, -1.2 * S), hilt1 = add(Rr.hand, bd, 1.0 * S), guardC = add(Rr.hand, bd, 1.3 * S);
   const blade0 = add(Rr.hand, bd, 1.6 * S), blade1 = add(Rr.hand, bd, 11 * S);
   const stick0 = add(Rr.hand, brd, -3 * S), stick1 = add(Rr.hand, brd, 10 * S), br0 = add(Rr.hand, brd, 9.5 * S), br1 = add(Rr.hand, brd, 14 * S);
+  // joran pancing: dari genggaman tangan kanan ke depan-atas (rpa = sudut angkat), senar menjuntai dari ujung
+  const rdir = norm([Math.cos(P.rpa), 0, Math.sin(P.rpa)]), rod0 = add(Rr.hand, rdir, -2.5 * S), rod1 = add(Rr.hand, rdir, 24 * S), line1 = add(rod1, [0, 0, 1], -9 * S);
   const neck0 = add(neck, up, -0.6 * S), neck1 = add(neck, hu, 1.4 * S);
   const phone0 = add(Rr.hand, norm(sub(Rr.hand, Rr.elbow)), 0.4 * S), phone1 = add(phone0, hu, 1.8 * S);
   const propC = add(add(add(arms[0].hand, arms[1].hand).map(v => v / 2), fwd, (P.box ? 1.4 : 0.5) * S), up, (P.box ? 0.4 : 0.6) * S);
@@ -483,6 +485,11 @@ function humanShape(P0, st, part = 'all') {
       const a = (q0 * fwd[0] + q2 * fwd[2]) / S, b = q1 / S, c = (q0 * up[0] + q2 * up[2]) / S;
       if (P.box > 0.5 && Math.abs(a) < 2.0 && Math.abs(b) < 3.0 && Math.abs(c) < 1.9) return Math.abs(b) < 0.3 && c > 1.4 ? 'seam' : 'box';
       if (P.book > 0.5) { const a2 = a * 0.8 - c * 0.6, c2 = a * 0.6 + c * 0.8; if (Math.abs(a2) < 0.45 && Math.abs(b) < 2.1 && Math.abs(c2) < 1.5) return a2 > 0.1 && Math.abs(b) < 1.9 && Math.abs(c2) < 1.3 ? 'page' : 'book'; }
+    }
+    if (P.rod > 0.5) {
+      if (capsule(p, rod0, add(Rr.hand, rdir, 3 * S), 0.75 * S, 0.6 * S) >= 0) return 'hilt';
+      if (capsule(p, rod0, rod1, 0.42 * S, 0.3 * S) >= 0) return 'stick';
+      if (P.rod > 1.5 && capsule(p, rod1, line1, 0.22 * S, 0.22 * S) >= 0) return 'blade';
     }
     if (P.broom > 0.5) {
       if (capsule(p, stick0, stick1, 0.45 * S, 0.45 * S) >= 0) return 'stick';
@@ -610,6 +617,7 @@ function humanShape(P0, st, part = 'all') {
   for (const l of legs) sp.push([l.hip, lr], [l.knee, lr], [l.ankle, lr], [l.toe, 2.2]);
   if (P.sword > 0.5) sp.push([add(Rr.hand, bd, 11 * S), 1.4], [add(Rr.hand, bd, -1.2 * S), 1.2], [add(Rr.hand, bd, 1.3 * S), 2]);
   if (P.broom > 0.5) sp.push([add(Rr.hand, brd, 14 * S), 3], [add(Rr.hand, brd, -3 * S), 1]);
+  if (P.rod > 0.5) sp.push([rod1, 1.2], [rod0, 1.2], [add(Rr.hand, rdir, 12 * S), 1], [line1, 1]);
   if (P.orb > 0) sp.push([orbPos, P.orb + 0.5]);
   if (P.phone > 0.5) sp.push([phone1, 1.5]);
   if (P.box > 0.5 || P.book > 0.5) sp.push([propC, 3.8]);
@@ -779,6 +787,31 @@ const ANIMS = {
     return { lean: 0.22, hp: -0.18, tw: 0.15 * s, sy: 0.2 * c, thL: 0.15 + 0.85 * s, thR: 0.15 - 0.85 * s, knL: 0.3 + 1.5 * Math.max(0, c), knR: 0.3 + 1.5 * Math.max(0, -c),
              arL: 2.5 + 0.35 * s, arR: 2.5 - 0.35 * s, elL: 0.5 + 0.3 * c, elR: 0.5 - 0.3 * c, spL: 0.45, spR: 0.45, jump: 0.8 * Math.abs(s) ** 1.5 }; } },
   cower:    { name: 'Meringkuk takut', kind: 'full', n: 4, fps: 6, loop: true, pose: t => ({ lean: 0.45, hp: -0.25, thL: 1.2, thR: 1.1, knL: 1.9, knR: 1.8, arL: 2.3 + 0.08 * sinT(t), arR: 2.3 - 0.08 * sinT(t), elL: 2.1, elR: 2.1, spL: 0.7, spR: 0.7, hy: 0.15 * sinT(t) }) },
+  // --- aktivitas (guide 71): berenang, memancing, bola basket & sepak bola ---
+  swim:     { name: 'Berenang', kind: 'loco', n: 8, fps: 8, stride: 24, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 1.38, hp: -0.85, hy: 0.25 * s, sy: 0.25 * s, arL: 1.9 + 1.25 * s, arR: 1.9 - 1.25 * s, elL: 0.35 + 0.35 * Math.max(0, c), elR: 0.35 + 0.35 * Math.max(0, -c), spL: 0.2, spR: 0.2,
+             thL: 0.25 * sinT(t * 2), thR: -0.25 * sinT(t * 2), knL: 0.2, knR: 0.2, ftL: 0.6, ftR: 0.6 }; } },
+  tread:    { name: 'Mengapung', kind: 'full', n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.15, hp: 0.05, arL: 1.25 + 0.15 * c, arR: 1.25 - 0.15 * c, spL: 0.75 + 0.35 * s, spR: 0.75 + 0.35 * s, elL: 0.4, elR: 0.4,
+             thL: 0.6 + 0.35 * s, thR: 0.6 - 0.35 * s, knL: 0.9 + 0.3 * c, knR: 0.9 - 0.3 * c, jump: 0.6 * s }; } },
+  fishCast: { name: 'Lempar pancing', kind: 'full', move: 0, n: 10, fps: 10, pose: keyed([
+    [0, { rod: 1, rpa: 0.6, arR: 0.9, elR: 0.6, arL: 0.8, elL: 0.9, spL: -0.1 }],
+    [0.4, { rod: 1, rpa: 2.3, arR: 2.6, elR: 0.9, spR: 0.3, arL: 1.2, elL: 1.4, lean: -0.15, tw: 0.35, thL: 0.25, knL: 0.2 }],
+    [0.65, { rod: 2, rpa: 0.35, arR: 1.3, elR: 0.2, arL: 0.9, elL: 0.8, lean: 0.25, tw: -0.25, thL: 0.35, knL: 0.35 }],
+    [1, { rod: 2, rpa: 0.55, arR: 1.0, elR: 0.5, arL: 0.85, elL: 0.9, lean: 0.08, tw: 0, thL: 0.1, knL: 0.15 }]]) },
+  fishWait: { name: 'Menunggu umpan', kind: 'full', move: 0, n: 6, fps: 4, loop: true, pose: t => ({ rod: 2, rpa: 0.55 + 0.04 * sinT(t), arR: 1.0, elR: 0.5, arL: 0.85, elL: 0.9, spL: -0.05, lean: 0.06, hp: -0.15, hy: 0.15 * sinT(t), knL: 0.12, knR: 0.12 }) },
+  fishPull: { name: 'Tarik pancing', kind: 'full', move: 0, n: 6, fps: 10, loop: true, pose: t => { const s = sinT(t);
+    return { rod: 2, rpa: 1.15 + 0.2 * s, arR: 1.5 + 0.2 * s, elR: 0.9, arL: 1.4 + 0.2 * s, elL: 1.2, spL: -0.1, lean: -0.3 + 0.08 * s, thL: 0.45, thR: -0.2, knL: 0.55, knR: 0.25, hp: 0.15 }; } },
+  fishShow: { name: 'Pamer ikan', kind: 'upper', n: 6, fps: 6, loop: true, pose: t => ({ arL: 2.3, elL: 0.6, spL: 0.3, arR: 1.0 + 0.1 * sinT(t), elR: 1.2, hp: 0.15, hy: 0.2 * sinT(t) }) },
+  dribble:  { name: 'Dribel', kind: 'upper', n: 6, fps: 9, loop: true, pose: t => { const s = sinT(t); return { arR: 0.55 + 0.25 * s, elR: 0.55 - 0.25 * s, spR: 0.25, arL: 0.6, elL: 1.2, spL: 0.25, lean: 0.12, hp: -0.15 }; } },
+  shoot:    { name: 'Tembakan', kind: 'full', move: 0, n: 10, fps: 12, pose: keyed([
+    [0, { arR: 0.9, elR: 1.6, arL: 0.9, elL: 1.6, lean: 0.1 }], [0.3, { arR: 1.8, elR: 2.3, arL: 1.6, elL: 2.0, spL: 0.3, thL: 0.7, thR: 0.7, knL: 1.3, knR: 1.3, lean: 0.25 }],
+    [0.55, { arR: 3.0, elR: 0.2, arL: 2.6, elL: 0.5, thL: 0.1, thR: 0.1, knL: 0.15, knR: 0.15, lean: -0.05, jump: 5 }], [0.75, { arR: 2.8, elR: 0.9, jump: 3 }], [1, POSE0]]) },
+  kickBall: { name: 'Tendang bola', kind: 'full', move: 0.2, n: 8, fps: 13, pose: keyed([
+    [0, {}], [0.35, { thR: -0.7, knR: 1.3, thL: 0.15, knL: 0.3, lean: 0.1, arL: 0.9, spL: 0.5, arR: -0.3, tw: 0.2 }],
+    [0.55, { thR: 1.35, knR: 0.1, thL: 0.1, knL: 0.25, lean: -0.2, arL: 0.4, arR: 0.6, spR: 0.4, tw: -0.25 }], [0.75, { thR: 0.9, knR: 0.4 }], [1, POSE0]]) },
+  cheer:    { name: 'Selebrasi', kind: 'full', n: 8, fps: 9, loop: true, pose: t => { const s = Math.abs(sinT(t)); return { arL: 2.9, arR: 2.9, elL: 0.3, elR: 0.3, spL: 0.45, spR: 0.45, jump: 3 * s, knL: 0.4 * (1 - s), knR: 0.4 * (1 - s), hp: 0.25 }; } },
+  catch:    { name: 'Tangkap bola', kind: 'upper', n: 4, fps: 6, loop: true, pose: t => ({ arL: 1.35, arR: 1.35, elL: 0.6, elR: 0.6, spL: 0.25, spR: 0.25, lean: 0.1 + 0.03 * sinT(t) }) },
 };
 ANIMS.getup = { name: 'Bangun', kind: 'full', move: 0, n: 8, fps: 9, pose: t => ANIMS.fall.pose(1 - t) };
 const COMBOS = { punch: ['jab', 'straight', 'hook', 'uppercut'], kick: ['kickFront', 'kickHigh'], slash: ['slashH', 'slashV', 'thrust', 'spin'] };

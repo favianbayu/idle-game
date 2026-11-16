@@ -10,6 +10,7 @@ import { LINES, NPCS } from './npcs.js';
 import { makeRide } from './rides.js';
 import { makeFight } from './fight.js';
 import { makeBigMap } from './bigmap.js';
+import { makeActivities } from './activities.js';
 
 /* ------------------------------------------------------------------ pengaturan */
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -94,6 +95,7 @@ function placeParked() {
 }
 function mount(i) {
   if (player.fx && (player.fx.down > 0 || player.fx.atk)) return;
+  if (player.swim) return;
   const R = RIDES[i], sp = garage.spot[i];
   ride = i; raka.group.add(R.r.group); R.holder.visible = false;
   Object.assign(player, { x: sp.x, z: sp.z, heading: sp.h, vx: 0, vz: 0, emote: null });
@@ -129,6 +131,7 @@ function emote(i) { if (ride) return; emoteI = i % EMOTES.length; player.emote =
 
 const npcs = [];
 const fight = makeFight({ player, raka, npcs, collision, riding: () => !!ride, toast });
+const acts = makeActivities({ scene, kota, collision, player, Character, toast, npcs, say: (n, text) => { if (n) n.say = { text, t: 2.5 }; } });
 onCharsReady(() => {
   preload('raka', ['idle', 'walk', 'run'], 10);
   const byRegion = {};
@@ -166,7 +169,7 @@ const keys = new Set();
 addEventListener('keydown', e => {
   if (e.repeat) { if (!['KeyQ', 'KeyE'].includes(e.code)) return; }
   keys.add(e.code);
-  if (e.code === 'KeyF') fight.attack();
+  if (e.code === 'KeyF') { if (!acts.action()) fight.attack(); }
   if (e.code === 'KeyQ') rotateCam(-1);
   if (e.code === 'KeyE') rotateCam(1);
   if (e.code === 'KeyC') toggleFollow();
@@ -174,11 +177,11 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyN') toggleMinimap();
   if (e.code === 'KeyV') cyclePitch();
   const dg = /^Digit(\d)$/.exec(e.code); if (dg) emote((+dg[1] + 9) % 10);
-  if (e.code === 'Space' || e.code === 'KeyF' || e.code === 'Enter') { act(); e.preventDefault(); }
+  if (e.code === 'Space' || e.code === 'Enter') { acts.setHold(true); act(); e.preventDefault(); }
   if (e.code === 'Equal' || e.code === 'NumpadAdd') zoom(-1);
   if (e.code === 'Minus' || e.code === 'NumpadSubtract') zoom(1);
 });
-addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('keyup', e => { keys.delete(e.code); if (e.code === 'Space' || e.code === 'Enter') acts.setHold(false); });
 addEventListener('blur', () => keys.clear());
 
 const joy = { x: 0, y: 0, id: null, ox: 0, oy: 0 };
@@ -244,7 +247,7 @@ document.body.classList.toggle('touch', isTouch);
 ui.follow.classList.toggle('on', opt.follow);
 ui.mapWrap.style.display = opt.minimap ? '' : 'none';
 const tap = (el, fn) => el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); fn(); });
-tap($('btnAct'), () => act()); tap($('btnHit'), () => fight.attack()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
+tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack(); }); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
 const menu = $('menu'); menu.classList.toggle('closed', isTouch);
 tap($('btnMenu'), () => menu.classList.toggle('closed'));
 tap(ui.run, () => { ui.run.classList.toggle('on'); player.run = ui.run.classList.contains('on'); });
@@ -268,10 +271,13 @@ function findTarget() {
     if (player.area === 'kota' && Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Parkir & masuk SMA Negeri 3' };
     return { kind: 'park', label: 'Turun & parkir' };
   }
+  const at = acts.target();
+  if (at && at.kind === 'act' && !at.label.startsWith('Duduk')) return at;
   for (const [i, R] of RIDES.entries()) if (R && R.holder.visible) { const sp = garage.spot[i], d = Math.hypot(sp.x - player.x, sp.z - player.z); if (d < 1.4 && d < bd) { bd = d; best = { kind: 'ride', i, label: 'Naik ' + R.name.toLowerCase() }; } }
   if (best) return best;
   for (const n of npcs) { const d = Math.hypot(n.x - player.x, n.z - player.z); if (d < 1.9 && d < bd) { bd = d; best = { kind: 'npc', n, label: 'Ngobrol: ' + n.name }; } }
   if (best) return best;
+  if (at) return at;
   if (player.area === 'kota') {
     if (Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Masuk SMA Negeri 3' };
     for (const m of kota.marks) if (Math.hypot(m.x - player.x, m.y - player.z) < 3.5) return { kind: 'info', label: m.name, desc: m.desc };
@@ -281,6 +287,9 @@ function findTarget() {
 let fading = 0;
 function act() {
   if (!target || fading) return;
+  if (target.kind === 'act') { target.fn(); return; }
+  if (target.kind === 'swim') { player.swim = 'air'; player.x = target.x; player.z = target.z; toast('Byur! Berenang (jalan ke tepi untuk naik)'); return; }
+  if (target.kind === 'go2') { const to = target.to; fading = 1; ui.fade.style.opacity = 1; setTimeout(() => { Object.assign(player, { x: to.x, z: to.z, vx: 0, vz: 0 }); cam.x = player.x; cam.z = player.z; ui.fade.style.opacity = 0; fading = 0; toast('Sampai di seberang. Bayar 2 ribu ke tukang rakit.'); }, 450); return; }
   if (target.kind === 'ride') { mount(target.i); return; }
   if (target.kind === 'park') { dismount(); return; }
   if (target.kind === 'npc') {
@@ -326,38 +335,53 @@ function updatePlayer(dt) {
   if (keys.has('KeyS') || keys.has('ArrowDown')) iy += 1;
   if (keys.has('KeyA') || keys.has('ArrowLeft')) ix -= 1;
   if (keys.has('KeyD') || keys.has('ArrowRight')) ix += 1;
-  const lock = player.area ? fight.updatePlayer(dt) : null;
-  if (bigmap.isOpen) { ix = 0; iy = 0; }
   ix += joy.x; iy += joy.y;
-  if (lock || bigmap.isOpen) { ix = 0; iy = 0; }
+  const lock = player.area ? fight.updatePlayer(dt) : null;
+  player.riding = !!ride;
+  const inp = Math.hypot(ix, iy) > 0.15 && !bigmap.isOpen;
+  const ac = player.area === 'kota' ? acts.update(dt, inp) : { anim: null, lock: false };
+  if (lock || bigmap.isOpen || ac.lock) { ix = 0; iy = 0; }
   let l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; l = 1; }
   const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || player.run;
-  const RD = RIDES[ride], sp = (RD ? (run ? RD.run : RD.walk) : (run ? 4.6 : 2.1)) * Math.min(1, l * 1.3);
+  const RD = RIDES[ride], swim = player.swim;
+  const sp = (RD ? (run ? RD.run : RD.walk) : swim ? (run ? 2.3 : 1.5) : (run ? 4.6 : 2.1)) * Math.min(1, l * 1.3);
   // arah relatif kamera: atas layar = arah pandang kamera
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   const wx = (fx * -iy + rx * ix), wz = (fz * -iy + rz * ix);
-  const k = 1 - Math.exp(-dt * 14);
+  const k = 1 - Math.exp(-dt * (swim ? 5 : 14));
   player.vx += (wx * sp - player.vx) * k; player.vz += (wz * sp - player.vz) * k;
-  let np = collision.move(player, player.x + player.vx * dt, player.z + player.vz * dt, ride ? 0.32 : 0.28);
+  let np;
+  if (swim === 'air') {   // berenang di kali/danau/curug: boleh bergerak di air, menepi = naik ke darat
+    const raw = collision.resolve({ x: player.x + player.vx * dt, z: player.z + player.vz * dt }, 0.28);
+    if (kota.M.waterAt(raw.x, raw.z)) np = raw;
+    else if (!collision.blockedMask(raw.x, raw.z)) { np = raw; player.swim = null; toast('Naik ke darat, basah kuyup'); }
+    else np = { x: player.x, z: player.z };
+  } else np = collision.move(player, player.x + player.vx * dt, player.z + player.vz * dt, ride ? 0.32 : 0.28);
   if (ride) {   // kendaraan pemain: ujung depan & belakang ikut ditabrakkan, bukan cuma titik tengah
     const hl = RIDES[ride].r.half || 0.45, cx = Math.cos(player.heading), cz = Math.sin(player.heading);
     for (const sd of [1, -1]) { const f = { x: np.x + cx * hl * sd, z: np.z + cz * hl * sd }, g = collision.resolve({ ...f }, 0.26); np = { x: np.x + g.x - f.x, z: np.z + g.z - f.z }; }
-    if (collision.blockedMask(np.x, np.z)) np = { x: player.x, z: player.z };
+    if (collision.blockedMask(np.x, np.z) || acts.poolAt(np.x, np.z)) np = { x: player.x, z: player.z };
   }
   if (player.area === 'kota') { kota.traffic.push(np, ride ? 0.4 : 0.28); if (ride) { const hl = RIDES[ride].r.half || 0.45, cx = Math.cos(player.heading), cz = Math.sin(player.heading); for (const sd of [1, -1]) { const f = { x: np.x + cx * hl * sd, z: np.z + cz * hl * sd }, g = kota.traffic.push({ ...f }, 0.25); np.x += g.x - f.x; np.z += g.z - f.z; } } }
   pushParked(np, ride ? 0.4 : 0.28);
+  // kolam renang: masuk = langsung berenang, keluar = jalan lagi
+  if (player.area === 'kota' && player.swim !== 'air') { const pool = !ride && acts.poolAt(np.x, np.z); if (pool && !player.swim) toast('Berenang di ' + pool.name.toLowerCase()); player.swim = pool ? 'kolam' : null; }
   // kecepatan nyata (supaya animasi berhenti saat menabrak dinding)
   if (dt > 0) { player.vx = (np.x - player.x) / dt; player.vz = (np.z - player.z) / dt; }
   player.x = np.x; player.z = np.z;
   const v = Math.hypot(player.vx, player.vz);
   if (l > 0.1) {
     const want = Math.atan2(wz, wx); let d = want - player.heading; d = Math.atan2(Math.sin(d), Math.cos(d));
-    player.heading += d * Math.min(1, dt * 14);
+    player.heading += d * Math.min(1, dt * (player.swim ? 6 : 14));
   }
   raka.heading = player.heading;
-  if (l > 0.1) player.emote = null;
+  if (l > 0.1 || player.swim) player.emote = null;
+  // tenggelam sebagian saat berenang: badan di bawah permukaan air, kepala & bahu kelihatan
+  const sw = player.swim, moveA = v > 0.3;
+  raka.sink = sw ? (sw === 'air' ? 0.48 : 0) + (moveA ? 0.3 : 0.62) : 0; raka.blob.visible = !sw;
   if (RD) { raka.play(RD.r.anim); RD.r.spin(v * dt); }
-  else raka.play(lock || player.emote || (v > 3.2 ? 'run' : v > 0.35 ? 'walk' : 'idle'));
+  else if (sw) raka.play(moveA ? 'swim' : 'tread');
+  else raka.play(lock || ac.anim || player.emote || (v > 3.2 ? 'run' : v > 0.35 ? 'walk' : 'idle'));
   raka.group.position.set(player.x, 0, player.z);
   raka.update(RD ? (RD.r.type === 'sepeda' ? dt * Math.min(1.6, v / 2.5) : dt) : dt);
   if (RD) RD.r.syncCrank(raka);
@@ -380,6 +404,11 @@ function updateNPC(n, dt) {
   n.c.group.visible = !far;
   if (far) return;
   if (fight.updateNPC(n, dt)) return;
+  if (n.ext) {   // NPC dengan perilaku sendiri (anak main bola): posisi & animasi diatur modulnya
+    n.ext(n, dt); n.c.heading = n.heading; n.c.play(n.anim || 'idle'); n.c.group.position.set(n.x, 0, n.z); n.c.update(dt);
+    if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
+    return;
+  }
   n.wait -= dt;
   let moving = false;
   if (n.wait <= 0) {
@@ -484,4 +513,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { fight, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { fight, acts, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

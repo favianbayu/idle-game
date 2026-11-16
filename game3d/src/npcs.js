@@ -77,6 +77,7 @@ export const NPCS = [
 ];
 
 export const LINES = {
+  bocahBola: ['Kak, main bola yuk! Kakak jaga gawang!', 'Oper sini, oper!', 'Awas, jangan kena kaca rumah Pak RT!'],
   omDarto: ['Raka, gerobak kopi udah dicuci belum?', 'Warkop ini harta Om satu-satunya. Bantu jaga, ya.', 'Pulang sekolah langsung bantu Om.'],
   cici: ['Kak Raka! Main yuk!', 'Kak, nanti ajarin PR matematika ya.'],
   buNarti: ['Kos Ibu masih ada kamar kosong, lho.', 'Eh, kamu tahu nggak, anaknya Pak RT...'],

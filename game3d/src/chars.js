@@ -72,7 +72,7 @@ export class Character {
     if (g) {
       this.mesh.geometry = g; this.mesh.visible = true; // duduk di kendaraan: pantat tokoh ditaruh tepat di titik jok (seat.y tinggi, seat.x maju), dihitung per frame dari bentuk voxel
       if (this.seat) { this.mesh.position.y = this.seat.y - (g.userData.butt || 0); this.mesh.position.x = this.seat.x - (g.userData.buttX || 0); }
-      else { this.mesh.position.y = g.userData.lift || 0; this.mesh.position.x = 0; }
+      else { this.mesh.position.y = (g.userData.lift || 0) - (this.sink || 0); this.mesh.position.x = 0; }
       if (this.xray) { this.xray.geometry = g; this.xray.visible = true; this.xray.position.copy(this.mesh.position); }
     }
     // model menghadap +x lokal; heading = sudut di bidang XZ (atan2(z, x))

@@ -25,6 +25,13 @@
   #bigmap .bm-info { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: 86vw; background: #fffbe8; color: #2a2014;
     border: 3px solid #2a2014; border-radius: 6px; padding: 8px 12px; font-size: 14px; display: none; }
   #mapWrap { pointer-events: auto; cursor: pointer; }
+  #fishUI { position: fixed; left: 50%; top: 26%; transform: translateX(-50%); width: min(340px, 86vw); background: #000b; border-radius: 8px; padding: 8px 12px; display: none; font-size: 13px; z-index: 5; pointer-events: none; }
+  #fishUI span { opacity: .8; font-size: 12px; }
+  #fishUI .fu-bar { position: relative; height: 14px; background: #5a2a2a; border-radius: 4px; margin-top: 6px; }
+  #fishUI .fu-zone { position: absolute; top: 0; bottom: 0; background: #3a7a3a; border-radius: 4px; }
+  #fishUI .fu-mark { position: absolute; top: -3px; width: 6px; height: 20px; margin-left: -3px; background: #3aa84a; border: 2px solid #fff; border-radius: 3px; }
+  #fishUI .fu-prog { height: 8px; background: #333; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+  #fishUI .fu-prog i { display: block; height: 100%; width: 0; background: #ffd84a; }
   #fade { position: fixed; inset: 0; background: #000; opacity: 0; transition: opacity .3s; pointer-events: none; }
   #bubbles div { position: fixed; left: 0; top: 0; pointer-events: none; white-space: nowrap; font-size: 13px; }
   .tag.filler { color: #e8e8d8; font-weight: normal; }

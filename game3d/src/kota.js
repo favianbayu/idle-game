@@ -841,12 +841,10 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin) {
   }
   { const m = ch.at(146, 71), xf = { x: 146, z: 70.6, a: 0 }; m.box(xf, 0, 0, 0, 4.4, 0.6, 2.2, col('#8a5a34')); m.box(xf, 0, 0.6, -0.9, 4.4, 1.8, 0.1, col('#c83a3a')); colLocal(C, xf, 0, 0, 4.4, 2.2); }
   for (const t of [[143.5, 77], [148.5, 77]]) { veg.push({ k: 'bulat', x: t[0], z: t[1], s: 1.6 }); C.circle(t[0], t[1], 0.5); }
-  // lapangan bola kampung: gawang
-  for (const s of [-1, 1]) { const m = ch.at(88, 104), xf = { x: 88 + s * 5.6, z: 104, a: 0 }; m.box(xf, 0, 0, -1.2, 0.12, 1.2, 0.12, col('#f4f4f0')); m.box(xf, 0, 0, 1.2, 0.12, 1.2, 0.12, col('#f4f4f0')); m.box(xf, 0, 1.2, 0, 0.12, 0.12, 2.5, col('#f4f4f0')); C.circle(xf.x, 102.8, 0.1); C.circle(xf.x, 105.2, 0.1); }
+  // lapangan bola kampung & ring basket umum: dibangun di activities.js (gawang berjaring, ring, bola)
   // taman kota & lapangan basket umum (no. 18)
   { const m = ch.at(127, 46);
     m.box({ x: 127, z: 46, a: 0 }, 0, 0, 0, 8, 0.04, 6, col('#c4784c')); for (const x of [123.3, 130.7]) m.box({ x, z: 46, a: 0 }, 0, 0.04, 0, 0.06, 0.01, 6, col('#f4f4f0'));
-    for (const [x, z] of [[123.4, 46], [130.6, 46]]) { m.box({ x, z, a: 0 }, 0, 0, 0, 0.15, 2.4, 0.15, col('#4a4a50')); m.box({ x, z, a: 0 }, 0, 2.2, 0, 0.1, 0.8, 1, col('#f4f4f0')); C.circle(x, z, 0.2); }
     for (const [x, z] of [[125, 50.5], [129, 50.5]]) { m.box({ x, z, a: 0 }, 0, 0, 0, 1.6, 0.45, 0.45, col('#3a7ac0')); colLocal(C, { x, z, a: 0 }, 0, 0, 1.6, 0.45); } }
   // gapura Gang Kenanga: di mulut gang utama dari jalan raya
   { const g1 = K.roads.find(r => r.kind === 'gang' && Math.hypot(r.pts[0][0] - 34, r.pts[0][1] - 77) < 1.5);
