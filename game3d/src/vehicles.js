@@ -29,7 +29,8 @@ function face(m, xf, pts, out, c) {
   m.poly(pts.map(p => P(xf, p[0], p[1], p[2])), c);
 }
 // batang lurus mulus (rangka, garpu, setang, jari-jari): prisma segi-6 dari a ke b, tebal t
-function line(m, xf, a, b, t, c, sides = 6) {
+let LO = false;   // kendaraan parkir (statis): batang segi-4 saja
+function line(m, xf, a, b, t, c, sides = LO ? 4 : 6) {
   const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...d) || 1, e = d.map(v => v / L);
   const ref = Math.abs(e[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
   let u = [e[1] * ref[2] - e[2] * ref[1], e[2] * ref[0] - e[0] * ref[2], e[0] * ref[1] - e[1] * ref[0]]; const ul = Math.hypot(...u); u = u.map(v => v / ul);
@@ -58,25 +59,26 @@ function ring(m, xf, x, y, z, ro, ri, w, c, n = 28, cs) {
 // roda di bidang yz: ban bulat (tepi sisi sedikit gelap) + pelek (piringan 5 palang / jari-jari kawat) + as.
 // o.knob: ban kembang tanah (trail/MTB) — tonjolan kecil di keliling ban
 function wheel(m, xf, x, y, z, r, w, o = {}) {
-  const t = o.t || r * 0.38, tire = o.tire || C.tire, rim = o.rim || C.rim, ri = r - t;
-  ring(m, xf, x, y, z, r, ri, w, tire, 28, shade(tire, 0.85));
-  if (o.knob) for (let i = 0; i < 16; i++) { const g = (i + 0.5) / 16 * Math.PI * 2; line(m, xf, [x - w * 0.42, y + Math.sin(g) * (r + 0.008), z + Math.cos(g) * (r + 0.008)], [x + w * 0.42, y + Math.sin(g) * (r + 0.008), z + Math.cos(g) * (r + 0.008)], 0.04, tire, 4); }
+  const t = o.t || r * 0.38, tire = o.tire || C.tire, rim = o.rim || C.rim, ri = r - t, lo = o.lo;   // lo: kendaraan parkir (statis) lebih hemat segitiga
+  const N = lo ? 14 : 28;
+  ring(m, xf, x, y, z, r, ri, w, tire, N, shade(tire, 0.85));
+  if (o.knob && !lo) for (let i = 0; i < 16; i++) { const g = (i + 0.5) / 16 * Math.PI * 2; line(m, xf, [x - w * 0.42, y + Math.sin(g) * (r + 0.008), z + Math.cos(g) * (r + 0.008)], [x + w * 0.42, y + Math.sin(g) * (r + 0.008), z + Math.cos(g) * (r + 0.008)], 0.04, tire, 4); }
   if (o.spokes) {
-    ring(m, xf, x, y, z, ri, ri - 0.025, w * 0.6, rim, 28);
-    for (let i = 0; i < 12; i++) { const g = i / 12 * Math.PI * 2, s = i % 2 ? 1 : -1; line(m, xf, [x + s * w * 0.18, y, z], [x, y + Math.sin(g) * (ri - 0.02), z + Math.cos(g) * (ri - 0.02)], 0.012, rim, 4); }
+    ring(m, xf, x, y, z, ri, ri - 0.025, w * 0.6, rim, N);
+    for (let i = 0; i < (lo ? 6 : 12); i++) { const g = i / 12 * Math.PI * 2, s = i % 2 ? 1 : -1; line(m, xf, [x + s * w * 0.18, y, z], [x, y + Math.sin(g) * (ri - 0.02), z + Math.cos(g) * (ri - 0.02)], 0.012, rim, 4); }
   } else {
-    ring(m, xf, x, y, z, ri, ri * 0.72, w * 0.82, rim, 24);                       // bibir pelek
-    ring(m, xf, x, y, z, ri * 0.72, 0, w * 0.5, shade(rim, 0.55), 20);             // piringan dalam (gelap)
+    ring(m, xf, x, y, z, ri, ri * 0.72, w * 0.82, rim, lo ? 12 : 24);              // bibir pelek
+    ring(m, xf, x, y, z, ri * 0.72, 0, w * 0.5, shade(rim, 0.55), lo ? 10 : 20);   // piringan dalam (gelap)
     const nsp = o.rim5 ? 5 : 3;
     for (let i = 0; i < nsp; i++) { const g = i / nsp * Math.PI * 2 + 0.3; line(m, xf, [x, y, z], [x, y + Math.sin(g) * ri * 0.78, z + Math.cos(g) * ri * 0.78], ri * 0.26, rim, 4); }
   }
-  ring(m, xf, x, y, z, r * 0.16, 0, w * 1.1, C.hub, 10);
+  ring(m, xf, x, y, z, r * 0.16, 0, w * 1.1, C.hub, lo ? 6 : 10);
 }
 
 /* ---------------------------------------------------------------- RODA TERPISAH (berputar) */
 // o.wheels = [] : roda tidak digambar ke Merger tapi dicatat, supaya bisa jadi mesh sendiri yang berputar saat jalan
 // posisi & ukuran roda dicatat sudah dikalikan skala xf.k, geometrinya dibangun dengan skala yang sama (k)
-const WH = (m, xf, o, x, y, z, r, w, op = {}) => { const k = xf.k || 1; return o.wheels ? o.wheels.push({ x: x * k, y: y * k, z: z * k, r: r * k, w, op, k, r0: r }) : wheel(m, xf, x, y, z, r, w, op); };
+const WH = (m, xf, o, x, y, z, r, w, op = {}) => { const k = xf.k || 1; return o.wheels ? o.wheels.push({ x: x * k, y: y * k, z: z * k, r: r * k, w, op, k, r0: r }) : wheel(m, xf, x, y, z, r, w, { ...op, lo: true }); };
 export function wheelGeo(Merger, r0, w, op = {}, k = 1) { const m = new Merger(); wheel(m, { x: 0, z: 0, a: 0, k }, 0, 0, 0, r0, w, op); return m.build(); }
 export function crankGeo(Merger, k = 1) {   // engkol sepeda: dua lengan berlawanan + pedal
   const m = new Merger(), xf = { x: 0, z: 0, a: 0, k };
@@ -97,7 +99,7 @@ export const MOTOR_FIT = {
   vespa: { seat: [0.7, -0.2], back: [0.72, -0.48], bar: [0.96, 0.33], anim: 'rideScooter' },
 };
 export const MOTOR_KINDS = Object.keys(MOTOR_FIT);
-export function motor(m, xf, c = '#c83a3a', kind = 'bebek', o = {}) { xf = scaled(xf, VK.motor); trk(xf, 0.35, 1.0); try { return motor_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
+export function motor(m, xf, c = '#c83a3a', kind = 'bebek', o = {}) { xf = scaled(xf, VK.motor); LO = !o.wheels; trk(xf, 0.35, 1.0); try { return motor_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
 function motor_(m, xf, c, kind, o) {
   const body = col(c), dark = shade(body, 0.7), hi = shade(body, 1.15);
   const R = kind === 'trail' ? 0.27 : kind === 'vespa' ? 0.17 : kind === 'sport' ? 0.23 : 0.21, Wt = kind === 'sport' ? 0.13 : kind === 'trail' ? 0.1 : 0.09;
@@ -189,7 +191,7 @@ export const BIKE_FIT = {
   bmx: { seat: [0.56, -0.16], crank: [0.2, 0.0], bar: [0.71, 0.31], anim: 'pedal' },
 };
 export const BIKE_KINDS = Object.keys(BIKE_FIT);
-export function sepeda(m, xf, c = '#2a8ae0', o = {}) { xf = scaled(xf, VK.sepeda); trk(xf, 0.3, 0.9); try { return sepeda_(m, xf, c, o); } finally { globalThis.__VEHCUR = 0; } }
+export function sepeda(m, xf, c = '#2a8ae0', o = {}) { xf = scaled(xf, VK.sepeda); LO = !o.wheels; trk(xf, 0.3, 0.9); try { return sepeda_(m, xf, c, o); } finally { globalThis.__VEHCUR = 0; } }
 function sepeda_(m, xf, c, o) {
   const kind = o.kind || 'kota', F = BIKE_FIT[kind], fr = col(kind === 'onthel' ? '#1e1e22' : c);
   const R = kind === 'onthel' ? 0.31 : kind === 'bmx' ? 0.21 : 0.27, zf = kind === 'onthel' ? 0.58 : kind === 'bmx' ? 0.42 : 0.52, zr = kind === 'onthel' ? -0.55 : kind === 'bmx' ? -0.4 : -0.48, y = R;
@@ -218,7 +220,7 @@ function sepeda_(m, xf, c, o) {
 
 /* ---------------------------------------------------------------- MOBIL */
 // kind: 'sedan' | 'mpv' | 'angkot' | 'pikap'; panjang ±3.4 (z), lebar ±1.45 (x)
-export function car(m, xf, c = '#e8e8e8', kind = 'mpv', o = {}) { xf = scaled(xf, VK.car); trk(xf, 0.75, kind === 'sedan' ? 1.75 : 1.72); try { return car_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
+export function car(m, xf, c = '#e8e8e8', kind = 'mpv', o = {}) { xf = scaled(xf, VK.car); LO = !o.wheels; trk(xf, 0.75, kind === 'sedan' ? 1.75 : 1.72); try { return car_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
 function car_(m, xf, c, kind, o) {
   const truk = kind === 'truk', taksi = kind === 'taksi';
   if (truk) kind = 'pikap'; if (taksi) kind = 'sedan';

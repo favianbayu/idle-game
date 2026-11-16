@@ -7,6 +7,8 @@ import { FLOOR, hash, pick, inPoly, rgb, MAT, PAT, makePatterns, groundDetail, f
 import { PAL, L, kampung, panggung, perum, ruko, motor, car, P1CAR } from './buildings.js';
 import { plant } from './veg.js';
 import { buildTraffic } from './traffic.js';
+import { SignBatch } from './signs.js';
+import { rukoShop, hotelKos, kantor, warung, minimarket, lahanParkir, parkedMotors } from './toko.js';
 
 const PX = 16;   // piksel tekstur tanah per petak (1 piksel = 2 voxel)
 // indeks area dicari dari warnanya (urutan di peta_organik.py bisa berubah)
@@ -92,19 +94,85 @@ const TYPES = {
   B: { w: 2.9, d: 3, setback: 0.4, gap: 0.6 },
   P1: { w: 6, d: 7, setback: 3.2, gap: 1.0, yard: true }, P2: { w: 7, d: 7, setback: 3.6, gap: 1.0, yard: true }, P3: { w: 7, d: 6, setback: 3.4, gap: 1.0, yard: true }, P4: { w: 8, d: 8, setback: 3.0, gap: 1.0, yard: true },
   R1: { w: 3, d: 5, setback: 1.6, gap: 0 }, R2: { w: 3.5, d: 6, setback: 1.6, gap: 0 }, R3: { w: 6, d: 5, setback: 1.6, gap: 0 },
+  R4: { w: 4, d: 6, setback: 1.6, gap: 0 }, R5: { w: 3.2, d: 6, setback: 1.4, gap: 0 }, R6: { w: 7, d: 7, setback: 2.6, gap: 0.3 }, R7: { w: 3, d: 3.5, setback: 1.4, gap: 0.1 },
+  MM: { w: 6.5, d: 6, setback: 5, gap: 0.3 }, PK: { w: 8, d: 7, setback: 0.4, gap: 0.3 },
 };
+// kuota bangunan khusus (minimarket & lahan parkir) supaya tersebar, tidak menumpuk
+const QUOTA = { MM: { pusat: 4, kampung: 2 }, PK: { pusat: 4 } }, used = {};
+const take = (t, region) => (used[t + region] || 0) < (QUOTA[t][region] || 0) ? t : null;   // dihitung saat benar-benar terpasang (plan)
 function chooseType(region, road, r) {
-  if (region === 'kampung') return road.kind === 'raya' ? pick(['K5', 'K2', 'K3', 'K6'], r) : pick(['K1', 'K1', 'K2', 'K2', 'K3', 'K4', 'K5', 'K6', 'K6'], r);
+  const big = road.kind === 'raya' || road.kind === 'jalan';
+  if (region === 'kampung') {
+    if (big && r > 0.9) return take('MM', region) || 'R7';
+    if (big && r < 0.12) return 'R7';
+    return road.kind === 'raya' ? pick(['K5', 'K2', 'K3', 'K6'], r) : pick(['K1', 'K1', 'K2', 'K2', 'K3', 'K4', 'K5', 'K6', 'K6'], r);
+  }
   if (region === 'bantaran') return 'B';
   if (region === 'perum') return road.kind === 'raya' ? null : pick(['P1', 'P2', 'P3', 'P4', 'P1', 'P3'], r);
-  if (region === 'pusat') return road.kind === 'gang' ? pick(['K1', 'K2', 'K6', 'K5'], r) : pick(['R1', 'R1', 'R2', 'R3', 'R1', 'R2'], r);
+  if (region === 'pusat') {
+    if (road.kind === 'gang') return pick(['K1', 'K2', 'K6', 'K5', 'R7', 'R7', 'R5'], r);
+    if (r > 0.84) return take('MM', region) || 'R4';
+    if (r > 0.7) return take('PK', region) || 'R1';
+    return pick(['R1', 'R1', 'R2', 'R3', 'R4', 'R4', 'R5', 'R7', 'R1', 'R2', 'R6', 'R3'], r / 0.7);
+  }
   if (region === 'selatan') return road.kind !== 'raya' && r < 0.45 ? pick(['K1', 'K2', 'K4'], r * 7 % 1) : null;
   return null;
+}
+// baris belakang pusat kota: di balik ruko yang menghadap jalan dibangun gedung lebih tinggi (hotel, kantor, ruko 3 lantai),
+// supaya lahan kosong di tengah blok terisi dan siluet kota lebih padat
+function backRows(houses, M, regionAt, occ, reserve) {
+  const out = [];
+  for (const h of houses) {
+    if (h.region !== 'pusat' || h.type[0] !== 'R' || h.back) continue;
+    let base = h, depth = h.d;
+    for (let row = 0; row < 2; row++) {
+      const r = hash(h.seed, 50 + row), type = pick(row ? ['R6', 'R5', 'R2'] : ['R5', 'R4', 'R2', 'R6', 'R4', 'R1'], r), T = TYPES[type];
+      const off = depth / 2 + 1.0 + T.d / 2, c = Math.cos(base.xf.a), sn = Math.sin(base.xf.a);
+      const xf = { x: base.xf.x + off * sn, z: base.xf.z - off * c, a: base.xf.a };
+      const w = Math.min(T.w, base.w + (type === 'R6' ? 3 : 0.5));
+      const free = (x, z) => !(occ.get(x, z) || M.roadAt(x, z) || M.waterAt(x, z) || M.railAt(x, z) || reserve(x, z)) && M.roadDist(x, z) > 0.4 && regionAt(x, z) === 'pusat';
+      if (!occ.rect(xf, 0, 0, w + 0.2, T.d + 0.2, free)) break;
+      occ.rect(xf, 0, 0, w + 0.3, T.d + 0.4, (x, z) => occ.set(x, z));
+      const nh = { type, region: 'pusat', xf, w, d: T.d, setback: 0.3, yard: null, road: h.road, seed: Math.floor(r * 1e6), back: true, noHome: true };
+      out.push(nh); base = nh; depth = T.d;
+    }
+  }
+  return out;
+}
+// isi lahan kosong di tengah blok pusat kota: gedung menghadap jalan terdekat (arah turunnya jarak ke jalan),
+// tanpa halaman. Membuat kota rapat: kos-kosan, kantor, ruko 3 lantai, rumah petak di gang belakang.
+function infill(K, M, regionAt, occ, reserve) {
+  const out = [], [W, H] = K.size, cand = [];
+  for (let z = 2; z < H - 2; z += 1.5) for (let x = 2; x < W - 2; x += 1.5) {
+    if (regionAt(x, z) !== 'pusat' || occ.get(x, z)) continue;
+    const rd = M.roadDist(x, z); if (rd < 2.5 || rd > 26) continue;
+    cand.push([rd + hash(Math.round(x), Math.round(z)) * 0.5, x, z]);
+  }
+  cand.sort((a, b) => a[0] - b[0]);
+  for (const [, x, z] of cand) {
+    if (occ.get(x, z)) continue;
+    const e = 0.5, gx = M.roadDist(x + e, z) - M.roadDist(x - e, z), gz = M.roadDist(x, z + e) - M.roadDist(x, z - e), gl = Math.hypot(gx, gz);
+    if (gl < 1e-3) continue;
+    const a = Math.atan2(gx / gl, -gz / gl);   // depan (+z lokal) menghadap jalan terdekat
+    const r = hash(Math.round(x * 3), Math.round(z * 3));
+    for (const type of [pick(['R5', 'R6', 'R4', 'R2', 'K6', 'R5', 'K2', 'R1'], r), 'R1', 'K6']) {
+      const T = TYPES[type], xf = { x, z, a };
+      const free = (px, pz) => !(occ.get(px, pz) || M.roadAt(px, pz) || M.waterAt(px, pz) || M.railAt(px, pz)) && M.roadDist(px, pz) > 0.6 && regionAt(px, pz) === 'pusat';
+      if (!occ.rect(xf, 0, 0.3, T.w + 0.6, T.d + 1.2, free) || !occ.rect(xf, 0, 0.3, T.w + 0.6, T.d + 1.2, (px, pz) => !reserve(px, pz))) continue;
+      occ.rect(xf, 0, 0.3, T.w + 0.8, T.d + 1.4, (px, pz) => occ.set(px, pz));
+      out.push({ type, region: 'pusat', xf, w: T.w, d: T.d, setback: 0.5, yard: null, road: { kind: 'gang' }, seed: Math.floor(r * 1e6), back: true, noHome: true });
+      break;
+    }
+  }
+  return out;
 }
 function plan(K, M, regionAt, occ, reserve) {
   const houses = [];
   const roads = K.roads.map((r, i) => ({ ...r, i })).filter(r => r.kind !== 'setapak' && !r.closed);
+  // dua putaran: dulu minimarket & lahan parkir (butuh tapak lebar + parkiran dalam) di jalan besar, baru rumah/ruko biasa
+  for (const special of [true, false])
   for (const road of roads) {
+    if (special && road.kind !== 'raya' && road.kind !== 'jalan') continue;
     const P = resample(road.pts, 0.25), Lr = P.at(-1)?.s || 0;
     for (const side of [-1, 1]) {
       let s = 1.5 + hash(road.i, side) * 2;
@@ -113,25 +181,33 @@ function plan(K, M, regionAt, occ, reserve) {
         const nx = -p.tz, nz = p.tx;     // normal kiri
         const probe = [p.x + nx * side * (road.w / 2 + 3), p.z + nz * side * (road.w / 2 + 3)];
         const region = regionAt(...probe), r = hash(road.i * 131 + side, Math.round(s * 4));
-        const type = chooseType(region, road, r);
-        if (!type) { s += 2; continue; }
-        const T = TYPES[type];
-        const jitter = 0;   // rumah lurus sejajar jalan (jendela tidak terlihat miring)
-        const a = Math.atan2(-side * p.tz, -side * p.tx) + jitter;   // depan (+z lokal) menghadap jalan
-        const dist = road.w / 2 + 0.35 + T.setback + T.d / 2;
-        const xf = { x: p.x + nx * side * dist, z: p.z + nz * side * dist, a };
-        const yb = T.yard ? 1.0 : 0.25, side_ = T.yard ? 1.0 : 0;   // halaman belakang & samping
-        const fw = T.w + side_ * 2 + 0.2, fz0 = -T.d / 2 - yb, fz1 = T.d / 2 + T.setback;
-        let ok = regionAt(xf.x, xf.z) === region;
-        ok = ok && occ.rect(xf, 0, (fz0 + fz1) / 2, fw, fz1 - fz0 - 0.4, (x, z) => !(occ.get(x, z) || M.roadAt(x, z) || M.waterAt(x, z) || M.railAt(x, z) || reserve(x, z)));
-        // jemuran/motor/pagar di samping & belakang rumah juga tidak boleh menyentuh jalan lain
-        ok = ok && occ.rect(xf, 0, (fz0 + fz1) / 2 - 0.3, fw + 1.8, fz1 - fz0 - 0.6, (x, z) => M.roadDist(x, z) > 0.1);
-        // akses: jalur dari pintu ke jalan harus bebas air
-        ok = ok && occ.rect(xf, 0, T.d / 2 + T.setback / 2 + 0.3, 1, T.setback + 0.6, (x, z) => !M.waterAt(x, z));
-        if (!ok) { s += 0.75; continue; }
+        const type0 = special ? (region === 'pusat' || region === 'kampung' ? take('MM', region) || (region === 'pusat' && take('PK', region)) || null : null) : chooseType(region, road, r);
+        if (!type0) { s += 2; continue; }
+        // pusat kota: bila tipe pilihan tidak muat, coba tipe yang lebih kecil di titik yang sama (deretan ruko rapat)
+        const tries = special ? [type0] : region === 'pusat' && road.kind !== 'gang' ? [type0, ...['R4', 'R2', 'R1', 'R7'].filter(t => t !== type0)] : [type0];
+        let type, T, xf, fw, fz0, fz1, yb, side_, ok = false;
+        for (type of tries) {
+          T = TYPES[type];
+          // pusat: s = tepi kiri tapak + 1.5, jadi gedung lebar (minimarket, bank) bergeser maju, tidak menimpa tetangga
+          const q = region === 'pusat' ? P[Math.min(P.length - 1, Math.max(0, Math.round((s + T.w / 2 - 1.5) / 0.25)))] : p, qx = -q.tz, qz = q.tx;
+          const a = Math.atan2(-side * q.tz, -side * q.tx);   // depan (+z lokal) menghadap jalan; rumah lurus sejajar jalan
+          const dist = road.w / 2 + 0.35 + T.setback + T.d / 2;
+          xf = { x: q.x + qx * side * dist, z: q.z + qz * side * dist, a };
+          yb = T.yard ? 1.0 : 0.25; side_ = T.yard ? 1.0 : 0;   // halaman belakang & samping
+          fw = T.w + side_ * 2 + 0.2; fz0 = -T.d / 2 - yb; fz1 = T.d / 2 + T.setback;
+          ok = regionAt(xf.x, xf.z) === region;
+          ok = ok && occ.rect(xf, 0, (fz0 + fz1) / 2, fw, fz1 - fz0 - 0.4, (x, z) => !(occ.get(x, z) || M.roadAt(x, z) || M.waterAt(x, z) || M.railAt(x, z) || reserve(x, z)));
+          // jemuran/motor/pagar di samping & belakang rumah juga tidak boleh menyentuh jalan lain
+          ok = ok && occ.rect(xf, 0, (fz0 + fz1) / 2 - 0.3, fw + 1.8, fz1 - fz0 - 0.6, (x, z) => M.roadDist(x, z) > 0.1);
+          // akses: jalur dari pintu ke jalan harus bebas air
+          ok = ok && occ.rect(xf, 0, T.d / 2 + T.setback / 2 + 0.3, 1, T.setback + 0.6, (x, z) => !M.waterAt(x, z));
+          if (ok) break;
+        }
+        if (!ok) { s += special ? 1.5 : 0.75; continue; }
         occ.rect(xf, 0, (fz0 + fz1) / 2, fw + T.gap, fz1 - fz0, (x, z) => occ.set(x, z));
+        if (QUOTA[type]) used[type + region] = (used[type + region] || 0) + 1;
         houses.push({ type, region, xf, w: T.w, d: T.d, setback: T.setback, yard: T.yard ? { w: fw, front: T.setback - 0.4, back: yb } : null, road, seed: Math.floor(r * 1e6) });
-        s += T.w + T.gap + side_ * 2 + (region === 'selatan' ? 4 : 0);
+        s += T.w + T.gap + side_ * 2 + (region === 'selatan' ? 4 : 0) + (special ? 25 : 0);
       }
     }
   }
@@ -185,7 +261,14 @@ function paintGround(K, houses, M, specials) {
   for (const h of houses) {
     const { xf, w, d, setback, type } = h;
     if (h.yard) { quad(h.xf, 0, (d / 2 + setback - 0.4 - d / 2 - h.yard.back) / 2, h.yard.w, d + setback - 0.4 + h.yard.back, PAT.lawn); quad(xf, type === 'P1' ? P1CAR(w, h.yard) : 0, d / 2 + setback / 2, type === 'P1' ? 1.9 : 2.2, setback + 0.8, PAT.paving); }
-    else if (type[0] === 'R') quad(xf, 0, d / 2 + setback / 2 + 0.2, w + 0.02, setback + 0.8, PAT.tile);
+    else if (type === 'MM' || type === 'PK') {
+      // parkiran beraspal + garis putih petak parkir
+      const z0 = type === 'PK' ? 0 : d / 2 + setback / 2 + 0.2, L = type === 'PK' ? d + setback + 0.4 : setback + 0.8, W2 = w + 0.4;
+      quad(xf, 0, z0, W2, L, PAT.asphaltLight); if (type === 'MM') quad(xf, 0, 0, w + 0.4, d + 0.4, PAT.semen);
+      const lines = type === 'PK' ? [[-d / 2 + 1.5, 1.5, 2.4], [d / 2 - 1.6, 0.5, 1.3]] : [[z0 + 0.3, 0.5, 1.3]];
+      for (const [lz, step, len] of lines) for (let x = -W2 / 2 + 0.4; x < W2 / 2 - 0.3; x += step) quad(xf, x, lz, 0.05, len, '#e8e8e2');
+    }
+    else if (type[0] === 'R') quad(xf, 0, d / 2 + setback / 2 + 0.2, w + 0.02, setback + 0.8, h.back ? PAT.semen : PAT.tile);
     else { quad(xf, 0, 0, w + 0.4, d + 0.4, PAT.semen); quad(xf, 0, d / 2 + setback / 2 + 0.2, Math.min(1.4, w * 0.4), setback + 0.8, type === 'B' ? PAT.dirt : PAT.semen); }
   }
   for (const b of Object.values(specials)) { const xf = { x: b.x, z: b.y, a: b.a }; quad(xf, 0, 0, b.w + 3, b.h + 3, b.pave || PAT.paving); }
@@ -260,7 +343,14 @@ export function buildKota(scene, C) {
   resv.push(p => p[0] > 104 + (specials.pasar?.dx || 0) && p[0] < 124 + (specials.pasar?.dx || 0) && p[1] > 102 && p[1] < 110);   // terminal angkot
   const reserve = (x, z) => resv.some(f => f([x, z]));
   const occ = new Occ(W, H);
-  const houses = plan(K, M, regionAt, occ, reserve);
+  // wilayah bangun: lahan tak bertuan di sekitar pusat kota (poligon pusat diperbesar 1.9x) ikut dihitung pusat,
+  // supaya pinggiran kota terisi ruko/gedung, bukan lapangan rumput kosong
+  const PC = K.areas[2].pts, pcx = PC.reduce((a, p) => a + p[0], 0) / PC.length, pcz = PC.reduce((a, p) => a + p[1], 0) / PC.length;
+  const regionB = (x, z) => { const r = regionAt(x, z); return r || !inPoly(pcx + (x - pcx) / 1.9, pcz + (z - pcz) / 1.9, PC) ? r : 'pusat'; };
+  const houses = plan(K, M, regionB, occ, reserve);
+  for (const h of houses) if (h.type === 'MM' || h.type === 'PK') h.noHome = true;
+  houses.push(...backRows(houses, M, regionB, occ, reserve));
+  houses.push(...infill(K, M, regionB, occ, reserve));
   // rumah kunci: Om Darto + gerobak Warkop Simpang (lv1) = rumah kampung terdekat ke penanda no. 3, musala kampung
   const kh = houses.filter(h => h.region === 'kampung');
   const near = (x, z) => kh.slice().sort((a, b) => Math.hypot(a.xf.x - x, a.xf.z - z) - Math.hypot(b.xf.x - x, b.xf.z - z));
@@ -284,7 +374,7 @@ export function buildKota(scene, C) {
   outer.rotation.x = -Math.PI / 2; outer.position.set(W / 2, -2.0, H / 2); scene.add(outer);
   C.box(W / 2, -1, W / 2 + 2, 1); C.box(W / 2, H + 1, W / 2 + 2, 1); C.box(-1, H / 2, 1, H / 2 + 2); C.box(W + 1, H / 2, 1, H / 2 + 2);
 
-  const ch = new Chunks(32), veg = [];
+  const ch = new Chunks(32), veg = [], SB = new SignBatch(), parkir = [];
   // rumah
   globalThis.__TRACE = globalThis.__TRACEON ? [] : null;
   for (const h of houses) {
@@ -294,13 +384,29 @@ export function buildKota(scene, C) {
     if (h.special === 'musala') { musalaKampung(m, h.xf, C); continue; }
     if (h.region === 'bantaran') panggung(m, h.xf, { ...o, wall: pick(PAL.bantaran.wall, r(1)), roof: pick(PAL.bantaran.roof, r(2)) });
     else if (h.type[0] === 'K') kampung(m, h.xf, h.type, { ...o, wall: pick(PAL.kampung.wall, r(1)), roof: pick(PAL.kampung.roof, r(2)), accent: pick(PAL.kampung.accent, r(3)) });
-    else if (h.type[0] === 'P') perum(m, h.xf, h.type, { ...o, wall: pick(PAL.perum.wall, r(1)), roof: pick(PAL.perum.roof, r(2)) });
-    else ruko(m, h.xf, h.type, { ...o, wall: pick(PAL.ruko.wall, r(1)), sign: pick(PAL.ruko.sign, r(2)), canopy: pick(PAL.ruko.canopy, r(3)) });
+    else if (/^P\d/.test(h.type)) perum(m, h.xf, h.type, { ...o, wall: pick(PAL.perum.wall, r(1)), roof: pick(PAL.perum.roof, r(2)) });
+    else {
+      const liar = !h.back && h.region === 'pusat' && /^R[1-4]$/.test(h.type) && r(60) < 0.55;
+      const ro = { ...o, wall: pick(PAL.ruko.wall, r(1)), canopy: pick(PAL.ruko.canopy, r(3)), setback: h.setback, liar };
+      if (h.type === 'MM') parkir.push(minimarket(m, SB, h.xf, ro));
+      else if (h.type === 'PK') parkir.push(lahanParkir(m, SB, h.xf, ro));
+      else if (h.type === 'R5') hotelKos(m, SB, h.xf, ro);
+      else if (h.type === 'R6') kantor(m, SB, h.xf, ro);
+      else if (h.type === 'R7') warung(m, SB, h.xf, ro);
+      else rukoShop(m, SB, h.xf, h.type, ro);
+      // parkir liar di depan ruko pinggir jalan: motor berjajar di teras/trotoar, dijaga tukang parkir
+      if (liar) {
+        const n = Math.max(2, Math.floor((h.w - 0.4) / 0.5) - Math.floor(r(61) * 2));
+        parkedMotors(m, h.xf, 0, h.d / 2 + 0.85, n, 0.5, Math.PI);
+        if (r(62) < 0.7) { const c = Math.cos(h.xf.a), sn = Math.sin(h.xf.a), lz = h.d / 2 + h.setback - 0.05; parkir.push({ x: h.xf.x - lz * sn, z: h.xf.z + lz * c, a: h.xf.a, len: Math.max(1, h.w - 0.6), liar: true }); }
+      }
+    }
   }
   specialBuildings(ch, specials, C, veg, M);
   streetStuff(ch, K, M, C, veg, regionAt, occ, houses);
   if (globalThis.__TRACE) { globalThis.__BOXES = globalThis.__TRACE; globalThis.__ROAD = globalThis.__TRACE.filter(t => t.p.some(([x, , z]) => M.roadDist(x, z) < -0.12 && !M.waterAt(x, z) && x > 0 && z > 0 && x < W && z < H)); globalThis.__TRACE = null; }
   for (const m of ch.meshes(MAT.world)) scene.add(m);
+  const signs = SB.build(scene);
   const water = riverMesh(K); scene.add(water); scene.add(waterBanks(K, M));
   // tanaman
   vegetation(K, M, occ, regionAt, veg, reserve, C);
@@ -308,7 +414,7 @@ export function buildKota(scene, C) {
   plant(scene, veg);
   const traffic = buildTraffic(scene, K, C, M);
   return {
-    traffic,
+    traffic, signs, parkir,
     regionAt: (x, z) => { const r = regionAt(x, z); return r ? REGIONS[REGION_KEY.indexOf(r)] : 'Wirabumi'; },
     regionKey: regionAt,
     marks: K.marks.map(m => ({ ...m, name: m.desc.replace(/\s*\(.*$/, '') })),

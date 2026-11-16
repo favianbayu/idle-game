@@ -121,6 +121,7 @@ export const LINES = {
   'Mbak Rini': ['Ssst, bayinya baru tidur.'], 'Teh Euis': ['Pecel pedas atau sedang, Kasep?'], 'Ustaz Hasan': ['Jangan lupa salat, Nak.'],
   'Pak Satpam Bambang': ['Mau ke rumah siapa, Dek? Tulis di buku tamu.'], 'Bu Veronika': ['Satu, dua, tiga... eh, permisi ya.'],
   'Mbak Yuni': ['Majikan saya galak, jangan berisik ya.'], 'Opa Willem': ['Anggrek ini umurnya lebih tua dari kamu.'],
+  parkir: ['Parkir, Mas? Dua ribu aja.', 'Aman, saya jagain. Helm taruh spion.', 'Priiit! Kiri, kiri... terus!', 'Mundur dikit, Mas. Ya, stop!', 'Bayar pas keluar ya, Mas.'],
   'Pak Polisi Sugeng': ['Helmnya dipakai, Mas!'], 'Bu Lastri': ['Jamu, Nak? Kunyit asam biar seger.'], 'Pak Tarno': ['Priiit! Kiri, kiri, terus!'],
   'Pengamen Dul': ['Satu lagu buat yang lagi kasmaran...'], 'Om Hendrik': ['Berita hari ini: proyek superblok!'], 'Mas Ilham': ['Orderan sepi, Bro.'],
   'Wak Udin': ['Ikannya lagi malas.'], 'Bu Inah': ['Jangan lewat jemuran!'], 'Bang Ucok': ['Becak, Dek? Murah, sambil curhat.'],

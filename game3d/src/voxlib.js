@@ -152,7 +152,7 @@ function makeRamps(st) {
   r.blush = fixedRamp('#ec8f82'); r.glasses = fixedRamp('#26262c');
   r.blade = R('#c4ced8'); r.hilt = R('#b07a26'); r.orb = R('#8fe0ff'); r.stick = R('#9a7440'); r.bristle = R('#d4b36a');
   // seragam & aksesori
-  r.collar = R('#ffffff'); r.shirt = R('#f4f4f0'); r.seam = R('#bcbcb6'); r.placket = R('#e6e6e0'); r.button = fixedRamp('#8a8a86');
+  r.collar = R('#ffffff'); r.shirt = R('#f4f4f0'); r.seam = R('#bcbcb6'); r.placket = R('#e6e6e0'); r.button = fixedRamp('#8a8a86'); r.reflect = fixedRamp('#e4e8ea');
   r.badge = fixedRamp('#d8a830'); r.nametag = fixedRamp('#1e2430'); r.belt = R('#1c1c20'); r.buckle = fixedRamp('#d0d4dc');
   r.clip = R(st.clip || '#f2c230'); r.book = R(st.book || '#3a6ab0'); r.page = R('#f4f0e2'); r.box = R('#b8905a'); r.bag = R(st.bag || '#2a3a5a');
   return r;
@@ -380,6 +380,10 @@ function humanShape(P0, st, part = 'all') {
 
   const topMat = (x, y, z, f, wy, rx, t) => {
     if (UNI && t !== undefined) { const u = uniMat(f, wy, rx, t); if (u) return u; }
+    if (st.topPattern === 'vest' && t !== undefined) {   // rompi tukang parkir: terbuka di depan, pita reflektor melintang
+      if (f > 0 && Math.abs(wy) < 0.9 && t < 0.86) return 'top';
+      return t > 0.42 && t < 0.52 ? 'reflect' : 'top2';
+    }
     if (st.topPattern === 'stripe' && Math.floor(z / 3) % 2) return 'top2';
     if (st.topPattern === 'batik' && (((x + z) % 5 === 0 && (y + z) % 5 === 0) || hash(x >> 1, y >> 1, z >> 1) < 0.1)) return 'top2';
     if (st.topPattern === 'koko' && Math.abs(wy) < 0.5 && f > rx * 0.7 && z % 3 === 0) return 'top2';

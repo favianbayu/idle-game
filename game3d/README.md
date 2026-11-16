@@ -60,6 +60,12 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   kuncir dua rendah, bob + jepit, setengah ikat, topi terbalik). Seragam SMA: kerah, kancing, saku + badge OSIS,
   papan nama, ikat pinggang + gesper, rok lipit; jaket di atas seragam memperlihatkan kemeja. NPC punya variasi diam
   (main HP, baca buku, jongkok, tertawa, bawa kardus, menyapu, hormat, dll.).
+- **Pusat kota padat** (`src/toko.js`, `src/signs.js`): ruko 2-3 lantai berbalkon, hotel melati/kos dengan papan vertikal,
+  kantor bank kaca + ATM, warung kelontong bertenda garis, minimarket parodi **Indomurah** dengan parkiran, lahan parkir,
+  dan baris gedung di belakang ruko supaya blok tidak kosong. Papan nama, spanduk vinyl, X-banner, dan LED berjalan
+  bertulisan khas pertokoan Indonesia (fotokopi, service HP, apotek, RM Padang, laundry kiloan, dll.).
+- **Parkir liar & tukang parkir**: motor berjajar di depan ruko; tukang parkir berompi oranye mondar-mandir, memberi
+  aba-aba ("Priiit! Kiri, kiri...") dan menyapa pemain yang lewat naik motor.
 - **Bangunan** lebih berkedalaman: kusen jendela & pintu menonjol, ambang bawah/atas, luifel beton di atas pintu,
   lis lantai, atap teras genteng sampai depan pilar. Tekstur tanah 16 piksel/petak + bintik seukuran voxel.
 - Tidak ada bangunan, pohon, atau benda yang menumpuk di permukaan jalan: rumah dicek terhadap jarak ke tepi jalan,

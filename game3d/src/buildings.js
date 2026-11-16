@@ -265,3 +265,4 @@ export function ruko(m, xf, type, o) {
   if (type === 'R3') for (let i = 0; i < 8; i++) m.box(xf, w / 2 + 0.35, i * H / 8, -d / 2 + 0.5 + i * 0.4, 0.6, 0.08, 0.36, col('#8a8478'));
   colLocal(o.C, xf, 0, 0, w + (type === 'R3' ? 0.9 : 0), d);
 }
+export { body, door, win, nako, tandon, chair, at, rot, parabola };

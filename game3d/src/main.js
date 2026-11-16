@@ -87,7 +87,7 @@ const npcs = [];
 onCharsReady(() => {
   preload('raka', ['idle', 'walk', 'run'], 10);
   const byRegion = {};
-  for (const h of kota.houses) if (!h.special) (byRegion[h.region] || (byRegion[h.region] = [])).push(h);
+  for (const h of kota.houses) if (!h.special && !h.noHome) (byRegion[h.region] || (byRegion[h.region] = [])).push(h);
   NPCS.forEach((n, idx) => {
     let home;
     const H = n.home;
@@ -103,6 +103,16 @@ onCharsReady(() => {
     npcs.push({ ...n, key: 'n' + idx, name: n.name || styleName(n.sid), c, home, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: Math.random() * 3, heading: Math.random() * 6, say: null, greetT: 0 });
     preload(n.sid, ['idle'], 1);
   });
+  // tukang parkir di minimarket, lahan parkir, dan parkir liar depan ruko: mondar-mandir sepanjang deretan motor, memberi aba-aba
+  const PNAMES = ['Bang Jalu', 'Pak Darno', 'Mas Tejo', 'Bang Ipul', 'Pak Somad', 'Mang Udin', 'Kang Asep', 'Bang Mamat', 'Pak Ogah', 'Mas Bowo', 'Bang Romli', 'Pak Kumis'];
+  (kota.parkir || []).forEach((sp, i) => {
+    const sid = i % 3 === 2 ? 'tukangParkir2' : 'tukangParkir', c = new Character(sid); scene.add(c.group);
+    const ux = Math.cos(sp.a), uz = Math.sin(sp.a), h = sp.len / 2;
+    const path = [{ x: sp.x - ux * h, z: sp.z - uz * h }, { x: sp.x + ux * h, z: sp.z + uz * h }];
+    const p = collision.resolve({ x: sp.x, z: sp.z }, 0.3);
+    npcs.push({ sid, name: PNAMES[i % PNAMES.length], filler: true, linesKey: 'parkir', parkir: true, path, roam: 0, key: 'p' + i, c, home: { x: p.x, z: p.z }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: Math.random() * 3, heading: sp.a + Math.PI / 2, say: null, greetT: Math.random() * 10 });
+  });
+  preload('tukangParkir', ['idle', 'walk', 'wave'], 1);
 });
 
 /* ------------------------------------------------------------------ input */
@@ -218,7 +228,7 @@ let fading = 0;
 function act() {
   if (!target || fading) return;
   if (target.kind === 'npc') {
-    const n = target.n, lines = LINES[n.filler ? n.name : n.sid] || ['Halo!'];
+    const n = target.n, lines = LINES[n.linesKey || (n.filler ? n.name : n.sid)] || ['Halo!'];
     n.say = { text: lines[n.line = ((n.line ?? -1) + 1) % lines.length], t: 3.5 };
     n.heading = Math.atan2(player.z - n.z, player.x - n.x); n.wait = 4; n.tx = n.x; n.tz = n.z;
   } else if (target.kind === 'go') {
@@ -292,6 +302,7 @@ const STUDENTS = new Set(['raka', 'rani', 'bimo', 'tegar', 'jojo', 'uti', 'nadia
 const KIDS = new Set(['anakSD', 'anakSDcw', 'bocah', 'cici']);
 const HABIT = { pakUjang: 'sweep', gilang: 'carry', mei: 'read', rizal: 'read', jojo: 'phone', sekar: 'think', fajar: 'squat', satpam: 'salute', paskibra: 'salute', polisi: 'salute', kakek: 'squat', andra: 'think', laras: 'carry', bimo: 'laugh', tegar: 'read', pakGunadi: 'think', buRatna: 'read' };
 const IDLES = { student: ['idle', 'idle', 'phone', 'talk', 'look', 'think', 'laugh', 'read', 'clap'], adult: ['idle', 'idle', 'look', 'phone', 'talk', 'squat', 'stretch', 'scratch'], kid: ['idle', 'look', 'dance', 'squat', 'wave', 'clap'] };
+const pick3 = a => a[Math.floor(Math.random() * a.length)];
 function pickIdle(n) {
   if (HABIT[n.sid] && Math.random() < 0.45) return HABIT[n.sid];
   const set = STUDENTS.has(n.sid) ? IDLES.student : KIDS.has(n.sid) ? IDLES.kid : IDLES.adult;
@@ -305,7 +316,12 @@ function updateNPC(n, dt) {
   let moving = false;
   if (n.wait <= 0) {
     const tx = n.tx - n.x, tz = n.tz - n.z, d = Math.hypot(tx, tz);
-    if (d < 0.2) { n.idle = pickIdle(n); n.wait = n.idle === 'idle' ? 2 + Math.random() * 5 : 5 + Math.random() * 8; const a = Math.random() * 6.28, r = Math.random() * (n.roam ?? 3); n.tx = n.home.x + Math.cos(a) * r; n.tz = n.home.z + Math.sin(a) * r; }
+    if (d < 0.2 && n.parkir) {   // tukang parkir: berhenti di satu titik deretan, kasih aba-aba, lalu pindah
+      n.idle = pick3(['wave', 'wave', 'raiseHand', 'look', 'idle', 'phone']); n.wait = 2 + Math.random() * 4;
+      const t = Math.random(), [a, b] = n.path; n.tx = a.x + (b.x - a.x) * t; n.tz = a.z + (b.z - a.z) * t;
+      if (n.idle === 'wave' && !n.say && Math.random() < 0.35) n.say = { text: pick3(['Priiit! Kiri, kiri... terus!', 'Mundur, mundur... stop!', 'Ayo, ayo, masih muat!', 'Priit priiit!']), t: 2.2 };
+    }
+    else if (d < 0.2) { n.idle = pickIdle(n); n.wait = n.idle === 'idle' ? 2 + Math.random() * 5 : 5 + Math.random() * 8; const a = Math.random() * 6.28, r = Math.random() * (n.roam ?? 3); n.tx = n.home.x + Math.cos(a) * r; n.tz = n.home.z + Math.sin(a) * r; }
     else {
       const s = 1.1 * dt; const p = collision.move(n, n.x + tx / d * s, n.z + tz / d * s, 0.26);
       if (Math.hypot(p.x - n.x, p.z - n.z) < s * 0.3) { n.tx = n.x; n.tz = n.z; }
@@ -318,7 +334,8 @@ function updateNPC(n, dt) {
   n.c.group.position.set(n.x, 0, n.z); n.c.update(dt);
   if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
   n.greetT -= dt;
-  if (n.filler && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 3) { const ls = LINES[n.name] || ['Halo!']; n.say = { text: ls[Math.floor(Math.random() * ls.length)], t: 3 }; n.greetT = 30; }
+  if (n.parkir && ride && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 4) { n.say = { text: pick3(['Parkir sini, Mas! Aman!', 'Sini, sini, masih kosong!', 'Helmnya dititip sini aja, Mas.']), t: 3 }; n.greetT = 20; n.idle = 'wave'; n.wait = 3; }
+  if (n.filler && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 3) { const ls = LINES[n.linesKey || n.name] || ['Halo!']; n.say = { text: ls[Math.floor(Math.random() * ls.length)], t: 3 }; n.greetT = 30; }
 }
 
 const v3 = new THREE.Vector3();
@@ -350,6 +367,7 @@ function loop(now) {
   const v = updatePlayer(dt);
   for (const n of npcs) updateNPC(n, dt);
   kota.traffic.update(dt, player);
+  kota.signs?.update(now / 1000);
   // kamera
   cam.manualT -= dt;
   if (opt.follow && v > 0.5 && cam.manualT <= 0) {
