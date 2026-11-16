@@ -17,8 +17,12 @@ const KINDS = [
   { id: 'cilok', title: 'Cilok Teh Euis', sign: ['CILOK', 'CIMOL'], body: '#f2c230', roof: '#d8302a', sid: 'mbak', name: 'Teh Euis', lines: ['Cilok, cilok! Lima ribuan!', 'Pedes apa sedeng?'] },
   { id: 'sate', title: 'Sate Pak Kumis', sign: ['SATE AYAM', 'Madura'], body: '#6a4428', roof: '#e8e4d0', sid: 'bapakPeci', name: 'Pak Kumis', lines: ['Sate, sateee!', 'Bumbunya kacang apa kecap?'] },
 ];
+// gerobak putaran kedua (jenis sama) dijaga pedagang lain, supaya tidak ada dua Kang Dadang
+const ALT = { bakso: { title: 'Bakso Cak Anwar', sign: ['BAKSO', 'Cak Anwar'], name: 'Cak Anwar' }, siomay: { title: 'Siomay Kang Ujang', name: 'Kang Ujang' },
+  cendol: { title: 'Es Cendol Mang Oleh', name: 'Mang Oleh', sid: 'bapakPeci' }, gorengan: { title: 'Gorengan Bu Painem', name: 'Bu Painem', sid: 'ibuDaster' },
+  martabak: { title: 'Martabak Bang Toyib', name: 'Bang Toyib' }, cilok: { title: 'Cilok Teh Neneng', name: 'Teh Neneng' }, sate: { title: 'Sate Cak Rokib', name: 'Cak Rokib' } };
 // tempat mangkal: dekat keramaian (pasar, gerbang SMA, stasiun, terminal, GOR, plaza, masjid, lapangan bola, taman)
-const ANCHORS = [[98, 92], [109, 63], [19, 58], [246, 98], [168, 44], [178, 98], [146, 64], [88, 104], [127, 46], [150, 82], [60, 86], [200, 120]];
+const ANCHORS = [[98, 92], [133, 62], [19, 58], [246, 98], [168, 44], [178, 98], [146, 64], [88, 104], [127, 46], [150, 82], [60, 86], [200, 120]];
 
 function signTex(lines, bg, fg) {
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 96;
@@ -30,12 +34,13 @@ function signTex(lines, bg, fg) {
 export function makeJajan({ scene, kota, collision, player, Character, npcs, shop, acts, toast }) {
   const M = kota.M, mg = new Merger(), carts = [];
   const free = (x, z, r) => { const p = collision.resolve({ x, z }, r); return Math.hypot(p.x - x, p.z - z) < 0.02 && !collision.blockedMask(x, z) && !M.waterAt(x, z) && !acts.poolAt(x, z); };
-  const inSpecial = (x, z) => Object.values(kota.specials || {}).some(b => { const c = Math.cos(-b.a), sn = Math.sin(-b.a), dx = x - b.x, dz = z - b.y; return Math.abs(dx * c - dz * sn) < b.w / 2 + 1.2 && Math.abs(dx * sn + dz * c) < b.h / 2 + 1.2; });
+  const inSpecial = (x, z) => Object.values(kota.specials || {}).some(b => { const c = Math.cos(-b.a), sn = Math.sin(-b.a), dx = x - b.x, dz = z - b.y; const m = b === kota.specials.sma ? 8 : 1.2; return Math.abs(dx * c - dz * sn) < b.w / 2 + m && Math.abs(dx * sn + dz * c) < b.h / 2 + m; });   // sekolah: jangan mangkal persis di depan gerbang/pagar
+  const nearHouse = (x, z) => (kota.houses || []).some(h => { if (Math.abs(h.xf.x - x) > 12 || Math.abs(h.xf.z - z) > 12) return false; const c = Math.cos(-h.xf.a), sn = Math.sin(-h.xf.a), dx = x - h.xf.x, dz = z - h.xf.z; return Math.abs(dx * c - dz * sn) < h.w / 2 + 1.3 && Math.abs(dx * sn + dz * c) < h.d / 2 + (h.setback || 0) + 1.3; });   // jangan menempel papan/parkiran/teras
   const doorNear = (x, z) => (kota.places?.doors || []).some(d => Math.hypot(d.x - x, d.z - z) < 3);
   function spotNear(ax, az) {
     for (let r = 2; r < 12; r += 0.7) for (let k = 0; k < 16; k++) {
       const a = k / 16 * Math.PI * 2 + r, x = ax + Math.cos(a) * r, z = az + Math.sin(a) * r, rd = M.roadDist(x, z);
-      if (rd < 0.95 || rd > 1.7 || !free(x, z, 0.9) || doorNear(x, z) || inSpecial(x, z) || carts.some(c => Math.hypot(c.x - x, c.z - z) < 8)) continue;
+      if (rd < 0.95 || rd > 1.7 || !free(x, z, 0.9) || doorNear(x, z) || inSpecial(x, z) || nearHouse(x, z) || (kota.trees || []).some(t => Math.hypot(t.x - x, t.z - z) < 2.6) || carts.some(c => Math.hypot(c.x - x, c.z - z) < 8)) continue;
       const e = 0.3, gx = M.roadDist(x + e, z) - M.roadDist(x - e, z), gz = M.roadDist(x, z + e) - M.roadDist(x, z - e);
       if (Math.hypot(gx, gz) < 1e-3) continue;
       const fa = Math.atan2(-gz, -gx);   // arah ke jalan
@@ -76,7 +81,7 @@ export function makeJajan({ scene, kota, collision, player, Character, npcs, sho
   }
   const used = [];
   ANCHORS.forEach(([ax, az], i) => {
-    const K = KINDS[carts.length % KINDS.length], s = spotNear(ax, az); if (!s) return;
+    const K0 = KINDS[carts.length % KINDS.length], K = carts.length >= KINDS.length ? { ...K0, ...ALT[K0.id] } : K0, s = spotNear(ax, az); if (!s) return;
     carts.push({ ...s, K }); used.push(K.id); cart(K, s);
     const c = new Character(K.sid); scene.add(c.group);
     npcs.push({ sid: K.sid, name: K.name, filler: true, lines: K.lines, c, home: { x: s.bx, z: s.bz }, x: s.bx, z: s.bz, tx: s.bx, tz: s.bz, wait: 3, heading: s.fa, say: null, greetT: Math.random() * 10, roam: 0.2, key: 'jj' + i, vendor: true });
