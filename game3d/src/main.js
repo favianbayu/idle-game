@@ -11,6 +11,9 @@ import { makeRide } from './rides.js';
 import { makeFight } from './fight.js';
 import { makeBigMap } from './bigmap.js';
 import { makeActivities } from './activities.js';
+import { makeShop } from './shop.js';
+import { makeInteriors } from './interior.js';
+import { makeJajan } from './jajan.js';
 
 /* ------------------------------------------------------------------ pengaturan */
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -28,7 +31,8 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPrefer
 renderer.setPixelRatio(1);
 renderer.shadowMap.type = THREE.PCFShadowMap;
 const scene = new THREE.Scene();
-const SKY = new THREE.Color('#bcd8ec');
+const SKY = new THREE.Color('#bcd8ec'), DARKBG = new THREE.Color('#16141a');
+let wasInside = false;
 scene.background = SKY; scene.fog = new THREE.Fog(SKY, 35, 85);
 const camera = new THREE.PerspectiveCamera(32, 1, 0.5, 160);
 const hemi = new THREE.HemisphereLight('#e6efff', '#7a8a5a', 1.9); scene.add(hemi);
@@ -66,6 +70,7 @@ const SPAWN = (() => { const [x, z] = L(kota.darto.xf, -0.4, kota.darto.d / 2 + 
 const player = { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, heading: Math.PI / 2, run: false, area: 'kota' };
 if (saved?.p) Object.assign(player, saved.p);
 if (saved?.stats) player.stats = saved.stats;
+if (saved) { if (saved.uang != null) player.uang = saved.uang; if (saved.inv) player.inv = saved.inv; if (saved.flags) player.flags = saved.flags; }
 const raka = new Character('raka', { xray: true, prio: 10 });
 scene.add(raka.group);
 // kendaraan pemain: tidak muncul dari udara. Tiap kendaraan diparkir di dunia (awal: lorong samping rumah Om Darto),
@@ -138,7 +143,12 @@ function onKO() {
   setTimeout(() => { if (ride) dismount(true); Object.assign(player, { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, area: 'kota', swim: null }); cam.x = player.x; cam.z = player.z; placeParked(); ui.fade.style.opacity = 0; fading = 0; toast('Kamu pingsan... Om Darto bawa kamu pulang. Latihan dulu biar kuat!'); }, 600);
 }
 const fight = makeFight({ player, raka, npcs, collision, riding: () => !!ride, toast, onKO: () => onKO(), save: () => { saveT = 99; } });
+const shop = makeShop({ player, toast, fight });
 const acts = makeActivities({ scene, kota, collision, player, Character, toast, npcs, gain: (k, x) => fight.gain(k, x), say: (n, text) => { if (n) n.say = { text, t: 2.5 }; } });
+const interiors = makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast });
+interiors.locate();
+const jajan = makeJajan({ scene, kota, collision, player, Character, npcs, shop, acts, toast });
+if (player.area === 'dalam' && !interiors.cur) Object.assign(player, { x: SPAWN.x, z: SPAWN.z, area: 'kota' });
 onCharsReady(() => {
   preload('raka', ['idle', 'walk', 'run'], 10);
   const byRegion = {};
@@ -186,7 +196,8 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyQ') rotateCam(-1);
   if (e.code === 'KeyE') rotateCam(1);
   if (e.code === 'KeyC') toggleFollow();
-  if (e.code === 'KeyM' || (e.code === 'Escape' && bigmap.isOpen)) bigmap.toggle();
+  if (e.code === 'Escape' && shop.isOpen) shop.close(); else if (e.code === 'Escape' && $('status').style.display === 'block') toggleStatus();
+  else if (e.code === 'KeyM' || (e.code === 'Escape' && bigmap.isOpen)) bigmap.toggle();
   if (e.code === 'KeyN') toggleMinimap();
   if (e.code === 'KeyV') cyclePitch();
   const dg = /^Digit(\d)$/.exec(e.code); if (dg) emote((+dg[1] + 9) % 10);
@@ -300,8 +311,9 @@ function findTarget() {
     if (player.area === 'kota' && Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Parkir & masuk SMA Negeri 3' };
     return { kind: 'park', label: 'Turun & parkir' };
   }
-  const at = acts.target();
+  const at = acts.target(), it = interiors.target() || jajan.target();
   if (at && at.kind === 'act' && !at.label.startsWith('Duduk')) return at;
+  if (it) return it;
   for (const [i, R] of RIDES.entries()) if (R && R.holder.visible) { const sp = garage.spot[i], d = Math.hypot(sp.x - player.x, sp.z - player.z); if (d < 1.4 && d < bd) { bd = d; best = { kind: 'ride', i, label: 'Naik ' + R.name.toLowerCase() }; } }
   if (best) return best;
   for (const n of npcs) { const d = Math.hypot(n.x - player.x, n.z - player.z); if (d < 1.9 && d < bd) { bd = d; best = { kind: 'npc', n, label: 'Ngobrol: ' + n.name }; } }
@@ -316,13 +328,14 @@ function findTarget() {
 function act() {
   if (!target || fading) return;
   if (target.kind === 'act') { target.fn(); return; }
+  if (target.kind === 'warp') { const t = target; fading = 1; ui.fade.style.opacity = 1; setTimeout(() => { Object.assign(player, t.to, { vx: 0, vz: 0, swim: null }); t.after?.(); cam.x = player.x; cam.z = player.z; if (t.to.area === 'dalam') { cam.saveDist ??= cam.distT; cam.distT = cam.dist = Math.min(cam.distT, ZOOMS[1]); } else if (cam.saveDist) { cam.distT = cam.saveDist; cam.saveDist = null; } placeParked(); ui.fade.style.opacity = 0; fading = 0; }, 380); return; }
   if (target.kind === 'swim') { player.swim = 'air'; player.x = target.x; player.z = target.z; toast('Byur! Berenang (jalan ke tepi untuk naik)'); return; }
   if (target.kind === 'go2') { const to = target.to; fading = 1; ui.fade.style.opacity = 1; setTimeout(() => { Object.assign(player, { x: to.x, z: to.z, vx: 0, vz: 0 }); cam.x = player.x; cam.z = player.z; ui.fade.style.opacity = 0; fading = 0; toast('Sampai di seberang. Bayar 2 ribu ke tukang rakit.'); }, 450); return; }
   if (target.kind === 'ride') { mount(target.i); return; }
   if (target.kind === 'park') { dismount(); return; }
   if (target.kind === 'npc') {
     if (target.n.mood) return;
-    const n = target.n, lines = LINES[n.linesKey || (n.filler ? n.name : n.sid)] || ['Halo!'];
+    const n = target.n, lines = n.lines || LINES[n.linesKey || (n.filler ? n.name : n.sid)] || ['Halo!'];
     n.say = { text: lines[n.line = ((n.line ?? -1) + 1) % lines.length], t: 3.5 };
     n.heading = Math.atan2(player.z - n.z, player.x - n.x); n.wait = 4; n.tx = n.x; n.tz = n.z;
   } else if (target.kind === 'go') {
@@ -341,6 +354,7 @@ function act() {
 const mctx = ui.map.getContext('2d');
 function drawMinimap() {
   const S = 132, sc = 3;   // 3 piksel per petak di minimap
+  if (player.area === 'dalam') { mctx.fillStyle = '#2a2420'; mctx.fillRect(0, 0, S, S); mctx.fillStyle = '#fffbe8'; mctx.font = 'bold 13px Trebuchet MS'; mctx.textAlign = 'center'; mctx.fillText('di dalam', S / 2, S / 2 - 6); mctx.fillText(interiors.cur?.name || '', S / 2, S / 2 + 12); return; }
   const inK = player.area === 'kota', img = inK ? kota.groundTex : sekolah.groundTex, ox = inK ? 0 : SCHOOL_OX + sekolah.gx0, oz = inK ? 0 : sekolah.gz0;
   const k = img.width / (inK ? 260 : sekolah.gw);
   mctx.save(); mctx.fillStyle = '#9ab878'; mctx.fillRect(0, 0, S, S);
@@ -371,7 +385,7 @@ function updatePlayer(dt) {
   const lock = player.area ? fight.updatePlayer(dt) : null;
   player.riding = !!ride;
   const inp = Math.hypot(ix, iy) > 0.15 && !bigmap.isOpen;
-  const ac = player.area === 'kota' ? acts.update(dt, inp) : { anim: null, lock: false };
+  const ac = player.area !== 'sekolah' ? acts.update(dt, inp) : { anim: null, lock: false };
   if (lock || bigmap.isOpen || ac.lock) { ix = 0; iy = 0; }
   let l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; l = 1; }
   const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || player.run;
@@ -464,7 +478,7 @@ function updateNPC(n, dt) {
   if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
   n.greetT -= dt;
   if (n.parkir && ride && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 4) { n.say = { text: pick3(['Parkir sini, Mas! Aman!', 'Sini, sini, masih kosong!', 'Helmnya dititip sini aja, Mas.']), t: 3 }; n.greetT = 20; n.idle = 'wave'; n.wait = 3; }
-  if (n.filler && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 3) { const ls = LINES[n.linesKey || n.name] || ['Halo!']; n.say = { text: ls[Math.floor(Math.random() * ls.length)], t: 3 }; n.greetT = 30; }
+  if (n.filler && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 3) { const ls = n.lines || LINES[n.linesKey || n.name] || ['Halo!']; n.say = { text: ls[Math.floor(Math.random() * ls.length)], t: 3 }; n.greetT = 30; }
 }
 
 const v3 = new THREE.Vector3();
@@ -524,12 +538,16 @@ function loop(now) {
     const sx = Math.round(cam.x / step) * step, sz = Math.round(cam.z / step) * step;
     sun.target.position.set(sx, 0, sz); sun.position.set(sx + 22, 45, sz + 14);
   }
+  jajan.update(dt);
+  const inside = player.area === 'dalam';
+  if (inside !== wasInside) { wasInside = inside; scene.background = inside ? DARKBG : SKY; scene.fog.color.copy(inside ? DARKBG : SKY); }
+  if (inside) { scene.fog.near = 60; scene.fog.far = 140; interiors.update(camera); }
   renderer.render(scene, camera);
   // HUD
   target = findTarget();
   ui.prompt.style.display = target ? '' : 'none';
   if (target) ui.prompt.textContent = (isTouch ? '' : '[Spasi] ') + target.label;
-  const an = player.area === 'kota' ? kota.regionAt(player.x, player.z) : sekolah.zoneAt(player.x, player.z);
+  const an = player.area === 'kota' ? kota.regionAt(player.x, player.z) : player.area === 'dalam' ? (interiors.cur?.name || '') : sekolah.zoneAt(player.x, player.z);
   if (an !== areaName) { areaName = an; ui.area.textContent = an; }
   drawBubbles();
   if (isTouch) { const sp = player.fx.nyali >= 100, b = $('btnHit'); if (b.classList.contains('on') !== sp) { b.classList.toggle('on', sp); b.textContent = sp ? 'JURUS' : 'Pukul'; } }
@@ -539,7 +557,7 @@ function loop(now) {
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { ui.fps.textContent = `${Math.round(fpsN / fpsAcc)} fps · ${renderer.info.render.calls} draw · ${renderer.domElement.width}x${renderer.domElement.height}`; fpsAcc = 0; fpsN = 0; }
   saveT += dt;
-  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage, stats: player.stats })); }
+  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage, stats: player.stats, uang: player.uang, inv: player.inv, flags: player.flags })); }
 }
 
 resize(); applyQuality();
@@ -548,4 +566,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { fight, acts, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { fight, acts, shop, interiors, jajan, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

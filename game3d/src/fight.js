@@ -81,7 +81,7 @@ export function makeFight({ player, raka, npcs, collision, riding, toast, onKO, 
     for (const n of npcs) { if (!n.c.group.visible || n.mood === 'down' || n.ext) continue; const dx = n.x - player.x, dz = n.z - player.z, d = Math.hypot(dx, dz); if (d < r && angDiff(Math.atan2(dz, dx), player.heading) < arc && (!best || d < best.d)) best = { n, d, a: Math.atan2(dz, dx) }; }
     return best;
   }
-  const canAct = () => !(riding() || fx.down > 0 || fx.hurt > 0 || fx.grab || fx.roll > 0 || player.swim || player.area !== 'kota' && player.area !== 'sekolah');
+  const canAct = () => !(riding() || fx.down > 0 || fx.hurt > 0 || fx.grab || fx.roll > 0 || player.swim || player.area !== 'kota' && player.area !== 'sekolah' && player.area !== 'dalam');
 
   // tombol serang: A = pukul, B = tendang; special = Shift/LT (butuh Nyali penuh)
   function attack(btn = 'A', special = false) {

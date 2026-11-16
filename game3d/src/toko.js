@@ -150,6 +150,14 @@ export function warung(m, S, xf, o) {
   awning(m, xf, 0, 1.85, d / 2, w + 0.2, 1.2, col(pick(['#2a6ac0', '#d8302a', '#2a8a4a'], r(1))), WHITE, 0.25);
   board(m, S, xf, 0, H + 0.05, d / 2 - 0.05, w - 0.2, 0.42, S.kinds.shop[pick([15, 9, 21, 22, 19], r(2))]);
   for (let i = 0; i < 4; i++) m.box(xf, w / 2 + 0.25, 0, -d / 2 + 0.5 + i * 0.32, 0.28, 0.42, 0.28, col('#3a7ac0'));   // galon kosong
+  // toples kerupuk di atas etalase, pisang & kerupuk tergantung, krat teh botol, karung beras, tabung gas, papan harga
+  for (let i = 0; i < 3; i++) { const x = -w / 4 - 0.45 + i * 0.45; m.box(xf, x, 1.15, d / 2 + 0.3, 0.26, 0.3, 0.26, mix(GLASS2, col('#ffffff'), 0.65)); m.box(xf, x, 1.17, d / 2 + 0.3, 0.2, 0.2, 0.2, col(pick(['#f2e2b0', '#e8a040', '#d85a3a', '#f2c8a0'], hash(o.seed, i + 40)))); m.box(xf, x, 1.45, d / 2 + 0.3, 0.28, 0.05, 0.28, col('#d8302a')); }
+  for (let i = 0; i < 3; i++) m.box(xf, w / 2 - 0.35 - i * 0.12, 1.25, d / 2 + 0.55, 0.1, 0.3, 0.1, col('#f2d23a'));
+  for (let i = 0; i < 4; i++) m.box(xf, -w / 2 + 0.35 + i * 0.16, 1.15, d / 2 + 0.6, 0.12, 0.42, 0.02, col(pick(['#f2e8c0', '#f28a1a', '#e8302a'], hash(o.seed, i + 50))));
+  m.box(xf, w / 4 + 0.55, 0, d / 2 + 0.35, 0.45, 0.32, 0.32, col('#d8a020')); for (let i = 0; i < 6; i++) m.box(xf, w / 4 + 0.4 + (i % 3) * 0.14, 0.32, d / 2 + 0.28 + Math.floor(i / 3) * 0.14, 0.06, 0.2, 0.06, col('#3a8a4a'));
+  m.box(xf, -w / 2 + 0.3, 0, d / 2 + 0.15, 0.4, 0.45, 0.3, col('#f2f0e8')); m.box(xf, -w / 2 + 0.3, 0.45, d / 2 + 0.15, 0.26, 0.06, 0.2, col('#e8e4d8'));
+  m.box(xf, w / 2 + 0.25, 0, d / 2 - 0.3, 0.24, 0.38, 0.24, col('#3a9a5a')); m.box(xf, w / 2 + 0.25, 0.38, d / 2 - 0.3, 0.08, 0.06, 0.08, col('#3a9a5a'));
+  m.box(xf, w / 4, 0.36, d / 2 + 0.9, 0.5, 0.36, 0.02, col('#2a2014')); m.box(xf, w / 4, 0.42, d / 2 + 0.915, 0.42, 0.06, 0.01, col('#f2d23a')); m.box(xf, w / 4, 0.55, d / 2 + 0.915, 0.36, 0.05, 0.01, col('#f2f2f2'));
   m.box(xf, 0, H, 0, w + 0.3, 0.08, d + 0.3, col('#8a8a86'));
   colLocal(o.C, xf, 0, 0, w, d);
 }

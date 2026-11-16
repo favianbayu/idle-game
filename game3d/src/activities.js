@@ -100,7 +100,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
     if (ad > FB.hl && ad < FB.hl + FB.gd + 0.3 && dz < FB.gw + 0.05 && b.p.y < FB.gh) {
       if (ad > FB.hl + FB.gd - b.r) { b.p.x = FB.x + sd * (FB.hl + FB.gd - b.r); b.v.x *= -0.15; b.v.z *= 0.5; }   // jaring belakang
       if (dz > FB.gw - b.r) { b.p.z = FB.z + Math.sign(b.p.z - FB.z) * (FB.gw - b.r); b.v.z *= -0.2; }
-      if (goalT <= 0) { goalT = 2.2; b.resetIn = 2; const side = sd < 0 ? 'R' : 'L'; score[side]++; toast(`GOOOL! Skor ${score.L} - ${score.R}`); for (const k of kids) if (k.goal === sd) { say(k, 'GOOOL!!'); k.cheer = 2; } }
+      if (goalT <= 0) { goalT = 2.2; b.resetIn = 2; const side = sd < 0 ? 'R' : 'L'; score[side]++; if (Math.hypot(player.x - FB.x, player.z - FB.z) < 18) toast(`GOOOL! Skor ${score.L} - ${score.R}`); for (const k of kids) if (k.goal === sd) { say(k, 'GOOOL!!'); k.cheer = 2; } }
     } else if (ad > FB.hl && ad < FB.hl + 0.4 && dz < FB.gw + 0.1 && b.p.y >= FB.gh && b.p.y < FB.gh + 0.2 && b.v.y < 0) b.v.y = Math.abs(b.v.y) * 0.4;   // kena mistar
   }
   // dua anak SD main bola: mengejar bola dan menendang ke gawang lawannya
@@ -159,18 +159,20 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
       const c = Math.cos(xf.a), sn = Math.sin(xf.a), x = xf.x + lx * c - lz * sn, z = xf.z + lx * sn + lz * c;
       const ok = [[0, 0], [0.7, 0], [-0.7, 0], [0, 0.7], [0, -0.7]].every(([u, v]) => !collision.blockedMask(x + u, z + v) && M.roadDist(x + u, z + v) > 0.5 && !M.waterAt(x + u, z + v));
       const p = collision.resolve({ x, z }, 0.45); if (!ok || Math.hypot(p.x - x, p.z - z) > 0.05) continue;
-      used.add(name);
-      // rangka kayu + rantai + karung goni berisi pasir
-      const fr = new Merger(), wood = col('#6a4a2a'), a = xf.a;
-      fr.box({ x, z, a }, -0.55, 0, 0, 0.1, 2.15, 0.1, wood); fr.box({ x, z, a }, 0.55, 0, 0, 0.1, 2.15, 0.1, wood); fr.box({ x, z, a }, 0, 2.1, 0, 1.3, 0.1, 0.12, wood);
-      fr.box({ x, z, a }, -0.55, 0, 0, 0.3, 0.06, 0.5, wood); fr.box({ x, z, a }, 0.55, 0, 0, 0.3, 0.06, 0.5, wood);
-      scene.add(new THREE.Mesh(fr.build(), MAT.world));
-      const bm = new Merger(); bm.box({ x: 0, z: 0, a: 0 }, 0, -0.38, 0, 0.02, 0.38, 0.02, col('#8a8a8a'));
-      bm.box({ x: 0, z: 0, a: 0 }, 0, -1.25, 0, 0.36, 0.88, 0.36, col('#9a2a22')); bm.box({ x: 0, z: 0, a: 0 }, 0, -1.25, 0, 0.38, 0.08, 0.38, col('#2a2a2a')); bm.box({ x: 0, z: 0, a: 0 }, 0, -0.5, 0, 0.38, 0.08, 0.38, col('#2a2a2a'));
-      const piv = new THREE.Group(); piv.position.set(x, 2.1, z); piv.add(new THREE.Mesh(bm.build(), MAT.world)); piv.children[0].castShadow = true; scene.add(piv);
-      collision.circle(x, z, 0.24);
-      bags.push({ x, z, a, name, piv, sw: 0, sv: 0 });
+      used.add(name); addBag(x, z, xf.a, name);
     } }
+  // samsak: rangka kayu + rantai + karung goni berisi pasir (berayun saat dipukul)
+  function addBag(x, z, a, name) {
+    const fr = new Merger(), wood = col('#6a4a2a');
+    fr.box({ x, z, a }, -0.55, 0, 0, 0.1, 2.15, 0.1, wood); fr.box({ x, z, a }, 0.55, 0, 0, 0.1, 2.15, 0.1, wood); fr.box({ x, z, a }, 0, 2.1, 0, 1.3, 0.1, 0.12, wood);
+    fr.box({ x, z, a }, -0.55, 0, 0, 0.3, 0.06, 0.5, wood); fr.box({ x, z, a }, 0.55, 0, 0, 0.3, 0.06, 0.5, wood);
+    scene.add(new THREE.Mesh(fr.build(), MAT.world));
+    const bm = new Merger(), o = { x: 0, z: 0, a: 0 }; bm.box(o, 0, -0.38, 0, 0.02, 0.38, 0.02, col('#8a8a8a'));
+    bm.box(o, 0, -1.25, 0, 0.36, 0.88, 0.36, col('#9a2a22')); bm.box(o, 0, -1.25, 0, 0.38, 0.08, 0.38, col('#2a2a2a')); bm.box(o, 0, -0.5, 0, 0.38, 0.08, 0.38, col('#2a2a2a'));
+    const piv = new THREE.Group(); piv.position.set(x, 2.1, z); piv.add(new THREE.Mesh(bm.build(), MAT.world)); piv.children[0].castShadow = true; scene.add(piv);
+    collision.circle(x, z, 0.24);
+    bags.push({ x, z, a, name, piv, sw: 0, sv: 0 });
+  }
   function trainBag(b) {
     player.heading = Math.atan2(b.z - player.z, b.x - player.x); player.emote = null;
     let hits = 0;
@@ -288,7 +290,9 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
 
   /* ---------------- API untuk main.js */
   return {
-    balls, score, poolAt, spots, bags,
+    balls, score, poolAt, spots, bags, addBag,
+    // aksi umum dengan animasi & gerak terkunci (kerja, makan, dsb.)
+    doAct(anim, dur, end) { actT = { anim, t: 0, dur, at: 99, fn: () => {}, end }; },
     setHold(v) { hold = v; },
     get busy() { return !!fish || !!actT; }, get fishState() { return fish && fish.st + ' ' + fish.t.toFixed(2); },
     // tombol Pukul / F: tendang atau tembak dulu kalau sedang main bola
