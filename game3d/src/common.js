@@ -136,8 +136,13 @@ export function facade(m, xf, w, d, side, floors, o) {
         continue;
       }
       const y = f * (o.fh || FLOOR) + (o.wy || 0.56);
-      put(u, y - 0.05, (o.ww || 0.62) + 0.1, 0.84, FRAME, 0.05);
-      put(u, y, o.ww || 0.62, 0.74, o.glass || GLASS, 0.07);
+      // jendela berkedalaman: kaca menempel dinding, kusen menonjol di sekelilingnya, ambang bawah & atas lebih menjorok
+      const ww = o.ww || 0.62, wh = 0.74;
+      put(u, y, ww, wh, o.glass || GLASS, 0.03);
+      put(u, y - 0.06, ww + 0.12, 0.07, FRAME, 0.12); put(u, y + wh - 0.01, ww + 0.12, 0.07, FRAME, 0.12);
+      for (const sd of [-1, 1]) put(u + sd * (ww / 2 + 0.03), y - 0.06, 0.06, wh + 0.12, FRAME, 0.12);
+      put(u, y, 0.04, wh, FRAME, 0.07); put(u, y + wh * 0.55, ww, 0.035, FRAME, 0.07);
+      put(u, y - 0.12, ww + 0.26, 0.06, PLINTH, 0.2); put(u, y + wh + 0.06, ww + 0.22, 0.07, shade(FRAME, 0.88), 0.15);
     }
   }
 }
@@ -150,28 +155,44 @@ function noise(g, w, h, base, cols, n, sz = 1) {
   for (let i = 0; i < n; i++) { g.fillStyle = cols[i % cols.length]; g.fillRect(hash(i, 11) * w | 0, hash(i, 12) * h | 0, sz + (hash(i, 13) * 2 | 0), sz); }
 }
 export const PAT = {};
-export function makePatterns(g) {
-  const P = (k, c) => (PAT[k] = g.createPattern(c, 'repeat'));
-  P('grass', patternCanvas(64, 64, (g, w, h) => {
-    noise(g, w, h, '#a4c07c', ['#96b670', '#b2ce88', '#8eae68', '#a9c682'], 420, 1);
-    for (let i = 0; i < 14; i++) { g.fillStyle = '#7aa05a'; g.fillRect(hash(i, 21) * w | 0, hash(i, 22) * h | 0, 1, 2); }
+// k = piksel per petak / 10. Pola digambar ulang pada resolusi aslinya (bukan diperbesar), supaya butir tekstur tanah
+// sekecil voxel bangunan & tokoh (1 piksel ~ 2 voxel pada k = 1.6)
+export function makePatterns(g, k = 1) {
+  const P = (key, c) => (PAT[key] = g.createPattern(c, 'repeat'));
+  const Z = v => Math.max(1, Math.round(v * k)), N = (n, sz) => Math.round(n * k * k);
+  const nz = (w, h, base, cols, n, sz = 1) => patternCanvas(Z(w), Z(h), (g, W, H) => noise(g, W, H, base, cols, N(n), sz));
+  P('grass', patternCanvas(Z(64), Z(64), (g, w, h) => {
+    noise(g, w, h, '#a4c07c', ['#96b670', '#b2ce88', '#8eae68', '#a9c682'], N(420), 1);
+    for (let i = 0; i < N(14); i++) { g.fillStyle = '#7aa05a'; g.fillRect(hash(i, 21) * w | 0, hash(i, 22) * h | 0, 1, 2); }
   }));
-  P('grassDark', patternCanvas(64, 64, (g, w, h) => noise(g, w, h, '#84a664', ['#78985a', '#8eb06c', '#6e9052'], 420)));
-  P('asphalt', patternCanvas(48, 48, (g, w, h) => noise(g, w, h, '#5c5e64', ['#54565c', '#66686e', '#4e5056', '#6a6c70'], 700)));
-  P('asphaltLight', patternCanvas(48, 48, (g, w, h) => noise(g, w, h, '#7a7a7c', ['#727274', '#848486', '#6c6c70'], 600)));
-  P('conblock', patternCanvas(20, 20, (g, w, h) => {   // paving gang: bata 1/2 x 1/4 petak
-    g.fillStyle = '#b4a68c'; g.fillRect(0, 0, w, h); g.fillStyle = '#9a8c74';
-    for (let y = 0; y < h; y += 5) { g.fillRect(0, y, w, 1); for (let x = (y / 5 % 2) * 5; x < w; x += 10) g.fillRect(x, y, 1, 5); }
-    for (let i = 0; i < 30; i++) { g.fillStyle = hash(i, 3) < 0.5 ? '#c0b298' : '#a89a80'; g.fillRect(hash(i, 1) * w | 0, hash(i, 2) * h | 0, 2, 1); }
+  P('grassDark', nz(64, 64, '#84a664', ['#78985a', '#8eb06c', '#6e9052'], 420));
+  P('asphalt', nz(48, 48, '#5c5e64', ['#54565c', '#66686e', '#4e5056', '#6a6c70'], 700));
+  P('asphaltLight', nz(48, 48, '#7a7a7c', ['#727274', '#848486', '#6c6c70'], 600));
+  P('conblock', patternCanvas(Z(20), Z(20), (g, w, h) => {   // paving gang: bata 1/2 x 1/4 petak (pinggir bata digambar 1 piksel)
+    const bh = Z(5), bw = Z(10);
+    g.fillStyle = '#b4a68c'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < N(60); i++) { g.fillStyle = hash(i, 3) < 0.5 ? '#c0b298' : '#a89a80'; g.fillRect(hash(i, 1) * w | 0, hash(i, 2) * h | 0, 2, 1); }
+    g.fillStyle = '#9a8c74';
+    for (let r = 0, y = 0; y < h; y += bh, r++) { g.fillRect(0, y, w, 1); for (let x = (r % 2) * (bw >> 1); x < w; x += bw) g.fillRect(x, y, 1, bh); }
   }));
-  P('dirt', patternCanvas(40, 40, (g, w, h) => noise(g, w, h, '#c4ac80', ['#b49c70', '#d0b88c', '#a88e64', '#bca476'], 380)));
-  P('tile', patternCanvas(20, 20, (g, w, h) => { g.fillStyle = '#d8d0bc'; g.fillRect(0, 0, w, h); g.fillStyle = '#bcb4a0'; g.fillRect(0, 0, w, 1); g.fillRect(0, 0, 1, h); g.fillRect(0, 10, w, 1); g.fillRect(10, 0, 1, h); }));
-  P('semen', patternCanvas(32, 32, (g, w, h) => noise(g, w, h, '#c4beb2', ['#b8b2a6', '#cec8bc', '#aea89c'], 260)));
-  P('paving', patternCanvas(20, 20, (g, w, h) => { g.fillStyle = '#b8b4ac'; g.fillRect(0, 0, w, h); g.fillStyle = '#a09c94'; for (let y = 0; y < h; y += 5) for (let x = (y / 5 % 2) * 2.5; x < w; x += 5) g.fillRect(x | 0, y, 1, 1), g.fillRect(x | 0, y, 4, 1); }));
-  P('lawn', patternCanvas(32, 32, (g, w, h) => { noise(g, w, h, '#8cbc6c', ['#82b264', '#96c676', '#7aa85c'], 300); for (let y = 0; y < h; y += 8) { g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(0, y, w, 4); } }));
-  P('sawah', patternCanvas(32, 32, (g, w, h) => noise(g, w, h, '#86ae5a', ['#7aa04e', '#94bc66', '#6e9a5a', '#80a8a0'], 300)));
-  P('water', patternCanvas(48, 48, (g, w, h) => { noise(g, w, h, '#5f98c4', ['#6aa2cc', '#5890bc', '#74aad2'], 200, 2); for (let i = 0; i < 10; i++) { g.fillStyle = 'rgba(210,235,250,0.55)'; g.fillRect(hash(i, 31) * w | 0, hash(i, 32) * h | 0, 3 + (hash(i, 33) * 4 | 0), 1); } }));
-  P('field', patternCanvas(32, 32, (g, w, h) => noise(g, w, h, '#a6cc7a', ['#9ac06e', '#b2d888'], 260)));
-  P('mud', patternCanvas(32, 32, (g, w, h) => noise(g, w, h, '#9a8a6c', ['#8a7a5c', '#a89878', '#7e6e52'], 300)));
+  P('dirt', nz(40, 40, '#c4ac80', ['#b49c70', '#d0b88c', '#a88e64', '#bca476'], 380));
+  P('tile', patternCanvas(Z(20), Z(20), (g, w, h) => { const t = Z(10); g.fillStyle = '#d8d0bc'; g.fillRect(0, 0, w, h); for (let i = 0; i < N(20); i++) { g.fillStyle = '#e0d8c4'; g.fillRect(hash(i, 5) * w | 0, hash(i, 6) * h | 0, 1, 1); } g.fillStyle = '#bcb4a0'; for (let y = 0; y < h; y += t) g.fillRect(0, y, w, 1); for (let x = 0; x < w; x += t) g.fillRect(x, 0, 1, h); }));
+  P('semen', nz(32, 32, '#c4beb2', ['#b8b2a6', '#cec8bc', '#aea89c'], 260));
+  P('paving', patternCanvas(Z(20), Z(20), (g, w, h) => { const bh = Z(5); g.fillStyle = '#b8b4ac'; g.fillRect(0, 0, w, h); for (let i = 0; i < N(30); i++) { g.fillStyle = '#c2beb6'; g.fillRect(hash(i, 7) * w | 0, hash(i, 8) * h | 0, 1, 1); } g.fillStyle = '#a09c94'; for (let r = 0, y = 0; y < h; y += bh, r++) { g.fillRect(0, y, w, 1); for (let x = (r % 2) * (bh >> 1); x < w; x += bh) g.fillRect(x, y, 1, bh); } }));
+  P('lawn', patternCanvas(Z(32), Z(32), (g, w, h) => { noise(g, w, h, '#8cbc6c', ['#82b264', '#96c676', '#7aa85c'], N(300)); for (let y = 0; y < h; y += Z(8)) { g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(0, y, w, Z(4)); } }));
+  P('sawah', nz(32, 32, '#86ae5a', ['#7aa04e', '#94bc66', '#6e9a5a', '#80a8a0'], 300));
+  P('water', patternCanvas(Z(48), Z(48), (g, w, h) => { noise(g, w, h, '#5f98c4', ['#6aa2cc', '#5890bc', '#74aad2'], N(200), 2); for (let i = 0; i < N(10); i++) { g.fillStyle = 'rgba(210,235,250,0.55)'; g.fillRect(hash(i, 31) * w | 0, hash(i, 32) * h | 0, Z(3 + (hash(i, 33) * 4 | 0)), 1); } }));
+  P('field', nz(32, 32, '#a6cc7a', ['#9ac06e', '#b2d888'], 260));
+  P('mud', nz(32, 32, '#9a8a6c', ['#8a7a5c', '#a89878', '#7e6e52'], 300));
   return PAT;
+}
+// detail halus tanah di shader: bintik 1/32 petak (seukuran voxel) menumpang di atas tekstur tanah
+export function groundDetail(mat, amount = 0.07) {
+  mat.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGP;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vGP = (modelMatrix * vec4(transformed, 1.0)).xz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vGP; float gh(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }')
+      .replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb *= ' + (1 - amount).toFixed(3) + ' + ' + (2 * amount).toFixed(3) + ' * gh(floor(vGP * 32.0));');
+  };
+  mat.customProgramCacheKey = () => 'gdet' + amount;
+  return mat;
 }

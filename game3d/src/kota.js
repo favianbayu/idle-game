@@ -3,11 +3,12 @@
 import * as THREE from 'three';
 import KOTA from './data/kota.json';
 import { Chunks, Merger, col, shade, mix } from './geom.js';
-import { FLOOR, hash, pick, inPoly, rgb, MAT, PAT, makePatterns, facade, colLocal, GLASS, GLASS2, FRAME, voxelize } from './common.js';
+import { FLOOR, hash, pick, inPoly, rgb, MAT, PAT, makePatterns, groundDetail, facade, colLocal, GLASS, GLASS2, FRAME, voxelize } from './common.js';
 import { PAL, L, kampung, panggung, perum, ruko, motor, car, P1CAR } from './buildings.js';
 import { plant } from './veg.js';
+import { buildTraffic } from './traffic.js';
 
-const PX = 10;   // piksel tekstur tanah per petak
+const PX = 16;   // piksel tekstur tanah per petak (1 piksel = 2 voxel)
 // indeks area dicari dari warnanya (urutan di peta_organik.py bisa berubah)
 const eqc = (a, c) => a.color[0] === c[0] && a.color[1] === c[1] && a.color[2] === c[2];
 const AREA = (() => {
@@ -140,7 +141,7 @@ function plan(K, M, regionAt, occ, reserve) {
 /* ------------------------------------------------------------------ cat tanah */
 function paintGround(K, houses, M, specials) {
   const [W, H] = K.size, s = PX, cv = document.createElement('canvas'); cv.width = W * s; cv.height = H * s;
-  const g = cv.getContext('2d'); makePatterns(g);
+  const g = cv.getContext('2d'); makePatterns(g, s / 10);
   g.fillStyle = PAT.grass; g.fillRect(0, 0, cv.width, cv.height);
   g.lineCap = g.lineJoin = 'round';
   // perbukitan (lebih gelap), danau, sawah, alun-alun, lapangan, lahan proyek
@@ -165,12 +166,13 @@ function paintGround(K, houses, M, specials) {
   });
   // alun-alun: jalan melingkar conblock + lapangan; lapangan bola: garis putih
   g.strokeStyle = PAT.paving; g.lineWidth = 1.6 * s; g.beginPath(); g.ellipse(146 * s, 76 * s, 11 * s, 7 * s, 0, 0, Math.PI * 2); g.stroke();
-  g.strokeStyle = 'rgba(255,255,255,0.8)'; g.lineWidth = 2; g.strokeRect(82.5 * s, 100.5 * s, 11 * s, 7 * s); g.beginPath(); g.moveTo(88 * s, 100.5 * s); g.lineTo(88 * s, 107.5 * s); g.stroke(); g.beginPath(); g.arc(88 * s, 104 * s, 1.2 * s, 0, 7); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,0.8)'; g.lineWidth = 0.2 * s; g.strokeRect(82.5 * s, 100.5 * s, 11 * s, 7 * s); g.beginPath(); g.moveTo(88 * s, 100.5 * s); g.lineTo(88 * s, 107.5 * s); g.stroke(); g.beginPath(); g.arc(88 * s, 104 * s, 1.2 * s, 0, 7); g.stroke();
   // sungai: tepi lumpur -> air bertekstur
   for (const r of K.rivers) {
     strokePath(g, r.pts, s); g.strokeStyle = '#8a8466'; g.lineWidth = (r.w + 1.6) * s; g.stroke();
     g.strokeStyle = '#6e7a68'; g.lineWidth = (r.w + 0.7) * s; g.stroke();
-    g.strokeStyle = PAT.water; g.lineWidth = r.w * s; g.stroke();
+    g.strokeStyle = '#8a8478'; g.lineWidth = (r.w + 0.05) * s; g.stroke();          // bibir talud batu
+    g.strokeStyle = PAT.water; g.lineWidth = (r.w - 0.4) * s; g.stroke();
   }
   // rel: kerikil
   for (const r of K.rails) { strokePath(g, r.pts, s); g.strokeStyle = '#8c8478'; g.lineWidth = 2.4 * s; g.stroke(); g.strokeStyle = 'rgba(60,50,40,0.25)'; g.lineWidth = 1.6 * s; g.stroke(); }
@@ -198,9 +200,9 @@ function paintGround(K, houses, M, specials) {
   const gm = mk.getContext('2d'); gm.lineCap = 'butt'; gm.lineJoin = 'round';
   for (const r of K.roads) {
     if (r.kind === 'raya') {
-      gm.strokeStyle = '#ecebe2'; gm.lineWidth = 2; for (const o of [-1, 1]) { strokeOffset(gm, r.pts, o * (r.w / 2 - 0.3), s); gm.stroke(); }
-      strokePath(gm, r.pts, s); gm.lineWidth = 2; gm.setLineDash([1.5 * s, 1.5 * s]); gm.stroke(); gm.setLineDash([]);
-    } else if (r.kind === 'jalan') { strokePath(gm, r.pts, s); gm.strokeStyle = 'rgba(240,236,220,0.8)'; gm.lineWidth = 1.5; gm.setLineDash([1 * s, 1.4 * s]); gm.stroke(); gm.setLineDash([]); }
+      gm.strokeStyle = '#ecebe2'; gm.lineWidth = 0.2 * s; for (const o of [-1, 1]) { strokeOffset(gm, r.pts, o * (r.w / 2 - 0.3), s); gm.stroke(); }
+      strokePath(gm, r.pts, s); gm.lineWidth = 0.2 * s; gm.setLineDash([1.5 * s, 1.5 * s]); gm.stroke(); gm.setLineDash([]);
+    } else if (r.kind === 'jalan') { strokePath(gm, r.pts, s); gm.strokeStyle = 'rgba(240,236,220,0.8)'; gm.lineWidth = 0.15 * s; gm.setLineDash([1 * s, 1.4 * s]); gm.stroke(); gm.setLineDash([]); }
   }
   gm.globalCompositeOperation = 'destination-out'; gm.fillStyle = '#000';
   const hole = (x, z, r) => { gm.beginPath(); gm.arc(x * s, z * s, r * s, 0, Math.PI * 2); gm.fill(); };
@@ -266,12 +268,20 @@ export function buildKota(scene, C) {
   const musala = near(30, 100).find(h => h !== darto && h.w >= 4); if (musala) musala.special = 'musala';
 
   // tanah
-  const tex = new THREE.CanvasTexture(paintGround(K, houses, M, specials));
-  tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.anisotropy = 4;
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshLambertMaterial({ map: tex }));
-  ground.rotation.x = -Math.PI / 2; ground.position.set(W / 2, 0, H / 2); ground.receiveShadow = true; scene.add(ground);
+  // tanah dipotong jadi beberapa tekstur <= 2048 px (batas aman GPU HP), tiap potong satu bidang
+  const gcv = paintGround(K, houses, M, specials), TS = 2048 / PX;
+  for (let tx = 0; tx < W; tx += TS) for (let tz = 0; tz < H; tz += TS) {
+    const tw = Math.min(TS, W - tx), th = Math.min(TS, H - tz), c = document.createElement('canvas');
+    c.width = tw * PX; c.height = th * PX; const cg = c.getContext('2d'); cg.drawImage(gcv, -tx * PX, -tz * PX);
+    waterHoles(cg, K, tx, tz, c.width, c.height);   // sungai & danau dilubangi: airnya ada di bawah permukaan tanah
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.anisotropy = 4;
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(tw, th), groundDetail(new THREE.MeshLambertMaterial({ map: tex, alphaTest: 0.5 })));
+    ground.rotation.x = -Math.PI / 2; ground.position.set(tx + tw / 2, 0, tz + th / 2); ground.receiveShadow = true; scene.add(ground);
+  }
+  const tex = { image: gcv };
   const outer = new THREE.Mesh(new THREE.PlaneGeometry(900, 700), new THREE.MeshLambertMaterial({ color: new THREE.Color('#9cbc78') }));
-  outer.rotation.x = -Math.PI / 2; outer.position.set(W / 2, -0.03, H / 2); scene.add(outer);
+  outer.rotation.x = -Math.PI / 2; outer.position.set(W / 2, -2.0, H / 2); scene.add(outer);
   C.box(W / 2, -1, W / 2 + 2, 1); C.box(W / 2, H + 1, W / 2 + 2, 1); C.box(-1, H / 2, 1, H / 2 + 2); C.box(W + 1, H / 2, 1, H / 2 + 2);
 
   const ch = new Chunks(32), veg = [];
@@ -291,12 +301,14 @@ export function buildKota(scene, C) {
   streetStuff(ch, K, M, C, veg, regionAt, occ, houses);
   if (globalThis.__TRACE) { globalThis.__BOXES = globalThis.__TRACE; globalThis.__ROAD = globalThis.__TRACE.filter(t => t.p.some(([x, , z]) => M.roadDist(x, z) < -0.12 && !M.waterAt(x, z) && x > 0 && z > 0 && x < W && z < H)); globalThis.__TRACE = null; }
   for (const m of ch.meshes(MAT.world)) scene.add(m);
-  const water = riverMesh(K); scene.add(water);
+  const water = riverMesh(K); scene.add(water); scene.add(waterBanks(K, M));
   // tanaman
   vegetation(K, M, occ, regionAt, veg, reserve, C);
   if (globalThis.__TRACEON) globalThis.__VEGROAD = veg.filter(v => M.roadDist(v.x, v.z) < 0.1).map(v => v.k);
   plant(scene, veg);
+  const traffic = buildTraffic(scene, K, C, M);
   return {
+    traffic,
     regionAt: (x, z) => { const r = regionAt(x, z); return r ? REGIONS[REGION_KEY.indexOf(r)] : 'Wirabumi'; },
     regionKey: regionAt,
     marks: K.marks.map(m => ({ ...m, name: m.desc.replace(/\s*\(.*$/, '') })),
@@ -453,7 +465,9 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses) {
       const water = M.waterAt(p.x, p.z);
       if (water) {   // jembatan: lantai beton + pagar (besi biru / bambu)
         const m = ch.at(p.x, p.z), xf = { x: p.x, z: p.z, a };
-        m.box(xf, 0, -0.05, 0, 0.55, 0.12, road.w + 0.5, col('#a8a49a'));
+        m.box(xf, 0, -0.12, 0, 0.55, 0.1, road.w + 0.5, col('#a8a49a'));
+        for (const sd of [-1, 1]) m.box(xf, 0, -0.5, sd * (road.w / 2 + 0.05), 0.55, 0.44, 0.3, col('#8e8a80'));          // balok samping jembatan
+        if (i % 6 === 0) for (const sd of [-0.5, 0.5]) m.box(xf, 0, BED, sd * road.w * 0.6, 0.34, -BED - 0.48, 0.34, col('#7a766c'));   // pilar di sungai
         for (const s of [-1, 1]) { const [qx, qz] = [p.x + nx * s * (road.w / 2 + 0.15), p.z + nz * s * (road.w / 2 + 0.15)]; if (M.roadDist(qx, qz) < 0) continue; m.box(xf, 0, 0.07, s * (road.w / 2 + 0.15), 0.52, 0.12, 0.2, col('#9a968c')); m.box(xf, 0, 0.19, s * (road.w / 2 + 0.15), 0.08, 0.6, 0.08, bridgeC); m.box(xf, 0, 0.75, s * (road.w / 2 + 0.15), 0.55, 0.06, 0.08, bridgeC); colLocal(C, xf, 0, s * (road.w / 2 + 0.2), 0.55, 0.15); }
         continue;
       }
@@ -504,13 +518,7 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses) {
       }
     }
   }
-  // lampu merah di simpang Jl. Raya - Jl. Merdeka & Jl. Raya - jalan selatan
-  for (const [x, z, a] of [[131.5, 87.5, 0], [104.5, 91, Math.PI]]) {
-    const m = ch.at(x, z), xf = { x, z, a };
-    m.box(xf, 0, 0, 0, 0.16, 3.2, 0.16, col('#3a3a40')); m.box(xf, -0.8, 3.0, 0, 1.6, 0.1, 0.1, col('#3a3a40'));
-    m.box(xf, -1.5, 2.4, 0, 0.3, 0.8, 0.3, col('#2a2a2e')); for (const [y, c] of [[2.95, '#e23a2a'], [2.72, '#3a3a2a'], [2.49, '#2a3a2a']]) m.box(xf, -1.5, y, 0.16, 0.18, 0.16, 0.02, col(c));
-    C.circle(x, z, 0.14);
-  }
+  // lampu merah: dibuat otomatis di tiap simpang jalan raya oleh traffic.js
   // rel kereta: bantalan + 2 batang rel
   for (const r of K.rails) {
     const P = resample(r.pts, 0.7);
@@ -562,16 +570,62 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses) {
 }
 
 /* ------------------------------------------------------------------ air sungai (beriak) */
+// lubang air di tekstur tanah: sungai (minus jembatan/jalan yang melintas) & danau, dengan bibir batu di tepi danau
+let HOLE = null;
+function waterHoles(g, K, tx, tz, w, h) {
+  if (!HOLE) HOLE = document.createElement('canvas');
+  HOLE.width = w; HOLE.height = h;
+  const m = HOLE.getContext('2d'); m.setTransform(PX, 0, 0, PX, -tx * PX, -tz * PX); m.lineCap = m.lineJoin = 'round';
+  m.fillStyle = m.strokeStyle = '#000';
+  for (const r of K.rivers) { strokePath(m, r.pts, 1); m.lineWidth = r.w - 0.3; m.stroke(); }
+  for (const i of AREA.water) { strokePath(m, K.areas[i].pts, 1); m.closePath(); m.fill(); }
+  m.globalCompositeOperation = 'destination-out';
+  for (const r of K.roads) if (r.kind !== 'setapak') { strokePath(m, r.pts, 1); m.lineWidth = r.w + 0.9; m.stroke(); }
+  g.save(); g.globalCompositeOperation = 'destination-out'; g.drawImage(HOLE, 0, 0); g.restore();
+  g.save(); g.setTransform(PX, 0, 0, PX, -tx * PX, -tz * PX); g.lineJoin = 'round'; g.strokeStyle = '#8a8478'; g.lineWidth = 0.3;
+  for (const i of AREA.water) { strokePath(g, K.areas[i].pts, 1); g.closePath(); g.stroke(); }
+  g.restore();
+}
+// dasar & dinding talud: sungai/danau punya kedalaman (dasar -0.9, permukaan air -0.32)
+const BED = -1.15, SURF = -0.48;
+function waterBanks(K, M) {
+  const m = new Merger(), bed = col('#3e5048'), stone = col('#8a8478'), wet = col('#56584c');
+  const wall = (ax, az, bx, bz, i) => {
+    const c1 = shade(stone, 0.9 + 0.2 * hash(i, 5)), c2 = shade(wet, 0.9 + 0.15 * hash(i, 6));
+    m.poly2([[ax, SURF + 0.06, az], [bx, SURF + 0.06, bz], [bx, 0.01, bz], [ax, 0.01, az]], c1);
+    m.poly2([[ax, BED, az], [bx, BED, bz], [bx, SURF + 0.06, bz], [ax, SURF + 0.06, az]], c2);
+  };
+  for (const r of K.rivers) {
+    const P = resample(r.pts, 0.5), w = r.w / 2 - 0.15;
+    for (let i = 1; i < P.length; i++) {
+      const a = P[i - 1], b = P[i];
+      for (const sd of [-1, 1]) wall(a.x + a.tz * w * sd, a.z - a.tx * w * sd, b.x + b.tz * w * sd, b.z - b.tx * w * sd, i * 2 + (sd > 0));
+      m.poly2([[a.x + a.tz * w, BED, a.z - a.tx * w], [b.x + b.tz * w, BED, b.z - b.tx * w], [b.x - b.tz * w, BED, b.z + b.tx * w], [a.x - a.tz * w, BED, a.z + a.tx * w]], shade(bed, 0.9 + 0.2 * hash(i, 9)));
+    }
+  }
+  for (const k of AREA.water) {
+    const pts = K.areas[k].pts;
+    for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(L / 0.6));
+      for (let j = 0; j < n; j++) wall(a[0] + (b[0] - a[0]) * j / n, a[1] + (b[1] - a[1]) * j / n, a[0] + (b[0] - a[0]) * (j + 1) / n, a[1] + (b[1] - a[1]) * (j + 1) / n, k * 1000 + i * 50 + j); }
+    const tris = THREE.ShapeUtils.triangulateShape(pts.map(p => new THREE.Vector2(p[0], p[1])), []);
+    for (const [i0, i1, i2] of tris) m.poly2([[pts[i0][0], BED, pts[i0][1]], [pts[i1][0], BED, pts[i1][1]], [pts[i2][0], BED, pts[i2][1]]], bed);
+  }
+  const me = new THREE.Mesh(m.build(), MAT.world); me.receiveShadow = true; return me;
+}
 function riverMesh(K) {
   const m = new Merger(), c = col('#4f8ab8');
   for (const r of K.rivers) {
     const P = resample(r.pts, 1);
     for (let i = 1; i < P.length; i++) {
-      const a = P[i - 1], b = P[i], w = r.w / 2 + 0.1;
-      m.poly([[a.x + a.tz * w, 0.04, a.z - a.tx * w], [b.x + b.tz * w, 0.04, b.z - b.tx * w], [b.x - b.tz * w, 0.04, b.z + b.tx * w], [a.x - a.tz * w, 0.04, a.z + a.tx * w]], c);
+      const a = P[i - 1], b = P[i], w = r.w / 2;
+      m.poly([[a.x + a.tz * w, SURF, a.z - a.tx * w], [b.x + b.tz * w, SURF, b.z - b.tx * w], [b.x - b.tz * w, SURF, b.z + b.tx * w], [a.x - a.tz * w, SURF, a.z + a.tx * w]], c);
     }
   }
-  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.55, depthWrite: false });
+  for (const k of AREA.water) {
+    const pts = K.areas[k].pts, tris = THREE.ShapeUtils.triangulateShape(pts.map(p => new THREE.Vector2(p[0], p[1])), []);
+    for (const [i0, i1, i2] of tris) m.poly2([[pts[i0][0], SURF, pts[i0][1]], [pts[i1][0], SURF, pts[i1][1]], [pts[i2][0], SURF, pts[i2][1]]], c);
+  }
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide });
   mat.onBeforeCompile = sh => {
     sh.uniforms.uT = WATER_T;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vW;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvW = (modelMatrix * vec4(transformed,1.0)).xyz;');
@@ -580,7 +634,7 @@ function riverMesh(K) {
         vec2 q = floor(vW.xz * 6.0);
         float w = sin(q.x * 0.9 + uT * 1.7) + sin(q.y * 1.3 - uT * 1.3 + q.x * 0.4);
         diffuseColor.rgb += step(1.75, w) * vec3(0.35, 0.4, 0.42);
-        diffuseColor.a = 0.5 + step(1.75, w) * 0.3;`);
+        diffuseColor.a = 0.62 + step(1.75, w) * 0.3;`);
   };
   const mesh = new THREE.Mesh(m.build(), mat); mesh.renderOrder = 2;
   return mesh;

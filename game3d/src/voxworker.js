@@ -1,22 +1,14 @@
 // Worker: membangun mesh voxel tokoh (per gaya, per animasi, per frame) di luar thread utama,
 // supaya game tidak tersendat saat tokoh baru muncul.
-import { STYLES, ANIMS, humanShape, buildVox, R, fixedRamp, organicColor } from './voxlib.js';
+import { STYLES, ANIMS, humanShape, buildVox, organicColor, makeRamps, faceCfg } from './voxlib.js';
 import { NPC_STYLES } from './npc_styles.js';
 import { EXTRA_STYLES } from './npc_extra.js';
 
 // Gaya tokoh SMA: ramp warna dibuat sama seperti loop STYLES di renderer lama.
 const ALL = { ...NPC_STYLES, ...EXTRA_STYLES };
 for (const id in ALL) {
-  const st = { ...ALL[id] }, r = {};
-  r.skin = R(st.skin); r.nose = [r.skin[0], r.skin[0], r.skin[1], r.skin[1]];
-  r.hair = R(st.hair || '#222222'); r.hair2 = r.hair.map(c => c.map(v => Math.round(v * 0.72))); r.brow = [r.hair[0], r.hair[0], r.hair[0], r.hair[1]];
-  r.tie = R(st.tie || '#e83a5a'); r.helmet = R(st.helmet || '#2fa04a'); r.visor = R('#2a3440'); r.phone = fixedRamp('#1e2230'); r.stubble = [r.skin[0], r.skin[1], r.skin[1], r.skin[2]];
-  if (st.hairStyle === 'hijab') r.brow = [R('#3a2418')[0], R('#3a2418')[0], R('#3a2418')[1], R('#3a2418')[1]];
-  r.top = R(st.top); r.top2 = R(st.top2 || st.top); r.bottom = R(st.bottom); r.bottom2 = R(st.bottom2 || st.bottom);
-  r.shoe = R(st.shoe); r.sole = R('#2a2420'); r.hijab = R(st.hijab || '#888888'); r.peci = R('#1e1e24'); r.cap = R(st.cap || '#cc3333');
-  r.eye = fixedRamp('#16121e'); r.eyeW = fixedRamp('#ffffff'); r.mouth = fixedRamp('#9a3f38'); r.blush = fixedRamp('#ec8f82'); r.glasses = fixedRamp('#26262c');
-  r.blade = R('#c4ced8'); r.hilt = R('#b07a26'); r.orb = R('#8fe0ff'); r.stick = R('#9a7440'); r.bristle = R('#d4b36a');
-  st.ramps = r; st.color = organicColor(m => r[m]);
+  const st = { ...ALL[id] };
+  st.ramps = makeRamps(st); st.color = organicColor(m => st.ramps[m]); st.fc = faceCfg(st);
   STYLES[id] = st;
 }
 
@@ -68,7 +60,7 @@ self.onmessage = e => {
   const sh = humanShape(A.pose(t), st, 'all');
   const m = buildVox(sh.L, sh.W, sh.H, sh.mat, st.color, { bbox: sh.bbox });
   const g = mesh(m);
-  g.lift = (sh.lift || 0) * S;
+  g.lift = (sh.lift || 0) * S; g.butt = sh.buttZ * S; g.buttX = sh.buttX * S;
   self.postMessage({ key, ...g }, [g.pos.buffer, g.nor.buffer, g.col.buffer, g.idx.buffer]);
 };
 self.postMessage({ ready: true, anims: Object.fromEntries(Object.entries(ANIMS).map(([k, a]) => [k, { n: a.n, fps: a.fps, loop: !!a.loop }])),

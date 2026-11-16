@@ -126,22 +126,38 @@ const STYLES = {
   tukangBakso:{ name: 'Mas Bakso', scale: 1.28, skin: '#b8805a', hair: '#1a1410', hairStyle: 'cap', cap: '#d23a3a', top: '#3a7ac0', sleeves: 'long', bottom: '#3a3a40', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'sandal' },
 };
 const fixedRamp = c => [hexRGB(c)];
-for (const id in STYLES) {
-  const st = STYLES[id], r = {};
+// gaya wajah otomatis dari nama (kalau tidak ditulis di style), supaya tiap tokoh beda: bentuk wajah, mata, alis, mulut
+const strHash = str => { let h = 7; for (const ch of str || '') h = Math.imul(h ^ ch.charCodeAt(0), 2654435761) >>> 0; return h / 4294967295; };
+const isFem = st => st.hairStyle === 'hijab' || st.bottomStyle === 'skirt' || ['long', 'bob', 'twintail', 'ponytail', 'bun', 'wavy', 'lowtie', 'braid', 'hightail', 'bobclip', 'twinlow'].includes(st.hairStyle);
+function faceCfg(st) {
+  const h = k => strHash((st.name || '') + k), fem = isFem(st), pk = (k, arr) => st[k] || arr[Math.floor(h(k) * arr.length)];
+  return {
+    fem, shape: pk('face', fem ? ['oval', 'v', 'round', 'oval'] : ['oval', 'square', 'round', 'square']),
+    eyes: pk('eyes', fem ? ['big', 'normal', 'big', 'sharp'] : ['normal', 'small', 'sharp', 'normal']),
+    brow: pk('brow', fem ? ['thin', 'arch', 'thin'] : ['thick', 'normal', 'thick', 'angry']),
+    mouth: pk('mouth', fem ? ['small', 'smile', 'small'] : ['flat', 'smile', 'flat', 'smirk']),
+    lash: st.lash ?? fem, blush: st.blush ?? fem, beard: st.beard || null, glasses: st.glasses || null,
+  };
+}
+function makeRamps(st) {
+  const r = {};
   r.skin = R(st.skin); r.nose = [r.skin[0], r.skin[0], r.skin[1], r.skin[1]];
   r.hair = R(st.hair || '#222222'); r.hair2 = r.hair.map(c => c.map(v => Math.round(v * 0.72))); r.brow = [r.hair[0], r.hair[0], r.hair[0], r.hair[1]];
-  r.tie = R(st.tie || '#e83a5a'); r.helmet = R(st.helmet || '#2fa04a'); r.visor = R('#2a3440'); r.phone = fixedRamp('#1e2230'); r.stubble = [r.skin[0], r.skin[1], r.skin[1], r.skin[2]];
+  r.tie = R(st.tie || '#e83a5a'); r.helmet = R(st.helmet || '#2fa04a'); r.visor = R('#2a3440'); r.phone = fixedRamp('#1e2230');
+  r.stubble = R(st.skin).map((c, i) => mixc(c, r.hair[1], 0.35).map(clamp255));
   if (st.hairStyle === 'hijab') r.brow = [R('#3a2418')[0], R('#3a2418')[0], R('#3a2418')[1], R('#3a2418')[1]];
-  r.top = R(st.top); r.top2 = R(st.top2 || st.top);
-  r.bottom = R(st.bottom); r.bottom2 = R(st.bottom2 || st.bottom);
-  r.shoe = R(st.shoe); r.sole = R('#2a2420');
-  r.hijab = R(st.hijab || '#888888'); r.peci = R('#1e1e24'); r.cap = R(st.cap || '#cc3333');
-  r.eye = fixedRamp('#16121e'); r.eyeW = fixedRamp('#ffffff'); r.mouth = fixedRamp('#9a3f38');
+  r.top = R(st.top); r.top2 = R(st.top2 || st.top); r.bottom = R(st.bottom); r.bottom2 = R(st.bottom2 || st.bottom);
+  r.shoe = R(st.shoe); r.sole = R('#2a2420'); r.hijab = R(st.hijab || '#888888'); r.peci = R('#1e1e24'); r.cap = R(st.cap || '#cc3333');
+  r.eye = fixedRamp('#16121e'); r.eyeW = fixedRamp('#ffffff'); r.mouth = fixedRamp('#9a3f38'); r.lip = fixedRamp('#c0605a'); r.teeth = fixedRamp('#f4f0e8');
   r.blush = fixedRamp('#ec8f82'); r.glasses = fixedRamp('#26262c');
-  r.blade = R('#c4ced8'); r.hilt = R('#b07a26'); r.orb = R('#8fe0ff');
-  r.stick = R('#9a7440'); r.bristle = R('#d4b36a');
-  st.ramps = r; st.color = organicColor(m => r[m]);
+  r.blade = R('#c4ced8'); r.hilt = R('#b07a26'); r.orb = R('#8fe0ff'); r.stick = R('#9a7440'); r.bristle = R('#d4b36a');
+  // seragam & aksesori
+  r.collar = R('#ffffff'); r.shirt = R('#f4f4f0'); r.seam = R('#bcbcb6'); r.placket = R('#e6e6e0'); r.button = fixedRamp('#8a8a86');
+  r.badge = fixedRamp('#d8a830'); r.nametag = fixedRamp('#1e2430'); r.belt = R('#1c1c20'); r.buckle = fixedRamp('#d0d4dc');
+  r.clip = R(st.clip || '#f2c230'); r.book = R(st.book || '#3a6ab0'); r.page = R('#f4f0e2'); r.box = R('#b8905a'); r.bag = R(st.bag || '#2a3a5a');
+  return r;
 }
+for (const id in STYLES) { const st = STYLES[id]; st.ramps = makeRamps(st); st.color = organicColor(m => st.ramps[m]); st.fc = faceCfg(st); }
 
 /* ---------- Rangka ----------
    Sudut tungkai: 0 = lurus ke bawah, +π/2 = ke depan, π = ke atas, negatif = ke belakang.
@@ -154,6 +170,7 @@ const POSE0 = {
   sy: 0,          // pinggul bergeser ke samping (goyang saat jalan/joget)
   ftL: 0, ftR: 0, // sudut telapak kaki (tumit/jinjit)
   phone: 0,       // memegang HP di tangan kanan
+  box: 0, book: 0, // membawa kardus / membaca buku (dua tangan)
 };
 const limb = a => [Math.sin(a), 0, -Math.cos(a)];
 const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
@@ -187,8 +204,20 @@ const BANGS = {   // garis poni: rambut menutupi dahi di atas garis ini
   ponytail: dy => 1.1,
   spiky: dy => 0.7 + 0.5 * Math.abs(((dy + 5) * 0.9) % 2 - 1),
   curly: dy => 0.9,
+  messy: dy => 0.55 + 0.75 * hash(Math.floor(dy * 1.4 + 9), 3, 7),
+  wavy: dy => 0.8 + 0.3 * Math.cos(dy * 1.3),
+  lowtie: dy => 1.0 + 0.2 * Math.abs(dy),
+  braid: dy => 1.2,
+  hightail: dy => 0.75 + 0.35 * (Math.floor((dy + 5) * 1.6) % 2),
+  bobclip: dy => 0.55,
+  twinlow: dy => 0.35,                         // poni menutupi alis
+  halfup: dy => 0.85,
+  slick: dy => (dy > 0.3 && dy < 1.2 ? 0.55 : 9),   // disisir ke belakang, sehelai jatuh di dahi
+  crew: dy => 1.35,
 };
 const SPIKES = [[0.2, 0, 1], [-0.5, 0, 0.85], [-0.9, 0, 0.3], [0.1, 0.7, 0.7], [0.1, -0.7, 0.7], [-0.5, 0.7, 0.5], [-0.5, -0.7, 0.5], [0.75, 0.3, 0.55], [0.75, -0.3, 0.55], [-0.95, 0.4, -0.1], [-0.95, -0.4, -0.1]].map(norm);
+// rambut belakang bawah (tengkuk) hanya di belakang telinga, supaya rahang & pipi tidak tertutup
+const nape = (dx, dz, lo = -4.4) => dz > lo && (dz > -1.3 || dx < -0.6);
 const shellIn = (dx, dy, dz, k = 1) => ((dx + 0.4) / (4.5 * k)) ** 2 + (dy / (4.3 * k)) ** 2 + ((dz - 0.2) / (4.4 * k)) ** 2 <= 1;
 function hairAt(hs, dx, dy, dz, face) {
   switch (hs) {
@@ -202,10 +231,10 @@ function hairAt(hs, dx, dy, dz, face) {
       if (dx > 2.5 && dx < 6.4 && dz > 1.5 && dz < 2.5 && Math.abs(dy) < 3.0) return 'cap';
       return !face && dz < 1.6 && shellIn(dx, dy, dz) ? 1 : 0;
     case 'bald': return !face && dz < 0.9 && dx < 1.0 && shellIn(dx, dy, dz) ? 1 : 0;
-    case 'buzz': return !face && shellIn(dx, dy, dz, 0.93) && dz > -2.6 ? 1 : 0;            // cepak
+    case 'buzz': return !face && shellIn(dx, dy, dz, 0.93) && dz > -2.4 && nape(dx, dz) ? 1 : 0;            // cepak
     case 'mohawk': return Math.abs(dy) < 1.1 && dz > -1 && ((dx + 0.4) / 5.0) ** 2 + ((dz - 0.4) / 5.6) ** 2 <= 1 ? 1 : 0;
     case 'spiky': {                                                                          // jabrik
-      if (!face && shellIn(dx, dy, dz, 0.97) && dz > -2.6) return 1;
+      if (!face && shellIn(dx, dy, dz, 0.97) && dz > -2.4 && nape(dx, dz)) return 1;
       const vx = dx + 0.3, vz = dz - 0.3;
       for (const d of SPIKES) {
         const t = vx * d[0] + dy * d[1] + vz * d[2];
@@ -218,7 +247,7 @@ function hairAt(hs, dx, dy, dz, face) {
       return !face && dz > -2.8 && ((dx + 0.5) / (5.0 + b * 0.7)) ** 2 + (dy / (4.9 + b * 0.7)) ** 2 + ((dz - 0.7) / (5.0 + b * 0.7)) ** 2 <= 1 ? 1 : 0;
     }
     case 'sidepart':                                                                         // belah samping
-      if (!face && shellIn(dx, dy, dz) && dz > -2.6) return 1;
+      if (!face && shellIn(dx, dy, dz) && dz > -2.4 && nape(dx, dz)) return 1;
       return dz > 0.3 && ((dx + 0.1) / 4.6) ** 2 + ((dy - 0.7) / 4.4) ** 2 + ((dz - 0.8) / 4.4) ** 2 <= 1 && !(dx > 0.6 && dz < 0.55 + 0.28 * dy) ? 1 : 0;
     case 'bob':                                                                              // rambut bob sebahu
       return !face && dz > -3.5 && ((dx + 0.5) / 4.7) ** 2 + (dy / 4.6) ** 2 + ((dz - 0.1) / 4.8) ** 2 <= 1 ? 1 : 0;
@@ -240,7 +269,57 @@ function hairAt(hs, dx, dy, dz, face) {
     case 'bun':
       if (!face && shellIn(dx, dy, dz)) return 1;
       return (dx + 3.8) ** 2 + dy ** 2 + (dz - 2.6) ** 2 < 2.4 ** 2 ? 1 : 0;
-    default: return !face && shellIn(dx, dy, dz) ? 1 : 0;                                   // pendek
+    case 'messy': {                                                                          // pendek berantakan: jumput tak rata
+      const b = hash(Math.round(dx * 0.9 + 9), Math.round(dy * 0.9 + 9), Math.round(dz * 0.9 + 9));
+      return !face && dz > -2.2 && nape(dx, dz) && shellIn(dx, dy, dz, 0.98 + b * 0.16) ? 1 : 0;
+    }
+    case 'crew': return !face && dz > -2.0 && nape(dx, dz) && shellIn(dx, dy, dz, 0.96) && dz < 4.15 ? 1 : 0;   // cepak rapi, atas rata
+    case 'slick': return !face && dz > -2.2 && nape(dx, dz) && ((dx + 0.7) / 4.6) ** 2 + (dy / 4.2) ** 2 + ((dz - 0.4) / 4.3) ** 2 <= 1 ? 1 : 0;
+    case 'wavy': {                                                                           // panjang bergelombang
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      const wv = 0.45 * Math.sin(dz * 1.5);
+      if (dx < 0.6 && ((dx + 1.3) / (3.7 + wv)) ** 2 + (dy / (4.7 + wv)) ** 2 <= 1 && dz > -10.5 && dz < 2) return 1;
+      return Math.abs(dy) > 3.0 && Math.abs(dy) < 4.4 + wv && dx > -1.5 && dx < 2.2 && dz > -8 && dz < 1 ? 1 : 0;
+    }
+    case 'lowtie': {                                                                         // panjang diikat rendah
+      if (!face && shellIn(dx, dy, dz) && nape(dx, dz, -3.4)) return 1;
+      if (((dx + 4.1) / 1.3) ** 2 + (dy / 1.3) ** 2 <= 1 && dz < -2.8 && dz > -3.6) return 'tie';
+      return ((dx + 4.3 + (dz + 3) * 0.08) / 1.15) ** 2 + (dy / 1.15) ** 2 <= 1 && dz <= -2.8 && dz > -10 ? 1 : 0;
+    }
+    case 'braid': {                                                                          // kuncir dikepang
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      if (dz < -1.2 && dz > -10.5) { const k = Math.floor((dz + 20) / 1.3), o = (k % 2 ? 0.35 : -0.35); if (((dx + 4.7) / 1.2) ** 2 + ((dy - o) / 1.2) ** 2 <= 1) return k % 2 ? 1 : 'hair2'; }
+      return (dx + 4.6) ** 2 + dy ** 2 + (dz + 11) ** 2 < 1.1 ? 'tie' : 0;
+    }
+    case 'hightail': {                                                                       // kuncir kuda tinggi
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      if ((dx + 3.6) ** 2 + dy ** 2 + (dz - 2.9) ** 2 < 1.2) return 'tie';
+      const zz = dz - 2.6, cx = -4.6 - Math.max(0, -zz) * 0.18;
+      return zz < 0.6 && zz > -7 && ((dx - cx) / (1.5 - zz * 0.04)) ** 2 + (dy / 1.4) ** 2 <= 1 ? 1 : 0;
+    }
+    case 'twinlow': {                                                                        // kuncir dua rendah
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      for (const sg of [-1, 1]) {
+        if ((dx + 1.0) ** 2 + (dy - sg * 3.9) ** 2 + (dz + 2.0) ** 2 < 1.1) return 'tie';
+        if (((dx + 1.2) / 1.3) ** 2 + ((dy - sg * 4.1) / 1.2) ** 2 <= 1 && dz < -2.2 && dz > -8) return 1;
+      }
+      return 0;
+    }
+    case 'bobclip':
+      if (dx > 1.8 && dz > 1.6 && dz < 2.3 && dy > 1.2 && dy < 3.0) return 'clip';
+      return !face && dz > -3.5 && ((dx + 0.5) / 4.7) ** 2 + (dy / 4.6) ** 2 + ((dz - 0.1) / 4.8) ** 2 <= 1 ? 1 : 0;
+    case 'halfup': {                                                                         // ikal sebahu, setengah diikat ke atas
+      const b = hash(Math.round(dx * 1.3), Math.round(dy * 1.3), Math.round(dz * 1.3));
+      if ((dx + 3.2) ** 2 + dy ** 2 + (dz - 3.4) ** 2 < 2.0 ** 2) return 1;
+      return !face && dz > -6 && ((dx + 0.6) / (4.8 + b * 0.6)) ** 2 + (dy / (4.7 + b * 0.6)) ** 2 + ((dz - 0.2) / (5.0 + b * 0.6)) ** 2 <= 1 && (dz > -2.5 || dx < 0.4) ? 1 : 0;
+    }
+    case 'capback': {                                                                        // topi dibalik: lidah topi ke belakang
+      if (dz > 1.6 && ((dx + 0.2) / 4.3) ** 2 + (dy / 4.1) ** 2 + ((dz - 0.8) / 4.2) ** 2 <= 1) return 'cap';
+      if (dx < -2.5 && dx > -6.6 && dz > 1.2 && dz < 2.2 && Math.abs(dy) < 3.0) return 'cap';
+      const b = hash(Math.round(dx), Math.round(dy), Math.round(dz));
+      return !face && dz < 1.6 && dz > -2.4 && nape(dx, dz) && shellIn(dx, dy, dz, 1 + b * 0.12) ? 1 : 0;
+    }
+    default: return !face && nape(dx, dz) && shellIn(dx, dy, dz) ? 1 : 0;                       // pendek
   }
 }
 
@@ -297,8 +376,10 @@ function humanShape(P0, st, part = 'all') {
   const stick0 = add(Rr.hand, brd, -3 * S), stick1 = add(Rr.hand, brd, 10 * S), br0 = add(Rr.hand, brd, 9.5 * S), br1 = add(Rr.hand, brd, 14 * S);
   const neck0 = add(neck, up, -0.6 * S), neck1 = add(neck, hu, 1.4 * S);
   const phone0 = add(Rr.hand, norm(sub(Rr.hand, Rr.elbow)), 0.4 * S), phone1 = add(phone0, hu, 1.8 * S);
+  const propC = add(add(add(arms[0].hand, arms[1].hand).map(v => v / 2), fwd, (P.box ? 1.4 : 0.5) * S), up, (P.box ? 0.4 : 0.6) * S);
 
-  const topMat = (x, y, z, f, wy, rx) => {
+  const topMat = (x, y, z, f, wy, rx, t) => {
+    if (UNI && t !== undefined) { const u = uniMat(f, wy, rx, t); if (u) return u; }
     if (st.topPattern === 'stripe' && Math.floor(z / 3) % 2) return 'top2';
     if (st.topPattern === 'batik' && (((x + z) % 5 === 0 && (y + z) % 5 === 0) || hash(x >> 1, y >> 1, z >> 1) < 0.1)) return 'top2';
     if (st.topPattern === 'koko' && Math.abs(wy) < 0.5 && f > rx * 0.7 && z % 3 === 0) return 'top2';
@@ -309,16 +390,77 @@ function humanShape(P0, st, part = 'all') {
     if (st.bottomPattern === 'batik' && (((x + z) % 5 === 0 && (y + z) % 5 === 0) || hash(x >> 1, y >> 1, z >> 1) < 0.1)) return 'bottom2';
     return 'bottom';
   };
+  // ----- wajah: tiap tokoh punya kombinasi bentuk mata, alis, mulut, kumis/janggut, kacamata
+  const FC = st.fc || faceCfg(st);
+  const EYE = { normal: [0.5, 0.62, 0.62, 0], big: [0.6, 0.85, 0.8, 0], small: [0.42, 0.5, 0.5, 0], sleepy: [0.55, 0.6, 0.15, 0], sharp: [0.62, 0.45, 0.45, 0.3] }[FC.eyes] || [0.5, 0.62, 0.62, 0];
   const faceMat = (dx, dy, dz) => {
-    const ay = Math.abs(dy);
-    if (st.glasses && dx > 1.6 && Math.abs(dz) < 1.0 && Math.abs(ay - 1.5) < 1.05 && !(Math.abs(dz) < 0.55 && Math.abs(ay - 1.5) < 0.6)) return 'glasses';
-    if (st.glasses && dx > 2.6 && Math.abs(dz) < 0.3 && ay < 0.5) return 'glasses';
-    if (dx > 2.0 && Math.abs(dz) < 0.75 && Math.abs(ay - 1.5) < 0.5) return (dz > 0.3 && ay > 1.5) ? 'eyeW' : 'eye';
-    if (dx > 1.8 && dz > 1.0 && dz < 1.55 && Math.abs(ay - 1.5) < 0.75) return 'brow';
-    if (dx > 1.8 && dz > -2.05 && dz < -1.45 && ay < 0.65) return 'mouth';
-    if (dx > 1.8 && dz > -1.35 && dz < -0.7 && Math.abs(ay - 2.3) < 0.45) return 'blush';
-    if (dx > 2.6 && dz > -1.0 && dz < -0.3 && ay < 0.35) return 'nose';
+    const ay = Math.abs(dy), ex = ay - 1.5, side = dy > 0;
+    const G = FC.glasses;
+    if (G) {
+      const round = G === 'round', rim = round ? Math.hypot(ex / 1.05, dz / 0.95) : Math.max(Math.abs(ex) / 1.05, Math.abs(dz) / 0.85);
+      if (dx > 1.6 && rim < 1.08 && rim > 0.8) return 'glasses';
+      if (dx > 2.6 && Math.abs(dz) < 0.3 && ay < 0.5) return 'glasses';
+    }
+    if (dx > 2.0) {
+      const [ew, eh, lid, tilt] = EYE, ez = dz - tilt * ex;
+      if (Math.abs(ex) < ew && ez > -eh && ez < lid) return (ez > lid - 0.45 && ex > 0 && ex < ew * 0.9 && eh > 0.6) ? 'eyeW' : 'eye';
+      if (FC.lash && ex > ew * 0.3 && ex < ew + 0.5 && ez >= lid && ez < lid + 0.45) return 'eye';                    // bulu mata
+      if (FC.eyes === 'sleepy' && Math.abs(ex) < ew + 0.1 && ez >= lid && ez < lid + 0.35) return 'nose';             // kelopak berat
+    }
+    if (dx > 1.8) {
+      const bw = FC.brow === 'thick' ? 0.85 : 0.72, b0 = FC.brow === 'thin' ? 1.3 : 1.15, b1 = FC.brow === 'thick' ? 1.8 : FC.brow === 'thin' ? 1.6 : 1.65;
+      const bz = dz - (FC.brow === 'angry' ? 0.45 * ex : FC.brow === 'arch' ? -0.3 * (1 - Math.abs(ex)) : 0.1 * ex);
+      const scar = st.scar && side && ex > -0.05 && ex < 0.3;
+      if (Math.abs(ex) < bw && bz > b0 && bz < b1 && !scar) return 'brow';
+    }
+    if (dx > 1.8) {   // mulut
+      const mz = dz + 1.75, M = FC.mouth;
+      if (M === 'smile' && ay < 0.95 && Math.abs(mz + 0.0 - 0.35 * (ay / 0.95) ** 2) < 0.3) return 'mouth';
+      if (M === 'grin' && ay < 0.95 && mz > -0.45 && mz < 0.35 - 0.2 * (ay / 0.95) ** 2) return mz > -0.05 && ay < 0.7 ? 'teeth' : 'mouth';
+      if (M === 'smirk' && dy > -0.4 && dy < 0.95 && Math.abs(mz - 0.3 * Math.max(0, dy)) < 0.3) return 'mouth';
+      if (M === 'small' && ay < 0.5 && Math.abs(mz) < 0.3) return 'lip';
+      if (M === 'flat' && ay < 0.75 && Math.abs(mz) < 0.28) return 'mouth';
+    }
+    if (FC.beard) {
+      if (FC.beard === 'mustache' && dx > 1.8 && dz > -1.5 && dz < -1.05 && ay < 1.1) return 'hair';
+      if ((FC.beard === 'beard' || FC.beard === 'goatee') && dx > 1.0 && dz < -2.15 && ay < (FC.beard === 'goatee' ? 0.8 : 2.9)) return 'hair';
+      if (FC.beard === 'stubble' && dx > 1.0 && dz < -1.3 && ay < 2.9 && !(ay < 0.9 && dz > -2.1)) return 'stubble';
+    }
+    if (FC.blush && dx > 1.8 && dz > -1.35 && dz < -0.7 && Math.abs(ay - 2.3) < 0.45) return 'blush';
+    if (dx > 2.6 && dz > -1.15 && dz < -0.25 && ay < 0.4) return 'nose';
+    if (dx > 2.2 && dz > -1.25 && dz < -1.0 && ay > 0.3 && ay < 0.75) return 'nose';                                // cuping hidung
     return 'skin';
+  };
+  // ----- bentuk kepala: tempurung bulat + rahang yang menyempit ke dagu (beda per bentuk wajah)
+  const HSH = { oval: [0.42, 0.4, 0.55], round: [0.24, 0.2, 0.72], square: [0.16, 0.3, 0.88], v: [0.56, 0.5, 0.38] }[FC.shape] || [0.42, 0.4, 0.55];
+  const headIn = (dx, dy, dz) => {
+    if (dz >= 0.2) return (dx / 3.9) ** 2 + (dy / 3.7) ** 2 + ((dz - 0.2) / 3.95) ** 2 <= 1;
+    const t = (0.2 - dz) / 4.25; if (t >= 1) return false;
+    let ry = 3.7 * (1 - HSH[0] * t ** 1.7), rx = 3.9 * (1 - 0.3 * t ** 1.5);
+    const cx = HSH[1] * t * t;
+    if (t > 0.78) { const k = Math.sqrt(Math.max(0, 1 - ((t - 0.78) / 0.22) ** 2)); ry *= HSH[2] + (1 - HSH[2]) * k; rx *= 0.7 + 0.3 * k; }
+    return ((dx - cx) / rx) ** 2 + (dy / ry) ** 2 <= 1;
+  };
+  const earAt = (dx, dy, dz) => Math.abs(Math.abs(dy) - 3.7) < 0.6 && Math.abs(dx + 0.25) < 0.75 && dz > -1.4 && dz < 0.6;
+  const SHORT = new Set(['short', 'buzz', 'spiky', 'sidepart', 'messy', 'crew', 'slick', 'mohawk', 'bald', 'peci', 'cap', 'capback', 'curly', 'helmet']);
+  const UNI = st.uniform === 'sma';
+  const uniMat = (f, wy, rx, t) => {   // detail seragam SMA di badan atas (t = 0 pinggul .. 1 leher)
+    const front = f > rx * 0.62;
+    if (st.belt && t < 0.255) return front && Math.abs(wy) < 0.6 ? 'buckle' : 'belt';
+    if (st.top !== '#f4f4f0') {         // jaket/rompi dipakai di atas seragam: kemeja putih terlihat di tengah
+      if (front && Math.abs(wy) < 0.55 + Math.max(0, t - 0.7) * 2.2) return t > 0.86 ? 'collar' : 'shirt';
+      return null;
+    }
+    if (t > 0.84 && f > rx * 0.15) { if (Math.abs(wy) < 0.32 + (t - 0.84) * 4) return t > 0.9 ? 'skin' : 'placket'; return Math.abs(wy) < 2.0 ? 'collar' : null; }
+    if (t > 0.8 && t <= 0.84 && f > rx * 0.15 && Math.abs(wy) < 2.0) return 'seam';
+    if (!front) return null;
+    if (Math.abs(wy) < 0.42) return Math.floor(t * 15) % 3 === 0 ? 'button' : 'placket';
+    if (wy < -0.75 && wy > -2.15 && t > 0.53 && t < 0.74) {                    // saku kiri + badge OSIS
+      if (t > 0.65 && t < 0.72 && wy < -1.05 && wy > -1.75) return 'badge';
+      return t < 0.56 || wy > -0.9 || wy < -2.0 ? 'seam' : null;
+    }
+    if (wy > 0.8 && wy < 2.1 && t > 0.63 && t < 0.7) return 'nametag';      // papan nama kanan
+    return null;
   };
   const shortHair = (dx, dy, dz) => ((dx + 0.4) / 4.5) ** 2 + (dy / 4.3) ** 2 + ((dz - 0.2) / 4.4) ** 2 <= 1 && dz > -3.2;
 
@@ -332,6 +474,12 @@ function humanShape(P0, st, part = 'all') {
       if (capsule(p, blade0, blade1, 1.15 * S, 0.55 * S) >= 0) return 'blade';
     }
     if (P.phone > 0.5 && capsule(p, phone0, phone1, 0.8 * S, 0.8 * S) >= 0) return 'phone';
+    if (P.box > 0.5 || P.book > 0.5) {   // kardus / buku di depan dada, sejajar badan
+      const q0 = p[0] - propC[0], q1 = p[1] - propC[1], q2 = p[2] - propC[2];
+      const a = (q0 * fwd[0] + q2 * fwd[2]) / S, b = q1 / S, c = (q0 * up[0] + q2 * up[2]) / S;
+      if (P.box > 0.5 && Math.abs(a) < 2.0 && Math.abs(b) < 3.0 && Math.abs(c) < 1.9) return Math.abs(b) < 0.3 && c > 1.4 ? 'seam' : 'box';
+      if (P.book > 0.5) { const a2 = a * 0.8 - c * 0.6, c2 = a * 0.6 + c * 0.8; if (Math.abs(a2) < 0.45 && Math.abs(b) < 2.1 && Math.abs(c2) < 1.5) return a2 > 0.1 && Math.abs(b) < 1.9 && Math.abs(c2) < 1.3 ? 'page' : 'book'; }
+    }
     if (P.broom > 0.5) {
       if (capsule(p, stick0, stick1, 0.45 * S, 0.45 * S) >= 0) return 'stick';
       if (capsule(p, br0, br1, 0.7 * S, 2.6 * S) >= 0) return 'bristle';
@@ -339,7 +487,7 @@ function humanShape(P0, st, part = 'all') {
     // kepala (koordinat lokal kepala, satuan unit)
     const vx = p[0] - head[0], vy = p[1] - head[1], vz = p[2] - head[2];
     const dx = (vx * hf[0] + vy * hf[1] + vz * hf[2]) / S / HS, dy = (vx * hsd[0] + vy * hsd[1]) / S / HS, dz = (vx * hu[0] + vz * hu[2]) / S / HS;
-    const inHead = (dx / 3.9) ** 2 + (dy / 3.7) ** 2 + (dz / 4.0) ** 2 <= 1;
+    const inHead = headIn(dx, dy, dz);
     const face = hs === 'hijab'
       ? dx > 0.6 && (dy / 2.7) ** 2 + ((dz + 0.8) / 2.6) ** 2 <= 1
       : hs === 'helmet' ? dx > 0.6 && dz < 0.9 && dz > -3.6 && Math.abs(dy) < 3.0
@@ -356,8 +504,11 @@ function humanShape(P0, st, part = 'all') {
       if (hs === 'mohawk' && Math.abs(dy) > 1.1 && dz > -1.5) return 'stubble';
       return strand();
     }
+    const ear = hs !== 'hijab' && hs !== 'helmet' && earAt(dx, dy, dz);
+    if (ear && SHORT.has(hs)) return 'nose';                       // telinga terlihat pada rambut pendek
     const hm = hairAt(hs, dx, dy, dz, face);
     if (hm) return hm === 1 ? strand() : hm;
+    if (ear) return 'nose';
     // lengan
     for (const a of arms) {
       if (sph(p, a.hand, 1.05 * S)) return 'skin';
@@ -375,7 +526,7 @@ function humanShape(P0, st, part = 'all') {
       const bump = st.belly ? st.belly * Math.exp(-(((t - 0.38) / 0.2) ** 2)) : 0;
       const f = (wx * fwd[0] + wz * fwd[2]) / S - bump * 0.9, rxx = rx + bump * 0.9, wy = wy0 / S;
       if (hs === 'hijab' && t > 0.58 && (f / (rxx + 0.7)) ** 2 + (wy / (ry + 0.6)) ** 2 <= 1) return 'hijab';
-      if ((f / rxx) ** 2 + (wy / ry) ** 2 <= 1) return topMat(x, y, z, f, wy, rxx);
+      if ((f / rxx) ** 2 + (wy / ry) ** 2 <= 1) return topMat(x, y, z, f, wy, rxx, t);
     }
     if (capsule(p, neck0, neck1, 1.1 * S, 1.1 * S) >= 0) return hs === 'hijab' ? 'hijab' : 'skin';
     return null;
@@ -401,14 +552,17 @@ function humanShape(P0, st, part = 'all') {
     const wx = p[0] - pelvis[0], wy = p[1] - pelvis[1], wz = p[2] - pelvis[2];
     const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / (9 * TL);
     if (t >= 0 && t < 0.2) {
-      const ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
-      if (((wx * fwd[0] + wz * fwd[2]) / S / rx) ** 2 + (wy / S / ry) ** 2 <= 1) return bottomMat(x, y, z);
+      const ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t, ff = (wx * fwd[0] + wz * fwd[2]) / S;
+      if ((ff / rx) ** 2 + (wy / S / ry) ** 2 <= 1) return st.belt && t > 0.16 ? (ff > rx * 0.62 && Math.abs(wy / S) < 0.6 ? 'buckle' : 'belt') : bottomMat(x, y, z);
     }
     if ((bs === 'sarung' || bs === 'skirt') && p[2] <= zTopSk && p[2] >= zBotSk) {
       const xs = [pelvis[0], ...legX(legs[0], p[2]), ...legX(legs[1], p[2])];
       const xmin = Math.min(...xs), xmax = Math.max(...xs), fl = (zTopSk - p[2]) / (zTopSk - zBotSk || 1);
       const pad = (1.9 + 0.5 * fl) * S, hy = (2.8 + 0.5 * fl) * S, hx = (xmax - xmin) / 2 + pad, xc = (xmin + xmax) / 2;
-      if (((p[0] - xc) / hx) ** 2 + ((p[1] - cy) / hy) ** 2 <= 1) return bottomMat(x, y, z);
+      if (((p[0] - xc) / hx) ** 2 + ((p[1] - cy) / hy) ** 2 <= 1) {
+        if (st.pleats && fl > 0.08) { const an = Math.atan2(p[1] - cy, (p[0] - xc) * hy / hx); if ((((an / Math.PI) * 7 + 20) % 1) < 0.22) return 'bottom2'; }   // lipit rok
+        return bottomMat(x, y, z);
+      }
     }
     for (const l of legs) {
       if (capsule(p, l.hip, l.knee, 1.55 * S, 1.2 * S) >= 0) return (bs === 'pants' || bs === 'shorts') ? 'bottom' : 'skin';
@@ -434,6 +588,7 @@ function humanShape(P0, st, part = 'all') {
   if (P.broom > 0.5) sp.push([add(Rr.hand, brd, 14 * S), 3], [add(Rr.hand, brd, -3 * S), 1]);
   if (P.orb > 0) sp.push([orbPos, P.orb + 0.5]);
   if (P.phone > 0.5) sp.push([phone1, 1.5]);
+  if (P.box > 0.5 || P.book > 0.5) sp.push([propC, 3.8]);
   const lo = [0, 1, 2].map(i => Math.min(...sp.map(([c, r]) => c[i] - r * S)) - 1);
   const hi = [0, 1, 2].map(i => Math.max(...sp.map(([c, r]) => c[i] + r * S)) + 1);
   // Grounding di atas memakai bola kepala kasar; rambut/topi/helm bisa lebih besar dan tenggelam
@@ -455,7 +610,7 @@ function humanShape(P0, st, part = 'all') {
   const bbox = [Math.max(0, Math.floor(lo[0] + ox)), Math.max(0, Math.floor(lo[1] + oy)), Math.max(0, Math.floor(lo[2])),
                 Math.min(L2 - 1, Math.ceil(hi[0] + ox)), Math.min(W2 - 1, Math.ceil(hi[1] + oy)), H2 - 1];
   const mat2 = ox || oy || sink ? (x, y, z) => mat(x - ox, y - oy, z - sink) : mat;
-  return { mat: mat2, L: L2, W: W2, H: H2, bbox, lift: P.jump * S, pelvisZ: pelvis[2] + sink, yaw: P.yaw, buttZ: buttZ + sink };
+  return { mat: mat2, L: L2, W: W2, H: H2, bbox, lift: P.jump * S, pelvisZ: pelvis[2] + sink, yaw: P.yaw, buttZ: buttZ + sink, buttX: butt[0] - L / 2 };
 }
 
 /* ---------- Gerakan ----------
@@ -510,8 +665,33 @@ const ANIMS = {
   stretch:{ name: 'Peregangan', kind: 'full', n: 10, fps: 6, pose: keyed([[0, {}], [0.4, { arL: 3.0, arR: 3.0, elL: 0.1, elR: 0.1, spL: 0.25, spR: 0.25, lean: -0.15, hp: 0.25 }], [0.7, { lean: -0.2 }], [1, {}]]) },
   // --- naik kendaraan ---
   rideMotor: { name: 'Naik motor', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.3 + 0.02 * sinT(t), thL: 1.3, thR: 1.3, knL: 1.3, knR: 1.3, ftL: -0.2, ftR: -0.2, arL: 1.2, arR: 1.2, elL: 0.15, elR: 0.15, spL: 0.18, spR: 0.18 }) },
+  rideScooter: { name: 'Naik skuter', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.3, hp: -0.22 + 0.02 * sinT(t), thL: 1.45, thR: 1.45, knL: 1.45, knR: 1.45, ftL: -0.1, ftR: -0.1, arL: 1.0, arR: 1.0, elL: 0.45, elR: 0.45, spL: 0.2, spR: 0.2 }) },
+  rideSport: { name: 'Naik motor sport', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.62, hp: -0.55 + 0.02 * sinT(t), thL: 1.7, thR: 1.7, knL: 2.3, knR: 2.3, ftL: 0.2, ftR: 0.2, arL: 1.25, arR: 1.25, elL: 0.3, elR: 0.3, spL: 0.22, spR: 0.22 }) },
+  rideTrail: { name: 'Naik trail', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.25 + 0.02 * sinT(t), thL: 1.2, thR: 1.2, knL: 1.5, knR: 1.5, ftL: -0.1, ftR: -0.1, arL: 1.15, arR: 1.15, elL: 0.55, elR: 0.55, spL: 0.4, spR: 0.4 }) },
+  pedalUp: { name: 'Mengayuh santai', kind: 'full', n: 8, fps: 7, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.3, hp: -0.15, thL: 1.05 + 0.42 * s, thR: 1.05 - 0.42 * s, knL: 1.35 + 0.55 * c, knR: 1.35 - 0.55 * c, ftL: -0.1, ftR: -0.1, arL: 1.0, arR: 1.0, elL: 0.45, elR: 0.45, spL: 0.18, spR: 0.18, sy: 0.08 * s }; } },
+  passenger: { name: 'Dibonceng', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.12, hp: 0.02 * sinT(t), thL: 1.4, thR: 1.4, knL: 1.5, knR: 1.5, ftL: -0.3, ftR: -0.3, arL: 0.75, arR: 0.75, elL: 0.6, elR: 0.6, spL: 0.3, spR: 0.3, hy: 0.25 }) },
+  motoLean: { name: 'Motor menikung', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.5, hp: -0.35, sy: -0.8, thL: 1.3, thR: 1.2, knL: 1.3, knR: 1.4, ftL: -0.2, ftR: -0.2, arL: 1.2, arR: 1.25, elL: 0.15, elR: 0.25, spL: 0.25, spR: 0.12, hy: -0.2 }) },
   pedal:  { name: 'Mengayuh', kind: 'full', n: 8, fps: 8, stride: 30, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
     return { lean: 0.55, hp: -0.4, thL: 0.95 + 0.4 * s, thR: 0.95 - 0.4 * s, knL: 1.3 + 0.5 * c, knR: 1.3 - 0.5 * c, arL: 0.92, arR: 0.92, elL: 0.05, elR: 0.05, spL: 0.15, spR: 0.15, sy: 0.15 * s }; } },
+  // --- gerak utama tambahan (guide 71): sprint, jongkok, berbaring, bawa barang, dorong, panjat, sekolah & sosial ---
+  sprint: { name: 'Sprint', kind: 'loco', n: 8, fps: 16, stride: 80, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.45, hp: -0.3, tw: 0.25 * s, sy: 0.15 * c, thL: 0.3 + 1.05 * s, thR: 0.3 - 1.05 * s, knL: 0.35 + 1.9 * Math.max(0, c), knR: 0.35 + 1.9 * Math.max(0, -c),
+             ftL: 0.6 * Math.max(0, -s), ftR: 0.6 * Math.max(0, s), arL: 0.3 - 1.2 * s, arR: 0.3 + 1.2 * s, elL: 1.6, elR: 1.6, spL: 0.15, spR: 0.15, jump: 1.4 * Math.abs(s) ** 1.5 }; } },
+  squat:  { name: 'Jongkok', kind: 'full', move: 0, n: 4, fps: 3, loop: true, pose: t => ({ lean: 0.42 + 0.02 * sinT(t), hp: -0.3, thL: 1.95, thR: 1.85, knL: 2.65, knR: 2.6, ftL: 0.2, ftR: 0.2, arL: 0.95, arR: 0.9, elL: 0.8, elR: 0.9, spL: 0.3, spR: 0.3 }) },
+  lie:    { name: 'Berbaring', kind: 'full', move: 0, n: 4, fps: 2, loop: true, pose: t => ({ lean: -1.5, hp: 0.12, thL: 1.5, thR: 1.35, knL: 0.05, knR: 0.6, arL: -1.5, arR: -1.35, elL: 1.2, elR: 1.0, spL: 0.55, spR: 0.5, px: 4, sy: 0.05 * sinT(t) }) },
+  carry:  { name: 'Bawa kardus', kind: 'upper', n: 2, fps: 2, loop: true, pose: t => ({ box: 1, arL: 0.75, arR: 0.75, elL: 1.05, elR: 1.05, spL: 0.42, spR: 0.42, lean: -0.04, hp: 0.02 * sinT(t) }) },
+  push:   { name: 'Dorong', kind: 'loco', n: 8, fps: 7, stride: 18, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.55, hp: -0.25, thL: 0.55 + 0.35 * s, thR: 0.55 - 0.35 * s, knL: 0.35 + 0.6 * Math.max(0, c), knR: 0.35 + 0.6 * Math.max(0, -c), ftL: -0.3, ftR: -0.3, arL: 1.45, arR: 1.45, elL: 0.35, elR: 0.35, spL: 0.25, spR: 0.25 }; } },
+  climb:  { name: 'Memanjat', kind: 'full', move: 0, n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
+    return { lean: -0.05, arL: 2.6 + 0.35 * s, arR: 2.6 - 0.35 * s, elL: 0.5 - 0.3 * s, elR: 0.5 + 0.3 * s, spL: 0.25, spR: 0.25, thL: 0.7 + 0.6 * s, thR: 0.7 - 0.6 * s, knL: 1.2 + 0.4 * s, knR: 1.2 - 0.4 * s, hp: 0.3 }; } },
+  raiseHand: { name: 'Angkat tangan', kind: 'upper', n: 4, fps: 4, loop: true, pose: t => ({ arR: 2.95 + 0.06 * sinT(t), elR: 0.15, spR: 0.12, hp: 0.12, hy: 0.05 * sinT(t) }) },
+  read:   { name: 'Baca buku', kind: 'upper', n: 4, fps: 2, loop: true, pose: t => ({ book: 1, arL: 0.55, arR: 0.55, elL: 1.75, elR: 1.75, spL: 0.32, spR: 0.32, hp: -0.4 + 0.03 * sinT(t), lean: 0.03 }) },
+  clap:   { name: 'Tepuk tangan', kind: 'upper', n: 4, fps: 10, loop: true, pose: t => { const s = Math.max(0, sinT(t)); return { arL: 1.1, arR: 1.1, elL: 1.2, elR: 1.2, spL: -0.1 + 0.45 * s, spR: -0.1 + 0.45 * s, hp: 0.08 }; } },
+  laugh:  { name: 'Tertawa', kind: 'upper', n: 6, fps: 10, loop: true, pose: t => { const s = sinT(t); return { hp: 0.3 + 0.08 * s, lean: -0.08 + 0.04 * s, arL: 0.2, elL: 2.0, spL: 0.1, arR: 0.35, elR: 1.6, spR: 0.3 }; } },
+  think:  { name: 'Berpikir', kind: 'upper', n: 4, fps: 2, loop: true, pose: t => ({ arR: 0.45, elR: 2.45, spR: 0.32, arL: 0.35, elL: 1.75, spL: 0.35, hp: -0.12, hy: 0.15 + 0.04 * sinT(t) }) },
+  bow:    { name: 'Salam', kind: 'full', move: 0, n: 8, fps: 8, pose: keyed([[0, {}], [0.35, { lean: 0.55, hp: -0.15, arL: 0.25, arR: 0.25, elL: 0.6, elR: 0.6, spL: -0.05, spR: -0.05 }], [0.65, { lean: 0.55 }], [1, POSE0]]) },
+  sitDesk:{ name: 'Duduk menulis', kind: 'full', move: 0, n: 4, fps: 3, loop: true, pose: t => ({ lean: 0.18, hp: -0.35, thL: 1.6, thR: 1.6, knL: 1.6, knR: 1.6, arL: 1.0, arR: 1.1 + 0.05 * sinT(t), elL: 1.3, elR: 1.25, spL: 0.25, spR: 0.2 }) },
   // --- emote pemain ---
   dance:  { name: 'Joget', kind: 'full', move: 0, n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
     return { sy: 0.55 * s, tw: 0.3 * s, hy: 0.3 * s, lean: 0.05, knL: 0.3 + 0.35 * Math.max(0, s), knR: 0.3 + 0.35 * Math.max(0, -s), thL: 0.15 * Math.max(0, s), thR: 0.15 * Math.max(0, -s),
@@ -567,4 +747,4 @@ ANIMS.getup = { name: 'Bangun', kind: 'full', move: 0, n: 8, fps: 9, pose: t => 
 const COMBOS = { punch: ['jab', 'straight', 'hook', 'uppercut'], kick: ['kickFront', 'kickHigh'], slash: ['slashH', 'slashV', 'thrust', 'spin'] };
 const FAMILY = {}; for (const f in COMBOS) for (const a of COMBOS[f]) FAMILY[a] = f;
 const animDur = n => ANIMS[n].n / ANIMS[n].fps;
-export { STYLES, ANIMS, humanShape, buildVox, R, fixedRamp, organicColor, hexRGB };
+export { STYLES, ANIMS, humanShape, buildVox, R, fixedRamp, organicColor, hexRGB, makeRamps, faceCfg };

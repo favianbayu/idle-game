@@ -19,7 +19,7 @@ export function initChars(src) {
     g.setAttribute('color', new THREE.BufferAttribute(d.col, 3));
     g.setIndex(new THREE.BufferAttribute(d.idx, 1));
     g.computeBoundingSphere();
-    g.userData.lift = d.lift;
+    g.userData.lift = d.lift; g.userData.butt = d.butt; g.userData.buttX = d.buttX;
     CACHE.set(d.key, g); PENDING.delete(d.key);
     pump();
   };
@@ -70,8 +70,10 @@ export class Character {
     let g = frame(this.sid, this.anim, i, this.prio);
     if (!g) g = frame(this.sid, 'idle', 0, this.prio + 1);   // fallback saat frame belum jadi
     if (g) {
-      this.mesh.geometry = g; this.mesh.visible = true; this.mesh.position.y = g.userData.lift || 0;
-      if (this.xray) { this.xray.geometry = g; this.xray.visible = true; this.xray.position.y = this.mesh.position.y; }
+      this.mesh.geometry = g; this.mesh.visible = true; // duduk di kendaraan: pantat tokoh ditaruh tepat di titik jok (seat.y tinggi, seat.x maju), dihitung per frame dari bentuk voxel
+      if (this.seat) { this.mesh.position.y = this.seat.y - (g.userData.butt || 0); this.mesh.position.x = this.seat.x - (g.userData.buttX || 0); }
+      else { this.mesh.position.y = g.userData.lift || 0; this.mesh.position.x = 0; }
+      if (this.xray) { this.xray.geometry = g; this.xray.visible = true; this.xray.position.copy(this.mesh.position); }
     }
     // model menghadap +x lokal; heading = sudut di bidang XZ (atan2(z, x))
     this.group.rotation.y = -this.heading;

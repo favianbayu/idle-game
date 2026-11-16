@@ -41,6 +41,7 @@ function body(m, xf, lx, lz, w, d, h, wall, plinth = 0.15) {
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.box(xf, lx + sx * (w / 2 - 0.05), plinth, lz + sz * (d / 2 - 0.05), 0.14, h - plinth, 0.14, trim);
   m.box(xf, lx, h - 0.14, lz, w + 0.06, 0.14, d + 0.06, trim);
   m.box(xf, lx, plinth, lz, w + 0.012, 0.18, d + 0.012, shade(wall, 0.86));
+  for (let f = 1; f * FLOOR < h - 0.3; f++) m.box(xf, lx, f * FLOOR - 0.06, lz, w + 0.12, 0.12, d + 0.12, trim);   // lis lantai menonjol
 }
 function door(m, xf, lx, lz, c, side = 0) {   // pintu menempel di dinding depan (z = lz)
   m.box(xf, lx, 0, lz + 0.03, 0.56, 1.42, 0.06, FRAME); m.box(xf, lx, 0, lz + 0.05, 0.48, 1.36, 0.06, c);
@@ -48,12 +49,18 @@ function door(m, xf, lx, lz, c, side = 0) {   // pintu menempel di dinding depan
   m.box(xf, lx, 0.95, lz + 0.085, 0.3, 0.3, 0.02, shade(c, 0.8)); m.box(xf, lx, 0.32, lz + 0.085, 0.3, 0.4, 0.02, shade(c, 0.8));   // panel pintu
   m.box(xf, lx, 0, lz + 0.2, 0.8, 0.07, 0.3, col('#b8b2a6'));   // anak tangga
   m.box(xf, lx, 1.42, lz + 0.03, 0.72, 0.08, 0.08, FRAME);   // ambang atas
+  for (const sd of [-1, 1]) m.box(xf, lx + sd * 0.31, 0, lz + 0.06, 0.07, 1.46, 0.12, FRAME);   // kusen pintu menonjol
+  m.box(xf, lx, 1.6, lz + 0.22, 0.95, 0.06, 0.44, shade(FRAME, 0.8)); m.box(xf, lx, 1.54, lz + 0.42, 0.95, 0.06, 0.04, shade(FRAME, 0.7));   // luifel beton di atas pintu
 }
 function win(m, xf, lx, y, lz, w = 0.62, h = 0.74, glass = GLASS) {
-  m.box(xf, lx, y - 0.05, lz + 0.025, w + 0.1, h + 0.1, 0.05, FRAME); m.box(xf, lx, y, lz + 0.05, w, h, 0.05, glass);
-  m.box(xf, lx, y + h / 2 - 0.02, lz + 0.08, w, 0.04, 0.02, FRAME); m.box(xf, lx, y - 0.02, lz + 0.08, 0.04, h, 0.02, FRAME);
-  m.box(xf, lx, y - 0.1, lz + 0.08, w + 0.2, 0.05, 0.12, shade(FRAME, 0.9));   // ambang jendela
-  m.box(xf, lx, y + h - 0.16, lz + 0.06, w * 0.96, 0.14, 0.02, col(pick(['#e8d8a8', '#c87a6a', '#8ab0c8', '#e8e0d0'], hash(Math.round(lx * 10), Math.round(y * 10)))));   // gorden
+  // kaca menempel dinding; kusen 4 sisi menonjol 0.12 (memberi bayangan/kedalaman), ambang bawah & atas menjorok
+  m.box(xf, lx, y, lz + 0.015, w, h, 0.03, glass);
+  m.box(xf, lx, y - 0.06, lz + 0.06, w + 0.12, 0.07, 0.12, FRAME); m.box(xf, lx, y + h - 0.01, lz + 0.06, w + 0.12, 0.07, 0.12, FRAME);
+  for (const sd of [-1, 1]) m.box(xf, lx + sd * (w / 2 + 0.03), y - 0.06, lz + 0.06, 0.06, h + 0.12, 0.12, FRAME);
+  m.box(xf, lx, y, lz + 0.035, 0.04, h, 0.05, FRAME); m.box(xf, lx, y + h * 0.55, lz + 0.035, w, 0.035, 0.05, FRAME);
+  m.box(xf, lx, y + h - 0.2, lz + 0.032, w * 0.96, 0.16, 0.01, col(pick(['#e8d8a8', '#c87a6a', '#8ab0c8', '#e8e0d0'], hash(Math.round(lx * 10), Math.round(y * 10)))));   // gorden di balik kaca
+  m.box(xf, lx, y - 0.13, lz + 0.1, w + 0.26, 0.06, 0.2, shade(FRAME, 0.85));                                                       // ambang bawah
+  m.box(xf, lx, y + h + 0.06, lz + 0.075, w + 0.22, 0.07, 0.15, shade(FRAME, 0.88));                                               // ambang atas
 }
 function nako(m, xf, lx, y, lz, w = 0.7) {   // jendela nako (bilah kaca)
   m.box(xf, lx, y - 0.05, lz + 0.025, w + 0.1, 0.84, 0.05, col('#7a4a2a'));

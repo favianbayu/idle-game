@@ -26,82 +26,166 @@ function wheel(m, xf, x, y, z, r, w, o = {}) {
   const n = o.n || 14, t = o.t || r * 0.42;
   for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; m.box(xf, x, y + Math.sin(a) * (r - t / 2) - t / 2, z + Math.cos(a) * (r - t / 2), w, t, t * 1.05, o.tire || C.tire); }
   // pelek: silang + bintang (jari-jari) atau piringan
-  if (o.spokes) { for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI; line(m, xf, [x, y + Math.sin(a) * (r - t), z + Math.cos(a) * (r - t)], [x, y - Math.sin(a) * (r - t), z - Math.cos(a) * (r - t)], 0.025, o.rim || C.rim); } }
+  if (o.rim5) { for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; line(m, xf, [x, y, z], [x, y + Math.sin(a) * (r - t * 0.9), z + Math.cos(a) * (r - t * 0.9)], 0.06, o.rim || C.rim); } }
+  else if (o.spokes) { for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI; line(m, xf, [x, y + Math.sin(a) * (r - t), z + Math.cos(a) * (r - t)], [x, y - Math.sin(a) * (r - t), z - Math.cos(a) * (r - t)], 0.025, o.rim || C.rim); } }
   else { const rr = (r - t) * 2; m.box(xf, x, y - rr / 2, z, w * 0.8, rr, rr * 0.42, o.rim || C.rim); m.box(xf, x, y - rr * 0.21, z, w * 0.8, rr * 0.42, rr, o.rim || C.rim); }
   m.box(xf, x, y - r * 0.12, z, w * 1.15, r * 0.24, r * 0.24, C.hub);
 }
 
+/* ---------------------------------------------------------------- RODA TERPISAH (berputar) */
+// o.wheels = [] : roda tidak digambar ke Merger tapi dicatat, supaya bisa jadi mesh sendiri yang berputar saat jalan
+const WH = (m, xf, o, x, y, z, r, w, op = {}) => o.wheels ? o.wheels.push({ x, y, z, r, w, op }) : wheel(m, xf, x, y, z, r, w, op);
+export function wheelGeo(Merger, r, w, op = {}) { const m = new Merger(); wheel(m, { x: 0, z: 0, a: 0 }, 0, 0, 0, r, w, op); return m.build(); }
+export function crankGeo(Merger) {   // engkol sepeda: dua lengan berlawanan + pedal
+  const m = new Merger(), xf = { x: 0, z: 0, a: 0 };
+  m.box(xf, 0.02, -0.05, 0, 0.03, 0.1, 0.1, C.steel);
+  for (const s of [-1, 1]) { line(m, xf, [s * 0.06, 0, 0], [s * 0.06, s * 0.14, 0], 0.025, C.steel); m.box(xf, s * 0.1, s * 0.14 - 0.015, 0, 0.09, 0.03, 0.06, C.black); }
+  return m.build();
+}
+
 /* ---------------------------------------------------------------- MOTOR */
-// jenis: 'bebek' (motor bebek), 'matic' (skuter); c = warna bodi; o.helmet = taruh helm di jok
+// jenis: 'bebek', 'matic' (skuter), 'sport' (fairing, nunduk), 'trail' (tinggi, setang lebar), 'vespa' (skuter klasik bulat)
+// FIT: titik jok (y tinggi, z maju) & pose pengendara, supaya tokoh pas duduk di tiap model
+export const MOTOR_FIT = {
+  bebek: { seat: [0.7, -0.2], back: [0.7, -0.52], anim: 'rideMotor' },
+  matic: { seat: [0.69, -0.22], back: [0.7, -0.5], anim: 'rideScooter' },
+  sport: { seat: [0.78, -0.3], back: [0.86, -0.56], anim: 'rideSport' },
+  trail: { seat: [0.84, -0.18], back: [0.84, -0.48], anim: 'rideTrail' },
+  vespa: { seat: [0.7, -0.2], back: [0.72, -0.48], anim: 'rideScooter' },
+};
+export const MOTOR_KINDS = Object.keys(MOTOR_FIT);
 export function motor(m, xf, c = '#c83a3a', kind = 'bebek', o = {}) { trk(xf, 0.35, 1.0); try { return motor_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
 function motor_(m, xf, c, kind, o) {
-  const body = col(c), dark = shade(body, 0.7), R = 0.21, W = 0.09, zf = 0.62, zr = -0.6;
-  wheel(m, xf, 0, R, zf, R, W); wheel(m, xf, 0, R, zr, R, W);
-  // spakbor depan & belakang
-  m.box(xf, 0, R * 2 + 0.01, zf, 0.13, 0.05, 0.36, kind === 'matic' ? body : C.black);
-  // garpu depan (dua batang miring) + setang + spion + lampu depan
-  for (const s of [-0.07, 0.07]) line(m, xf, [s, R, zf], [s, 0.86, zf - 0.17], 0.035, C.chrome);
-  m.box(xf, 0, 0.88, zf - 0.2, 0.62, 0.035, 0.04, C.black);                                    // setang
-  for (const s of [-1, 1]) { m.box(xf, s * 0.3, 0.86, zf - 0.2, 0.06, 0.05, 0.08, C.rubber); line(m, xf, [s * 0.2, 0.9, zf - 0.2], [s * 0.25, 1.06, zf - 0.22], 0.02, C.steel); m.box(xf, s * 0.26, 1.06, zf - 0.22, 0.09, 0.06, 0.02, C.chrome); }   // grip & spion
-  m.box(xf, 0, 0.76, zf - 0.12, 0.26, 0.15, 0.16, kind === 'matic' ? body : dark);              // kepala lampu
-  m.box(xf, 0, 0.79, zf - 0.03, 0.17, 0.08, 0.02, C.head);
-  for (const s of [-1, 1]) m.box(xf, s * 0.12, 0.74, zf - 0.03, 0.04, 0.03, 0.02, C.amber);    // sein
+  const body = col(c), dark = shade(body, 0.7), hi = shade(body, 1.15);
+  const R = kind === 'trail' ? 0.27 : kind === 'vespa' ? 0.17 : kind === 'sport' ? 0.23 : 0.21, Wt = kind === 'sport' ? 0.13 : kind === 'trail' ? 0.1 : 0.09;
+  const zf = kind === 'sport' ? 0.66 : kind === 'trail' ? 0.66 : kind === 'vespa' ? 0.55 : 0.62, zr = kind === 'vespa' ? -0.55 : -0.6;
+  const knob = kind === 'trail' ? { n: 16, t: R * 0.46 } : {};
+  WH(m, xf, o, 0, R, zf, R, Wt, knob); WH(m, xf, o, 0, R, zr, R, Wt, knob);
+  const hy = kind === 'trail' ? 1.02 : kind === 'sport' ? 0.84 : kind === 'vespa' ? 0.94 : 0.88, hz = kind === 'sport' ? zf - 0.26 : zf - 0.2, hw = kind === 'trail' ? 0.4 : kind === 'sport' ? 0.27 : 0.31;
+  // garpu depan (upside-down gelap untuk sport/trail) + setang/grip + spion
+  if (kind !== 'vespa') for (const s of [-0.07, 0.07]) line(m, xf, [s, R, zf], [s, hy - 0.04, hz + 0.04], 0.04, kind === 'sport' || kind === 'trail' ? C.black : C.chrome);
+  m.box(xf, 0, hy, hz, hw * 2, 0.035, 0.04, C.black);
+  for (const sd of [-1, 1]) {
+    m.box(xf, sd * hw, hy - 0.02, hz, 0.06, 0.05, 0.08, C.rubber);
+    if (kind !== 'sport') { line(m, xf, [sd * (hw - 0.1), hy + 0.03, hz], [sd * (hw - 0.04), hy + 0.18, hz - 0.02], 0.02, C.steel); m.box(xf, sd * (hw - 0.04), hy + 0.18, hz - 0.02, 0.09, 0.06, 0.02, C.chrome); }
+  }
+  // lampu belakang, plat, knalpot
+  const tailY = kind === 'sport' ? 0.8 : kind === 'trail' ? 0.74 : 0.5;
+  m.box(xf, 0, tailY, zr - 0.08, 0.16, 0.06, 0.06, C.tail);
+  m.box(xf, 0, tailY - 0.14, zr - 0.18, 0.16, 0.08, 0.02, C.plate); m.box(xf, 0, tailY - 0.12, zr - 0.191, 0.12, 0.03, 0.005, C.plateTxt);
+  for (const sd of [-1, 1]) m.box(xf, sd * 0.1, tailY - 0.02, zr - 0.1, 0.04, 0.03, 0.04, C.amber);
   if (kind === 'matic') {
-    // apron depan besar + dek datar + bodi belakang membulat
-    m.box(xf, 0, 0.3, 0.35, 0.34, 0.5, 0.12, body); m.box(xf, 0, 0.55, 0.32, 0.3, 0.2, 0.1, body);
-    m.box(xf, 0, 0.22, 0.08, 0.3, 0.06, 0.48, C.black);                                         // dek kaki
-    m.box(xf, 0, 0.22, -0.38, 0.32, 0.36, 0.52, body); m.box(xf, 0, 0.5, -0.4, 0.28, 0.08, 0.46, dark);
-    m.box(xf, 0, 0.58, -0.3, 0.26, 0.1, 0.56, C.seat);                                          // jok
-    m.box(xf, 0.13, 0.18, -0.48, 0.07, 0.12, 0.36, C.black);                                    // CVT
+    m.box(xf, 0, R * 2 + 0.01, zf, 0.13, 0.05, 0.36, body);
+    m.box(xf, 0, 0.3, 0.35, 0.34, 0.5, 0.12, body); m.box(xf, 0, 0.55, 0.32, 0.3, 0.26, 0.12, body); m.box(xf, 0, 0.78, zf - 0.14, 0.28, 0.12, 0.16, body);
+    m.box(xf, 0, 0.8, zf - 0.05, 0.2, 0.06, 0.02, C.head); m.box(xf, 0, 0.3, 0.42, 0.24, 0.03, 0.02, shade(body, 0.6));
+    m.box(xf, 0, 0.2, 0.08, 0.3, 0.06, 0.48, C.black);
+    m.box(xf, 0, 0.22, -0.38, 0.32, 0.36, 0.52, body); m.box(xf, 0, 0.5, -0.4, 0.3, 0.1, 0.5, hi);
+    m.box(xf, 0, 0.6, -0.3, 0.26, 0.09, 0.56, C.seat); m.box(xf, 0, 0.62, -0.62, 0.26, 0.08, 0.06, C.steel);   // jok + behel
+    m.box(xf, 0.13, 0.16, -0.48, 0.07, 0.12, 0.36, C.black); m.box(xf, -0.14, 0.12, -0.52, 0.06, 0.08, 0.3, C.chrome);
+  } else if (kind === 'vespa') {
+    // tameng depan tinggi melengkung, bodi belakang bulat menggembung (dua sisi), lampu di spakbor
+    m.box(xf, 0, R * 2, zf, 0.18, 0.16, 0.32, body); m.box(xf, 0, R * 2 + 0.1, zf + 0.12, 0.1, 0.07, 0.03, C.head);
+    line(m, xf, [0, R * 2 + 0.05, zf - 0.08], [0, hy - 0.05, hz], 0.09, body);
+    m.box(xf, 0, 0.22, 0.32, 0.4, 0.62, 0.08, body); m.box(xf, 0, 0.84, 0.32, 0.3, 0.06, 0.06, body);
+    m.box(xf, 0, 0.18, 0.02, 0.32, 0.05, 0.56, C.black);
+    for (const sd of [-1, 1]) { m.box(xf, sd * 0.15, 0.2, -0.38, 0.14, 0.36, 0.44, body); m.box(xf, sd * 0.18, 0.26, -0.38, 0.1, 0.24, 0.36, hi); }
+    m.box(xf, 0, 0.36, -0.3, 0.2, 0.24, 0.46, body); m.box(xf, 0, 0.6, -0.26, 0.22, 0.1, 0.5, C.seat);
+    m.box(xf, 0, hy - 0.06, hz + 0.02, 0.24, 0.1, 0.14, body); m.box(xf, 0, hy - 0.04, hz + 0.09, 0.12, 0.08, 0.02, C.head);
+    m.box(xf, 0, 0.28, zr - 0.06, 0.04, 0.4, 0.04, C.chrome);
+  } else if (kind === 'sport') {
+    // fairing depan + kaca, tangki besar, jok bertingkat, buntut lancip, knalpot naik
+    m.box(xf, 0, R * 2 - 0.02, zf, 0.13, 0.05, 0.3, C.black);
+    const Q = (pts, cc) => m.poly(pts.map(p => P(xf, ...p)), cc);
+    for (const sd of [-1, 1]) Q((sd > 0 ? (a => a) : (a => a.slice().reverse()))([[sd * 0.17, 0.42, 0.62], [sd * 0.2, 0.42, 0.18], [sd * 0.17, 0.84, 0.3], [sd * 0.11, 0.9, 0.54]]), body);
+    m.box(xf, 0, 0.42, 0.4, 0.34, 0.42, 0.44, body);
+    Q([[-0.12, 0.9, 0.54], [0.12, 0.9, 0.54], [0.08, 1.04, 0.42], [-0.08, 1.04, 0.42]].reverse(), C.glass);
+    for (const sd of [-1, 1]) m.box(xf, sd * 0.07, 0.72, 0.63, 0.1, 0.06, 0.02, C.head);
+    m.box(xf, 0, 0.6, 0.1, 0.32, 0.17, 0.34, body); m.box(xf, 0, 0.77, 0.12, 0.22, 0.03, 0.22, hi);
+    m.box(xf, 0, 0.26, -0.02, 0.26, 0.24, 0.34, C.steel); m.box(xf, 0, 0.3, 0.12, 0.3, 0.06, 0.2, dark);
+    m.box(xf, 0, 0.68, -0.3, 0.24, 0.08, 0.3, C.seat); m.box(xf, 0, 0.58, -0.36, 0.22, 0.12, 0.4, body);
+    m.box(xf, 0, 0.74, -0.5, 0.2, 0.08, 0.22, body); m.box(xf, 0, 0.8, -0.52, 0.16, 0.05, 0.18, C.seat);
+    line(m, xf, [0.12, 0.2, -0.05], [0.14, 0.42, -0.62], 0.08, C.black); m.box(xf, 0.14, 0.38, -0.7, 0.1, 0.12, 0.14, C.steel);
+    line(m, xf, [0, 0.28, -0.1], [0, 0.42, zr], 0.06, C.black);
+    for (const sd of [-1, 1]) m.box(xf, sd * 0.16, 0.3, -0.2, 0.08, 0.02, 0.08, C.steel);
+  } else if (kind === 'trail') {
+    // spakbor depan tinggi, tangki ramping, jok rata panjang, plat nomor samping, rangka terbuka
+    m.box(xf, 0, hy - 0.22, zf - 0.02, 0.14, 0.04, 0.5, body); m.box(xf, 0, hy - 0.12, zf - 0.16, 0.22, 0.2, 0.06, col('#f2f2ee'));
+    m.box(xf, 0, hy - 0.08, zf - 0.13, 0.12, 0.08, 0.02, C.head);
+    m.box(xf, 0, 0.62, 0.12, 0.26, 0.22, 0.34, body); m.box(xf, 0, 0.84, 0.12, 0.2, 0.03, 0.26, hi);
+    m.box(xf, 0, 0.76, -0.24, 0.22, 0.08, 0.7, C.seat);
+    for (const sd of [-1, 1]) m.box(xf, sd * 0.13, 0.56, -0.42, 0.04, 0.2, 0.34, col('#f2f2ee'));
+    m.box(xf, 0, 0.3, -0.02, 0.22, 0.22, 0.26, C.steel); line(m, xf, [0, 0.62, 0.0], [0, 0.4, -0.05], 0.06, C.black);
+    line(m, xf, [0, 0.5, -0.1], [0, R, zr], 0.05, C.black); line(m, xf, [0, 0.72, -0.4], [0, R, zr], 0.03, C.steel);
+    line(m, xf, [0.13, 0.22, 0.0], [0.15, 0.6, -0.58], 0.06, C.steel);
+    m.box(xf, 0, 0.66, zr - 0.08, 0.12, 0.04, 0.3, body);
+    for (const sd of [-1, 1]) m.box(xf, sd * 0.16, 0.3, -0.08, 0.08, 0.02, 0.08, C.steel);
   } else {
-    // pelindung kaki + rangka bebek + tangki di bawah jok
+    // bebek: pelindung kaki + rangka bebek + tangki di bawah jok
+    m.box(xf, 0, R * 2 + 0.01, zf, 0.13, 0.05, 0.36, C.black);
+    m.box(xf, 0, 0.76, zf - 0.12, 0.26, 0.15, 0.16, dark); m.box(xf, 0, 0.79, zf - 0.03, 0.17, 0.08, 0.02, C.head);
+    for (const sd of [-1, 1]) m.box(xf, sd * 0.12, 0.74, zf - 0.03, 0.04, 0.03, 0.02, C.amber);
     m.box(xf, 0, 0.26, 0.28, 0.3, 0.4, 0.1, body); m.box(xf, 0, 0.62, 0.3, 0.12, 0.12, 0.2, dark);
     line(m, xf, [0, 0.66, 0.24], [0, 0.4, 0.0], 0.09, dark);
-    m.box(xf, 0, 0.24, -0.02, 0.24, 0.18, 0.28, C.steel);                                       // mesin
-    m.box(xf, 0, 0.36, -0.36, 0.28, 0.24, 0.5, body); m.box(xf, 0, 0.36, -0.36, 0.3, 0.05, 0.5, shade(body, 1.15));   // bodi samping + striping
-    m.box(xf, 0, 0.6, -0.26, 0.24, 0.09, 0.62, C.seat);                                         // jok panjang
-    for (const s of [-1, 1]) m.box(xf, s * 0.16, 0.24, 0.02, 0.08, 0.02, 0.1, C.steel);        // footstep
+    m.box(xf, 0, 0.24, -0.02, 0.24, 0.18, 0.28, C.steel);
+    m.box(xf, 0, 0.36, -0.36, 0.28, 0.24, 0.5, body); m.box(xf, 0, 0.36, -0.36, 0.3, 0.05, 0.5, hi);
+    m.box(xf, 0, 0.6, -0.26, 0.24, 0.09, 0.62, C.seat);
+    for (const sd of [-1, 1]) m.box(xf, sd * 0.16, 0.24, 0.02, 0.08, 0.02, 0.1, C.steel);
+    m.box(xf, 0.15, 0.16, -0.38, 0.07, 0.08, 0.5, C.chrome); m.box(xf, 0.15, 0.17, -0.67, 0.06, 0.06, 0.08, C.black);
+    m.box(xf, 0, 0.44, zr - 0.08, 0.14, 0.05, 0.28, C.black);
   }
-  // knalpot di kanan, spakbor & lampu & plat belakang
-  m.box(xf, 0.15, 0.16, -0.38, 0.07, 0.08, 0.5, C.chrome); m.box(xf, 0.15, 0.17, -0.67, 0.06, 0.06, 0.08, C.black);
-  m.box(xf, 0, 0.44, zr - 0.08, 0.14, 0.05, 0.28, C.black); m.box(xf, 0, 0.5, -0.66, 0.16, 0.06, 0.06, C.tail);
-  m.box(xf, 0, 0.36, zr - 0.2, 0.16, 0.08, 0.02, C.plate); m.box(xf, 0, 0.38, zr - 0.211, 0.12, 0.03, 0.005, C.plateTxt);
-  m.box(xf, -0.1, 0, -0.05, 0.03, 0.22, 0.03, C.steel);                                           // standar samping
-  if (o.helmet) { m.box(xf, 0, 0.66, -0.32, 0.22, 0.17, 0.22, col(o.helmet)); m.box(xf, 0, 0.68, -0.2, 0.18, 0.08, 0.02, C.glass); }
+  if (!o.wheels) m.box(xf, -0.1, 0, -0.05, 0.03, 0.22, 0.03, C.steel);                        // standar samping (diparkir)
+  if (o.helmet) { m.box(xf, 0, 0.7, -0.32, 0.22, 0.17, 0.22, col(o.helmet)); m.box(xf, 0, 0.72, -0.2, 0.18, 0.08, 0.02, C.glass); }
 }
 
 /* ---------------------------------------------------------------- SEPEDA */
+// jenis: 'kota' (keranjang, tegak), 'mtb' (gunung, ban tebal), 'onthel' (klasik tinggi hitam), 'bmx' (kecil)
+export const BIKE_FIT = {
+  kota: { seat: [0.76, -0.17], crank: [0.22, -0.02], anim: 'pedalUp' },
+  mtb: { seat: [0.8, -0.18], crank: [0.24, -0.02], anim: 'pedal' },
+  onthel: { seat: [0.9, -0.2], crank: [0.25, -0.02], anim: 'pedalUp' },
+  bmx: { seat: [0.6, -0.16], crank: [0.2, 0.0], anim: 'pedal' },
+};
+export const BIKE_KINDS = Object.keys(BIKE_FIT);
 export function sepeda(m, xf, c = '#2a8ae0', o = {}) { trk(xf, 0.3, 0.9); try { return sepeda_(m, xf, c, o); } finally { globalThis.__VEHCUR = 0; } }
 function sepeda_(m, xf, c, o) {
-  const fr = col(c), R = 0.26, zf = 0.5, zr = -0.48, y = R;
-  wheel(m, xf, 0, R, zf, R, 0.05, { spokes: true, t: 0.06, n: 18 }); wheel(m, xf, 0, R, zr, R, 0.05, { spokes: true, t: 0.06, n: 18 });
-  const crank = [0, 0.22, -0.02], seatTop = [0, 0.66, -0.16], head = [0, 0.66, 0.36];
-  line(m, xf, [0, y, zr], crank, 0.04, fr);          // chainstay
-  line(m, xf, [0, y, zr], seatTop, 0.04, fr);        // seatstay
-  line(m, xf, crank, seatTop, 0.045, fr);            // seat tube
-  line(m, xf, crank, head, 0.05, fr);                // down tube
-  line(m, xf, seatTop, head, 0.045, fr);             // top tube
-  line(m, xf, head, [0, y, zf], 0.035, C.chrome);    // garpu
-  line(m, xf, head, [0, 0.82, 0.32], 0.035, C.steel);
-  m.box(xf, 0, 0.82, 0.3, 0.48, 0.03, 0.04, C.steel); for (const s of [-1, 1]) m.box(xf, s * 0.22, 0.8, 0.3, 0.05, 0.05, 0.08, C.rubber);
-  m.box(xf, 0, 0.7, -0.18, 0.1, 0.05, 0.22, C.seat);                               // sadel
-  m.box(xf, 0.04, 0.17, -0.02, 0.02, 0.12, 0.12, C.steel); m.box(xf, 0.06, 0.1, 0.06, 0.08, 0.03, 0.05, C.black);   // gir & pedal
-  line(m, xf, [0.035, 0.22, -0.02], [0.035, y, zr], 0.015, C.black);              // rantai
-  if (o.basket) { m.box(xf, 0, 0.62, 0.5, 0.3, 0.2, 0.24, col('#8a6a40')); m.box(xf, 0, 0.62, 0.5, 0.24, 0.17, 0.18, col('#6a4a2a')); }
-  m.box(xf, 0, 0.6, -0.42, 0.1, 0.03, 0.26, C.black);                              // boncengan
-  m.box(xf, 0, 0.56, -0.56, 0.06, 0.04, 0.02, C.tail);
+  const kind = o.kind || 'kota', F = BIKE_FIT[kind], fr = col(kind === 'onthel' ? '#1e1e22' : c);
+  const R = kind === 'onthel' ? 0.31 : kind === 'bmx' ? 0.21 : 0.27, zf = kind === 'onthel' ? 0.58 : kind === 'bmx' ? 0.42 : 0.52, zr = kind === 'onthel' ? -0.55 : kind === 'bmx' ? -0.4 : -0.48, y = R;
+  const wo = { spokes: kind !== 'bmx', t: kind === 'mtb' ? 0.085 : 0.06, n: 18, tire: kind === 'onthel' ? col('#3a3a3a') : C.tire, rim: kind === 'bmx' ? col('#e8c020') : C.rim };
+  WH(m, xf, o, 0, R, zf, R, kind === 'mtb' ? 0.08 : 0.05, wo); WH(m, xf, o, 0, R, zr, R, kind === 'mtb' ? 0.08 : 0.05, wo);
+  const crank = [0, F.crank[0], F.crank[1]], seatTop = [0, F.seat[0] - 0.08, F.seat[1] + 0.02];
+  const hd = kind === 'onthel' ? [0, 0.8, zf - 0.16] : kind === 'bmx' ? [0, 0.56, zf - 0.12] : [0, 0.68, zf - 0.14];
+  const bar = kind === 'onthel' ? [0, 0.98, zf - 0.32] : kind === 'bmx' ? [0, 0.82, zf - 0.16] : kind === 'mtb' ? [0, 0.84, zf - 0.2] : [0, 0.88, zf - 0.24];
+  line(m, xf, [0, y, zr], crank, 0.04, fr); line(m, xf, [0, y, zr], seatTop, 0.04, fr);
+  line(m, xf, crank, seatTop, 0.045, fr); line(m, xf, crank, hd, kind === 'mtb' ? 0.07 : 0.05, fr);
+  line(m, xf, kind === 'kota' ? [0, 0.38, -0.04] : seatTop, hd, 0.045, fr);
+  line(m, xf, hd, [0, y, zf], kind === 'mtb' ? 0.05 : 0.035, kind === 'mtb' ? C.black : C.chrome);
+  line(m, xf, hd, bar, 0.035, C.steel);
+  const bw = kind === 'mtb' ? 0.3 : kind === 'onthel' ? 0.26 : 0.24;
+  if (kind === 'onthel') { for (const sd of [-1, 1]) line(m, xf, [0, bar[1], bar[2]], [sd * bw, bar[1] + 0.02, bar[2] - 0.14], 0.03, C.chrome); }
+  else m.box(xf, 0, bar[1], bar[2], bw * 2, 0.03, 0.04, C.steel);
+  for (const sd of [-1, 1]) m.box(xf, sd * bw, bar[1] - 0.02, bar[2] - (kind === 'onthel' ? 0.14 : 0), 0.05, 0.05, 0.08, C.rubber);
+  m.box(xf, 0, F.seat[0] - 0.05, F.seat[1], 0.11, 0.05, 0.22, kind === 'onthel' ? col('#5a3a24') : C.seat);
+  line(m, xf, [0.035, F.crank[0], F.crank[1]], [0.035, y, zr], 0.015, C.black);
+  if (kind === 'onthel') { m.box(xf, 0.05, F.crank[0] - 0.06, (zr + F.crank[1]) / 2, 0.02, 0.12, 0.5, fr); for (const z of [zf, zr]) m.box(xf, 0, R * 2 + 0.02, z, 0.08, 0.03, 0.4, fr); m.box(xf, 0, 0.82, zf - 0.08, 0.1, 0.1, 0.06, C.chrome); }
+  if (kind === 'mtb') { m.box(xf, 0, 0.5, zf - 0.08, 0.1, 0.12, 0.06, C.steel); }
+  if (kind === 'kota' || o.basket) { m.box(xf, 0, 0.62, zf + 0.0, 0.3, 0.2, 0.24, col('#8a6a40')); m.box(xf, 0, 0.64, zf + 0.0, 0.24, 0.18, 0.18, col('#6a4a2a')); }
+  if (kind !== 'bmx') { m.box(xf, 0, F.seat[0] - 0.14, zr + 0.06, 0.1, 0.03, 0.26, C.black); m.box(xf, 0, F.seat[0] - 0.18, zr - 0.08, 0.06, 0.04, 0.02, C.tail); }
+  if (!o.wheels) { m.box(xf, 0.04, F.crank[0] - 0.05, F.crank[1], 0.02, 0.12, 0.12, C.steel); m.box(xf, 0.06, F.crank[0] - 0.12, F.crank[1] + 0.08, 0.08, 0.03, 0.05, C.black); }
 }
 
 /* ---------------------------------------------------------------- MOBIL */
 // kind: 'sedan' | 'mpv' | 'angkot' | 'pikap'; panjang ±3.4 (z), lebar ±1.45 (x)
 export function car(m, xf, c = '#e8e8e8', kind = 'mpv', o = {}) { trk(xf, 0.75, kind === 'sedan' ? 1.75 : 1.72); try { return car_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
 function car_(m, xf, c, kind, o) {
-  const body = col(c), lo = shade(body, 0.82), hw = 0.72;
-  const L2 = kind === 'sedan' ? 1.72 : kind === 'angkot' ? 1.6 : 1.7, sill = 0.24, belt = kind === 'mpv' || kind === 'angkot' ? 0.78 : 0.72;
-  const roof = kind === 'sedan' ? 1.22 : kind === 'angkot' ? 1.52 : 1.42;
-  const R = 0.27, zf = L2 - 0.68, zr = -L2 + 0.62;
+  const truk = kind === 'truk', taksi = kind === 'taksi';
+  if (truk) kind = 'pikap'; if (taksi) kind = 'sedan';
+  const body = col(c), lo = shade(body, 0.82), hw = kind === 'suv' ? 0.76 : kind === 'hatch' ? 0.68 : 0.72;
+  const L2 = { sedan: 1.72, angkot: 1.6, hatch: 1.42, suv: 1.78 }[kind] || 1.7, sill = kind === 'suv' ? 0.34 : 0.24, belt = { mpv: 0.78, angkot: 0.78, suv: 0.9, hatch: 0.72 }[kind] || 0.72;
+  const roof = { sedan: 1.22, angkot: 1.52, hatch: 1.3, suv: 1.62 }[kind] || 1.42;
+  const R = kind === 'suv' ? 0.33 : kind === 'hatch' ? 0.25 : 0.27, zf = L2 - (kind === 'hatch' ? 0.55 : 0.68), zr = -L2 + (kind === 'hatch' ? 0.5 : 0.62);
   // roda (empat) + lengkung spakbor gelap
-  for (const z of [zf, zr]) for (const s of [-1, 1]) { wheel(m, xf, s * (hw - 0.09), R, z, R, 0.2); m.box(xf, s * (hw - 0.02), R * 2 - 0.08, z, 0.06, 0.14, R * 2 + 0.14, shade(body, 0.45)); }
+  for (const z of [zf, zr]) for (const s of [-1, 1]) { WH(m, xf, o, s * (hw - 0.09), R, z, R, 0.2, { rim5: true }); m.box(xf, s * (hw - 0.02), R * 2 - 0.08, z, 0.06, 0.14, R * 2 + 0.14, shade(body, 0.45)); }
+  for (const s of [-1, 1]) m.box(xf, s * (hw + 0.004), sill - 0.02, 0, 0.02, 0.06, L2 * 2 - 1.5, shade(body, 0.55));   // list bawah pintu
   // badan bawah: sasis gelap, badan (lebar penuh) dengan bumper depan/belakang
   m.box(xf, 0, 0.14, 0, hw * 2 - 0.2, 0.12, L2 * 2 - 0.4, C.black);
   const front = kind === 'angkot' ? L2 - 0.15 : L2, hood = kind === 'angkot' ? belt + 0.05 : belt;
@@ -109,10 +193,10 @@ function car_(m, xf, c, kind, o) {
   m.box(xf, 0, sill, front - 0.04, hw * 2 + 0.04, 0.2, 0.12, kind === 'angkot' ? C.chrome : C.black);   // bumper depan
   m.box(xf, 0, sill, -L2 + 0.04, hw * 2 + 0.04, 0.2, 0.12, C.black);                                   // bumper belakang
   // kap & kaca depan miring, atap, kaca belakang (poligon)
-  const zA = kind === 'angkot' ? L2 - 0.55 : kind === 'pikap' ? L2 - 1.1 : L2 - 0.95;   // pangkal kaca depan
+  const zA = kind === 'angkot' ? L2 - 0.55 : kind === 'pikap' ? L2 - 1.1 : kind === 'hatch' ? L2 - 0.75 : kind === 'suv' ? L2 - 0.85 : L2 - 0.95;   // pangkal kaca depan
   const zB = zA - (kind === 'angkot' ? 0.18 : 0.62);                                     // ujung depan atap
   const zC = kind === 'pikap' ? zB - 0.9 : kind === 'sedan' ? -L2 + 1.0 : -L2 + 0.32;   // ujung belakang atap
-  const zD = kind === 'pikap' ? zC - 0.05 : kind === 'sedan' ? -L2 + 0.42 : -L2 + 0.16; // pangkal kaca belakang
+  const zD = kind === 'pikap' ? zC - 0.05 : kind === 'sedan' ? -L2 + 0.42 : kind === 'hatch' ? -L2 + 0.08 : -L2 + 0.16; // pangkal kaca belakang
   const xi = hw - 0.08, xr = hw - 0.14;
   const Q = (pts, cc) => m.poly(pts.map(p => P(xf, ...p)), cc);
   // kap mesin (sedikit miring ke depan)
@@ -158,7 +242,20 @@ function car_(m, xf, c, kind, o) {
     m.box(xf, 0, roof, zB - 0.06, 0.8, 0.16, 0.06, col('#f2f2f2')); m.box(xf, 0, roof + 0.04, zB - 0.095, 0.6, 0.06, 0.01, col('#2a2a2e'));
     m.box(xf, 0, roof, -0.3, hw * 1.6, 0.04, 1.6, col('#9a9a9a'));
   }
-  if (kind === 'sedan') m.box(xf, 0, belt, -L2 + 0.18, hw * 1.6, 0.03, 0.12, shade(body, 0.9));   // spoiler kecil
+  if (kind === 'sedan' && !taksi) m.box(xf, 0, belt, -L2 + 0.18, hw * 1.6, 0.03, 0.12, shade(body, 0.9));   // spoiler kecil
+  // detail umum: lis krom jendela, wiper, antena, knalpot, lampu kabut
+  for (const s of [-1, 1]) m.box(xf, s * (hw - 0.01), belt - 0.01, (zA + zD) / 2, 0.02, 0.025, zA - zD - 0.1, C.chrome);
+  for (const s of [-1, 1]) m.box(xf, s * 0.22, belt + 0.02, zA - 0.06, 0.34, 0.02, 0.03, C.black);
+  m.box(xf, -hw + 0.2, roof, zC + 0.2, 0.02, 0.22, 0.02, C.black);
+  m.box(xf, hw - 0.3, 0.14, -L2 - 0.02, 0.08, 0.07, 0.12, C.steel);
+  for (const s of [-1, 1]) m.box(xf, s * (hw - 0.2), sill + 0.04, front + 0.01, 0.1, 0.06, 0.02, col('#e8e4c8'));
+  if (kind === 'suv') { for (const s of [-1, 1]) m.box(xf, s * (hw - 0.18), roof + 0.02, (zB + zC) / 2, 0.04, 0.05, zB - zC - 0.2, C.steel); m.box(xf, 0, 0.5, -L2 - 0.1, 0.36, 0.36, 0.14, C.black); }   // rel atap & ban serep
+  if (taksi) { m.box(xf, 0, roof, (zB + zC) / 2, 0.42, 0.14, 0.2, col('#f2f2ee')); m.box(xf, 0, roof + 0.03, (zB + zC) / 2 + 0.101, 0.32, 0.07, 0.005, col('#2a5ab0')); }
+  if (truk) {   // bak boks tertutup
+    const zb0 = zD - 0.04;
+    m.box(xf, 0, belt, (zb0 - L2) / 2 - 0.05, hw * 2 + 0.06, 1.0, zb0 + L2 + 0.1, col(o.box || '#e8e4d8'));
+    for (const s of [-1, 1]) m.box(xf, s * (hw + 0.035), belt + 0.4, (zb0 - L2) / 2, 0.01, 0.2, zb0 + L2 - 0.3, body);
+  }
 }
 
 export const CAR_COLORS = ['#f2f2f0', '#c0c2c8', '#2a2a2e', '#b83a3a', '#3f6fa8', '#8a8a90', '#e8e2d0', '#4a6a4a'];

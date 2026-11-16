@@ -15,6 +15,8 @@ dibangun ulang di Three.js (GPU) supaya kamera berputar tidak lag lagi.
 | Kamera ikut karakter | C | Menu → Kamera ikut |
 | Sudut kamera (Rendah / Sedang / Tinggi) | V, seret mouse naik-turun | tombol Sudut, geser dua jari naik-turun |
 | Peta mini | M | Menu → Peta |
+| Naik sepeda / motor / turun | R | tombol Naik |
+| Gaya (melambai, duduk, jongkok, HP, joget, hormat, angkat tangan, baca, berbaring, tepuk tangan, tertawa, berpikir, bawa kardus, salam, peregangan) | 1-9, 0 | tombol Gaya (berganti tiap tekan) |
 
 Menu juga punya **Grafik** (Rendah: tanpa bayangan matahari dan rumput kecil, Sedang, Tinggi) dan **Pixel** (besar piksel; auto menyesuaikan layar).
 Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
@@ -42,8 +44,24 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   di sepanjang jalan dengan halaman, jalur masuk, dan jarak antar-rumah, semua menghadap jalan. Jalan punya aspal/paving,
   marka, kanstin, zebra cross, selokan gang, tiang listrik dan lampu jalan. Tanaman: pohon per wilayah, bambu, kelapa,
   pisang, padi, kebun teh, semak, bunga, rumput.
-- **Kendaraan** (`src/vehicles.js`): motor bebek & matic (garpu, spion, knalpot, plat, helm), sepeda (rangka berlian,
-  jari-jari, keranjang), mobil sedan / MPV / pikap / angkot (kaca miring, lampu, gril, spion, plat).
+- **Kendaraan** (`src/vehicles.js`, `src/rides.js`): motor bebek, matic, sport, trail, vespa; sepeda kota (keranjang),
+  MTB, onthel, BMX; mobil sedan, hatchback, SUV, MPV, angkot, pikap, taksi, truk boks. Tiap motor/sepeda punya titik jok
+  dan pose pengendara sendiri (`MOTOR_FIT`, `BIKE_FIT`); tokoh didudukkan tepat di jok dari posisi pantat voxel per frame.
+  Roda berputar sesuai kecepatan, engkol sepeda ikut kayuhan, motor miring saat menikung.
+- **Lalu lintas** (`src/traffic.js`): mobil, motor (kadang berboncengan), dan sepeda berjalan di lajur kiri jalan raya &
+  jalan, pindah ke jalan lain di simpang, menjaga jarak, berhenti untuk pemain. Lampu merah dibuat otomatis di tiap simpang
+  jalan raya: tiang di kiri jalur, kotak lampu di atas lajur menghadap kendaraan yang datang, nyala bergantian
+  (jalan raya hijau 9 dtk, lalu jalan masuk), kendaraan berhenti di garis.
+- **Sungai & danau** punya kedalaman: tanah dilubangi, dinding talud batu (basah di bawah), dasar gelap, permukaan air
+  di bawah tanah; jembatan dengan balok samping & pilar di sungai.
+- **Tokoh**: kepala dengan rahang/dagu & telinga (bentuk wajah oval/bulat/kotak/V), mata (normal/besar/kecil/sayu/tajam,
+  bulu mata), alis (tebal/tipis/naik/marah, bekas luka), mulut (senyum/datar/nyengir/miring), kumis/janggut, kacamata
+  bulat/kotak; 10 gaya rambut baru sesuai guide (messy, cepak, klimis, bergelombang, ikat rendah, kepang, kuncir tinggi,
+  kuncir dua rendah, bob + jepit, setengah ikat, topi terbalik). Seragam SMA: kerah, kancing, saku + badge OSIS,
+  papan nama, ikat pinggang + gesper, rok lipit; jaket di atas seragam memperlihatkan kemeja. NPC punya variasi diam
+  (main HP, baca buku, jongkok, tertawa, bawa kardus, menyapu, hormat, dll.).
+- **Bangunan** lebih berkedalaman: kusen jendela & pintu menonjol, ambang bawah/atas, luifel beton di atas pintu,
+  lis lantai, atap teras genteng sampai depan pilar. Tekstur tanah 16 piksel/petak + bintik seukuran voxel.
 - Tidak ada bangunan, pohon, atau benda yang menumpuk di permukaan jalan: rumah dicek terhadap jarak ke tepi jalan,
   bangunan kunci digeser otomatis kalau tapaknya menyentuh jalan, marka jalan diputus di setiap simpang.
 - Tanaman bergoyang pelan tertiup angin (shader); pohon, semak, bunga, rumput punya gumpalan daun & warna bertingkat.

@@ -3,14 +3,14 @@
 // di dunia digeser X + SCHOOL_OX. Pagar (2,2)-(78,55.5), trotoar z 56-57, Jl. Merdeka z 57-60.
 import * as THREE from 'three';
 import { Chunks, col, shade, mix } from './geom.js';
-import { hash, pick, MAT, GLASS, GLASS2, FRAME, makePatterns, PAT } from './common.js';
+import { hash, pick, MAT, GLASS, GLASS2, FRAME, makePatterns, PAT, groundDetail } from './common.js';
 import { plant } from './veg.js';
 import * as V from './vehicles.js';
 export { Collision } from './common.js';
 export { buildKota } from './kota.js';
 
 export const SCHOOL_OX = 400;
-const PX = 10;
+const PX = 16;
 const FS = 2.2;                       // tinggi 1 lantai sekolah (guide 83: 2.2 petak)
 const GX = -12, GZ = -10, GW = 104, GH = 76;   // bidang tanah (lebih luas dari tapak, supaya tepi tidak kosong)
 
@@ -39,7 +39,7 @@ export const SCHOOL_ZONES = [
 /* ------------------------------------------------------------------ tanah */
 function paintSekolah() {
   const s = PX, cv = document.createElement('canvas'); cv.width = GW * s; cv.height = GH * s;
-  const g = cv.getContext('2d'); makePatterns(g);
+  const g = cv.getContext('2d'); makePatterns(g, s / 10);
   g.translate(-GX * s, -GZ * s);
   g.fillStyle = PAT.grassDark; g.fillRect(GX * s, GZ * s, GW * s, GH * s);
   g.fillStyle = PAT.grass; g.fillRect(2 * s, 2 * s, 76 * s, 53.5 * s);
@@ -53,7 +53,7 @@ function paintSekolah() {
   // paving halaman
   const pav = PAT.paving, tile = PAT.tile;
   O(39, 49.5, 5.5, pav); R(36.5, 44, 41.5, 57, pav);
-  O(39, 49.5, 5.5, pav); g.strokeStyle = 'rgba(120,112,100,0.6)'; g.lineWidth = 1; for (const r of [3, 4.2, 5.4]) { g.beginPath(); g.arc(39 * s, 49.5 * s, r * s, 0, Math.PI * 2); g.stroke(); }
+  O(39, 49.5, 5.5, pav); g.strokeStyle = 'rgba(120,112,100,0.6)'; g.lineWidth = 0.1 * s; for (const r of [3, 4.2, 5.4]) { g.beginPath(); g.arc(39 * s, 49.5 * s, r * s, 0, Math.PI * 2); g.stroke(); }
   // selasar beratap & jalur
   R(27, 31.5, 51, 33.5, tile); R(24, 15.5, 26, 33.5, tile); R(52, 15.5, 54, 33.5, tile); R(13, 15.5, 24, 17.5, tile);
   R(22, 12, 58, 15.5, pav); R(62, 14.5, 66, 16.5, pav); R(56, 31.2, 58, 34, pav); R(13, 31.5, 22, 33.5, pav); R(21, 31.5, 27, 33.5, pav);
@@ -64,11 +64,11 @@ function paintSekolah() {
   R(28, 16, 50, 30, PAT.semen);
   for (let i = 1; i < 11; i++) line([[28 + i * 2, 16.2], [28 + i * 2, 29.8]], 'rgba(120,116,108,0.45)', 1);
   for (let i = 1; i < 7; i++) line([[28.2, 16 + i * 2], [49.8, 16 + i * 2]], 'rgba(120,116,108,0.3)', 1);
-  g.strokeStyle = 'rgba(250,250,240,0.85)'; g.lineWidth = 2; g.strokeRect(28.6 * s, 16.6 * s, 20.8 * s, 12.8 * s);
+  g.strokeStyle = 'rgba(250,250,240,0.85)'; g.lineWidth = 0.2 * s; g.strokeRect(28.6 * s, 16.6 * s, 20.8 * s, 12.8 * s);
   for (let r = 0; r < 6; r++) for (let c = 0; c < 9; c++) O(30.5 + c * 2.2, 21 + r * 1.4, 0.16, 'rgb(110,110,110)');
   // lapangan basket & futsal (semen cat bata)
   R(54, 16, 69, 30, 'rgb(201,119,74)');
-  g.strokeStyle = 'rgba(250,250,250,0.95)'; g.lineWidth = 2; g.strokeRect(55 * s, 17 * s, 13 * s, 12 * s);
+  g.strokeStyle = 'rgba(250,250,250,0.95)'; g.lineWidth = 0.2 * s; g.strokeRect(55 * s, 17 * s, 13 * s, 12 * s);
   line([[55, 23], [68, 23]], 'rgba(250,250,250,0.95)', 2);
   g.beginPath(); g.arc(61.5 * s, 23 * s, 1.6 * s, 0, Math.PI * 2); g.stroke();
   g.beginPath(); g.arc(61.5 * s, 17 * s, 3 * s, 0, Math.PI); g.stroke();
@@ -102,7 +102,7 @@ export function buildSekolah(scene, C) {
   const OX = SCHOOL_OX, ch = new Chunks(32);
   const tex = new THREE.CanvasTexture(paintSekolah());
   tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.anisotropy = 4;
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(GW, GH), new THREE.MeshLambertMaterial({ map: tex }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(GW, GH), groundDetail(new THREE.MeshLambertMaterial({ map: tex })));
   ground.rotation.x = -Math.PI / 2; ground.position.set(OX + GX + GW / 2, 0.01, GZ + GH / 2); ground.receiveShadow = true; scene.add(ground);
 
   const at = (x, z) => ch.at(OX + x, z);

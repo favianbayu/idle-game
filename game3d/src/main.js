@@ -7,6 +7,7 @@ import { L } from './buildings.js';
 import { SMALL, WIND, plant as vegPlant } from './veg.js';
 import { initChars, onCharsReady, Character, preload, styleName } from './chars.js';
 import { LINES, NPCS } from './npcs.js';
+import { makeRide } from './rides.js';
 
 /* ------------------------------------------------------------------ pengaturan */
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -63,6 +64,24 @@ const player = { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, heading: Math.PI / 2, run
 if (saved?.p) Object.assign(player, saved.p);
 const raka = new Character('raka', { xray: true, prio: 10 });
 scene.add(raka.group);
+// kendaraan pemain: R / tombol Naik = jalan kaki -> sepeda -> motor. Kendaraan (roda berputar, engkol ikut kayuhan) menempel di grup tokoh.
+const RIDES = [null,
+  { name: 'Sepeda', walk: 3.6, run: 6.0, r: makeRide('sepeda', 'kota', '#2a8ae0') },
+  { name: 'Motor', walk: 6.5, run: 10.5, r: makeRide('motor', 'bebek', '#c83a3a') }];
+for (const R of RIDES) if (R) { R.r.group.rotation.y = Math.PI / 2; R.r.group.visible = false; raka.group.add(R.r.group); }
+let ride = 0;
+function toggleRide() {
+  if (player.area !== 'kota' && !ride) { toast('Kendaraan cuma bisa dipakai di kota'); return; }
+  ride = (ride + 1) % RIDES.length; if (player.area !== 'kota') ride = 0;
+  RIDES.forEach((R, i) => R && (R.r.group.visible = i === ride));
+  const R = RIDES[ride];
+  raka.seat = R ? { y: R.r.fit.seat[0], x: R.r.fit.seat[1] } : null; raka.blob.scale.setScalar(R ? 1.6 : 1); player.emote = null;
+  toast(R ? 'Naik ' + R.name.toLowerCase() + ' (Naik/R lagi: ganti/turun)' : 'Jalan kaki');
+}
+// gaya (emote) pemain: tombol 1-9, 0 atau tombol Gaya (HP). Berhenti saat bergerak.
+const EMOTES = ['wave', 'sitDown', 'squat', 'phone', 'dance', 'salute', 'raiseHand', 'read', 'lie', 'clap', 'laugh', 'think', 'carry', 'bow', 'stretch'];
+let emoteI = -1;
+function emote(i) { if (ride) return; emoteI = i % EMOTES.length; player.emote = EMOTES[emoteI]; }
 
 const npcs = [];
 onCharsReady(() => {
@@ -96,6 +115,8 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyC') toggleFollow();
   if (e.code === 'KeyM') toggleMinimap();
   if (e.code === 'KeyV') cyclePitch();
+  if (e.code === 'KeyR') toggleRide();
+  const dg = /^Digit(\d)$/.exec(e.code); if (dg) emote((+dg[1] + 9) % 10);
   if (e.code === 'Space' || e.code === 'KeyF' || e.code === 'Enter') { act(); e.preventDefault(); }
   if (e.code === 'Equal' || e.code === 'NumpadAdd') zoom(-1);
   if (e.code === 'Minus' || e.code === 'NumpadSubtract') zoom(1);
@@ -166,7 +187,7 @@ document.body.classList.toggle('touch', isTouch);
 ui.follow.classList.toggle('on', opt.follow);
 ui.mapWrap.style.display = opt.minimap ? '' : 'none';
 const tap = (el, fn) => el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); fn(); });
-tap($('btnAct'), () => act());
+tap($('btnAct'), () => act()); tap($('btnRide'), toggleRide); tap($('btnEmote'), () => emote(emoteI + 1));
 const menu = $('menu'); menu.classList.toggle('closed', isTouch);
 tap($('btnMenu'), () => menu.classList.toggle('closed'));
 tap(ui.run, () => { ui.run.classList.toggle('on'); player.run = ui.run.classList.contains('on'); });
@@ -203,6 +224,7 @@ function act() {
   } else if (target.kind === 'go') {
     fading = 1; ui.fade.style.opacity = 1;
     setTimeout(() => {
+      if (ride) { ride = RIDES.length - 1; toggleRide(); }
       if (target.to === 'sekolah') Object.assign(player, { x: EXIT_SCHOOL.x, z: EXIT_SCHOOL.z - 4.2, heading: -Math.PI / 2, area: 'sekolah' });
       else Object.assign(player, { x: ENTER_SCHOOL.x, z: ENTER_SCHOOL.z + 1.5, heading: Math.PI / 2, area: 'kota' });
       cam.x = player.x; cam.z = player.z; cam.yaw = cam.yawT = 0;
@@ -240,13 +262,13 @@ function updatePlayer(dt) {
   ix += joy.x; iy += joy.y;
   let l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; l = 1; }
   const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || player.run;
-  const sp = (run ? 4.6 : 2.1) * Math.min(1, l * 1.3);
+  const RD = RIDES[ride], sp = (RD ? (run ? RD.run : RD.walk) : (run ? 4.6 : 2.1)) * Math.min(1, l * 1.3);
   // arah relatif kamera: atas layar = arah pandang kamera
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   const wx = (fx * -iy + rx * ix), wz = (fz * -iy + rz * ix);
   const k = 1 - Math.exp(-dt * 14);
   player.vx += (wx * sp - player.vx) * k; player.vz += (wz * sp - player.vz) * k;
-  const np = collision.move(player, player.x + player.vx * dt, player.z + player.vz * dt, 0.28);
+  const np = collision.move(player, player.x + player.vx * dt, player.z + player.vz * dt, ride ? 0.4 : 0.28);
   // kecepatan nyata (supaya animasi berhenti saat menabrak dinding)
   if (dt > 0) { player.vx = (np.x - player.x) / dt; player.vz = (np.z - player.z) / dt; }
   player.x = np.x; player.z = np.z;
@@ -256,12 +278,25 @@ function updatePlayer(dt) {
     player.heading += d * Math.min(1, dt * 14);
   }
   raka.heading = player.heading;
-  raka.play(v > 3.2 ? 'run' : v > 0.35 ? 'walk' : 'idle');
+  if (l > 0.1) player.emote = null;
+  if (RD) { raka.play(RD.r.anim); RD.r.spin(v * dt); }
+  else raka.play(player.emote || (v > 3.2 ? 'run' : v > 0.35 ? 'walk' : 'idle'));
   raka.group.position.set(player.x, 0, player.z);
-  raka.update(dt);
+  raka.update(RD ? (RD.r.type === 'sepeda' ? dt * Math.min(1.6, v / 2.5) : dt) : dt);
+  if (RD) RD.r.syncCrank(raka);
   return v;
 }
 
+// variasi diam NPC: siswa main HP/ngobrol/baca, orang dewasa jongkok/peregangan, anak-anak joget; beberapa tokoh punya kebiasaan sendiri (guide)
+const STUDENTS = new Set(['raka', 'rani', 'bimo', 'tegar', 'jojo', 'uti', 'nadia', 'sekar', 'laras', 'dimas', 'arga', 'rizal', 'bram', 'rio', 'kevin', 'sasha', 'siswaA', 'siswiA', 'siswiB', 'siswaB', 'paskibra', 'kirana', 'mei', 'andra']);
+const KIDS = new Set(['anakSD', 'anakSDcw', 'bocah', 'cici']);
+const HABIT = { pakUjang: 'sweep', gilang: 'carry', mei: 'read', rizal: 'read', jojo: 'phone', sekar: 'think', fajar: 'squat', satpam: 'salute', paskibra: 'salute', polisi: 'salute', kakek: 'squat', andra: 'think', laras: 'carry', bimo: 'laugh', tegar: 'read', pakGunadi: 'think', buRatna: 'read' };
+const IDLES = { student: ['idle', 'idle', 'phone', 'talk', 'look', 'think', 'laugh', 'read', 'clap'], adult: ['idle', 'idle', 'look', 'phone', 'talk', 'squat', 'stretch', 'scratch'], kid: ['idle', 'look', 'dance', 'squat', 'wave', 'clap'] };
+function pickIdle(n) {
+  if (HABIT[n.sid] && Math.random() < 0.45) return HABIT[n.sid];
+  const set = STUDENTS.has(n.sid) ? IDLES.student : KIDS.has(n.sid) ? IDLES.kid : IDLES.adult;
+  return set[Math.floor(Math.random() * set.length)];
+}
 function updateNPC(n, dt) {
   const dx = n.x - player.x, dz = n.z - player.z, far = dx * dx + dz * dz > 70 * 70;
   n.c.group.visible = !far;
@@ -270,7 +305,7 @@ function updateNPC(n, dt) {
   let moving = false;
   if (n.wait <= 0) {
     const tx = n.tx - n.x, tz = n.tz - n.z, d = Math.hypot(tx, tz);
-    if (d < 0.2) { n.wait = 2 + Math.random() * 5; const a = Math.random() * 6.28, r = Math.random() * (n.roam ?? 3); n.tx = n.home.x + Math.cos(a) * r; n.tz = n.home.z + Math.sin(a) * r; }
+    if (d < 0.2) { n.idle = pickIdle(n); n.wait = n.idle === 'idle' ? 2 + Math.random() * 5 : 5 + Math.random() * 8; const a = Math.random() * 6.28, r = Math.random() * (n.roam ?? 3); n.tx = n.home.x + Math.cos(a) * r; n.tz = n.home.z + Math.sin(a) * r; }
     else {
       const s = 1.1 * dt; const p = collision.move(n, n.x + tx / d * s, n.z + tz / d * s, 0.26);
       if (Math.hypot(p.x - n.x, p.z - n.z) < s * 0.3) { n.tx = n.x; n.tz = n.z; }
@@ -279,7 +314,7 @@ function updateNPC(n, dt) {
   }
   // jangan tembus pemain
   const pd = Math.hypot(dx, dz); if (pd < 0.55 && pd > 1e-4) { n.x = player.x + dx / pd * 0.55; n.z = player.z + dz / pd * 0.55; }
-  n.c.heading = n.heading; n.c.play(moving ? 'walk' : 'idle');
+  n.c.heading = n.heading; n.c.play(moving ? 'walk' : n.say && !n.filler ? 'talk' : n.idle || 'idle');
   n.c.group.position.set(n.x, 0, n.z); n.c.update(dt);
   if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
   n.greetT -= dt;
@@ -314,6 +349,7 @@ function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   const v = updatePlayer(dt);
   for (const n of npcs) updateNPC(n, dt);
+  kota.traffic.update(dt, player);
   // kamera
   cam.manualT -= dt;
   if (opt.follow && v > 0.5 && cam.manualT <= 0) {
@@ -360,4 +396,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { vegPlant, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { makeRide, toggleRide, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
