@@ -19,6 +19,10 @@ const AREA = (() => {
   return { water: idx([104, 160, 204]), sawah: A.map((a, i) => a.kind === 'sawah' ? i : -1).filter(i => i >= 0), forest: A.map((a, i) => a.alpha === 120 && i > 6 ? i : -1).filter(i => i >= 0),
     alun: green[0], lapangan: green[1], proyek: idx([190, 186, 176])[0], dirt: [...idx([200, 180, 150]), ...idx([180, 140, 90]), ...idx([196, 170, 120])], semen: idx([150, 150, 160]), tpu: idx([176, 186, 150]) };
 })();
+// jalan ke SMA dulu buntu di depan pagar: belokkan ke timur menyusuri pagar sampai ketemu jalan utama
+{ const r = KOTA.roads.find(r => Math.hypot(r.pts.at(-1)[0] - 104, r.pts.at(-1)[1] - 64) < 0.5);
+  if (r) { const i = r.pts.findIndex(p => p[0] > 99.3 && p[1] < 67.6), zf = x => 66.36 - 0.1404 * (x - 97.3);   // sejajar pagar SMA (posisi dipatok di bawah)
+    r.pts = [...r.pts.slice(0, i + 1), [100.1, 66.75], [101, 66.15], [102.2, 65.7], ...[104, 106.5, 109, 111.5, 114, 116.5, 119, 121].map(x => [x, +zf(x).toFixed(2)]), [122.6, 62.75]]; } }
 export const REGIONS = ['Perbukitan Utara', 'Perkampungan Kenanga', 'Pusat Kota', 'Kawasan Sekolah', 'Perumahan Bukit Asri', 'Bantaran Kali', 'Selatan'];
 const REGION_KEY = ['bukit', 'kampung', 'pusat', 'sekolah', 'perum', 'bantaran', 'selatan'];
 const SPECIAL = { '110,54': 'sma', '19,58': 'stasiun', '146,64': 'masjid', '114,98': 'pasar', '178,98': 'plaza', '50,131': 'gudang', '150,158': 'stm', '224,56': 'bram', '84,18': 'menara' };
@@ -328,7 +332,9 @@ export function buildKota(scene, C) {
   for (const b of K.bldgs) { const sp = SPECIAL[Math.round(b.x) + ',' + Math.round(b.y)]; if (sp) specials[sp] = { ...b }; }
   // geser bangunan kunci sedikit kalau tapaknya (plus pelataran 1 petak) menyentuh permukaan jalan
   const clearOf = (b, x, y) => { const c = Math.cos(b.a), sn = Math.sin(b.a); for (let u = -b.w / 2 - 1; u <= b.w / 2 + 1; u += 0.5) for (let v = -b.h / 2 - 1; v <= b.h / 2 + 1; v += 0.5) if (M.roadDist(x + u * c - v * sn, y + u * sn + v * c) < 0.15) return false; return true; };
+  const PIN = { sma: [-5, 0] };   // SMA dipatok: jalan depan sekolah dirutekan menyusuri pagarnya
   for (const [name, b] of Object.entries(specials)) {
+    if (PIN[name]) { [b.dx, b.dy] = PIN[name]; b.x += b.dx; b.y += b.dy; continue; }
     if (clearOf(b, b.x, b.y)) continue;
     let best = null;
     for (let r = 0.5; r <= 8 && !best; r += 0.5) for (let k = 0; k < 16; k++) { const t = k / 16 * Math.PI * 2, x = b.x + Math.cos(t) * r, y = b.y + Math.sin(t) * r; if (clearOf(b, x, y)) { best = [x, y]; break; } }
