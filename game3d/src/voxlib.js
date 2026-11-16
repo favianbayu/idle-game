@@ -535,6 +535,25 @@ function humanShape(P0, st, part = 'all') {
   const zTopSk = pelvis[2] + 1.6 * S;
   const zBotSk = st.skirtShort ? Math.min(legs[0].knee[2], legs[1].knee[2]) - 0.3 * S
     : Math.min(legs[0].ankle[2], legs[1].ankle[2]) + (bs === 'sarung' ? 1.6 : 0.9) * S;
+  // duduk (naik motor/sepeda, dibonceng, duduk, jongkok): kedua paha maju. Rok tidak lagi dibuat per irisan datar
+  // (irisan itu tidak menutup paha yang mendatar sehingga kulit kaki tembus), tapi membungkus paha seperti kain di pangkuan
+  // lalu menjuntai dari lutut (rok panjang).
+  const seated = (bs === 'sarung' || bs === 'skirt') && P.thL > 0.55 && P.thR > 0.55;
+  const lap = seated && (() => {
+    const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    const hipM = mid(legs[0].hip, legs[1].hip), kneeM = mid(legs[0].knee, legs[1].knee), long = !st.skirtShort;
+    const drop = l => add(l.knee, sub(l.ankle, l.knee), bs === 'sarung' ? 0.8 : 0.62), D = legs.map(drop), Dm = mid(D[0], D[1]);
+    return p => {
+      if (capsule(p, hipM, kneeM, 2.9 * S, long ? 2.5 * S : 2.3 * S) >= 0) return true;              // pangkuan (menutup celah antar paha)
+      for (let i = 0; i < 2; i++) {
+        const l = legs[i];
+        if (capsule(p, l.hip, l.knee, 2.35 * S, long ? 2.05 * S : 1.75 * S) >= 0) return true;        // kain di atas paha
+        if (long && capsule(p, l.knee, D[i], 2.0 * S, 1.75 * S) >= 0) return true;                   // juntai dari lutut
+      }
+      if (long && capsule(p, kneeM, Dm, 2.6 * S, 2.2 * S) >= 0) return true;
+      return false;
+    };
+  })();
   const legX = (l, z) => {
     const xs = [];
     for (const [a, b] of [[l.hip, l.knee], [l.knee, l.ankle]]) {
@@ -555,7 +574,8 @@ function humanShape(P0, st, part = 'all') {
       const ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t, ff = (wx * fwd[0] + wz * fwd[2]) / S;
       if ((ff / rx) ** 2 + (wy / S / ry) ** 2 <= 1) return st.belt && t > 0.16 ? (ff > rx * 0.62 && Math.abs(wy / S) < 0.6 ? 'buckle' : 'belt') : bottomMat(x, y, z);
     }
-    if ((bs === 'sarung' || bs === 'skirt') && p[2] <= zTopSk && p[2] >= zBotSk) {
+    if (lap) { if (lap(p)) return bottomMat(x, y, z); }
+    else if ((bs === 'sarung' || bs === 'skirt') && p[2] <= zTopSk && p[2] >= zBotSk) {
       const xs = [pelvis[0], ...legX(legs[0], p[2]), ...legX(legs[1], p[2])];
       const xmin = Math.min(...xs), xmax = Math.max(...xs), fl = (zTopSk - p[2]) / (zTopSk - zBotSk || 1);
       const pad = (1.9 + 0.5 * fl) * S, hy = (2.8 + 0.5 * fl) * S, hx = (xmax - xmin) / 2 + pad, xc = (xmin + xmax) / 2;
