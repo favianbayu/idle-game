@@ -9,6 +9,7 @@ import { initChars, onCharsReady, Character, preload, styleName } from './chars.
 import { LINES, NPCS } from './npcs.js';
 import { makeRide } from './rides.js';
 import { makeFight } from './fight.js';
+import { makeBigMap } from './bigmap.js';
 
 /* ------------------------------------------------------------------ pengaturan */
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -65,21 +66,62 @@ const player = { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, heading: Math.PI / 2, run
 if (saved?.p) Object.assign(player, saved.p);
 const raka = new Character('raka', { xray: true, prio: 10 });
 scene.add(raka.group);
-// kendaraan pemain: R / tombol Naik = jalan kaki -> sepeda -> motor. Kendaraan (roda berputar, engkol ikut kayuhan) menempel di grup tokoh.
+// kendaraan pemain: tidak muncul dari udara. Tiap kendaraan diparkir di dunia (awal: lorong samping rumah Om Darto),
+// Aksi di dekatnya = naik, Aksi saat berkendara = turun & parkir di tempat. Mode cerita: awal cuma punya onthel Om.
 const RIDES = [null,
-  { name: 'Sepeda', walk: 3.6, run: 6.0, r: makeRide('sepeda', 'kota', '#2a8ae0') },
+  { name: 'Sepeda onthel', walk: 3.0, run: 5.0, r: makeRide('sepeda', 'onthel', '#2f5a3e') },
   { name: 'Motor', walk: 6.5, run: 10.5, r: makeRide('motor', 'bebek', '#c83a3a') }];
-for (const R of RIDES) if (R) { R.r.group.rotation.y = Math.PI / 2; R.r.group.visible = false; raka.group.add(R.r.group); }
-let ride = 0;
-function toggleRide() {
-  if (player.fx && (player.fx.down > 0 || player.fx.atk)) return;
-  if (player.area !== 'kota' && !ride) { toast('Kendaraan cuma bisa dipakai di kota'); return; }
-  ride = (ride + 1) % RIDES.length; if (player.area !== 'kota') ride = 0;
-  RIDES.forEach((R, i) => R && (R.r.group.visible = i === ride));
-  const R = RIDES[ride];
-  raka.seat = R ? { ...R.r.seat } : null; raka.blob.scale.setScalar(R ? 1.6 : 1); player.emote = null;
-  toast(R ? 'Naik ' + R.name.toLowerCase() + ' (Naik/R lagi: ganti/turun)' : 'Jalan kaki');
+const HOME_PARK = (() => {
+  const D = kota.darto, sd = D.cart && D.cart.lx > 0 ? -1 : 1, out = [];
+  for (const lx of [sd * 1.3, sd * 2.3, sd * 0.5, -sd * 1.5]) {
+    const [x, z] = L(D.xf, lx, D.d / 2 + 0.75), p = collision.resolve({ x, z }, 0.35);
+    if (Math.hypot(p.x - x, p.z - z) < 0.3 && kota.M.roadDist(p.x, p.z) > 0.25) out.push({ x: p.x, z: p.z, h: D.xf.a + Math.PI / 2 });
+  }
+  while (out.length < 2) { const [x, z] = L(D.xf, -0.4 + out.length * 0.9, D.d / 2 + 1.2); out.push({ x, z, h: D.xf.a + Math.PI / 2 }); }
+  return out;
+})();
+const garage = { owned: { 1: true, 2: !opt.story }, spot: { 1: { ...HOME_PARK[0], area: 'kota' }, 2: { ...HOME_PARK[1], area: 'kota' } } };
+if (saved?.garage) { Object.assign(garage.owned, saved.garage.owned); Object.assign(garage.spot, saved.garage.spot); }
+for (const [i, R] of RIDES.entries()) if (R) {
+  R.r.group.rotation.y = Math.PI / 2; R.holder = new THREE.Group(); R.holder.add(R.r.group); scene.add(R.holder);
 }
+let ride = 0;
+function placeParked() {
+  for (const [i, R] of RIDES.entries()) if (R && i !== ride) {
+    const sp = garage.spot[i]; R.holder.add(R.r.group);
+    R.holder.position.set(sp.x, 0, sp.z); R.holder.rotation.y = -sp.h; R.holder.visible = !!garage.owned[i] && sp.area === player.area;
+  }
+}
+function mount(i) {
+  if (player.fx && (player.fx.down > 0 || player.fx.atk)) return;
+  const R = RIDES[i], sp = garage.spot[i];
+  ride = i; raka.group.add(R.r.group); R.holder.visible = false;
+  Object.assign(player, { x: sp.x, z: sp.z, heading: sp.h, vx: 0, vz: 0, emote: null });
+  raka.seat = { ...R.r.seat }; raka.blob.scale.setScalar(1.6);
+  toast('Naik ' + R.name.toLowerCase() + ' (Aksi lagi: turun & parkir)');
+}
+function dismount(quiet) {
+  if (!ride) return;
+  const i = ride, R = RIDES[i];
+  garage.spot[i] = { x: player.x, z: player.z, h: player.heading, area: player.area };
+  ride = 0; raka.seat = null; raka.blob.scale.setScalar(1); placeParked();
+  // turun di samping kendaraan, bukan di joknya
+  const sx = -Math.sin(player.heading), sz = Math.cos(player.heading);
+  const p = collision.resolve({ x: player.x + sx * 0.55, z: player.z + sz * 0.55 }, 0.28); player.x = p.x; player.z = p.z;
+  if (!quiet) toast(R.name + ' diparkir di sini');
+}
+// kendaraan yang diparkir ikut jadi penghalang (dua lingkaran: depan & belakang)
+function pushParked(p, r) {
+  for (const [i, R] of RIDES.entries()) if (R && i !== ride && R.holder.visible) {
+    const sp = garage.spot[i], hl = R.r.half || 0.45;
+    for (const sd of [1, -1, 0]) {
+      const cx = sp.x + Math.cos(sp.h) * hl * sd * 0.8, cz = sp.z + Math.sin(sp.h) * hl * sd * 0.8, dx = p.x - cx, dz = p.z - cz, d = Math.hypot(dx, dz), m = r + 0.2;
+      if (d < m && d > 1e-5) { p.x = cx + dx / d * m; p.z = cz + dz / d * m; }
+    }
+  }
+  return p;
+}
+placeParked();
 // gaya (emote) pemain: tombol 1-9, 0 atau tombol Gaya (HP). Berhenti saat bergerak.
 const EMOTES = ['wave', 'sitDown', 'squat', 'phone', 'dance', 'salute', 'raiseHand', 'read', 'lie', 'clap', 'laugh', 'think', 'carry', 'bow', 'stretch'];
 let emoteI = -1;
@@ -128,9 +170,9 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyQ') rotateCam(-1);
   if (e.code === 'KeyE') rotateCam(1);
   if (e.code === 'KeyC') toggleFollow();
-  if (e.code === 'KeyM') toggleMinimap();
+  if (e.code === 'KeyM' || (e.code === 'Escape' && bigmap.isOpen)) bigmap.toggle();
+  if (e.code === 'KeyN') toggleMinimap();
   if (e.code === 'KeyV') cyclePitch();
-  if (e.code === 'KeyR') toggleRide();
   const dg = /^Digit(\d)$/.exec(e.code); if (dg) emote((+dg[1] + 9) % 10);
   if (e.code === 'Space' || e.code === 'KeyF' || e.code === 'Enter') { act(); e.preventDefault(); }
   if (e.code === 'Equal' || e.code === 'NumpadAdd') zoom(-1);
@@ -202,7 +244,7 @@ document.body.classList.toggle('touch', isTouch);
 ui.follow.classList.toggle('on', opt.follow);
 ui.mapWrap.style.display = opt.minimap ? '' : 'none';
 const tap = (el, fn) => el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); fn(); });
-tap($('btnAct'), () => act()); tap($('btnHit'), () => fight.attack()); tap($('btnRide'), toggleRide); tap($('btnEmote'), () => emote(emoteI + 1));
+tap($('btnAct'), () => act()); tap($('btnHit'), () => fight.attack()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
 const menu = $('menu'); menu.classList.toggle('closed', isTouch);
 tap($('btnMenu'), () => menu.classList.toggle('closed'));
 tap(ui.run, () => { ui.run.classList.toggle('on'); player.run = ui.run.classList.contains('on'); });
@@ -212,6 +254,7 @@ tap($('btnZoomIn'), () => zoom(-1)); tap($('btnZoomOut'), () => zoom(1));
 tap(ui.quality, () => { opt.quality = (opt.quality + 1) % 3; applyQuality(); ui.quality.textContent = 'Grafik: ' + QUALITY[opt.quality].name; });
 tap($('btnPx'), () => { opt.px = opt.px >= 5 ? 0 : (opt.px || pxSize) + 1; resize(); $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto'); });
 ui.quality.textContent = 'Grafik: ' + QUALITY[opt.quality].name; $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto');
+const bigmap = makeBigMap({ kota, player, isTouch, parked: () => RIDES.flatMap((R, i) => R && R.holder.visible && player.area === 'kota' ? [{ x: garage.spot[i].x, z: garage.spot[i].z, icon: i === 1 ? 'S' : 'M' }] : []) });
 let toastT = 0;
 function toast(t) { ui.toast.textContent = t; ui.toast.style.opacity = 1; toastT = 2.2; }
 
@@ -221,6 +264,12 @@ const EXIT_SCHOOL = { x: SCHOOL_OX + 39, z: 58.2 };   // trotoar depan gerbang (
 let target = null;
 function findTarget() {
   let best = null, bd = 1e9;
+  if (ride) {
+    if (player.area === 'kota' && Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Parkir & masuk SMA Negeri 3' };
+    return { kind: 'park', label: 'Turun & parkir' };
+  }
+  for (const [i, R] of RIDES.entries()) if (R && R.holder.visible) { const sp = garage.spot[i], d = Math.hypot(sp.x - player.x, sp.z - player.z); if (d < 1.4 && d < bd) { bd = d; best = { kind: 'ride', i, label: 'Naik ' + R.name.toLowerCase() }; } }
+  if (best) return best;
   for (const n of npcs) { const d = Math.hypot(n.x - player.x, n.z - player.z); if (d < 1.9 && d < bd) { bd = d; best = { kind: 'npc', n, label: 'Ngobrol: ' + n.name }; } }
   if (best) return best;
   if (player.area === 'kota') {
@@ -232,6 +281,8 @@ function findTarget() {
 let fading = 0;
 function act() {
   if (!target || fading) return;
+  if (target.kind === 'ride') { mount(target.i); return; }
+  if (target.kind === 'park') { dismount(); return; }
   if (target.kind === 'npc') {
     if (target.n.mood) return;
     const n = target.n, lines = LINES[n.linesKey || (n.filler ? n.name : n.sid)] || ['Halo!'];
@@ -240,10 +291,10 @@ function act() {
   } else if (target.kind === 'go') {
     fading = 1; ui.fade.style.opacity = 1;
     setTimeout(() => {
-      if (ride) { ride = RIDES.length - 1; toggleRide(); }
+      if (ride) dismount(true);
       if (target.to === 'sekolah') Object.assign(player, { x: EXIT_SCHOOL.x, z: EXIT_SCHOOL.z - 4.2, heading: -Math.PI / 2, area: 'sekolah' });
       else Object.assign(player, { x: ENTER_SCHOOL.x, z: ENTER_SCHOOL.z + 1.5, heading: Math.PI / 2, area: 'kota' });
-      cam.x = player.x; cam.z = player.z; cam.yaw = cam.yawT = 0;
+      cam.x = player.x; cam.z = player.z; cam.yaw = cam.yawT = 0; placeParked();
       ui.fade.style.opacity = 0; fading = 0;
     }, 350);
   } else toast(target.desc);
@@ -276,8 +327,9 @@ function updatePlayer(dt) {
   if (keys.has('KeyA') || keys.has('ArrowLeft')) ix -= 1;
   if (keys.has('KeyD') || keys.has('ArrowRight')) ix += 1;
   const lock = player.area ? fight.updatePlayer(dt) : null;
+  if (bigmap.isOpen) { ix = 0; iy = 0; }
   ix += joy.x; iy += joy.y;
-  if (lock) { ix = 0; iy = 0; }
+  if (lock || bigmap.isOpen) { ix = 0; iy = 0; }
   let l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; l = 1; }
   const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || player.run;
   const RD = RIDES[ride], sp = (RD ? (run ? RD.run : RD.walk) : (run ? 4.6 : 2.1)) * Math.min(1, l * 1.3);
@@ -293,6 +345,7 @@ function updatePlayer(dt) {
     if (collision.blockedMask(np.x, np.z)) np = { x: player.x, z: player.z };
   }
   if (player.area === 'kota') { kota.traffic.push(np, ride ? 0.4 : 0.28); if (ride) { const hl = RIDES[ride].r.half || 0.45, cx = Math.cos(player.heading), cz = Math.sin(player.heading); for (const sd of [1, -1]) { const f = { x: np.x + cx * hl * sd, z: np.z + cz * hl * sd }, g = kota.traffic.push({ ...f }, 0.25); np.x += g.x - f.x; np.z += g.z - f.z; } } }
+  pushParked(np, ride ? 0.4 : 0.28);
   // kecepatan nyata (supaya animasi berhenti saat menabrak dinding)
   if (dt > 0) { player.vx = (np.x - player.x) / dt; player.vz = (np.z - player.z) / dt; }
   player.x = np.x; player.z = np.z;
@@ -416,12 +469,13 @@ function loop(now) {
   const an = player.area === 'kota' ? kota.regionAt(player.x, player.z) : sekolah.zoneAt(player.x, player.z);
   if (an !== areaName) { areaName = an; ui.area.textContent = an; }
   drawBubbles();
+  bigmap.update(dt);
   if (opt.minimap) drawMinimap();
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) ui.toast.style.opacity = 0; }
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { ui.fps.textContent = `${Math.round(fpsN / fpsAcc)} fps · ${renderer.info.render.calls} draw · ${renderer.domElement.width}x${renderer.domElement.height}`; fpsAcc = 0; fpsN = 0; }
   saveT += dt;
-  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt })); }
+  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage })); }
 }
 
 resize(); applyQuality();
@@ -430,4 +484,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { fight, makeRide, toggleRide, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { fight, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

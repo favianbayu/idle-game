@@ -459,9 +459,9 @@ export function buildKota(scene, C) {
   plant(scene, veg);
   const traffic = buildTraffic(scene, K, C, M);
   return {
-    traffic, signs, parkir, portal, posSatpam: portal?.pos,
+    traffic, signs, parkir, portal, posSatpam: portal?.pos, M,
     regionAt: (x, z) => { const r = regionAt(x, z); return r ? REGIONS[REGION_KEY.indexOf(r)] : 'Wirabumi'; },
-    regionKey: regionAt,
+    regionKey: regionAt, labels: K.labels,
     marks: K.marks.map(m => ({ ...m, name: m.desc.replace(/\s*\(.*$/, '') })),
     houses, darto, groundTex: tex.image, water, smaShift: { x: specials.sma?.dx || 0, z: specials.sma?.dy || 0 },
   };
@@ -682,11 +682,12 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin) {
       const dx = q.bx - q.ax, dz = q.bz - q.az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - q.ax) * dx + (z - q.az) * dz) / l2)); best = Math.min(best, Math.hypot(x - q.ax - dx * t, z - q.az - dz * t) - q.hw); }
     return best;
   };
+  const poles = [];
   for (const road of K.roads) {
     if (road.kind === 'setapak') continue;
     const P = resample(road.pts, 0.5);
     const bridgeC = road.kind === 'gang' ? col('#b89a5a') : col('#3a6aa8');
-    let poleNext = 4 + hash(road.pts.length) * 4, lampNext = 6, lastPole = null;
+    let poleNext = 4 + hash(road.pts.length) * 4, lampNext = 6;
     for (let i = 0; i < P.length; i++) {
       const p = P[i], nx = -p.tz, nz = p.tx, a = Math.atan2(p.tz, p.tx), reg = regionAt(p.x, p.z);
       const water = M.waterAt(p.x, p.z);
@@ -717,23 +718,11 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin) {
         ch.at(x, z).box({ x: x + nx * s * 0.2, z: z + nz * s * 0.2, a }, 0, 0, 0, 0.52, 0.08, 0.08, col('#9a968c'));
         if (i % 8 === 0) ch.at(x, z).box({ x, z, a }, 0, 0, 0, 0.5, 0.05, 0.45, col('#a8a49a'));   // tutup selokan
       }
-      // tiang listrik + kabel (kampung, bantaran, pusat)
+      // tiang listrik (kampung, bantaran, pusat, selatan): kalau titiknya terhalang, geser sedikit (bukan dilewati) supaya jarak antartiang tetap rapat
       if (p.s >= poleNext && road.kind !== 'raya' && (reg === 'kampung' || reg === 'bantaran' || reg === 'pusat' || reg === 'selatan')) {
         const off = road.w / 2 + 0.75, x = p.x + nx * off, z = p.z + nz * off;
-        if (!M.roadAt(x, z) && !M.waterAt(x, z) && !occ.get(x, z) && M.roadDist(x, z) > 0.3) {
-          const m = thin.at(x, z), xf = { x, z, a };
-          m.box(xf, 0, 0, 0, 0.16, 4.2, 0.16, col('#7a7a80')); m.box(xf, 0, 3.9, 0, 0.1, 0.08, 0.9, col('#5a5a60'));
-          m.box(xf, 0, 3.6, 0.3, 0.28, 0.36, 0.22, col('#5a6a5a'));
-          C.circle(x, z, 0.14);
-          if (lastPole && Math.hypot(lastPole.x - x, lastPole.z - z) < 14) for (const o of [-0.4, 0.4]) {
-            const ax = lastPole.x + Math.cos(lastPole.a + Math.PI / 2) * o, az = lastPole.z + Math.sin(lastPole.a + Math.PI / 2) * o;
-            const bx = x + Math.cos(a + Math.PI / 2) * o, bz = z + Math.sin(a + Math.PI / 2) * o, l = Math.hypot(bx - ax, bz - az);
-            const mm = thin.at((ax + bx) / 2, (az + bz) / 2), ca = Math.atan2(bz - az, bx - ax);
-            wire(mm, [ax, 3.93, az], [bx, 3.93, bz], 0.25 + l * 0.025);
-          }
-          lastPole = { x, z, a };
-        }
-        poleNext += 9;
+        if (!M.roadAt(x, z) && !M.waterAt(x, z) && !occ.get(x, z) && M.roadDist(x, z) > 0.3) { poles.push({ x, z, a, road, s: p.s, n: [] }); poleNext = p.s + 9; }
+        else poleNext = p.s + 0.5;
       }
       // lampu jalan raya (selang-seling)
       if (road.kind === 'raya' && !road.closed && p.s >= lampNext) {
@@ -747,6 +736,34 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin) {
         }
       }
     }
+  }
+  // kabel: tiang berurutan di jalan yang sama tersambung; ujung jaringan disambung ke tiang jalan lain terdekat (simpang),
+  // tiang yang tetap sendirian tidak dipasang (tiang tanpa kabel kelihatan aneh)
+  const link = (A, B) => { if (A === B || A.n.includes(B)) return; A.n.push(B); B.n.push(A); };
+  for (let i = 1; i < poles.length; i++) { const A = poles[i - 1], B = poles[i]; if (A.road === B.road && Math.hypot(A.x - B.x, A.z - B.z) < 15) link(A, B); }
+  for (const A of poles) if (A.n.length < 2) {
+    let best = null, bd = A.n.length ? 9 : 13;
+    for (const B of poles) { if (B === A || B.road === A.road || A.n.includes(B)) continue; const d = Math.hypot(A.x - B.x, A.z - B.z); if (d < bd) { bd = d; best = B; } }
+    if (best) link(A, best);
+  }
+  const wired = new Set();
+  for (const A of poles) {
+    if (!A.n.length) continue;
+    const m = thin.at(A.x, A.z), xf = { x: A.x, z: A.z, a: A.a };
+    m.box(xf, 0, 0, 0, 0.16, 4.2, 0.16, col('#7a7a80')); m.box(xf, 0, 3.9, 0, 0.1, 0.08, 0.9, col('#5a5a60'));
+    m.box(xf, 0, 3.6, 0.3, 0.28, 0.36, 0.22, col('#5a6a5a'));
+    C.circle(A.x, A.z, 0.14);
+    for (const B of A.n) {
+      if (wired.has(B)) continue;
+      // ujung palang dipasangkan supaya dua kabel tidak bersilangan
+      const end = (P, o) => [P.x + Math.cos(P.a + Math.PI / 2) * o, P.z + Math.sin(P.a + Math.PI / 2) * o];
+      const flip = Math.cos(A.a - B.a) < 0 ? -1 : 1;
+      for (const o of [-0.4, 0.4]) {
+        const [ax, az] = end(A, o), [bx, bz] = end(B, o * flip), l = Math.hypot(bx - ax, bz - az);
+        wire(thin.at((ax + bx) / 2, (az + bz) / 2), [ax, 3.93, az], [bx, 3.93, bz], 0.25 + l * 0.025);
+      }
+    }
+    wired.add(A);
   }
   // lampu merah: dibuat otomatis di tiap simpang jalan raya oleh traffic.js
   // rel kereta: bantalan + 2 batang rel

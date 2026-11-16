@@ -17,6 +17,14 @@
     border: 3px solid #2a2014; border-radius: 6px; font-size: 16px; text-shadow: none; white-space: nowrap; }
   #toast { top: 18%; left: 50%; transform: translateX(-50%); max-width: 80vw; text-align: center; background: #000a; padding: 8px 14px; border-radius: 6px; opacity: 0; transition: opacity .3s; }
   #mapWrap { top: max(10px, env(safe-area-inset-top)); right: 12px; width: 132px; height: 132px; border: 3px solid #2a2014; border-radius: 50%; overflow: hidden; background: #9ab878; }
+  #bigmap { position: fixed; inset: 0; display: none; background: #1e2430; z-index: 20; touch-action: none; }
+  #bigmap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #bigmap .bm-top { position: absolute; top: max(8px, env(safe-area-inset-top)); left: 10px; right: 10px; display: flex; gap: 8px; align-items: center; }
+  #bigmap .bm-top b { font-size: 18px; text-shadow: 0 2px 0 #000; }
+  #bigmap .bm-hint { flex: 1; font-size: 12px; opacity: .8; }
+  #bigmap .bm-info { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: 86vw; background: #fffbe8; color: #2a2014;
+    border: 3px solid #2a2014; border-radius: 6px; padding: 8px 12px; font-size: 14px; display: none; }
+  #mapWrap { pointer-events: auto; cursor: pointer; }
   #fade { position: fixed; inset: 0; background: #000; opacity: 0; transition: opacity .3s; pointer-events: none; }
   #bubbles div { position: fixed; left: 0; top: 0; pointer-events: none; white-space: nowrap; font-size: 13px; }
   .tag.filler { color: #e8e8d8; font-weight: normal; }
@@ -48,7 +56,8 @@
 <div id="menu"><button id="btnMenu">⚙ Menu</button><div id="menuItems" style="display:contents">
   <button id="btnFollow" title="C">Kamera ikut</button>
   <button id="btnPitch" title="V">Sudut</button>
-  <button id="btnMap" title="M">Peta</button>
+  <button id="btnBigMap" title="M">Peta besar</button>
+  <button id="btnMap" title="N">Minimap</button>
   <button id="btnQuality">Grafik</button>
   <button id="btnPx">Pixel</button>
   <div style="display:flex;gap:6px"><button id="btnZoomIn">+</button><button id="btnZoomOut">−</button></div>
@@ -57,10 +66,10 @@
 <div id="toast" class="hud"></div>
 <div id="bubbles"></div>
 <div id="fps" class="hud"></div>
-<div id="help" class="hud">WASD/panah: jalan · Shift: lari · Spasi: aksi · R: sepeda/motor · F: pukul · 1-9, 0: gaya<br>Q/E atau seret mouse: putar & miringkan kamera · V: sudut · roda: zoom · C: kamera ikut · M: peta</div>
+<div id="help" class="hud">WASD/panah: jalan · Shift: lari · Spasi: aksi / naik-turun kendaraan · F: pukul · 1-9, 0: gaya<br>Q/E atau seret mouse: putar & miringkan kamera · V: sudut · roda: zoom · C: kamera ikut · M: peta besar · N: minimap</div>
 <div id="joy"><div id="knob"></div></div>
 <div id="camPad"><button id="btnL">⟲</button><button id="btnR">⟳</button></div>
-<div id="pad"><button id="btnEmote">Gaya</button><button id="btnRide">Naik</button><button id="btnRun">Lari</button><button id="btnHit">Pukul</button><button id="btnAct">Aksi</button></div>
+<div id="pad"><button id="btnEmote">Gaya</button><button id="btnRide">Peta</button><button id="btnRun">Lari</button><button id="btnHit">Pukul</button><button id="btnAct">Aksi</button></div>
 <div id="fade"></div>
 <div id="loading">Memuat Wirabumi…</div>
 <script>/*GAME*/</script>
