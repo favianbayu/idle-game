@@ -5,106 +5,124 @@ import { Merger, col, shade } from './geom.js';
 
 const O = { x: 0, z: 0, a: 0 };
 const T = {};
-// pseudo-acak tetap untuk template
 const R = (i, k = 0) => { let h = (i * 374761393 + k * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
-// gumpalan daun: inti + kubus kecil menonjol di permukaan, warna bervariasi (gelap di bawah, terang di atas)
-function leafBlob(m, cx, cy, cz, rx, ry, rz, pal, seed, n = 9) {
-  m.box(O, cx, cy - ry, cz, rx * 2, ry * 2, rz * 2, pal[0], { top: pal[1], bottom: true });
-  m.box(O, cx, cy - ry * 0.6, cz, rx * 2.15, ry * 1.2, rz * 1.7, pal[1], { top: pal[2] });
-  for (let i = 0; i < n; i++) {
-    const a = R(seed, i) * Math.PI * 2, e = R(seed, i + 40) * 1.2 - 0.3, sz = 0.18 + R(seed, i + 80) * 0.22;
-    const x = cx + Math.cos(a) * rx * Math.cos(e), z = cz + Math.sin(a) * rz * Math.cos(e), y = cy + Math.sin(e) * ry;
-    m.box(O, x, y - sz / 2, z, sz, sz, sz, pal[1 + (i % 3 === 0 ? 1 : 0) + (e > 0.5 ? 1 : 0)] || pal[3], { top: pal[3] || pal[2] });
+// bentuk dasar (dibuat sekali)
+const ICO1 = new THREE.IcosahedronGeometry(1, 1), ICO0 = new THREE.IcosahedronGeometry(1, 0);
+const CYL6 = (rt, rb) => new THREE.CylinderGeometry(rt, rb, 1, 6, 1).translate(0, 0.5, 0);
+const CONE7 = new THREE.ConeGeometry(1, 1, 7, 1).translate(0, 0.5, 0);
+const mixc = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+// warna daun: gelap di bawah/dalam, terang di atas yang kena matahari, sedikit acak per segitiga
+const leafCol = (lo, hi, y0, y1, seed = 1) => (x, y, z, nx, ny) => {
+  const t = Math.max(0, Math.min(1, (y - y0) / (y1 - y0) * 0.7 + ny * 0.35)), r = R(Math.round(x * 97 + seed), Math.round(z * 89 + y * 53));
+  return shade(mixc(lo, hi, t), 0.9 + r * 0.2);
+};
+// batang melengkung dari ruas silinder
+function trunk(m, pts, r0, r1, c) {
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay, az] = pts[i - 1], [bx, by, bz] = pts[i], dx = bx - ax, dy = by - ay, dz = bz - az, l = Math.hypot(dx, dy, dz);
+    const t0 = (i - 1) / (pts.length - 1), t1 = i / (pts.length - 1), rb = r0 + (r1 - r0) * t0, rt = r0 + (r1 - r0) * t1;
+    const geo = CYL6(rt / rb, 1);
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / l, dy / l, dz / l)), e = new THREE.Euler().setFromQuaternion(q, 'YXZ');
+    m.addGeo(geo, { x: ax, y: ay, z: az, rx: e.x, ry: e.y, rz: e.z, sx: rb, sy: l * 1.04, sz: rb }, (x, y, z, nx, ny, nz) => shade(c, 0.82 + 0.18 * Math.max(0, nx * 0.6 + nz * 0.4) + R(Math.round(y * 40), i) * 0.08));
   }
 }
-const BARK = col('#6e5034'), BARK2 = col('#5a4028');
-// pohon bulat (mangga/angsana): batang bercabang + 4 gumpalan daun
-T.bulat = m => {
-  const pal = [col('#3f7a3a'), col('#4f8a46'), col('#5f9c52'), col('#72b05e')];
-  m.box(O, 0, 0, 0, 0.36, 1.2, 0.36, BARK, { top: BARK2 }); m.box(O, 0, 0, 0, 0.5, 0.12, 0.5, BARK2);   // akar
-  m.box(O, 0.28, 0.85, 0.05, 0.6, 0.12, 0.13, BARK); m.box(O, -0.22, 1.0, -0.12, 0.5, 0.12, 0.12, BARK); m.box(O, 0, 1.15, 0, 0.24, 0.5, 0.24, BARK);
-  leafBlob(m, 0, 1.75, 0, 1.0, 0.5, 1.0, pal, 1, 10);
-  leafBlob(m, -0.55, 2.05, 0.4, 0.62, 0.42, 0.6, pal, 2, 6);
-  leafBlob(m, 0.6, 2.15, -0.35, 0.6, 0.45, 0.62, pal, 3, 6);
-  leafBlob(m, 0.05, 2.5, 0.05, 0.55, 0.35, 0.55, pal, 4, 6);
-  for (let i = 0; i < 5; i++) m.box(O, (R(9, i) - 0.5) * 1.6, 1.25 + R(9, i + 5) * 0.2, (R(9, i + 9) - 0.5) * 1.6, 0.1, 0.12, 0.1, col('#d0a040'));   // buah/bunga kecil
-};
-// ketapang: daun bertingkat mendatar (khas halaman sekolah)
-T.ketapang = m => {
-  const pal = [col('#3a7036'), col('#4a8640'), col('#5a984c'), col('#6eac5a')];
-  m.box(O, 0, 0, 0, 0.3, 2.6, 0.3, BARK, { top: BARK2 }); m.box(O, 0, 0, 0, 0.46, 0.12, 0.46, BARK2);
-  [[1.3, 1.25, 0.25], [1.9, 1.0, 0.25], [2.5, 0.72, 0.22], [2.95, 0.45, 0.2]].forEach(([y, r, h], i) => {
-    for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + i * 0.6; m.box({ x: 0, z: 0, a }, r * 0.45, y - 0.05, 0, r * 0.9, 0.08, 0.12, BARK); }
-    leafBlob(m, 0, y + h / 2, 0, r, h / 2, r, pal, 20 + i, 8);
-  });
-};
-// cemara (perbukitan)
-T.cemara = m => {
-  m.box(O, 0, 0, 0, 0.28, 1.0, 0.28, col('#5a4230'));
-  const g = [col('#2a5634'), col('#2f5e3a'), col('#36693f'), col('#3d7446'), col('#46804e')];
-  [[1.8, 0.8], [1.45, 1.45], [1.1, 2.05], [0.72, 2.6], [0.4, 3.1]].forEach(([s, y], i) => {
-    m.box(O, 0, y, 0, s, 0.62, s, g[i], { top: shade(g[i], 1.25), bottom: true });
-    for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + i * 0.4; m.box({ x: 0, z: 0, a }, s * 0.5, y - 0.08, 0, 0.22, 0.2, 0.3, shade(g[i], 0.85)); }   // ujung ranting menjuntai
-  });
-  m.box(O, 0, 3.7, 0, 0.18, 0.35, 0.18, g[4]);
-};
-// pisang: batang hijau + daun lebar menjuntai ke 4 arah
-T.pisang = m => {
-  m.box(O, 0, 0, 0, 0.26, 1.5, 0.26, col('#7a8a4a'));
-  const lf = col('#6aa848');
-  for (let i = 0; i < 4; i++) {
-    const a = i * Math.PI / 2 + 0.4, xf = { x: 0, z: 0, a };
-    m.box(xf, 0.55, 1.45, 0, 1.0, 0.1, 0.42, lf, { top: col('#82c058') });
-    m.box(xf, 1.1, 1.25, 0, 0.35, 0.1, 0.36, shade(lf, 0.85));
+// daun panjang melengkung (pelepah kelapa, pisang, helai rumput): pita yang menekuk ke bawah, dua sisi
+function frond(m, base, ang, len, w, droop, c, segs = 4, o = {}) {
+  const ca = Math.cos(ang), sa = Math.sin(ang), rise = o.rise ?? 0.35;
+  const P = t => { const d = len * t; return [base[0] + ca * d, base[1] + rise * len * t - droop * t * t * len, base[2] + sa * d]; };
+  for (let i = 0; i < segs; i++) {
+    const t0 = i / segs, t1 = (i + 1) / segs, a = P(t0), b = P(t1), w0 = w * (o.taper ? 1 - t0 * 0.8 : Math.sin(Math.PI * (0.15 + t0 * 0.7))), w1 = w * (o.taper ? 1 - t1 * 0.8 : Math.sin(Math.PI * (0.15 + t1 * 0.7)));
+    const px = -sa, pz = ca, fold = o.fold ?? 0.25;   // lebar tegak lurus arah daun, sedikit melipat (bentuk V)
+    const L0 = [a[0] + px * w0, a[1] - fold * w0, a[2] + pz * w0], R0 = [a[0] - px * w0, a[1] - fold * w0, a[2] - pz * w0];
+    const L1 = [b[0] + px * w1, b[1] - fold * w1, b[2] + pz * w1], R1 = [b[0] - px * w1, b[1] - fold * w1, b[2] - pz * w1];
+    const cc = shade(c, 0.85 + 0.25 * t0);
+    m.poly2([L0, a, b, L1], shade(cc, 1.05)); m.poly2([a, R0, R1, b], cc);
   }
-  m.box(O, 0, 1.5, 0, 0.3, 0.5, 0.3, col('#5a9a40'));
+}
+// gumpalan daun: bola low-poly bergelombang
+const blob = (m, x, y, z, rx, ry, rz, lo, hi, seed, fine = true) => m.addGeo(fine ? ICO1 : ICO0, { x, y, z, sx: rx, sy: ry, sz: rz, ry: seed }, leafCol(lo, hi, y - ry, y + ry, seed), { noise: 0.22, seed });
+const BARK = col('#6e5034'), BARK2 = col('#5a4028');
+
+// pohon bulat (mangga/angsana): batang melengkung bercabang + tajuk dari 5 gumpalan
+T.bulat = m => {
+  const lo = col('#2f6a32'), hi = col('#7ab85e');
+  trunk(m, [[0, 0, 0], [0.05, 0.7, 0], [-0.05, 1.3, 0.05]], 0.2, 0.12, BARK);
+  trunk(m, [[0, 0.9, 0], [0.45, 1.45, 0.15]], 0.08, 0.04, BARK); trunk(m, [[0, 1.0, 0], [-0.4, 1.5, -0.25]], 0.08, 0.04, BARK);
+  blob(m, 0, 1.95, 0, 1.15, 0.75, 1.1, lo, hi, 1);
+  blob(m, 0.6, 1.8, 0.35, 0.65, 0.5, 0.6, lo, hi, 2); blob(m, -0.6, 1.85, -0.3, 0.7, 0.5, 0.65, lo, hi, 3);
+  blob(m, -0.2, 2.45, 0.35, 0.6, 0.45, 0.6, lo, hi, 4); blob(m, 0.25, 2.5, -0.3, 0.55, 0.42, 0.55, lo, hi, 5, false);
 };
-// kelapa (pinggir sawah & kali)
+// ketapang: tajuk bertingkat mendatar
+T.ketapang = m => {
+  const lo = col('#2c6630'), hi = col('#78b45a');
+  trunk(m, [[0, 0, 0], [0, 1.5, 0], [0.04, 3.0, 0]], 0.17, 0.08, BARK);
+  [[1.3, 1.35], [1.95, 1.05], [2.55, 0.75], [3.05, 0.45]].forEach(([y, r], i) => {
+    for (let k = 0; k < 3; k++) { const a = k * 2.1 + i; trunk(m, [[0, y - 0.1, 0], [Math.cos(a) * r * 0.75, y, Math.sin(a) * r * 0.75]], 0.05, 0.03, BARK); }
+    blob(m, 0, y + 0.08, 0, r, 0.2, r, lo, hi, 10 + i, r > 0.7);
+  });
+};
+// pinus / cemara: kerucut bertumpuk yang sedikit miring
+T.cemara = m => {
+  const lo = col('#1f4a2c'), hi = col('#4a8650');
+  trunk(m, [[0, 0, 0], [0, 1.2, 0]], 0.13, 0.09, col('#5a4230'));
+  [[0.6, 0.95, 1.1], [1.25, 0.78, 1.0], [1.85, 0.6, 0.9], [2.4, 0.42, 0.8], [2.9, 0.25, 0.7]].forEach(([y, r, h], i) =>
+    m.addGeo(CONE7, { y, sx: r, sy: h, sz: r, ry: i * 0.7, rz: (R(i, 3) - 0.5) * 0.08 }, leafCol(lo, hi, y, y + h, i), { noise: 0.06, seed: i }));
+};
+// pisang: batang semu + daun lebar melengkung
+T.pisang = m => {
+  trunk(m, [[0, 0, 0], [0, 0.8, 0], [0.03, 1.45, 0]], 0.14, 0.1, col('#7a8a4a'));
+  for (let i = 0; i < 6; i++) frond(m, [0, 1.35 + (i % 2) * 0.12, 0], i * 1.05 + 0.3, 1.25, 0.24, 0.9, i % 3 ? col('#5aa040') : col('#6ab448'), 5, { rise: 0.55 });
+  frond(m, [0, 1.5, 0], 2.0, 0.6, 0.12, 0.2, col('#8ac858'), 3, { rise: 1.4 });   // daun muda menggulung ke atas
+};
+// kelapa: batang melengkung + 8 pelepah menjuntai + buah
 T.kelapa = m => {
-  for (let i = 0; i < 6; i++) m.box(O, i * 0.06, i * 0.6, 0, 0.24, 0.62, 0.24, col(i % 2 ? '#8a7454' : '#7a6448'));
-  const lf = col('#5a9a48');
-  for (let i = 0; i < 6; i++) { const xf = { x: 0.3, z: 0, a: i * Math.PI / 3 }; m.box(xf, 0.6, 3.5, 0, 1.2, 0.08, 0.3, lf); m.box(xf, 1.25, 3.3, 0, 0.4, 0.08, 0.25, shade(lf, 0.85)); }
-  m.box(O, 0.3, 3.35, 0, 0.36, 0.3, 0.36, col('#6a8a3a'));
+  const tp = [[0, 0, 0], [0.12, 1.2, 0], [0.35, 2.3, 0], [0.62, 3.3, 0]];
+  trunk(m, tp, 0.15, 0.1, col('#8a7454'));
+  const top = [0.62, 3.35, 0];
+  for (let i = 0; i < 8; i++) frond(m, top, i * Math.PI / 4 + 0.2, 1.5, 0.2, 1.2, i % 2 ? col('#4f9040') : col('#5aa048'), 5, { taper: true, fold: 0.15 });
+  for (let i = 0; i < 3; i++) m.addGeo(ICO0, { x: top[0] + Math.cos(i * 2.1) * 0.15, y: top[1] - 0.2, z: Math.sin(i * 2.1) * 0.15, s: 0.11 }, col('#6a7a2a'));
 };
-// bambu (rumpun di bantaran)
+// bambu: rumpun batang melengkung keluar + semburan daun tipis
 T.bambu = m => {
-  for (let i = 0; i < 7; i++) { const a = i * 2.4, r = 0.25 + (i % 3) * 0.12; m.box(O, Math.cos(a) * r, 0, Math.sin(a) * r, 0.1, 2.4 + (i % 3) * 0.5, 0.1, col(i % 2 ? '#8aa848' : '#7a9a40')); }
-  // daun: lempeng tipis berlapis yang menjuntai keluar, bukan satu kubus besar
-  const lf = [col('#5f9a40'), col('#6aa846'), col('#78b450')];
-  for (let i = 0; i < 6; i++) { const xf = { x: 0, z: 0, a: i * 1.05 + 0.3 }, y = 1.9 + (i % 3) * 0.45; m.box(xf, 0.45, y, 0, 0.95, 0.08, 0.32, lf[i % 3]); m.box(xf, 0.95, y - 0.2, 0, 0.4, 0.08, 0.26, shade(lf[i % 3], 0.88)); }
-  m.box(O, 0, 3.0, 0, 0.5, 0.3, 0.5, lf[2]);
+  for (let i = 0; i < 7; i++) {
+    const a = i * 0.9, lean = 0.25 + (i % 3) * 0.12, h = 2.6 + (i % 3) * 0.5, x0 = Math.cos(a) * 0.18, z0 = Math.sin(a) * 0.18;
+    const pts = [[x0, 0, z0], [x0 + Math.cos(a) * lean * 0.3, h * 0.45, z0 + Math.sin(a) * lean * 0.3], [x0 + Math.cos(a) * lean * 1.1, h * 0.85, z0 + Math.sin(a) * lean * 1.1], [x0 + Math.cos(a) * lean * 2.0, h, z0 + Math.sin(a) * lean * 2.0]];
+    trunk(m, pts, 0.05, 0.035, col(i % 2 ? '#8aa848' : '#7a9a40'));
+    for (let k = 1; k < 4; k++) { const p = pts[k]; for (let j = 0; j < 3; j++) frond(m, p, a + (j - 1) * 0.9, 0.45, 0.05, 0.25, col(j % 2 ? '#6aa046' : '#7ab456'), 2, { taper: true, rise: 0.1 }); }
+  }
 };
 T.semak = m => {
-  const pal = [col('#3f7a3e'), col('#4f8c48'), col('#62a256'), col('#76b464')];
-  leafBlob(m, 0, 0.32, 0, 0.45, 0.3, 0.4, pal, 31, 7); leafBlob(m, 0.25, 0.5, 0.1, 0.25, 0.18, 0.25, pal, 32, 3);
+  const lo = col('#2f6a34'), hi = col('#78b464');
+  blob(m, 0, 0.3, 0, 0.5, 0.33, 0.45, lo, hi, 31); blob(m, 0.28, 0.42, 0.12, 0.3, 0.25, 0.3, lo, hi, 32, false); blob(m, -0.25, 0.38, -0.1, 0.3, 0.22, 0.3, lo, hi, 33, false);
 };
-T.pagarHidup = m => {   // pagar tanaman, skala x = panjang: badan + tonjolan daun di atas & samping
-  const a = col('#3a7a3c'), b = col('#4c8e48'), c = col('#62a456');
-  m.box(O, 0, 0, 0, 1, 0.62, 0.45, a, { top: b });
-  for (let i = 0; i < 4; i++) m.box(O, -0.38 + i * 0.25, 0.58, (R(41, i) - 0.5) * 0.2, 0.2, 0.1, 0.22, i % 2 ? c : b);
-  for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) m.box(O, -0.33 + i * 0.33, 0.15 + R(42, i + sd) * 0.3, sd * 0.24, 0.18, 0.16, 0.06, b);
+T.pagarHidup = m => {   // skala x = panjang: badan membulat dari 3 gumpalan
+  const lo = col('#2f6a34'), hi = col('#64a456');
+  for (let i = 0; i < 3; i++) blob(m, -0.33 + i * 0.33, 0.32, 0, 0.26, 0.32, 0.25, lo, hi, 40 + i, false);
+  m.box(O, 0, 0, 0, 0.95, 0.5, 0.36, lo, { top: hi });
 };
-// bunga: rumpun daun + beberapa kuntum; 'bunga:#warna' memberi warna kuntum (daun tetap hijau)
+// bunga: helai daun + kuntum low-poly; 'bunga:#warna' memberi warna kuntum
 const flower = (m, pc) => {
-  const lf = col('#4a8a44'), lf2 = col('#5c9e50');
-  for (let i = 0; i < 5; i++) { const a = i * 1.26; m.box({ x: 0, z: 0, a }, 0.1, 0, 0, 0.24, 0.12, 0.08, i % 2 ? lf : lf2); }
-  for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.4, r = 0.09 + (i % 2) * 0.05, x = Math.cos(a) * r, z = Math.sin(a) * r, y = 0.16 + (i % 3) * 0.06;
-    m.box(O, x, 0.05, z, 0.025, y, 0.025, lf2); m.box(O, x, y, z, 0.1, 0.06, 0.1, pc); m.box(O, x, y + 0.035, z, 0.04, 0.04, 0.04, col('#f8e060')); }
+  for (let i = 0; i < 6; i++) frond(m, [0, 0.02, 0], i * 1.05, 0.22, 0.05, 0.1, i % 2 ? col('#4a8a44') : col('#5c9e50'), 2, { rise: 0.9, taper: true });
+  for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.4, r = 0.08 + (i % 2) * 0.05, x = Math.cos(a) * r, z = Math.sin(a) * r, y = 0.18 + (i % 3) * 0.06;
+    trunk(m, [[x * 0.4, 0, z * 0.4], [x, y, z]], 0.012, 0.01, col('#4a8a3a'));
+    m.addGeo(ICO0, { x, y: y + 0.02, z, sx: 0.07, sy: 0.04, sz: 0.07, ry: i }, pc); m.addGeo(ICO0, { x, y: y + 0.05, z, s: 0.025 }, col('#f8e060')); }
 };
 T.bunga = m => flower(m, col('#f06080'));
 T.pot = m => {
   const tc = col('#b0603a');
-  m.box(O, 0, 0, 0, 0.26, 0.24, 0.26, tc); m.box(O, 0, 0.22, 0, 0.34, 0.07, 0.34, shade(tc, 1.1)); m.box(O, 0, 0.27, 0, 0.28, 0.02, 0.28, col('#5a4028'));
-  for (let i = 0; i < 6; i++) { const a = i * 1.05; m.box({ x: 0, z: 0, a }, 0.1, 0.27 + (i % 2) * 0.06, 0, 0.22, 0.07, 0.09, i % 2 ? col('#4f9a48') : col('#62ac56')); }
-  m.box(O, 0, 0.3, 0, 0.06, 0.22, 0.06, col('#4f9a48')); m.box(O, 0, 0.5, 0, 0.12, 0.07, 0.12, col('#f05a6a'));
+  m.addGeo(CYL6(1.25, 1), { sx: 0.13, sy: 0.25, sz: 0.13 }, tc); m.addGeo(CYL6(1, 1), { y: 0.23, sx: 0.17, sy: 0.05, sz: 0.17 }, shade(tc, 1.12));
+  for (let i = 0; i < 6; i++) frond(m, [0, 0.27, 0], i * 1.05, 0.28, 0.06, 0.18, i % 2 ? col('#4f9a48') : col('#62ac56'), 2, { rise: 0.9 });
+  m.addGeo(ICO0, { y: 0.5, s: 0.07 }, col('#f05a6a'));
 };
-T.rumput = m => {   // rumpun 6 helai, tinggi & warna beda
-  const g = [col('#5e9044'), col('#6a9a4a'), col('#7aaa52'), col('#88b85a')];
-  for (let i = 0; i < 6; i++) { const a = i * 1.05 + 0.3, r = 0.05 + (i % 2) * 0.04, h = 0.12 + R(51, i) * 0.16; m.box(O, Math.cos(a) * r, 0, Math.sin(a) * r, 0.035, h, 0.035, g[i % 4], { top: g[3] }); }
+T.rumput = m => {   // rumpun helai tipis melengkung (dua sisi)
+  for (let i = 0; i < 7; i++) frond(m, [(R(51, i) - 0.5) * 0.08, 0, (R(52, i) - 0.5) * 0.08], i * 0.9, 0.16 + R(53, i) * 0.12, 0.022, 0.12, i % 2 ? col('#6a9a4a') : col('#86b65a'), 2, { rise: 1.6, taper: true, fold: 0 });
 };
-T.padi = m => { m.box(O, 0, 0, 0, 0.22, 0.4, 0.06, col('#7ab83a'), { top: col('#c8c050') }); m.box(O, 0, 0, 0, 0.06, 0.34, 0.2, col('#6aa832')); };
-T.teh = m => m.box(O, 0, 0, 0, 1, 0.55, 0.8, col('#3f8a3e'), { top: col('#58a84e') });   // baris kebun teh, skala x = panjang
-T.batu = m => { m.box(O, 0, 0, 0, 0.5, 0.22, 0.4, col('#9a968c'), { top: col('#b0aca0') }); m.box(O, 0.12, 0.18, -0.04, 0.28, 0.14, 0.24, col('#a8a498'), { top: col('#bcb8ac') }); m.box(O, -0.2, 0, 0.16, 0.16, 0.1, 0.14, col('#8a867c')); m.box(O, 0.05, 0.22, 0.05, 0.1, 0.02, 0.1, col('#6a8a4a')); };
+T.padi = m => {
+  for (let i = 0; i < 6; i++) frond(m, [0, 0, 0], i * 1.05, 0.3, 0.025, 0.12, i % 2 ? col('#7ab83a') : col('#8ac84a'), 2, { rise: 1.5, taper: true, fold: 0 });
+  frond(m, [0, 0.35, 0], 0.5, 0.18, 0.03, 0.15, col('#d8c860'), 2, { rise: 0.3, taper: true });
+};
+T.teh = m => { const lo = col('#2f6a34'), hi = col('#58a84e'); for (let i = 0; i < 3; i++) blob(m, -0.33 + i * 0.33, 0.3, 0, 0.26, 0.28, 0.38, lo, hi, 60 + i, false); };
+T.batu = m => { m.addGeo(ICO0, { y: 0.1, sx: 0.28, sy: 0.15, sz: 0.22 }, (x, y, z, nx, ny) => shade(col('#a8a498'), 0.8 + ny * 0.25), { noise: 0.08 }); m.addGeo(ICO0, { x: 0.2, y: 0.05, z: 0.12, s: 0.08 }, col('#8a867c')); };
 
 const GEO = {};
 function geo(kind) {

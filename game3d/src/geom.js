@@ -36,13 +36,33 @@ export class Merger {
     for (let i = 1; i < p.length - 1; i++) this.idx.push(base, base + i, base + i + 1);
     this.n += p.length;
   }
+  // bidang dua sisi (atap teras/kanopi tipis): terlihat dari atas maupun bawah
+  poly2(p, c) { this.poly(p, c); this.poly(p.slice().reverse(), shade(c, 0.7)); }
+  // geometri bebas (bola daun, batang silinder, kerucut): tiap segitiga warna sendiri (low-poly), opsi dua sisi
+  // t: { x, y, z, rx, ry, rz, sx, sy, sz }, c: [r,g,b] atau fn(cx, cy, cz, nx, ny, nz) -> [r,g,b]; o.noise: geser verteks acak
+  addGeo(geo, t, c, o = {}) {
+    const g = geo.index ? geo.toNonIndexed() : geo, P = g.attributes.position, M = new THREE.Matrix4(), q = new THREE.Quaternion();
+    M.compose(new THREE.Vector3(t.x || 0, t.y || 0, t.z || 0), q.setFromEuler(new THREE.Euler(t.rx || 0, t.ry || 0, t.rz || 0, 'YXZ')), new THREE.Vector3(t.sx ?? t.s ?? 1, t.sy ?? t.s ?? 1, t.sz ?? t.s ?? 1));
+    const v = new THREE.Vector3(), pts = [], nz = o.noise || 0, seed = o.seed || 1;
+    const jit = (x, y, z) => { if (!nz) return [x, y, z]; const h = k => { let n = Math.sin(x * 12.9898 * k + y * 78.233 + z * 37.719 * k + seed * 1.37) * 43758.5453; return n - Math.floor(n) - 0.5; }; return [x + h(1) * nz, y + h(2) * nz, z + h(3) * nz]; };
+    for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i); pts.push(jit(v.x, v.y, v.z)); }
+    for (let i = 0; i < pts.length; i += 3) {
+      const tri = [pts[i], pts[i + 1], pts[i + 2]].map(p => { v.set(p[0], p[1], p[2]).applyMatrix4(M); return [v.x, v.y, v.z]; });
+      const ux = tri[1][0] - tri[0][0], uy = tri[1][1] - tri[0][1], uz = tri[1][2] - tri[0][2], wx = tri[2][0] - tri[0][0], wy = tri[2][1] - tri[0][1], wz = tri[2][2] - tri[0][2];
+      let n = [uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx]; const l = Math.hypot(...n) || 1; n = n.map(k => k / l);
+      const cx = (tri[0][0] + tri[1][0] + tri[2][0]) / 3, cy = (tri[0][1] + tri[1][1] + tri[2][1]) / 3, cz = (tri[0][2] + tri[1][2] + tri[2][2]) / 3;
+      const cc = typeof c === 'function' ? c(cx, cy, cz, n[0], n[1], n[2]) : c;
+      this.tri(tri, n, cc);
+      if (o.twoSided) this.tri([tri[0], tri[2], tri[1]], [-n[0], -n[1], -n[2]], shade(cc, 0.8));
+    }
+  }
   // kotak: pusat dasar (lx, ly, lz) lokal, ukuran sx (lebar, sumbu x lokal), sy (tinggi), sz (dalam)
   box(xf, lx, ly, lz, sx, sy, sz, c, o = {}) {
     const T = (x, y, z) => tf(xf, x, y, z);
     const x0 = lx - sx / 2, x1 = lx + sx / 2, z0 = lz - sz / 2, z1 = lz + sz / 2, y0 = ly, y1 = ly + sy;
     const N = v => tn(xf, v);
     const top = o.top || c, side = c;
-    if (globalThis.__TRACE && ly < 1.5) globalThis.__TRACE.push({ p: [T(x0, 0, z0), T(x1, 0, z0), T(x1, 0, z1), T(x0, 0, z1), T(lx, 0, lz)], st: new Error().stack.split('\n').slice(2, 5).join(' ') });
+    if (globalThis.__TRACE && ly < 1.5) globalThis.__TRACE.push({ p: [T(x0, 0, z0), T(x1, 0, z0), T(x1, 0, z1), T(x0, 0, z1), T(lx, 0, lz)], y0: (xf.y || 0) + y0, y1: (xf.y || 0) + y1, veh: globalThis.__VEHCUR || 0, st: new Error().stack.split('\n').slice(2, 5).join(' ') });
     this.quad([T(x0, y1, z1), T(x1, y1, z1), T(x1, y1, z0), T(x0, y1, z0)], N([0, 1, 0]), top);
     this.quad([T(x0, y0, z1), T(x1, y0, z1), T(x1, y1, z1), T(x0, y1, z1)], N([0, 0, 1]), side);
     this.quad([T(x1, y0, z0), T(x0, y0, z0), T(x0, y1, z0), T(x1, y1, z0)], N([0, 0, -1]), side);

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { buildKota, buildSekolah, Collision, SCHOOL_OX } from './world.js';
 import { WATER_T } from './kota.js';
 import { L } from './buildings.js';
-import { SMALL, WIND } from './veg.js';
+import { SMALL, WIND, plant as vegPlant } from './veg.js';
 import { initChars, onCharsReady, Character, preload, styleName } from './chars.js';
 import { LINES, NPCS } from './npcs.js';
 
@@ -360,4 +360,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { vegPlant, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

@@ -10,6 +10,13 @@ const C = {
   plateTxt: col('#e8e8e8'), grille: col('#2a2a2e'), rubber: col('#2a2a2a'), steel: col('#8a8e96'),
 };
 // garis 3D dari kubus kecil (rangka sepeda, garpu, setang)
+// pelacak tabrakan (hanya saat __TRACEON): jejak kendaraan untuk dicek terhadap kotak lain
+let VID = 0;
+function trk(xf, hw, hl) {
+  if (!globalThis.__TRACE) return;
+  globalThis.__VEHCUR = ++VID;
+  (globalThis.__VEHS || (globalThis.__VEHS = [])).push({ id: VID, p: [P(xf, -hw, 0, -hl), P(xf, hw, 0, -hl), P(xf, hw, 0, hl), P(xf, -hw, 0, hl)], y: xf.y || 0, st: new Error().stack.split('\n').slice(3, 5).join(' ') });
+}
 function line(m, xf, a, b, t, c) {
   const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / (t * 0.9)));
   for (let i = 0; i <= n; i++) { const k = i / n; m.box(xf, a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k - t / 2, a[2] + (b[2] - a[2]) * k, t, t, t, c); }
@@ -26,7 +33,8 @@ function wheel(m, xf, x, y, z, r, w, o = {}) {
 
 /* ---------------------------------------------------------------- MOTOR */
 // jenis: 'bebek' (motor bebek), 'matic' (skuter); c = warna bodi; o.helmet = taruh helm di jok
-export function motor(m, xf, c = '#c83a3a', kind = 'bebek', o = {}) {
+export function motor(m, xf, c = '#c83a3a', kind = 'bebek', o = {}) { trk(xf, 0.35, 1.0); try { return motor_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
+function motor_(m, xf, c, kind, o) {
   const body = col(c), dark = shade(body, 0.7), R = 0.21, W = 0.09, zf = 0.62, zr = -0.6;
   wheel(m, xf, 0, R, zf, R, W); wheel(m, xf, 0, R, zr, R, W);
   // spakbor depan & belakang
@@ -63,7 +71,8 @@ export function motor(m, xf, c = '#c83a3a', kind = 'bebek', o = {}) {
 }
 
 /* ---------------------------------------------------------------- SEPEDA */
-export function sepeda(m, xf, c = '#2a8ae0', o = {}) {
+export function sepeda(m, xf, c = '#2a8ae0', o = {}) { trk(xf, 0.3, 0.9); try { return sepeda_(m, xf, c, o); } finally { globalThis.__VEHCUR = 0; } }
+function sepeda_(m, xf, c, o) {
   const fr = col(c), R = 0.26, zf = 0.5, zr = -0.48, y = R;
   wheel(m, xf, 0, R, zf, R, 0.05, { spokes: true, t: 0.06, n: 18 }); wheel(m, xf, 0, R, zr, R, 0.05, { spokes: true, t: 0.06, n: 18 });
   const crank = [0, 0.22, -0.02], seatTop = [0, 0.66, -0.16], head = [0, 0.66, 0.36];
@@ -85,7 +94,8 @@ export function sepeda(m, xf, c = '#2a8ae0', o = {}) {
 
 /* ---------------------------------------------------------------- MOBIL */
 // kind: 'sedan' | 'mpv' | 'angkot' | 'pikap'; panjang ±3.4 (z), lebar ±1.45 (x)
-export function car(m, xf, c = '#e8e8e8', kind = 'mpv', o = {}) {
+export function car(m, xf, c = '#e8e8e8', kind = 'mpv', o = {}) { trk(xf, 0.75, kind === 'sedan' ? 1.75 : 1.72); try { return car_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
+function car_(m, xf, c, kind, o) {
   const body = col(c), lo = shade(body, 0.82), hw = 0.72;
   const L2 = kind === 'sedan' ? 1.72 : kind === 'angkot' ? 1.6 : 1.7, sill = 0.24, belt = kind === 'mpv' || kind === 'angkot' ? 0.78 : 0.72;
   const roof = kind === 'sedan' ? 1.22 : kind === 'angkot' ? 1.52 : 1.42;

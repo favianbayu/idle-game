@@ -17,6 +17,8 @@ const at = (xf, lx, lz, da = 0, y) => { const [x, z] = L(xf, lx, lz); return { x
 /* ---------- potongan kecil */
 // kendaraan detail ada di vehicles.js; jenis dipilih dari posisi supaya bervariasi tapi tetap
 export function motor(m, xf, c = '#3a6a8a') { const r = hash(Math.round(xf.x * 7), Math.round(xf.z * 7)); V.motor(m, xf, c, r < 0.45 ? 'matic' : 'bebek', { helmet: r > 0.8 ? pick(['#e8e8e8', '#2a2a2e', '#c83a3a'], r * 9 % 1) : null }); }
+// posisi mobil rumah P1: antara dinding kanan (w/2 - 1) dan pagar samping (yard.w/2)
+export const P1CAR = (w, Y) => Math.min(w / 2 + 0.6, (w / 2 - 1 + Y.w / 2) / 2 + 0.05);
 export function car(m, xf, c = '#e8e8e8', kind) { const r = hash(Math.round(xf.x * 5), Math.round(xf.z * 5)); V.car(m, xf, c, kind || (r < 0.5 ? 'mpv' : r < 0.85 ? 'sedan' : 'pikap'), { cargo: '#c8a060' }); }
 function chair(m, xf, c = '#d23a3a') { m.box(xf, 0, 0, 0, 0.42, 0.4, 0.42, col(c)); m.box(xf, 0, 0.4, -0.18, 0.42, 0.4, 0.06, col(c)); }
 function jemuran(m, xf, lx, lz, len, seed) {
@@ -58,6 +60,17 @@ function nako(m, xf, lx, y, lz, w = 0.7) {   // jendela nako (bilah kaca)
   for (let i = 0; i < 5; i++) m.box(xf, lx, y + i * 0.15, lz + 0.06, w, 0.1, 0.05, i % 2 ? GLASS : GLASS2);
 }
 
+// atap sandar (teras): genteng berderet miring dari dinding (z0, y0) ke depan (z1, y1), lis papan di ujung depan
+export function leanTo(m, xf, w, z0, z1, y0, y1, roof) {
+  const n = 6, P2 = (x, y, z) => { const p = at(xf, x, z); return [p.x, y, p.z]; };
+  for (let i = 0; i < n; i++) {
+    const a = i / n, b = (i + 1) / n, za = z0 + (z1 - z0) * a, zb = z0 + (z1 - z0) * b, ya = y0 + (y1 - y0) * a, yb = y0 + (y1 - y0) * b;
+    const c = shade(roof, i % 2 ? 0.92 : 1.02);
+    m.poly2([P2(-w / 2, ya + 0.04, za), P2(w / 2, ya + 0.04, za), P2(w / 2, yb, zb), P2(-w / 2, yb, zb)], c);   // tiap deret genteng menumpuk sedikit
+    m.box(xf, 0, yb - 0.03, zb, w, 0.05, 0.05, shade(roof, 0.7));
+  }
+  m.box(xf, 0, y1 - 0.14, z1, w + 0.04, 0.14, 0.05, col('#f2eee4'));   // lis depan
+}
 /* ---------- RUMAH KAMPUNG */
 // o: { wall, roof, accent, seed, veg(list), C(collision), darto }
 export function kampung(m, xf, type, o) {
@@ -69,7 +82,7 @@ export function kampung(m, xf, type, o) {
     const w = 3, d = 3.2, z0 = -0.4;
     body(m, xf, 0, z0, w, d, H, wall);
     door(m, xf, -0.6, z0 + d / 2, acc); win(m, xf, 0.7, 0.56, z0 + d / 2);
-    windowsSide(m, xf, w, d, 1, 2, {}); m.box(xf, 0, 0, d / 2 + z0 + 0.45, w, 0.1, 0.9, col('#c4beb2'));
+    windowsSide(m, at(xf, 0, z0), w, d, 1, 2, {}); m.box(xf, 0, 0, d / 2 + z0 + 0.45, w, 0.1, 0.9, col('#c4beb2'));
     gableZ(m, xf, 0, H, z0, w, d, 1.0, roof, wall);
     if (r(1) < 0.6) jemuran(m, xf, w / 2 + 0.6, 0.3, 1.6, seed);
     if (r(2) < 0.5) veg('pot', -w / 2 + 0.3, z0 + d / 2 + 0.5);
@@ -78,20 +91,19 @@ export function kampung(m, xf, type, o) {
     const w = 4, d = 3.6, z0 = -0.7;
     body(m, xf, 0, z0, w, d, H, wall);
     door(m, xf, 0, z0 + d / 2, acc); nako(m, xf, -1.2, 0.56, z0 + d / 2); nako(m, xf, 1.2, 0.56, z0 + d / 2);
-    windowsSide(m, xf, w, d, 1, 2, {}); windowsSide(m, xf, w, d, 1, 3, {});
+    windowsSide(m, at(xf, 0, z0), w, d, 1, 2, {}); windowsSide(m, at(xf, 0, z0), w, d, 1, 3, {});
     gableX(m, xf, 0, H, z0, w, d, 1.2, roof, wall);
     m.box(xf, 0, 0, z0 + d / 2 + 0.7, w, 0.14, 1.4, col(o.darto ? '#b8b0a0' : '#c8c0b0'));                // lantai teras
-    for (const s of [-1, 1]) m.box(xf, s * (w / 2 - 0.15), 0.14, z0 + d / 2 + 1.25, 0.18, H - 0.25, 0.18, FRAME);   // tiang teras
-    m.poly([at(xf, -w / 2 - 0.2, z0 + d / 2), at(xf, w / 2 + 0.2, z0 + d / 2), at(xf, w / 2 + 0.2, z0 + d / 2 + 1.6), at(xf, -w / 2 - 0.2, z0 + d / 2 + 1.6)]
-      .map((p, i) => [p.x, H + (i < 2 ? 0.05 : -0.2), p.z]), shade(roof, 0.9));                              // atap teras (miring)
-    if (o.darto) { m.box(xf, -1.0, 0.14, z0 + d / 2 + 0.45, 1.7, 0.42, 0.42, col('#8a5a34')); motor(m, at(xf, 2.6, z0 + d / 2 + 1.0, 0.2), '#3a6a8a'); veg('pot', 1.6, z0 + d / 2 + 0.3, { c: '#a0d080' }); }
-    else { chair(m, at(xf, -1.2, z0 + d / 2 + 0.6, 0.3), pick(['#d23a3a', '#2a6ac0', '#3a9a4a'], r(3))); if (r(4) < 0.35) motor(m, at(xf, 1.0, z0 + d / 2 + 0.75, Math.PI / 2), pick(['#2a2a2e', '#c83a3a', '#2a6ac0'], r(5))); veg('pot', 1.7, z0 + d / 2 + 1.2); }
+    for (const s of [-1, 1]) m.box(xf, s * (w / 2 - 0.15), 0.14, z0 + d / 2 + 1.25, 0.18, H - 0.3, 0.18, FRAME);   // tiang teras
+    leanTo(m, xf, w + 0.4, z0 + d / 2 - 0.15, z0 + d / 2 + 1.6, H + 0.28, H - 0.12, roof);              // atap teras genteng sampai depan pilar
+    if (o.darto) { m.box(xf, -1.0, 0.14, z0 + d / 2 + 0.45, 1.7, 0.42, 0.42, col('#8a5a34')); motor(m, at(xf, w / 2 + 0.55, z0 + d / 2 - 0.2, 0.1), '#3a6a8a'); veg('pot', 1.75, z0 + d / 2 + 0.18, { c: '#a0d080' }); }
+    else { chair(m, at(xf, -1.2, z0 + d / 2 + 0.6, 0.3), pick(['#d23a3a', '#2a6ac0', '#3a9a4a'], r(3))); if (r(4) < 0.35) motor(m, at(xf, 1.3, z0 + d / 2 + 0.78, Math.PI / 2), pick(['#2a2a2e', '#c83a3a', '#2a6ac0'], r(5))); veg('pot', 1.75, z0 + d / 2 + 1.25); }
     if (r(6) < 0.3) m.box(xf, w / 2 - 0.4, H + 0.6, z0 - 0.6, 0.3, 0.3, 0.4, col('#c8c0b0'));               // kandang burung
     C(0, z0, w, d); C(-w / 2 + 0.15, z0 + d / 2 + 1.25, 0.25, 0.25); C(w / 2 - 0.15, z0 + d / 2 + 1.25, 0.25, 0.25);
   } else if (type === 'K3') {     // rumah tumbuh: lt1 bata, lt2 setengah jadi, tandon oranye, tangga besi luar
     const w = 4, d = 3.6, z0 = -0.3, brick = col('#b06a4a');
     body(m, xf, 0, z0, w, d, H, wall);
-    door(m, xf, -0.8, z0 + d / 2, acc); win(m, xf, 0.9, 0.56, z0 + d / 2); windowsSide(m, xf, w, d, 1, 3, {});
+    door(m, xf, -0.8, z0 + d / 2, acc); win(m, xf, 0.9, 0.56, z0 + d / 2); windowsSide(m, at(xf, 0, z0), w, d, 1, 3, {});
     m.box(xf, 0, H, z0, w + 0.1, 0.14, d + 0.1, col('#a8a49a'));
     m.box(xf, 0.4, H + 0.14, z0 - 0.5, w - 0.8, FLOOR * 0.7, d - 1.4, brick);
     win(m, xf, 0.4, H + 0.6, z0 - 0.5 + (d - 1.4) / 2, 0.6, 0.5, col('#2a2a2e'));
@@ -119,9 +131,9 @@ export function kampung(m, xf, type, o) {
     m.box(xf, -0.6, 0.85, z0 + d / 2 + 0.3, 1.2, 0.45, 0.42, col('#b8d8e8'));
     m.box(xf, 0.9, 0.85, z0 + d / 2 + 0.3, 0.5, 0.35, 0.4, col('#d23a3a'));                          // termos es
     for (let i = 0; i < 7; i++) m.box(xf, -w / 2 + 0.5 + i * 0.5, 1.15, z0 + d / 2 + 0.75, 0.18, 0.45, 0.03, col(pick(['#f2c230', '#e85a5a', '#3a9ae0', '#6ab85a', '#f28ab4'], hash(seed, i + 30))));   // renceng
-    m.poly([at(xf, -w / 2, z0 + d / 2), at(xf, w / 2, z0 + d / 2), at(xf, w / 2, z0 + d / 2 + 1.2), at(xf, -w / 2, z0 + d / 2 + 1.2)].map((p, i) => [p.x, (i < 2 ? 1.75 : 1.5), p.z]), awn);
+    m.poly2([at(xf, -w / 2, z0 + d / 2), at(xf, w / 2, z0 + d / 2), at(xf, w / 2, z0 + d / 2 + 1.2), at(xf, -w / 2, z0 + d / 2 + 1.2)].map((p, i) => [p.x, (i < 2 ? 1.75 : 1.5), p.z]), awn);
     m.box(xf, 0, H - 0.05, z0 + d / 2 + 0.06, w * 0.7, 0.35, 0.06, col('#f4f0e0'));                // papan nama
-    gableX(m, xf, 0, H, z0, w, d, 1.1, roof, wall); windowsSide(m, xf, w, d, 1, 3, {});
+    gableX(m, xf, 0, H, z0, w, d, 1.1, roof, wall); windowsSide(m, at(xf, 0, z0), w, d, 1, 3, {});
     C(0, z0, w, d); C(0, z0 + d / 2 + 0.3, w - 0.4, 0.5);
   } else {                        // K6 rumah gang sempit 2.5 x 5, 2 lantai, balkon besi, parabola
     const w = 2.6, d = 4.2, z0 = -0.2;
@@ -130,7 +142,7 @@ export function kampung(m, xf, type, o) {
     win(m, xf, 0, H + 0.4, z0 + d / 2, 0.5, 1.0); m.box(xf, 0, H, z0 + d / 2 + 0.3, w - 0.2, 0.08, 0.6, col('#8a8a90'));
     for (let i = 0; i < 6; i++) m.box(xf, -w / 2 + 0.2 + i * (w - 0.4) / 5, H + 0.08, z0 + d / 2 + 0.56, 0.04, 0.55, 0.04, col('#2a2a2e'));
     m.box(xf, 0, H + 0.6, z0 + d / 2 + 0.56, w - 0.2, 0.05, 0.05, col('#2a2a2e'));
-    windowsSide(m, xf, w, d, 2, 2, { spacing: 2 });
+    windowsSide(m, at(xf, 0, z0), w, d, 2, 2, { spacing: 2 });
     gableZ(m, xf, 0, 2 * H, z0, w, d, 0.9, roof, wall);
     parabola(m, xf, w / 2 - 0.3, 2 * H + 0.3, z0 - d / 2 + 0.4);
     veg('pot', w / 2 - 0.3, z0 + d / 2 + 0.25);
@@ -165,8 +177,11 @@ export function perum(m, xf, type, o) {
     m.box(xf, -0.5, H, 0.2, w - 0.8, 0.14, d + 0.2, col('#4a4a50')); m.box(xf, 0.2, 2 * H, -0.4, w - 1.2, 0.18, d - 0.6, col('#3a3a40'));
     m.box(xf, -0.5, 0.2, d / 2 + 0.01, 2.2, 1.3, 0.05, GLASS2); m.box(xf, 0.2, H + 0.3, d / 2 - 0.39, w - 2, 1.0, 0.05, GLASS2);
     m.box(xf, -0.5 + 1.6, 0, d / 2 + 0.01, 0.6, 1.4, 0.06, wood);
-    m.box(xf, w / 2 - 0.2, 0, 0.6, 0.12, 2.1, 0.12, col('#3a3a40')); m.box(xf, w / 2 - 0.2, 2.1, 0.6, 2.4, 0.1, 3.4, col('#3a3a40'));   // carport
-    car(m, at(xf, w / 2 + 0.6, 0.8), pick(['#e8e8e8', '#2a2a2e', '#a8a8b0'], hash(o.seed, 2)));
+    // carport: atap menempel dinding, tiang di sisi luar supaya tidak menembus mobil; mobil di antara dinding dan pagar samping
+    const cx = P1CAR(w, o.yard);
+    for (const z of [-0.6, 2.2]) m.box(xf, cx + 0.86, 0, z, 0.08, 2.1, 0.08, col('#3a3a40'));
+    m.box(xf, (w / 2 - 1 + cx + 1.05) / 2, 2.1, 0.8, cx + 1.05 - (w / 2 - 1), 0.1, 3.4, col('#3a3a40'));
+    car(m, at(xf, cx, 0.8), pick(['#e8e8e8', '#2a2a2e', '#a8a8b0'], hash(o.seed, 2)));
     m.box(xf, -w / 2 + 0.1, H, -d / 2 + 0.5, 0.1, H * 0.6, d - 1, wood);
   } else if (type === 'P2') {   // klasik: pilar putih, limas, air mancur, lampu taman bulat
     body(m, xf, 0, 0, w, d, 2 * H, wall);
@@ -174,6 +189,7 @@ export function perum(m, xf, type, o) {
     door(m, xf, 0, d / 2, wood); m.box(xf, 0, 1.45, d / 2 + 0.06, 0.9, 0.3, 0.05, FRAME);
     for (const x of [-1.4, -0.6, 0.6, 1.4]) m.box(xf, x, 0, d / 2 + 0.9, 0.3, 2 * H, 0.3, col('#fafaf6'));
     m.box(xf, 0, 2 * H - 0.25, d / 2 + 0.6, 3.6, 0.3, 1.4, col('#fafaf6'));
+    m.gable(at(xf, 0, d / 2 + 0.75, Math.PI / 2), 0, 2 * H + 0.05, 0, 1.9, 3.8, 1.0, roof, 0.25, col('#fafaf6'));   // atap portiko berpilar
     m.hip(xf, 0, 2 * H, 0, w, d, 1.8, roof);
     windowsSide(m, xf, w, d, 2, 2, { ww: 0.8, glass: GLASS2 }); windowsSide(m, xf, w, d, 2, 3, { ww: 0.8, glass: GLASS2 });
     const fz = d / 2 + 2.6; m.box(xf, 0, 0, fz, 1.2, 0.3, 1.2, col('#d8d4cc')); m.box(xf, 0, 0.3, fz, 0.9, 0.08, 0.9, col('#6ab0e0')); m.box(xf, 0, 0.3, fz, 0.2, 0.7, 0.2, col('#e8e4dc'));
@@ -190,7 +206,7 @@ export function perum(m, xf, type, o) {
     C(-w / 2 + 0.9, d / 2 + 2.4, 0.35, 0.35);
   } else {                      // P4 rumah sudut L, dua mobil, taman luas
     body(m, xf, 0, -d / 4, w, d / 2, 2 * H, wall); body(m, xf, -w / 4, d / 4, w / 2, d / 2, 2 * H, wall);
-    windowsSide(m, xf, w, d / 2, 2, 1, { ww: 0.9, glass: GLASS2 });
+    windowsSide(m, at(xf, 0, -d / 4), w, d / 2, 2, 1, { ww: 0.9, glass: GLASS2 });
     for (let f = 0; f < 2; f++) { win(m, at(xf, -w / 4, d / 4), 0, f * H + 0.5, d / 4, 1.4, 0.9, GLASS2); win(m, at(xf, w / 4, -d / 4), 0, f * H + 0.5, d / 4, 1.2, 0.9, GLASS2); }
     door(m, xf, 0.5, 0, wood);
     m.hip(xf, 0, 2 * H, -d / 4, w, d / 2, 1.4, roof); m.hip(at(xf, -w / 4, d / 4), 0, 2 * H, 0, w / 2, d / 2, 1.4, roof);
@@ -200,7 +216,7 @@ export function perum(m, xf, type, o) {
   if (type !== 'P4') C(0, 0, w, d); else C(0, -d / 4, w, d / 2);
   // pagar halaman (yard: { w, front, back }) dengan gerbang di depan
   const Y = o.yard, fc = col(type === 'P1' ? '#2a2a2e' : type === 'P2' ? '#f2f0ea' : type === 'P3' ? '#8a5a34' : '#3f7a40');
-  const fz = d / 2 + Y.front, bz = -d / 2 - Y.back, hw = Y.w / 2, gate = 2.2, gx = type === 'P1' ? w / 2 + 0.6 : 0;
+  const fz = d / 2 + Y.front, bz = -d / 2 - Y.back, hw = Y.w / 2, gate = type === 'P1' ? 1.9 : 2.2, gx = type === 'P1' ? P1CAR(w, Y) : 0;
   const seg = (x0, z0, x1, z1) => {
     const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, sx = Math.abs(x1 - x0) + 0.1, sz = Math.abs(z1 - z0) + 0.1;
     if (type === 'P4') { const [x, z] = L(xf, cx, cz); o.veg.push({ k: 'pagarHidup', x, z, a: xf.a + (sx > sz ? 0 : Math.PI / 2), sx: Math.max(sx, sz) }); }
@@ -234,7 +250,7 @@ export function ruko(m, xf, type, o) {
   m.box(xf, 0, H + (type === 'R2' ? 0.0 : -0.05), d / 2 + 0.1, w - 0.2, 0.42, 0.14, type === 'R1' ? mix(sign, col('#d8d4cc'), 0.35) : sign);
   m.box(xf, 0, H + 0.12, d / 2 + 0.18, w * 0.6, 0.16, 0.02, col('#f8f4e8'));
   if (type === 'R2') m.box(xf, 0, 1.75, d / 2 + 0.7, w, 0.05, 1.3, mix(GLASS2, col('#ffffff'), 0.4));
-  else m.poly([at(xf, -w / 2, d / 2), at(xf, w / 2, d / 2), at(xf, w / 2, d / 2 + 1.3), at(xf, -w / 2, d / 2 + 1.3)].map((p, i) => [p.x, i < 2 ? 1.95 : 1.7, p.z]), canopy);
+  else m.poly2([at(xf, -w / 2, d / 2), at(xf, w / 2, d / 2), at(xf, w / 2, d / 2 + 1.3), at(xf, -w / 2, d / 2 + 1.3)].map((p, i) => [p.x, i < 2 ? 1.95 : 1.7, p.z]), canopy);
   // atap datar + dinding pembatas + tandon
   m.box(xf, 0, Ht, 0, w, 0.1, d, shade(wall, 0.85));
   for (const [lx, lz, sx, sz] of [[0, d / 2 - 0.06, w, 0.12], [0, -d / 2 + 0.06, w, 0.12], [w / 2 - 0.06, 0, 0.12, d], [-w / 2 + 0.06, 0, 0.12, d]]) m.box(xf, lx, Ht + 0.1, lz, sx, 0.35, sz, shade(wall, 0.95));

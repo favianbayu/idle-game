@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import KOTA from './data/kota.json';
 import { Chunks, Merger, col, shade, mix } from './geom.js';
 import { FLOOR, hash, pick, inPoly, rgb, MAT, PAT, makePatterns, facade, colLocal, GLASS, GLASS2, FRAME, voxelize } from './common.js';
-import { PAL, L, kampung, panggung, perum, ruko, motor, car } from './buildings.js';
+import { PAL, L, kampung, panggung, perum, ruko, motor, car, P1CAR } from './buildings.js';
 import { plant } from './veg.js';
 
 const PX = 10;   // piksel tekstur tanah per petak
@@ -115,7 +115,7 @@ function plan(K, M, regionAt, occ, reserve) {
         const type = chooseType(region, road, r);
         if (!type) { s += 2; continue; }
         const T = TYPES[type];
-        const jitter = region === 'kampung' || region === 'bantaran' ? (hash(r * 977) - 0.5) * 0.12 : 0;
+        const jitter = 0;   // rumah lurus sejajar jalan (jendela tidak terlihat miring)
         const a = Math.atan2(-side * p.tz, -side * p.tx) + jitter;   // depan (+z lokal) menghadap jalan
         const dist = road.w / 2 + 0.35 + T.setback + T.d / 2;
         const xf = { x: p.x + nx * side * dist, z: p.z + nz * side * dist, a };
@@ -182,7 +182,7 @@ function paintGround(K, houses, M, specials) {
   };
   for (const h of houses) {
     const { xf, w, d, setback, type } = h;
-    if (h.yard) { quad(h.xf, 0, (d / 2 + setback - 0.4 - d / 2 - h.yard.back) / 2, h.yard.w, d + setback - 0.4 + h.yard.back, PAT.lawn); quad(xf, type === 'P1' ? w / 2 + 0.6 : 0, d / 2 + setback / 2, 2.2, setback + 0.8, PAT.paving); }
+    if (h.yard) { quad(h.xf, 0, (d / 2 + setback - 0.4 - d / 2 - h.yard.back) / 2, h.yard.w, d + setback - 0.4 + h.yard.back, PAT.lawn); quad(xf, type === 'P1' ? P1CAR(w, h.yard) : 0, d / 2 + setback / 2, type === 'P1' ? 1.9 : 2.2, setback + 0.8, PAT.paving); }
     else if (type[0] === 'R') quad(xf, 0, d / 2 + setback / 2 + 0.2, w + 0.02, setback + 0.8, PAT.tile);
     else { quad(xf, 0, 0, w + 0.4, d + 0.4, PAT.semen); quad(xf, 0, d / 2 + setback / 2 + 0.2, Math.min(1.4, w * 0.4), setback + 0.8, type === 'B' ? PAT.dirt : PAT.semen); }
   }
@@ -289,7 +289,7 @@ export function buildKota(scene, C) {
   }
   specialBuildings(ch, specials, C, veg, M);
   streetStuff(ch, K, M, C, veg, regionAt, occ, houses);
-  if (globalThis.__TRACE) { globalThis.__ROAD = globalThis.__TRACE.filter(t => t.p.some(([x, , z]) => M.roadDist(x, z) < -0.12 && !M.waterAt(x, z) && x > 0 && z > 0 && x < W && z < H)); globalThis.__TRACE = null; }
+  if (globalThis.__TRACE) { globalThis.__BOXES = globalThis.__TRACE; globalThis.__ROAD = globalThis.__TRACE.filter(t => t.p.some(([x, , z]) => M.roadDist(x, z) < -0.12 && !M.waterAt(x, z) && x > 0 && z > 0 && x < W && z < H)); globalThis.__TRACE = null; }
   for (const m of ch.meshes(MAT.world)) scene.add(m);
   const water = riverMesh(K); scene.add(water);
   // tanaman
@@ -405,7 +405,7 @@ function specialBuildings(ch, S, C, veg, M) {
     m.box(xf, -0.6, 0, b.h / 2 + 0.02, 2.6, 1.9, 0.06, col('#5a5a5e'));
     m.box(xf, 1.9, 0.9, b.h / 2 + 0.03, 0.9, 1.1, 0.04, col('#f2c230')); m.box(xf, 1.9, 0.6, b.h / 2 + 0.03, 0.4, 0.3, 0.04, col('#a8a8a8'));
     for (let i = 0; i < 6; i++) m.box(xf, -b.w / 2 + 0.5 + i * (b.w - 1) / 5, 2.3, b.h / 2 + 0.15, 0.14, 0.14, 0.14, col('#fff2a0'));
-    motor(m, { ...xf, ...Object.fromEntries([['x', L(xf, -2.5, b.h / 2 + 1)[0]], ['z', L(xf, -2.5, b.h / 2 + 1)[1]]]), a: xf.a + 0.3 }, '#2a2a2e');
+    { const [x, z] = L(xf, -2.5, b.h / 2 + 0.75); motor(m, { x, z, a: xf.a + Math.PI / 2 }, '#2a2a2e'); }
     cl(xf, 0, 0, b.w, b.h);
   });
   add(S.stm, (m, xf, b) => {   // STM: dua gedung L gaya pabrik
