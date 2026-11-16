@@ -35,7 +35,7 @@ function nearest(rd, x, z) {
   return best;
 }
 
-export function buildTraffic(scene, K, C, M) {
+export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
   const roads = K.roads.map((r, i) => ({ ...r, i })).filter(r => r.kind === 'raya' || r.kind === 'jalan').map(r => ({ ...r, ...path(r) }));
   // ---------- simpang: ujung jalan menempel jalan lain, atau dua ruas berpotongan
   const J = [];
@@ -89,8 +89,8 @@ export function buildTraffic(scene, K, C, M) {
     }
   });
   const sigMat = {}, sigMeshes = [];
-  for (const k in lamp) { sigMat[k] = new THREE.MeshBasicMaterial({ vertexColors: false, color: 0x222222 }); const me = new THREE.Mesh(lamp[k].build(), sigMat[k]); scene.add(me); sigMeshes.push(me); }
-  const pm = new THREE.Mesh(poles.build(), MAT.world); pm.castShadow = true; scene.add(pm);
+  for (const k in lamp) { sigMat[k] = new THREE.MeshBasicMaterial({ vertexColors: false, color: 0x222222 }); const me = new THREE.Mesh(lamp[k].build(), sigMat[k]); lift(me); scene.add(me); sigMeshes.push(me); }
+  const pm = new THREE.Mesh(poles.build(), MAT.world); lift(pm); pm.castShadow = true; scene.add(pm);
   const ON = { r: new THREE.Color('#ff3a2a'), y: new THREE.Color('#ffc020'), g: new THREE.Color('#3aff6a') }, OFF = { r: new THREE.Color('#3a1a1a'), y: new THREE.Color('#3a301a'), g: new THREE.Color('#1a3a22') };
   const CYCLE = 22, light = (grp, t) => {   // A (jalan raya) hijau dulu, lalu B
     const u = t % CYCLE, a = u < 9 ? 'g' : u < 11 ? 'y' : 'r', b = u < 11 ? 'r' : u < 20 ? 'g' : 'y';
@@ -199,8 +199,9 @@ export function buildTraffic(scene, K, C, M) {
       const far = !player || (v.x - player.x) ** 2 + (v.z - player.z) ** 2 > 85 * 85;
       v.grp.visible = !far;
       if (far) continue;
-      v.grp.position.set(v.x, 0, v.z); v.grp.rotation.y = v.h;
-      v.grp.rotation.z = v.motor ? -dh * 0.6 : 0;   // motor miring saat menikung
+      // tanjakan: kendaraan ikut naik & mendongak sesuai tinggi jalan di depan/belakangnya
+      const fx = Math.sin(v.h), fz = Math.cos(v.h), y0 = HT(v.x, v.z), pitch = Math.atan2(HT(v.x + fx * 0.8, v.z + fz * 0.8) - HT(v.x - fx * 0.8, v.z - fz * 0.8), 1.6);
+      v.grp.position.set(v.x, y0, v.z); v.grp.rotation.set(-pitch, v.h, v.motor ? -dh * 0.6 : 0, 'YXZ');   // motor miring saat menikung
       v.rd.spin(v.v * dt);
       const near = (v.x - player.x) ** 2 + (v.z - player.z) ** 2 < 45 * 45;
       for (const ch of v.riders) { ch.group.visible = near; if (near) ch.update(v.type === 'sepeda' ? dt * Math.min(1.6, v.v / 2.2) : dt); }

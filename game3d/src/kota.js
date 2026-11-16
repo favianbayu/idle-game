@@ -560,6 +560,7 @@ export function buildKota(scene, C) {
   for (const g of grounds) { const pa = g.geometry.attributes.position; for (let i = 0; i < pa.count; i++) pa.setZ(i, HT(g.position.x + pa.getX(i), g.position.z - pa.getY(i))); pa.needsUpdate = true; g.geometry.computeVertexNormals(); g.geometry.computeBoundingSphere(); }
   for (const m of ch.meshes(MAT.world)) { lift(m); scene.add(m); }
   for (const m of thin.meshes(MAT.world, { cast: false })) { lift(m); m.userData.thin = true; scene.add(m); }
+  for (const arr of [SB.p, SB.lp]) if (arr) for (let i = 0; i < arr.length; i += 3) arr[i + 1] += HT(arr[i], arr[i + 2]);   // papan nama ikut kontur
   const signs = SB.build(scene);
   const water = riverMesh(K); scene.add(water); scene.add(waterBanks(K, M));
   // tanaman
@@ -579,10 +580,10 @@ export function buildKota(scene, C) {
   for (const v of veg) { const h = HT(v.x, v.z); if (h > 0.001) v.y = (v.y || 0) + h; }
   if (globalThis.__TRACEON) globalThis.__VEGROAD = veg.filter(v => M.roadDist(v.x, v.z) < 0.1).map(v => v.k);
   plant(scene, veg);
-  const traffic = buildTraffic(scene, K, C, M);
+  const traffic = buildTraffic(scene, K, C, M, HT, lift);
   return {
     traffic, signs, parkir, portal, posSatpam: portal?.pos, M, places, specials,
-    walkPaths: street.walkPaths, groundY: (x, z) => street.walkAt(x, z) ? 0.1 : HT(x, z), heightAt: HT,
+    walkPaths: street.walkPaths, groundY: (x, z) => HT(x, z) + (street.walkAt(x, z) ? 0.1 : 0), heightAt: HT, lift,
     regionAt: (x, z) => { const r = regionAt(x, z); return r ? REGIONS[REGION_KEY.indexOf(r)] : 'Wirabumi'; },
     regionKey: regionAt, labels: K.labels,
     marks: K.marks.map(m => ({ ...m, name: m.desc.replace(/\s*\(.*$/, '') })),
@@ -815,7 +816,7 @@ function terrain(K, M, occ, specials) {
   const sp = Object.values(specials).map(b => ({ x: b.x, z: b.y, c: Math.cos(b.a), s: Math.sin(b.a), hw: b.w / 2 + 2.5, hd: b.h / 2 + 2.5 }));
   for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
     const x = i / R, z = j / R;
-    const flat = M.roadDist(x, z) < 1.2 || M.waterAt(x, z) || M.railAt(x, z) || occ.get(x, z) || x < 1 || z < 0.5 || x > W - 1 || z > H - 1
+    const flat = M.waterAt(x, z) || M.railAt(x, z) || occ.get(x, z) || x < 1 || z < 0.5 || x > W - 1 || z > H - 1
       || areaFlat(j * gw + i) || sp.some(b => { const dx = x - b.x, dz = z - b.z; return Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd; });
     if (flat) D[j * gw + i] = 0;
   }
@@ -836,6 +837,23 @@ function terrain(K, M, occ, specials) {
     b += 0.45 * n;                                                               // padang rumput: naik-turun landai
     HG[k] = b * ss((D[k] - 1.0) / 6);                                            // lereng halus dari tepi daerah rata
   }
+  // jalan ikut menanjak: tinggi as jalan = tanah di sepanjang as (dihaluskan searah jalan), penampang melintang tetap datar,
+  // bahu jalan (2.5 petak) melandai ke tanah sekitar. Jembatan & simpang di kota otomatis 0 karena tanahnya rata.
+  const sample = (x, z) => { const fx = x * R, fz = z * R, i = Math.max(0, Math.min(gw - 2, Math.floor(fx))), j = Math.max(0, Math.min(gh - 2, Math.floor(fz))), u = fx - i, v = fz - j, k = j * gw + i; return (HG[k] * (1 - u) + HG[k + 1] * u) * (1 - v) + (HG[k + gw] * (1 - u) + HG[k + gw + 1] * u) * v; };
+  const RD = new Float32Array(gw * gh).fill(1e9), RH = new Float32Array(gw * gh);
+  for (const r of K.roads) {
+    const P = resample(r.pts, 0.5); if (P.length < 2) continue;
+    const dAt = (x, z) => { const i = Math.max(0, Math.min(gw - 1, Math.round(x * R))), j = Math.max(0, Math.min(gh - 1, Math.round(z * R))); return D[j * gw + i]; };
+    let h = P.map(p => M.waterAt(p.x, p.z) ? 0 : sample(p.x, p.z) * ss((dAt(p.x, p.z) - (r.w / 2 + 0.8)) / 3));   // di samping rumah/halaman/gedung: jalan tetap rata
+    for (let pass = 0; pass < 3; pass++) { const W8 = 8; h = h.map((_, i) => { let s2 = 0, n = 0; for (let k = Math.max(0, i - W8); k <= Math.min(h.length - 1, i + W8); k++) { s2 += h[k]; n++; } return s2 / n; }); }
+    const hw = r.w / 2, reach = hw + 2.6;
+    P.forEach((p, n) => {
+      const i0 = Math.floor((p.x - reach) * R), i1 = Math.ceil((p.x + reach) * R), j0 = Math.floor((p.z - reach) * R), j1 = Math.ceil((p.z + reach) * R);
+      for (let j = Math.max(0, j0); j <= Math.min(gh - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(gw - 1, i1); i++) {
+        const d = Math.hypot(i / R - p.x, j / R - p.z) - hw, k = j * gw + i; if (d < RD[k]) { RD[k] = d; RH[k] = h[n]; } }
+    });
+  }
+  for (let k = 0; k < HG.length; k++) { const d = RD[k]; if (d > 2.6 || (D[k] === 0 && d > 0.3)) continue; const t = ss((d - 0.6) / 2.0); HG[k] = RH[k] * (1 - t) + HG[k] * t; }
   return (x, z) => {
     const fx = x * R, fz = z * R, i = Math.floor(fx), j = Math.floor(fz); if (i < 0 || j < 0 || i >= gw - 1 || j >= gh - 1) return 0;
     const u = fx - i, v = fz - j, k = j * gw + i;

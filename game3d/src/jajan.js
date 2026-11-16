@@ -71,8 +71,8 @@ export function makeJajan({ scene, kota, collision, player, Character, npcs, sho
     collision.box(s.x, s.z, 0.75, 0.38, xf.a);
     // papan nama di depan etalase
     const sg = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.36), new THREE.MeshBasicMaterial({ map: signTex(K.sign, K.body === '#e8e4d0' ? '#3a9a5a' : K.body, '#ffffff') }));
-    const [px, pz] = L(xf, 0.15, 0.36); sg.position.set(px, 1.17, pz); sg.rotation.y = -xf.a; scene.add(sg);
-    const sg2 = sg.clone(); const [qx, qz] = L(xf, 0, 0.445); sg2.position.set(qx, 1.86, qz); sg2.scale.set(1.5, 0.33, 1); scene.add(sg2);
+    const [px, pz] = L(xf, 0.15, 0.36); sg.position.set(px, 1.17 + kota.heightAt(px, pz), pz); sg.rotation.y = -xf.a; scene.add(sg);
+    const sg2 = sg.clone(); const [qx, qz] = L(xf, 0, 0.445); sg2.position.set(qx, 1.86 + kota.heightAt(qx, qz), qz); sg2.scale.set(1.5, 0.33, 1); scene.add(sg2);
   }
   const used = [];
   ANCHORS.forEach(([ax, az], i) => {
@@ -81,7 +81,7 @@ export function makeJajan({ scene, kota, collision, player, Character, npcs, sho
     const c = new Character(K.sid); scene.add(c.group);
     npcs.push({ sid: K.sid, name: K.name, filler: true, lines: K.lines, c, home: { x: s.bx, z: s.bz }, x: s.bx, z: s.bz, tx: s.bx, tz: s.bz, wait: 3, heading: s.fa, say: null, greetT: Math.random() * 10, roam: 0.2, key: 'jj' + i, vendor: true });
   });
-  const mesh = new THREE.Mesh(mg.build(), MAT.world); mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh);
+  const mesh = new THREE.Mesh(mg.build(), MAT.world); kota.lift(mesh); mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh);
 
   // Warkop Simpang (gerobak Om Darto): ngopi gratis & bantu jualan
   const D = kota.darto, wk = D && D.cart ? (([x, z]) => ({ x, z }))(L(D.xf, D.cart.lx, D.cart.lz + 0.9)) : null;

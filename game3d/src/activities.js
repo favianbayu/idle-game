@@ -54,7 +54,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
       for (const [y, k] of [[rimY - 0.12, 0.9], [rimY - 0.26, 0.75]]) for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; box(thin, rx + Math.cos(a) * rimR * k, y, cz + Math.sin(a) * rimR * k, 0.1, 0.012, 0.012, net, a + Math.PI / 2); }
       BK.rims.push({ x: rx, y: rimY, z: cz, sd, board: brd });
     } }
-  scene.add(new THREE.Mesh(mg.build(), MAT.world)); { const t = new THREE.Mesh(thin.build(), MAT.world); scene.add(t); }
+  { const me = new THREE.Mesh(mg.build(), MAT.world); kota.lift(me); scene.add(me); } { const t = new THREE.Mesh(thin.build(), MAT.world); kota.lift(t); scene.add(t); }
 
   /* ---------------- bola */
   const ballMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
@@ -166,10 +166,10 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
     const fr = new Merger(), wood = col('#6a4a2a');
     fr.box({ x, z, a }, -0.55, 0, 0, 0.1, 2.15, 0.1, wood); fr.box({ x, z, a }, 0.55, 0, 0, 0.1, 2.15, 0.1, wood); fr.box({ x, z, a }, 0, 2.1, 0, 1.3, 0.1, 0.12, wood);
     fr.box({ x, z, a }, -0.55, 0, 0, 0.3, 0.06, 0.5, wood); fr.box({ x, z, a }, 0.55, 0, 0, 0.3, 0.06, 0.5, wood);
-    scene.add(new THREE.Mesh(fr.build(), MAT.world));
+    { const me = new THREE.Mesh(fr.build(), MAT.world); kota.lift(me); scene.add(me); }
     const bm = new Merger(), o = { x: 0, z: 0, a: 0 }; bm.box(o, 0, -0.38, 0, 0.02, 0.38, 0.02, col('#8a8a8a'));
     bm.box(o, 0, -1.25, 0, 0.36, 0.88, 0.36, col('#9a2a22')); bm.box(o, 0, -1.25, 0, 0.38, 0.08, 0.38, col('#2a2a2a')); bm.box(o, 0, -0.5, 0, 0.38, 0.08, 0.38, col('#2a2a2a'));
-    const piv = new THREE.Group(); piv.position.set(x, 2.1, z); piv.add(new THREE.Mesh(bm.build(), MAT.world)); piv.children[0].castShadow = true; scene.add(piv);
+    const piv = new THREE.Group(); piv.position.set(x, 2.1 + kota.heightAt(x, z), z); piv.add(new THREE.Mesh(bm.build(), MAT.world)); piv.children[0].castShadow = true; scene.add(piv);
     collision.circle(x, z, 0.24);
     bags.push({ x, z, a, name, piv, sw: 0, sv: 0 });
   }
