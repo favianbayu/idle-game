@@ -35,6 +35,34 @@ Menggantikan dan memperluas `05-bangunan.md` yang lama.
 **Wajib**: fasad dan pintu menghadap jalan terdekat; sisi samping dan belakang boleh polos tapi tetap punya 1 jendela.
 Tidak ada objek di badan jalan. Jarak antar-rumah minimal 0.4 (kampung), 1.5 (perumahan).
 
+### Aturan wajib: bangunan, jalan, dan parkiran
+
+Aturan ini **tidak boleh dilanggar** di game (bug kalau terjadi). Contoh salah: rumah besar yang dindingnya menempel ke
+aspal dan mobilnya parkir di badan jalan.
+
+| No | Aturan | Ukuran / cara cek |
+|---|---|---|
+| 1 | **Bangunan tidak boleh clipping ke jalan.** Seluruh tapak (dinding, atap menjorok, teras, tiang, tangga, pagar) ada di luar badan jalan | Jarak tepi tapak ke tepi aspal: kampung ≥ 1, perumahan ≥ 3, ruko ≥ 0.6 (trotoar), bangunan besar (pasar, plaza, GOR, sekolah, rumah Bram) ≥ 2. Atap boleh menjorok paling jauh 0.4 dan tetap tidak boleh di atas aspal |
+| 2 | **Bangunan harus menghadap jalan.** Pintu utama & fasad depan menghadap jalan terdekat | Sudut antara arah depan bangunan dan arah ke jalan terdekat ≤ 30°. Rumah di sudut menghadap jalan yang lebih besar |
+| 3 | **Harus ada akses.** Dari pintu ke jalan ada jalur bebas (paving, teras, jalan setapak, gerbang) selebar ≥ 1.2 | Tidak terhalang pagar, pohon, mobil, rumah lain. Kalau tidak ada jalan di depan: putar bangunan; kalau tetap tidak bisa, hapus bangunan |
+| 4 | **Kendaraan parkir tidak boleh masuk ke jalan.** Seluruh badan mobil/motor di dalam carport, garasi, halaman, petak parkir, atau teras | Jarak bodi kendaraan ke tepi aspal ≥ 0.3. Mobil diparkir sejajar atau tegak lurus petak, tidak miring keluar |
+| 5 | **Parkiran punya pintu masuk ke jalan** | Jalur masuk (driveway) selebar ≥ 2.6 untuk mobil, ≥ 1.2 untuk motor, tidak terhalang pohon/tiang |
+| 6 | **Pagar & gerbang ada di batas kavling**, bukan di badan jalan atau trotoar | Gerbang terbuka ke dalam halaman |
+| 7 | **Parkir di tepi jalan hanya di tempat yang disediakan**: parkir liar ruko (di teras/trotoar depan ruko) dan petak parkir paralel bergaris | Lajur jalan tetap bisa dilewati 2 kendaraan |
+| 8 | **Bangunan tidak saling tumpang** dan tidak menutupi pintu bangunan lain | Jarak antar-dinding sesuai tabel tapak |
+
+**Urutan penempatan** (supaya aturan di atas selalu terpenuhi):
+
+1. Ambil titik di samping jalan, hitung arah ke jalan terdekat → bangunan menghadap ke sana.
+2. Mundurkan bangunan sesuai jarak minimal wilayah + setengah kedalaman bangunan.
+3. Cek tapak + atap + teras terhadap semua jalan (bukan hanya jalan terdekat). Kalau kena: geser mundur, lalu coba putar 90°/180°, kalau tetap kena: batalkan.
+4. Taruh jalur akses pintu → jalan, lalu carport/garasi/petak parkir **di dalam kavling** + driveway ke jalan.
+5. Baru taruh kendaraan, di dalam petak parkir saja.
+6. Terakhir objek kecil (pot, jemuran, lampu taman), juga di luar badan jalan.
+
+**Cek otomatis di game** (jalankan setelah tata letak berubah): untuk tiap bangunan & kendaraan parkir, hitung jarak ke semua
+garis tengah jalan dikurangi setengah lebar jalan. Hasil < batas minimal = laporkan nama bangunan + posisinya.
+
 ## Rumah kampung K1-K8
 
 ![Fasad kampung](../peta/katalog/fasad_kampung.png)
@@ -114,6 +142,6 @@ Kanopi: merah, biru, hijau, kuning, abu.
 1. Tipe & ukuran petak, jumlah lantai, dua lapis (badan + atap) supaya tokoh bisa masuk ke bawah teras.
 2. Warna dari palet wilayah + 1 warna pembeda.
 3. Minimal 3 objek pendukung di posisi sesuai tabel tapak.
-4. Pintu menghadap jalan (cek di game: rumah yang membelakangi jalan = bug).
+4. Pintu menghadap jalan, tidak clipping ke jalan, ada akses, kendaraan parkir di dalam kavling (aturan wajib di atas).
 5. Versi malam (lampu) & versi event.
 6. Kalau bisa dimasuki: denah di segmen 92 + titik interaksi.
