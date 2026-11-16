@@ -33,6 +33,9 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 | 87 | Sirkuit & balap liar | Sirkuit resmi (tribun, pit, paddock), 4 rute balap liar, razia, akses |
 | 88 | STM Karya Bangsa | Denah tapak, tampak, bengkel otomotif, akses & jadwal |
 | 89 | GOR Kota | Arena event, kolam renang lomba, gym upgrade diri |
+| 90 | Katalog tipe bangunan | Rumah kampung, perumahan, ruko, panggung, desa, pesisir: bentuk, warna, plus-minus, aturan posisi |
+| 91 | Detail tiap bangunan | 61 bangunan bernama: papan nama, objek pendukung + posisi, plus-minus, jam |
+| 92 | Interior detail | 29 denah dalam dengan posisi objek & titik interaksi |
 
 Dokumen yang sudah ada sebelumnya (`01-cerita.md` sampai `06-event.md`, peta, bangunan, sprite) tetap berlaku. Guide ini
 memperdalam dan, kalau ada yang beda, **guide ini yang dipakai**.
