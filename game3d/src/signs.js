@@ -131,6 +131,11 @@ function buildAtlas() {
   });
   idx.atm = add((g, ox, oy, k) => { R(g, ox, oy, k, 0, 0, CW, CH, '#1a3a8a'); ptext(g, ox, oy, k, 'ATM 24 JAM', CW / 2, 10, CW - 8, 4, '#f6c81a'); });
   idx.open = add((g, ox, oy, k) => { R(g, ox, oy, k, 0, 0, CW, CH, '#ffffff'); ptext(g, ox, oy, k, 'BUKA', CW / 2, 10, CW - 8, 4, '#d0282e'); });
+  idx.perum = add((g, ox, oy, k) => { R(g, ox, oy, k, 0, 0, CW, CH, '#2a3a2a'); R(g, ox, oy, k, 0, 0, CW, 3, '#e0c060'); R(g, ox, oy, k, 0, CH - 3, CW, 3, '#e0c060');
+    ptext(g, ox, oy, k, 'BUKIT ASRI', CW / 2, 7, CW - 8, 4, '#f0e0a8'); ptext(g, ox, oy, k, 'SELAMAT DATANG', CW / 2, 36, CW - 8, 1, '#e0c060', { s: 1 }); });
+  idx.pos = add((g, ox, oy, k) => { R(g, ox, oy, k, 0, 0, CW, CH, '#1f3f7a'); ptext(g, ox, oy, k, 'POS SATPAM', CW / 2, 10, CW - 8, 4, '#ffffff'); });
+  idx.lapor = add((g, ox, oy, k) => { R(g, ox, oy, k, 0, 0, CW, CH, '#f2f2ee'); R(g, ox, oy, k, 0, 0, CW, 4, '#d0282e');
+    ptext(g, ox, oy, k, 'TAMU WAJIB', CW / 2, 8, CW - 8, 3, '#d0282e'); ptext(g, ox, oy, k, 'LAPOR 1X24 JAM', CW / 2, 32, CW - 8, 2, '#1a1a1a'); });
   const rows = Math.ceil(cells.length / COLS), W0 = CW * COLS, H0 = THREE.MathUtils.ceilPowerOfTwo(rows * CH);
   const mips = [];
   for (let l = 0, w = W0, h = H0; w >= 1 || h >= 1; l++, w >>= 1, h >>= 1) {

@@ -30,7 +30,7 @@
   #pad { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); display: none; gap: 10px; align-items: flex-end; }
   #pad button { width: 64px; height: 64px; border-radius: 50%; font-size: 14px; padding: 0; }
   #pad #btnAct { width: 84px; height: 84px; font-size: 16px; background: #ffd84a; }
-  #pad #btnEmote, #pad #btnRide { width: 52px; height: 52px; font-size: 12px; }
+  #pad #btnEmote, #pad #btnRide, #pad #btnHit { width: 52px; height: 52px; font-size: 12px; }
   #camPad { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 100px); display: none; gap: 8px; }
   #camPad button { width: 48px; height: 40px; font-size: 18px; padding: 0; }
   body.touch #pad, body.touch #camPad { display: flex; }
@@ -57,10 +57,10 @@
 <div id="toast" class="hud"></div>
 <div id="bubbles"></div>
 <div id="fps" class="hud"></div>
-<div id="help" class="hud">WASD/panah: jalan · Shift: lari · Spasi: aksi · R: sepeda/motor · 1-9, 0: gaya<br>Q/E atau seret mouse: putar & miringkan kamera · V: sudut · roda: zoom · C: kamera ikut · M: peta</div>
+<div id="help" class="hud">WASD/panah: jalan · Shift: lari · Spasi: aksi · R: sepeda/motor · F: pukul · 1-9, 0: gaya<br>Q/E atau seret mouse: putar & miringkan kamera · V: sudut · roda: zoom · C: kamera ikut · M: peta</div>
 <div id="joy"><div id="knob"></div></div>
 <div id="camPad"><button id="btnL">⟲</button><button id="btnR">⟳</button></div>
-<div id="pad"><button id="btnEmote">Gaya</button><button id="btnRide">Naik</button><button id="btnRun">Lari</button><button id="btnAct">Aksi</button></div>
+<div id="pad"><button id="btnEmote">Gaya</button><button id="btnRide">Naik</button><button id="btnRun">Lari</button><button id="btnHit">Pukul</button><button id="btnAct">Aksi</button></div>
 <div id="fade"></div>
 <div id="loading">Memuat Wirabumi…</div>
 <script>/*GAME*/</script>

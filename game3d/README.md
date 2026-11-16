@@ -66,6 +66,12 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   bertulisan khas pertokoan Indonesia (fotokopi, service HP, apotek, RM Padang, laundry kiloan, dll.).
 - **Parkir liar & tukang parkir**: motor berjajar di depan ruko; tukang parkir berompi oranye mondar-mandir, memberi
   aba-aba ("Priiit! Kiri, kiri...") dan menyapa pemain yang lewat naik motor.
+- **Berantem** (`src/fight.js`): tombol F / "Pukul" (combo jab, straight, hook, tendangan). NPC "jagoan" (preman, punk,
+  ojol, satpam, pemuda, tukang parkir, dll.) ngelawan dengan kuda-kuda & pukulan; yang lain lari panik atau meringkuk.
+  Saksi ikut bereaksi (satpam/polisi datang melerai). NPC yang KO jatuh lalu bangun lagi; nyawa pemain pulih pelan.
+- **Lalu lintas**: kendaraan yang keluar di tepi peta menghilang, lalu masuk lagi dari ujung jalan di tepi peta lain.
+  Kendaraan saling jaga jarak & memberi jalan di simpang; pemain/NPC tidak bisa menembus badan kendaraan.
+- **Gerbang Perumahan Bukit Asri**: gapura papan nama, pos satpam, portal yang naik saat ada kendaraan mendekat.
 - **Bangunan** lebih berkedalaman: kusen jendela & pintu menonjol, ambang bawah/atas, luifel beton di atas pintu,
   lis lantai, atap teras genteng sampai depan pilar. Tekstur tanah 16 piksel/petak + bintik seukuran voxel.
 - Tidak ada bangunan, pohon, atau benda yang menumpuk di permukaan jalan: rumah dicek terhadap jarak ke tepi jalan,

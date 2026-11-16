@@ -121,7 +121,7 @@ export function buildTraffic(scene, K, C, M) {
       }
       const s = (i + hash(i, 11)) / n * r.L, dir = hash(i, 13) < 0.5 ? 1 : -1;
       const base = type === 'sepeda' ? 2.6 : (r.kind === 'raya' ? 6.5 : 4.2) * (type === 'motor' ? 1.1 : 1);
-      cars.push({ r, s, dir, type, motor: type !== 'car', rd, riders, grp: rd.group, len: type === 'car' ? (kind === 'hatch' ? 1.5 : 1.8) : 1.0, vmax: base * (0.85 + 0.3 * hash(i, 17)), v: 0, x: 0, z: 0, h: 0, init: false });
+      cars.push({ id: cars.length, r, s, dir, type, motor: type !== 'car', rd, riders, grp: rd.group, len: type === 'car' ? (kind === 'hatch' ? 1.5 : 1.8) : 1.0, wid: type === 'car' ? 1.0 : 0.45, vmax: base * (0.85 + 0.3 * hash(i, 17)), v: 0, x: 0, z: 0, h: 0, init: false });
     }
   }
   const lane = v => v.motor ? Math.min(v.r.w / 2 - (v.type === 'sepeda' ? 0.35 : 0.45), v.r.w / 4 + 0.45) : v.r.w / 4 + 0.05;
@@ -140,11 +140,30 @@ export function buildTraffic(scene, K, C, M) {
     v.dir = o.s < 3 ? 1 : o.s > o.r.L - 3 ? -1 : (Math.random() < 0.5 ? 1 : -1);
     v.s += v.dir * 2.5;
   }
+  // ujung jalan di tepi peta: kendaraan yang keluar menghilang, lalu muncul lagi (acak) dari ujung tepi peta lain
+  const [MW, MH] = K.size, EDGE = 3;
+  const onEdge = p => p.x < EDGE || p.z < EDGE || p.x > MW - EDGE || p.z > MH - EDGE;
+  const gates = [];
+  for (const r of roads) if (!r.closed) { if (onEdge(r.P[0])) gates.push({ r, s: 0, dir: 1 }); if (onEdge(r.P.at(-1))) gates.push({ r, s: r.L, dir: -1 }); }
+  const isGate = (r, s) => gates.some(g => g.r === r && Math.abs(g.s - s) < 1);
+  function respawn(v) {
+    v.grp.visible = false; for (const ch of v.riders) ch.group.visible = false;
+    v.wait = 1 + Math.random() * 5; v.v = 0;
+  }
+  function enter(v) {
+    const opts = gates.filter(g => !(g.r.kind === 'raya') === !(v.r.kind === 'raya') || Math.random() < 0.3);
+    const g = (opts.length ? opts : gates)[Math.floor(Math.random() * (opts.length || gates.length))];
+    v.r = g.r; v.dir = g.dir; v.s = g.dir > 0 ? 0.5 : g.r.L - 0.5;
+    const t = target(v);
+    if (cars.some(u => u !== v && !u.wait && (u.x - t.x) ** 2 + (u.z - t.z) ** 2 < 9)) { v.wait = 1; return; }   // gerbang masih terisi: tunggu
+    v.wait = 0; v.init = false; v.v = v.vmax * 0.6;
+  }
   let T = 0;
   function update(dt, player) {
     T += dt;
     for (const g of ['A', 'B']) { const st = light(g, T); for (const k of ['r', 'y', 'g']) sigMat[g + k].color.copy(st === k ? ON[k] : OFF[k]); }
     for (const v of cars) {
+      if (v.wait) { v.wait = Math.max(0, v.wait - dt) || 1e-6; if (v.wait <= 1e-6) enter(v); if (v.wait) continue; }
       const tg = target(v);
       let want = v.vmax;
       // lampu merah / kuning di depan
@@ -154,20 +173,24 @@ export function buildTraffic(scene, K, C, M) {
         if (ds > -0.2 && ds < 9 && light(st.grp, T) !== 'g') want = Math.min(want, Math.max(0, (ds - 0.3) * 1.3));
       }
       // jaga jarak dengan kendaraan di depan & pemain
+      // kendaraan lain: ikuti yang di depan selajur; di simpang/silang, yang datang dari samping diberi jalan (prioritas id supaya tidak saling tunggu)
+      const fx0 = Math.sin(v.h), fz0 = Math.cos(v.h);
       for (const u of cars) {
-        if (u === v) continue;
+        if (u === v || u.wait) continue;
         const rx = u.x - v.x, rz = u.z - v.z; if (rx * rx + rz * rz > 64) continue;
-        const ahead = rx * tg.fx + rz * tg.fz, lat = Math.abs(rx * tg.fz - rz * tg.fx);
-        if (ahead > 0 && lat < 1.0) want = Math.min(want, Math.max(0, (ahead - (v.len + u.len) / 2 - 0.8) * 1.6));
+        const ahead = rx * fx0 + rz * fz0, lat = Math.abs(rx * fz0 - rz * fx0), same = Math.sin(u.h) * fx0 + Math.cos(u.h) * fz0;
+        const gap = ahead - (v.len + u.len) / 2;
+        if (ahead > 0 && lat < (v.wid + u.wid) / 2 + 0.25) { if (same > 0.3 || v.id > u.id || gap < 0.6) want = Math.min(want, Math.max(0, (gap - 0.7) * 1.6)); }
+        else if (ahead > 0 && same < 0.5 && same > -0.7 && gap < 2.2 && lat < 2.4 && v.id > u.id) want = Math.min(want, Math.max(0, (gap - 0.9) * 1.2));
       }
       if (player) {
-        const rx = player.x - v.x, rz = player.z - v.z, ahead = rx * tg.fx + rz * tg.fz, lat = Math.abs(rx * tg.fz - rz * tg.fx);
-        if (ahead > 0 && ahead < 7 && lat < 1.3) want = Math.min(want, Math.max(0, (ahead - v.len / 2 - 1.2) * 1.5));
+        const rx = player.x - v.x, rz = player.z - v.z, ahead = rx * fx0 + rz * fz0, lat = Math.abs(rx * fz0 - rz * fx0);
+        if (ahead > 0 && ahead < 7 && lat < v.wid / 2 + 0.9) want = Math.min(want, Math.max(0, (ahead - v.len / 2 - 0.9) * 1.5));
       }
       v.v += (want - v.v) * Math.min(1, dt * (want < v.v ? 6 : 1.5));
       v.s += v.v * v.dir * dt;
       if (v.r.closed) v.s = (v.s + v.r.L) % v.r.L;
-      else if (v.s > v.r.L || v.s < 0) { v.s = Math.max(0, Math.min(v.r.L, v.s)); endOfRoad(v); }
+      else if (v.s > v.r.L || v.s < 0) { v.s = Math.max(0, Math.min(v.r.L, v.s)); if (isGate(v.r, v.s)) { respawn(v); continue; } endOfRoad(v); }
       const t2 = target(v);
       if (!v.init) { v.x = t2.x; v.z = t2.z; v.h = t2.h; v.init = true; }
       const k = 1 - Math.exp(-dt * 5);
@@ -184,5 +207,17 @@ export function buildTraffic(scene, K, C, M) {
       if (near && v.type === 'sepeda') v.rd.syncCrank(v.riders[0]);
     }
   }
-  return { update, junctions: J, signals, cars };
+  // dorong lingkaran (pemain / NPC) keluar dari badan kendaraan (kotak berorientasi)
+  function push(p, r) {
+    for (const v of cars) {
+      if (v.wait || !v.init) continue;
+      const dx = p.x - v.x, dz = p.z - v.z; if (dx * dx + dz * dz > 9) continue;
+      const fx = Math.sin(v.h), fz = Math.cos(v.h), a = dx * fx + dz * fz, b = dx * fz - dz * fx, hl = v.len / 2 + r, hw = v.wid / 2 + r;
+      if (Math.abs(a) >= hl || Math.abs(b) >= hw) continue;
+      if (hl - Math.abs(a) < hw - Math.abs(b)) { const d = (hl - Math.abs(a)) * Math.sign(a || 1); p.x += fx * d; p.z += fz * d; }
+      else { const d = (hw - Math.abs(b)) * Math.sign(b || 1); p.x += fz * d; p.z -= fx * d; }
+    }
+    return p;
+  }
+  return { update, push, junctions: J, signals, cars };
 }

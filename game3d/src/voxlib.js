@@ -768,6 +768,17 @@ const ANIMS = {
     [0, {}], [0.3, { lean: -0.4, thL: 0.4, knL: 0.6, arL: 1.2, arR: 1.0, elL: 0.4, elR: 0.4 }],
     [0.6, { lean: -0.8, thL: 1.4, thR: 1.4, knL: 0.4, knR: 0.4, arL: -0.6, arR: -0.6, px: 2 }],
     [1, { lean: -1.45, hp: 0.15, thL: 1.4, thR: 1.3, knL: 0.15, knR: 0.35, arL: -1.6, arR: -1.3, elL: 0.2, elR: 0.2, spL: 0.5, spR: 0.6, px: 4 }]]) },
+  // --- berantem: kuda-kuda, kena pukul, bangun, panik, meringkuk ---
+  guard:    { name: 'Kuda-kuda', kind: 'full', n: 6, fps: 7, loop: true, pose: t => { const s = sinT(t); return Object.assign({}, GUARD, { knL: 0.3 + 0.08 * s, knR: 0.3 + 0.08 * s, thL: 0.32 + 0.04 * s, thR: -0.28 + 0.04 * s, hp: -0.05 + 0.025 * s, tw: 0.25, hy: 0.04 * s }); } },
+  hurt:     { name: 'Kena pukul', kind: 'full', n: 6, fps: 13, pose: keyed([
+    [0, GUARD], [0.25, { lean: -0.4, hp: 0.06, tw: 0.35, arL: 0.4, elL: 1.2, arR: 0.3, elR: 0.9, spL: 0.5, spR: 0.5, thL: -0.25, knL: 0.35, hy: 0.4 }], [0.6, { lean: -0.2, tw: 0.15, hy: 0.2 }], [1, GUARD]]) },
+  getUp:    { name: 'Bangun', kind: 'full', n: 8, fps: 8, pose: keyed([
+    [0, { lean: -1.45, hp: 0.15, thL: 1.4, thR: 1.3, knL: 0.15, knR: 0.35, arL: -1.6, arR: -1.3, elL: 0.2, elR: 0.2, spL: 0.5, spR: 0.6, px: 4 }],
+    [0.45, { lean: 0.5, hp: -0.3, thL: 1.9, thR: 1.6, knL: 2.4, knR: 2.0, arL: 0.9, arR: 0.6, elL: 0.6, elR: 0.6, spL: 0.3, spR: 0.3, px: 0 }], [1, {}]]) },
+  panic:    { name: 'Lari panik', kind: 'loco', n: 8, fps: 13, stride: 58, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.22, hp: -0.18, tw: 0.15 * s, sy: 0.2 * c, thL: 0.15 + 0.85 * s, thR: 0.15 - 0.85 * s, knL: 0.3 + 1.5 * Math.max(0, c), knR: 0.3 + 1.5 * Math.max(0, -c),
+             arL: 2.5 + 0.35 * s, arR: 2.5 - 0.35 * s, elL: 0.5 + 0.3 * c, elR: 0.5 - 0.3 * c, spL: 0.45, spR: 0.45, jump: 0.8 * Math.abs(s) ** 1.5 }; } },
+  cower:    { name: 'Meringkuk takut', kind: 'full', n: 4, fps: 6, loop: true, pose: t => ({ lean: 0.45, hp: -0.25, thL: 1.2, thR: 1.1, knL: 1.9, knR: 1.8, arL: 2.3 + 0.08 * sinT(t), arR: 2.3 - 0.08 * sinT(t), elL: 2.1, elR: 2.1, spL: 0.7, spR: 0.7, hy: 0.15 * sinT(t) }) },
 };
 ANIMS.getup = { name: 'Bangun', kind: 'full', move: 0, n: 8, fps: 9, pose: t => ANIMS.fall.pose(1 - t) };
 const COMBOS = { punch: ['jab', 'straight', 'hook', 'uppercut'], kick: ['kickFront', 'kickHigh'], slash: ['slashH', 'slashV', 'thrust', 'spin'] };
