@@ -8,8 +8,9 @@ import { L } from './buildings.js';
 import { CATALOG } from './shop.js';
 import { WARUNGS } from './signs.js';
 import INTERIORS from './data/interiors.json';
+import { makeRide } from './rides.js';
 
-const OX = 700, OZ = 30, GAP = 40;
+const OX = 700, OZ = 30, GAP = 40, OZB = 130;   // OZB: baris kedua untuk ruangan besar (GOR, STM)
 const C = c => col(c);
 const GOODS = ['#e85a5a', '#f2c230', '#3a7ac0', '#6ab85a', '#f2f2f2', '#e8823a', '#c25a8a', '#2a2a2e', '#8a5a3a', '#5ac0c0'];
 
@@ -34,7 +35,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
 
   /* ---------------- kerangka ruangan */
   function room(id, name, w, d, o = {}) {
-    const ox = o.ox ?? OX + slot * GAP, oz = OZ; slot++;
+    const ox = o.ox ?? OX + slot * GAP, oz = o.oz ?? OZ; slot++;
     const H = o.h || 2.5, wc = C(o.wall || '#e8e0cc'), doorX = o.doorX || 0, dw = o.doorW || 1.2;
     const P = (lx, lz, a = 0) => ({ x: ox + lx, z: oz + lz, a });
     const st = new Merger(), W = { back: new Merger(), front: new Merger(), left: new Merger(), right: new Merger() };
@@ -127,7 +128,40 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     npcs.push(n); return n;
   }
   const restOK = { t: -99 };
-  const sleep = () => acts.doAct('lie', 3.2, () => { player.fx.hp = fight.maxHP(); toast('Tidur sebentar... Nyawa pulih penuh. (Tersimpan)'); fight.gain('nyali', 0.5); });
+  const sleep = () => acts.doAct('lie', 3.2, () => { player.fx.hp = fight.maxHP(); const f = player.flags || (player.flags = {}); f.gymN = 0; f.gymPaid = false; toast('Tidur sebentar... Nyawa pulih penuh. (Tersimpan)'); fight.gain('nyali', 0.5); });   // tidur = ganti hari (jatah sesi gym)
+
+  // ruangan besar (GOR, bengkel STM) pakai koordinat denah guide: (x, y) petak dari pojok kiri atas, y ke bawah = ke arah pintu
+  function plan(R) {
+    const W = R.w, D = R.d, m = R.st;
+    const at = (x, y, a = 0) => R.P(x - W / 2, y - D / 2, a);
+    const solid = (x, y, w, h) => collision.box(R.ox + x + w / 2 - W / 2, R.oz + y + h / 2 - D / 2, w / 2, h / 2);
+    const box = (x, y, w, h, hy, c, o = {}) => { m.box(R.X, x + w / 2 - W / 2, o.y || 0, y + h / 2 - D / 2, w, hy, h, typeof c === 'string' ? C(c) : c, o.top ? { top: C(o.top) } : undefined); if (o.solid) solid(x, y, w, h); };
+    // sekat setinggi dada (isi ruangan tetap kelihatan) dengan celah pintu [a, b] di sepanjang sekat
+    const part = (x0, y0, x1, y1, gaps = [], h = 1.3, c = '#e8e2d0') => {
+      const hor = y0 === y1, a1 = hor ? x1 : y1; let s0 = hor ? x0 : y0;
+      for (const g of [...gaps].sort((p, q) => p[0] - q[0]).concat([[a1, a1]])) {
+        const e = Math.min(a1, g[0]);
+        if (e - s0 > 0.1) { if (hor) { box(s0, y0 - 0.07, e - s0, 0.14, h, c, { solid: true }); box(s0, y0 - 0.08, e - s0, 0.16, 0.05, '#8a6a4a', { y: h }); } else { box(x0 - 0.07, s0, 0.14, e - s0, h, c, { solid: true }); box(x0 - 0.08, s0, 0.16, e - s0, 0.05, '#8a6a4a', { y: h }); } }
+        s0 = Math.max(s0, g[1]);
+      }
+    };
+    const label = (x, y, text, w = 2.6) => { const lab = textPlane([text], w, 0.42, '#2a2014', '#fff6d8', 46); lab.rotation.x = -Math.PI / 2; lab.position.set(R.ox + x - W / 2, 0.016, R.oz + y - D / 2); scene.add(lab); };
+    const spot = (x, y, r, l, fn) => R.spot(x - W / 2, y - D / 2, r, l, fn);
+    const npc = (sid, name, x, y, lines, roam = 0.6) => addNPC(R, sid, name, x - W / 2, y - D / 2, lines, roam);
+    const plane = (lines, x, y, h, w, hh, rotY, bg, fg, px) => { const t = textPlane(lines, w, hh, bg, fg, px); t.position.set(R.ox + x - W / 2, h, R.oz + y - D / 2); t.rotation.y = rotY; scene.add(t); return t; };
+    const world = (x, y) => [R.ox + x - W / 2, R.oz + y - D / 2];
+    return { at, box, solid, part, label, spot, npc, plane, world, m };
+  }
+  // sesi latihan gym GOR (guide 89): tiket harian Rp15.000 / member bulanan, maks 2 sesi sehari (lewat dari itu cedera ringan),
+  // tiap sesi stat +1 level (setengahnya setelah level 5)
+  function gymSession(name, anim, stats) {
+    return () => {
+      const f = player.flags || (player.flags = {}), st = player.stats || {};
+      if ((f.gymN || 0) >= 2) { acts.doAct(anim, 1.6, () => { player.fx.hp = Math.max(1, Math.round(player.fx.hp * 0.5)); toast('Otot ketarik! Kebanyakan latihan, cedera ringan. Tidur dulu biar pulih.'); }); return; }
+      if (!f.gymMember && !f.gymPaid) { if (player.uang < 15000) { toast('Tiket harian gym Rp15.000. Uangnya kurang...'); return; } player.uang -= 15000; shop.showMoney(); f.gymPaid = true; toast('Bayar tiket harian gym Rp15.000'); }
+      acts.doAct(anim, 4, () => { f.gymN = (f.gymN || 0) + 1; for (const k of stats) { const lv = st[k] || 1; fight.gain(k, (6 + lv * 6) * (lv < 5 ? 1 : 0.5)); } toast(`${name} selesai (sesi ${f.gymN}/2 hari ini)`); });
+    };
+  }
 
   /* ================= 1. Rumah Om Darto: ruang tamu, kamar Raka, dapur + stok kopi warkop */
   { const R = room('rumah', 'Rumah Om Darto', 9, 7, { wall: '#d8e8c8', base: '#8a6a4a', doorX: -2.2 });
@@ -261,25 +295,98 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     finish(R); R.doorLabel = 'Masuk markas Lampu Kota';
   }
 
-  /* ================= 5. GOR: lapangan bulu tangkis/futsal, tribun, papan skor */
-  { const R = room('gor', 'GOR Kota (dalam)', 16, 11, { wall: '#d8dce0', base: '#2f5a8a', doorX: 0, h: 3.6, outside: '#f6f6e8' });
-    planks(R, '#c8904a', 0.35); const m = R.st, P = R.P, wl = C('#f4f4f0');
-    m.box(R.X, 0, 0, 0, 12.4, 0.004, 7.4, C('#3a7a5a')); m.box(R.X, 0, 0.002, 0, 12, 0.004, 7, C('#2f6a9a'));
-    for (const z of [-3.5, 3.5]) m.box(R.X, 0, 0.006, z, 12, 0.004, 0.06, wl); for (const x of [-6, 0, 6]) m.box(R.X, x, 0.006, 0, 0.06, 0.004, 7, wl);
-    for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; m.box({ x: R.ox + Math.cos(a) * 1.2, z: R.oz + Math.sin(a) * 1.2, a: a + Math.PI / 2 }, 0, 0.006, 0, 0.34, 0.004, 0.06, wl); }
-    for (const sd of [-1, 1]) { const gx = sd * 6.1; m.box(R.X, gx, 0, -0.9, 0.08, 1.0, 0.08, wl); m.box(R.X, gx, 0, 0.9, 0.08, 1.0, 0.08, wl); m.box(R.X, gx, 0.95, 0, 0.08, 0.08, 1.88, wl); m.box(R.X, gx + sd * 0.5, 0, 0, 0.02, 0.9, 1.8, C('#dcdcd4')); R.solid(P(gx + sd * 0.3, 0), 0.6, 1.9); }
-    // net bulu tangkis di tengah (dilipat ke samping)
-    m.box(R.X, -6.6, 0, 4.4, 0.06, 1.55, 0.06, C('#3a3a40')); m.box(R.X, -3.6, 0, 4.4, 0.06, 1.55, 0.06, C('#3a3a40')); m.box(R.X, -5.1, 0.9, 4.4, 3, 0.6, 0.01, C('#2a2a2a'));
-    // tribun bertingkat di sisi kiri & kanan
-    for (let i = 0; i < 3; i++) m.box(R.X, 0, 0, -4.1 - i * 0.4, 11, 0.38 * (i + 1), 0.4, C(i % 2 ? '#e8302a' : '#f2c230'));
-    R.solid(P(0, -4.5), 11, 1.2);
-    R.sign('back', ['GOR KOTA WIRABUMI', 'SEHAT • SPORTIF • GUYUB'], 0, 2.4, 4.4, 0.7, '#2f5a8a', '#ffffff', 52);
-    R.sign('back', ['HOME 3 - 2 TAMU'], 5, 2.4, 2.2, 0.6, '#1a1a1a', '#ff6a3a', 44);
-    R.sign('left', ['JADWAL', 'Senin badminton • Rabu futsal', 'Sabtu senam pagi'], 0, 2.0, 2.6, 0.9, '#f4f4f0', '#2a2014', 32);
-    for (let i = 0; i < 4; i++) crate(m, P(-7.4, -4.6 + i * 0.6), 0.5, '#4a6a8a');
-    R.spot(0, 0, 1.6, 'Latihan lari bolak-balik (Kelincahan)', () => acts.doAct('run', 4, () => { fight.gain('kelincahan', 3); toast('Ngos-ngosan... Kelincahan naik!'); }));
-    addNPC(R, 'siswaA', 'Andi', -3, -2, ['Futsal yuk, kurang satu orang!', 'Lapangan disewa sampai jam lima.'], 2.5);
-    addNPC(R, 'pakRT', 'Pak Komar (penjaga GOR)', 6.8, 4.2, ['Jangan lupa lepas sepatu yang kotor.', 'Bola dikembalikan ke keranjang, ya.'], 0.6);
+  /* ================= 5. GOR Kota Wirabumi (guide 89, gor/interior_gor.png): arena 32 x 16 + tribun utara/selatan, panggung lipat,
+     papan skor; gym & ruang beladiri; lobi (loket, lemari piala, papan jadwal event), kantin, ganti & bilas, medis, panitia,
+     gudang alat, musala. Lebih luas dari tampak luarnya (segmen 81). */
+  { const R = room('gor', 'GOR Kota Wirabumi', 66, 44, { ox: OX + 40, oz: OZB, wall: '#d8dce0', base: '#2f5a8a', doorX: 22 - 33, doorW: 3, h: 4.2, outside: '#f6f6e8' });
+    planks(R, '#c8904a', 0.35);
+    const { at, box, solid, part, label, spot, npc, plane, world, m } = plan(R), WL = '#f4f4f0';
+    // lapangan multifungsi: basket, futsal, voli, bulu tangkis
+    const x0 = 10, y0 = 7.5, cw = 32, chh = 16, cz = y0 + chh / 2;
+    box(x0 - 0.6, y0 - 0.6, cw + 1.2, chh + 1.2, 0.02, '#2f6a9a', { y: -0.012 }); box(x0, y0, cw, chh, 0.022, '#ce9660', { y: -0.01 });
+    const line = (x, y, w, h, c = WL) => box(x, y, w, h, 0.004, c, { y: 0.013 });
+    line(x0, y0, cw, 0.08); line(x0, y0 + chh - 0.08, cw, 0.08); line(x0, y0, 0.08, chh); line(x0 + cw - 0.08, y0, 0.08, chh); line(x0 + cw / 2 - 0.04, y0, 0.08, chh);
+    for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; m.box(at(x0 + cw / 2 + Math.cos(a) * 2.2, cz + Math.sin(a) * 2.2, a + Math.PI / 2), 0, 0.013, 0, 0.5, 0.004, 0.08, C(WL)); }
+    for (const kx of [x0, x0 + cw - 6]) { line(kx, y0 + 5, 6, 0.08); line(kx, y0 + 11, 6, 0.08); line(kx === x0 ? kx + 6 : kx, y0 + 5, 0.08, 6); }
+    for (const [x, y, w, h] of [[x0 + 2, y0 + 2, cw - 4, 0.06], [x0 + 2, y0 + chh - 2, cw - 4, 0.06], [x0 + 2, y0 + 2, 0.06, chh - 4], [x0 + cw - 2, y0 + 2, 0.06, chh - 4]]) line(x, y, w, h, '#f0c83c');
+    for (const sd of [-1, 1]) {
+      const gx = sd < 0 ? x0 + 0.1 : x0 + cw - 0.9;   // gawang futsal (dalam garis) + ring basket (tiang di luar lapangan)
+      box(gx, cz - 1.5, 0.8, 0.08, 1.0, WL); box(gx, cz + 1.42, 0.8, 0.08, 1.0, WL); box(sd < 0 ? gx : gx + 0.72, cz - 1.5, 0.08, 3, 1.0, '#c8c8c0'); box(gx, cz - 1.5, 0.8, 3, 0.06, WL, { y: 1.0 }); solid(gx, cz - 1.5, 0.8, 3);
+      const px = sd < 0 ? x0 - 1.3 : x0 + cw + 1.1; box(px, cz - 0.1, 0.2, 0.2, 3.0, '#3a3a40', { solid: true }); box(sd < 0 ? px : px - 0.9, cz - 0.06, 1.1, 0.12, 0.12, '#3a3a40', { y: 2.8 });
+      const bx = sd < 0 ? x0 - 0.3 : x0 + cw + 0.24; box(bx, cz - 0.8, 0.06, 1.6, 1.0, '#f4f4f0', { y: 2.3 }); box(bx, cz - 0.3, 0.07, 0.6, 0.45, '#e8302a', { y: 2.4 }); box(sd < 0 ? bx + 0.06 : bx - 0.45, cz - 0.22, 0.45, 0.44, 0.04, '#f26a1a', { y: 2.45 });
+    }
+    // tribun teleskopik 5 baris: utara naik ke dinding belakang, selatan naik ke arah lobi
+    for (const [ty, dir] of [[1, -1], [24.5, 1]]) {
+      for (let r = 0; r < 5; r++) { const yy = dir < 0 ? ty + 5.2 - (r + 1) * 1.04 : ty + r * 1.04, hy = 0.32 * (r + 1); box(8, yy, 36, 1.04, hy, r % 2 ? '#9aa0a8' : '#b8bec6'); for (let i = 0; i < 18; i++) box(8.3 + i * 2, yy + (dir < 0 ? 0.5 : 0.1), 1.5, 0.42, 0.14, pick(['#2f5a8a', '#f2c230', '#c83a3a'], hash(i, r)), { y: hy }); }
+      solid(8, ty, 36, 5.2); label(26, dir < 0 ? 6.5 : 24.2, dir < 0 ? 'Tribun utara' : 'Tribun selatan');
+    }
+    box(1, 9, 6, 14, 0.6, '#b8302a', { top: '#c83a3a', solid: true }); for (let i = 0; i < 4; i++) box(7, 10 + i * 3.4, 0.06, 2.6, 0.5, '#8a2a24'); label(4, 8.5, 'Panggung lipat', 2.4);
+    box(44.6, 12, 0.2, 0.2, 2.8, '#3a3a40', { solid: true }); box(44.6, 18.8, 0.2, 0.2, 2.8, '#3a3a40', { solid: true }); box(44.72, 12.2, 0.4, 6.6, 1.4, '#1a1a1e', { y: 1.45 });
+    plane(['HOME 0 - 0 TAMU', 'LIGA BASKET ANTAR-SMA'], 44.69, 15.5, 2.15, 6.2, 1.2, -Math.PI / 2, '#1a1a1e', '#ff6a3a', 60);
+    R.sign('back', ['GOR KOTA WIRABUMI', 'SEHAT • SPORTIF • GUYUB'], 26 - 33, 3.3, 6, 0.9, '#2f5a8a', '#ffffff', 52);
+    // sekat ruangan
+    part(46, 0, 46, 44, [[13, 16], [28.5, 30.5], [37, 39]]); part(0, 31, 46, 31, [[5, 8], [18, 22], [37, 40]]); part(11, 31, 11, 44); part(32, 31, 32, 44, [[41, 43]]);
+    part(46, 27, 66, 27, [[57, 60]]); part(46, 35, 66, 35); part(53, 27, 53, 44, [[39, 41]]);
+    // lantai tiap ruang
+    box(46.1, 0.05, 19.85, 26.9, 0.02, '#4a4a52', { y: -0.012 }); box(0.05, 31.1, 10.9, 12.85, 0.02, '#dde6ea', { y: -0.012 }); box(11.1, 31.1, 20.8, 12.85, 0.02, '#e6e2d8', { y: -0.012 });
+    box(32.1, 31.1, 13.8, 12.85, 0.02, '#e0d4b8', { y: -0.012 }); box(46.1, 27.1, 6.8, 7.8, 0.02, '#eef2f2', { y: -0.012 }); box(46.1, 35.1, 6.8, 8.85, 0.02, '#c8c8c0', { y: -0.012 });
+    box(53.1, 27.1, 12.85, 7.8, 0.02, '#9a968c', { y: -0.012 }); box(53.1, 35.1, 12.85, 8.85, 0.02, '#3a7a5a', { y: -0.012 });
+    for (const [x, y, t, w] of [[56, 0.6, 'Gym & beladiri', 2.6], [5.5, 32, 'Ganti & bilas', 2.6], [21.5, 39.5, 'Lobi', 1.4], [39, 43.2, 'Kantin GOR', 2.4], [49.5, 27.6, 'R. medis', 2], [49.5, 43.2, 'Panitia & wasit', 2.6], [59.5, 27.6, 'Gudang alat', 2.4], [59.5, 43.2, 'Musala', 1.6]]) label(x, y, t, w);
+    // GYM: kardio, beban bebas, mesin, ring tinju, samsak, matras silat
+    for (let k = 0; k < 4; k++) { const x = 48 + k * 2.2; box(x + 0.2, 3, 1.2, 3, 0.25, '#2a2a30'); box(x + 0.3, 3.3, 1.0, 2.6, 0.02, '#4a4a50', { y: 0.25 }); box(x + 0.2, 3, 0.1, 0.3, 1.2, '#6a6a70'); box(x + 1.3, 3, 0.1, 0.3, 1.2, '#6a6a70'); box(x + 0.2, 3, 1.2, 0.35, 0.3, '#3a3a40', { y: 1.15 }); box(x + 0.45, 3.32, 0.7, 0.04, 0.2, '#5ac8e8', { y: 1.2 }); solid(x + 0.2, 3, 1.2, 3); }
+    for (let k = 0; k < 3; k++) { const x = 48 + k * 2.2; box(x + 0.6, 7.2, 0.3, 1.6, 0.25, '#3a3a40'); box(x + 0.65, 7.45, 0.2, 0.2, 0.75, '#6a6a70'); box(x + 0.5, 7.35, 0.5, 0.4, 0.08, '#1a1a1a', { y: 0.75 }); box(x + 0.65, 8.4, 0.2, 0.2, 1.0, '#6a6a70'); box(x + 0.35, 8.4, 0.8, 0.12, 0.06, '#1a1a1a', { y: 1.0 }); box(x + 0.62, 7.9, 0.26, 0.5, 0.5, '#c83a3a', { y: 0.2 }); solid(x + 0.4, 7.2, 0.8, 1.6); }
+    box(57.5, 3, 7.5, 1.2, 0.75, '#3a3a40', { solid: true }); for (let r = 0; r < 2; r++) for (let i = 0; i < 12; i++) box(57.75 + i * 0.6, 3.2 + r * 0.45, 0.42, 0.22, 0.14, i % 3 ? '#1a1a1e' : '#c83a3a', { y: 0.75 });
+    for (let k = 0; k < 3; k++) { const x = 57.5 + k * 2.6; box(x + 0.3, 5.7, 0.6, 2.6, 0.45, '#c83a3a', { top: '#d84a3a' }); box(x + 0.05, 5.5, 0.1, 0.1, 1.15, '#8a8a90'); box(x + 1.05, 5.5, 0.1, 0.1, 1.15, '#8a8a90'); box(x - 0.35, 5.52, 1.9, 0.06, 0.06, '#c8c8cc', { y: 1.08 }); for (const ex of [-0.3, 1.45]) box(x + ex, 5.42, 0.08, 0.26, 0.42, '#1a1a1e', { y: 0.88 }); solid(x + 0.1, 5.4, 1.0, 3); }
+    { const x = 57.5, y = 9.5; for (const [dx, dy] of [[0.4, 0.4], [2.4, 0.4], [0.4, 2.4], [2.4, 2.4]]) box(x + dx, y + dy, 0.14, 0.14, 2.2, '#3a3a40'); box(x + 0.4, y + 0.4, 2.14, 0.1, 0.1, '#3a3a40', { y: 2.2 }); box(x + 0.4, y + 2.4, 2.14, 0.1, 0.1, '#3a3a40', { y: 2.2 }); box(x - 0.1, y + 1.45, 3.2, 0.06, 0.06, '#c8c8cc', { y: 1.4 }); for (const ex of [-0.05, 2.95]) box(x + ex, y + 1.3, 0.1, 0.36, 0.5, '#1a1a1e', { y: 1.2 }); solid(x + 0.3, y + 0.3, 2.4, 2.4); }
+    { const x = 61.6, y = 9.5; box(x + 0.4, y + 0.3, 0.18, 0.18, 2.3, '#3a3a40'); box(x + 0.4, y + 0.3, 2.4, 0.18, 0.12, '#3a3a40', { y: 2.2 }); box(x + 2.6, y + 0.3, 0.6, 0.5, 1.4, '#5a5a60'); box(x + 0.9, y + 1.0, 1.0, 1.2, 0.48, '#c83a3a'); box(x + 0.6, y + 0.4, 1.6, 0.06, 0.06, '#c8c8cc', { y: 1.9 }); solid(x + 0.3, y + 0.3, 2.9, 2.2); }
+    { const x = 48, y = 10.5; box(x + 0.3, y + 0.6, 3.4, 1.4, 0.3, '#3a3a40'); box(x + 0.5, y + 0.8, 1.2, 1.0, 0.55, '#c83a3a', { y: 0.3 }); box(x + 2.8, y + 0.7, 0.8, 1.2, 0.9, '#5a5a60', { y: 0.3 }); for (const ex of [0, 1]) box(x + 3.0, y + 0.5 + ex * 1.3, 0.4, 0.12, 0.5, '#1a1a1e', { y: 0.6 }); solid(x + 0.3, y + 0.5, 3.4, 1.6); }
+    { const x = 48, y = 14.5, r = 7; box(x, y, r, r, 0.05, '#2a5aa8', { top: '#3a6ac0' }); box(x + 0.3, y + 0.3, r - 0.6, r - 0.6, 0.004, '#4a7ad0', { y: 0.05 });
+      for (const [dx, dy, c] of [[0, 0, '#d8302a'], [r - 0.25, 0, '#2a5aa8'], [0, r - 0.25, '#f4f4f0'], [r - 0.25, r - 0.25, '#f4f4f0']]) box(x + dx, y + dy, 0.25, 0.25, 1.25, c, { solid: true });
+      for (const hy of [0.55, 0.8, 1.05]) { box(x, y + 0.08, r, 0.05, 0.04, '#e8e8e8', { y: hy }); box(x, y + r - 0.13, r, 0.05, 0.04, '#e8e8e8', { y: hy }); box(x + 0.08, y, 0.05, r, 0.04, '#e8e8e8', { y: hy }); box(x + r - 0.13, y, 0.05, r, 0.04, '#e8e8e8', { y: hy }); }
+      label(x + r / 2, y - 0.4, 'Ring tinju', 2); }
+    for (let k = 0; k < 4; k++) { const [wx, wz] = world(56.5 + k * 2.1 + 0.6, 15.4); acts.addBag(wx, wz, 0, 'Samsak GOR'); }
+    box(56.5, 18, 8.5, 5.5, 0.05, '#3a8a4a', { top: '#4a9a5a' }); box(56.8, 18.3, 7.9, 4.9, 0.004, '#5aaa6a', { y: 0.05 }); label(60.75, 17.6, 'Matras silat & beladiri', 3);
+    box(48, 23.6, 7, 0.12, 1.9, '#c8e0f0', { y: 0.1 }); box(48, 23.66, 7, 0.1, 0.1, '#8a8a90', { solid: true }); box(48, 23.66, 7, 0.1, 0.06, '#8a8a90', { y: 2.0 });
+    box(56.5, 24.5, 4, 0.8, 0.95, '#5a6a7a', { top: '#e8e4dc', solid: true }); box(61.5, 25.3, 3.5, 0.6, 1.9, '#8a9aa8', { solid: true }); for (let i = 1; i < 6; i++) box(61.5 + i * 0.58, 25.28, 0.03, 0.02, 1.8, '#5a6a78', { y: 0.05 });
+    R.sign('right', ['GYM & BELADIRI', 'harian Rp15rb • bulanan Rp150rb'], 13.5 - 22, 2.6, 4.4, 0.8, '#1a1a1e', '#f2c230', 46);
+    // ganti & bilas
+    box(0.3, 32.6, 0.6, 6, 1.9, '#8a9aa8', { solid: true }); for (let i = 1; i < 10; i++) box(0.88, 32.6 + i * 0.6, 0.02, 0.03, 1.8, '#5a6a78', { y: 0.05 });
+    for (let i = 0; i < 3; i++) { box(1 + i * 3.2, 40.4, 0.1, 3.4, 1.9, '#9ab8c8', { solid: true }); box(1.2 + i * 3.2, 40.6, 2.8, 3.2, 0.02, '#c8dce6', { y: -0.005 }); box(2.4 + i * 3.2, 43.5, 0.3, 0.1, 0.1, '#c8c8cc', { y: 2.0 }); }
+    box(10.6, 40.4, 0.1, 3.4, 1.9, '#9ab8c8', { solid: true }); box(4, 35.5, 3.2, 0.5, 0.45, '#8a5a34', { solid: true });
+    // lobi: loket, lemari piala, papan jadwal event
+    box(12.5, 33.4, 5, 0.8, 1.0, '#2f5a8a', { top: '#e8e4dc', solid: true }); register(m, at(14, 33.8));
+    box(24, 31.3, 6, 0.6, 1.9, '#6a4428', { solid: true }); box(24.1, 31.88, 5.8, 0.02, 1.6, '#c8e0f0', { y: 0.2 }); for (let i = 0; i < 6; i++) box(24.5 + i * 0.9, 31.5, 0.3, 0.3, 0.35 + (i % 3) * 0.1, '#e8c040', { y: 0.95 }); for (let i = 0; i < 5; i++) box(24.8 + i * 1.1, 31.5, 0.2, 0.2, 0.25, '#c8c8cc', { y: 0.45 });
+    box(22.4, 37.4, 0.12, 0.12, 2.2, '#5a3a22', { solid: true }); box(25.6, 37.4, 0.12, 0.12, 2.2, '#5a3a22', { solid: true }); box(22.4, 37.42, 3.3, 0.08, 1.4, '#6a4428', { y: 0.75 });
+    plane(['JADWAL EVENT GOR', 'Liga basket antar-SMA • Turnamen futsal', 'Turnamen silat (2 minggu sekali)', 'Debat calon ketua OSIS • Pensi gabungan', 'Badminton bebas tiap sore Rp20.000/jam'], 24.05, 37.53, 1.45, 3.1, 1.3, 0, '#f4f0e0', '#2a2014', 30);
+    // kantin, medis, panitia, gudang alat, musala
+    box(33, 31.5, 12, 0.8, 0.95, '#c83a2a', { top: '#e8e4dc', solid: true }); box(33, 31.2, 12, 0.3, 1.8, '#d8c8a8', { y: 0.95 }); for (let i = 0; i < 3; i++) { const tx = 35 + i * 3.6; table(m, at(tx, 38.5), 1.6, 0.9); solid(tx - 0.8, 38.05, 1.6, 0.9); for (const sz of [-1, 1]) chair(m, at(tx, 38.5 + sz * 0.75, sz > 0 ? Math.PI : 0), '#c83a2a'); }
+    bed(m, at(48, 31, 0), '#e8e8f0'); solid(47.45, 30, 1.1, 2.0); box(51, 27.7, 1.6, 0.6, 1.6, '#f4f4f0', { solid: true }); box(51.4, 28.28, 0.6, 0.02, 0.6, '#d8302a', { y: 1.0 });
+    table(m, at(49.5, 39), 2.6, 1.2); solid(48.2, 38.4, 2.6, 1.2); for (const dx of [-0.8, 0, 0.8]) chair(m, at(49.5 + dx, 40, Math.PI));
+    for (let i = 0; i < 6; i++) crate(m, at(54 + (i % 3) * 0.7, 28.2 + Math.floor(i / 3) * 0.7), 0.6, '#4a6a8a'); solid(53.6, 27.8, 2.2, 1.5);
+    box(58, 28, 1.4, 1.0, 0.6, '#8a8a90', { solid: true }); for (let i = 0; i < 6; i++) box(58.1 + (i % 3) * 0.42, 28.1 + Math.floor(i / 3) * 0.42, 0.36, 0.36, 0.36, '#f26a1a', { y: 0.6 });
+    for (let i = 0; i < 3; i++) box(61 + i * 1.3, 28.2, 0.9, 2.6, 0.5, '#e8e8e8', { solid: true }); box(60.5, 32, 5, 2.6, 0.12, '#3a8a4a', { solid: false });
+    for (let r = 0; r < 3; r++) box(55, 36.5 + r * 2.2, 10, 1.6, 0.02, r % 2 ? '#a83a3a' : '#c84a4a', { y: 0.005 }); box(54, 40.6, 0.6, 1.6, 0.5, '#7a5030', { solid: true });
+    // titik interaksi
+    spot(26, cz, 1.6, 'Latihan lari bolak-balik (Kelincahan)', () => acts.doAct('run', 4, () => { fight.gain('kelincahan', 3); toast('Ngos-ngosan... Kelincahan naik!'); }));
+    spot(18, cz - 3, 1.4, 'Main badminton (sewa lapangan Rp20.000)', () => { if (player.uang < 20000) { toast('Sewa lapangan Rp20.000 sejam. Uangnya kurang.'); return; } player.uang -= 20000; shop.showMoney(); acts.doAct('raiseHand', 4, () => { fight.gain('kelincahan', 4); toast('Smes! Sejam main badminton. Kelincahan naik.'); }); });
+    spot(51, 6.6, 1.5, 'Lari di treadmill (kardio: Kelincahan)', gymSession('Kardio treadmill', 'run', ['kelincahan']));
+    spot(52, 9.75, 1.3, 'Sepeda statis (kardio: Kelincahan)', gymSession('Sepeda statis', 'run', ['kelincahan']));
+    spot(60.5, 9.0, 1.2, 'Dumbel & bench press (Kekuatan)', gymSession('Beban bebas', 'carry', ['kekuatan']));
+    spot(55, 13.4, 1.3, 'Leg press & lat pulldown (Kekuatan)', gymSession('Latihan mesin', 'squat', ['kekuatan']));
+    spot(51.5, 18, 1.6, 'Sparring di ring tinju (Kekuatan + Nyali)', gymSession('Sparring', 'straight', ['kekuatan', 'nyali']));
+    spot(60.75, 20.75, 1.8, 'Latihan silat di matras (Kelincahan)', gymSession('Latihan silat', 'kickHigh', ['kelincahan']));
+    spot(58.5, 24, 1.2, 'Daftar member gym bulanan (Rp150.000)', () => { const f = player.flags || (player.flags = {}); if (f.gymMember) { toast('Kamu udah member. Latihan maksimal 2 sesi sehari, ya.'); return; } if (player.uang < 150000) { toast('Member bulanan Rp150.000. Uangnya kurang.'); return; } player.uang -= 150000; shop.showMoney(); f.gymMember = true; toast('Resmi jadi member gym GOR! Gak perlu bayar harian lagi.'); });
+    spot(24, 38.6, 1.3, 'Lihat papan jadwal event', () => toast('Minggu ini: badminton bebas tiap sore (Rp20.000/jam). Liga basket, futsal, silat & pensi menyusul.'));
+    spot(27, 32.4, 1.2, 'Lemari piala', () => toast('Piala liga basket antar-SMA: SMA 3 juara 2019 & 2022. Futsal: STM Karya Bangsa tiga tahun beruntun.'));
+    spot(15, 34.9, 1.2, 'Loket tiket event', () => toast('Petugas: "Belum ada event minggu ini, Dik. Gym & badminton buka tiap hari."'));
+    spot(39, 32.9, 1.3, 'Jajan di Kantin GOR', () => shop.open({ title: 'Kantin GOR', sub: 'Habis olahraga, isi tenaga', items: CATALOG.warung, thanks: 'Semangat latihannya!' }));
+    spot(49.5, 32.4, 1.1, 'Rebahan di ruang medis (nyawa +50%)', () => acts.doAct('lie', 3, () => { player.fx.hp = Math.min(fight.maxHP(), player.fx.hp + fight.maxHP() * 0.5); toast('Dikompres es & dikasih plester. Mendingan.'); }));
+    spot(59.5, 40, 1.4, 'Salat sebentar (hati tenang, Nyali +)', () => acts.doAct('bow', 3, () => { fight.gain('nyali', 1); toast('Hati jadi tenang.'); }));
+    npc('pakRT', 'Coach Herman', 57.5, 23.4, ['Latihan itu konsisten, bukan sekali gas.', 'Maksimal dua sesi sehari. Otot juga butuh tidur.', 'Kardio buat napas, beban buat tenaga, silat buat gesit.'], 1.2);
+    npc('kakek', 'Pak Komar (penjaga GOR)', 15, 35.6, ['Jangan lupa lepas sepatu yang kotor.', 'Bola dikembalikan ke keranjang, ya.'], 0.6);
+    npc('ibuHijab', 'Bu Kantin GOR', 38, 32.6, ['Es teh, es jeruk, nasi bungkus!', 'Habis main basket pasti haus.'], 0.4);
+    npc('siswaA', 'Andi', 22, 12, ['Futsal yuk, kurang satu orang!', 'Lapangan disewa sampai jam lima.'], 2.5);
+    npc('siswiA', 'Rina', 30, 19, ['Badminton yuk, raketnya bawa dua.', 'Liga basket bentar lagi, SMA 3 harus juara!'], 2.0);
     finish(R); R.doorLabel = 'Masuk GOR';
   }
 
@@ -366,6 +473,77 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     R.spot(0.6, 0.4, 1.3, 'Upgrade sepeda / motor (Mas Fajar)', () => shop.open({ title: 'Bengkel Mas Fajar', sub: 'Upgrade kendaraan', items: CATALOG.bengkel, thanks: 'Mantap, makin ngebut!' }));
     addNPC(R, 'fajar', 'Mas Fajar', 0.8, -0.6, ['Motor Om Darto udah waktunya ganti oli.', 'Kalau mau ngebut, rem dulu yang bener.', 'Malam aku sekolah paket C, bengkel tutup jam 6.'], 0.8);
     finish(R); R.doorLabel = 'Masuk Bengkel Mas Fajar';
+  }
+
+  /* ================= 11. STM Karya Bangsa (guide 88, stm/interior_bengkel_otomotif.png): Bengkel Otomotif TKR & TSM (4 bay mobil +
+     lift, 6 stand motor, ruang dyno, gudang oli & part = koperasi, kelas teori, R. guru produktif, toilet) + gudang lama markas
+     Serigala Besi. Masuk tanpa diajak = disemprot Pak Bonar. */
+  const stmEnter = () => { const f = player.flags || {}; if (!f.stmInvite) toast(Math.random() < 0.3 ? 'Siswa STM: "Anak SMA 3? Ngapain lo ke sini?"' : 'Pak Bonar: "Anak SMA 3? Jangan bikin ribut di sini, ya!"'); };
+  { const R = room('stm_bengkel', 'STM Karya Bangsa · Bengkel Otomotif', 40, 24, { ox: OX + 140, oz: OZB, wall: '#c8c8c4', base: '#7a2a2a', doorX: 17 - 20, doorW: 3, h: 3.4, outside: '#e8e4d8' });
+    flat(R, '#8a8a86'); for (let i = 0; i < 16; i++) R.st.box(R.X, -18 + hash(i, 5) * 36, -0.01, -9 + hash(i, 9) * 20, 0.6 + hash(i, 1) * 1.4, 0.02, 0.4 + hash(i, 3) * 0.9, C(hash(i, 7) < 0.5 ? '#4a4a46' : '#5a5650'));   // noda oli
+    const { at, box, solid, part, label, spot, npc, plane, world, m } = plan(R);
+    for (const k of [0, 1, 3]) { const lx = 1.5 + k * 6.5 + 2.5 - 20; R.W.front.box(R.X, lx, 0, 12 - 0.03, 5, 2.7, 0.04, C('#9a3a30')); for (let r = 0; r < 9; r++) R.W.front.box(R.X, lx, 0.15 + r * 0.3, 12 - 0.06, 5, 0.04, 0.02, C('#7a2a24')); }   // pintu rolling merah
+    // 4 bay mobil + lift
+    for (let k = 0; k < 4; k++) {
+      const x = 1 + k * 6.5; box(x, 14, 6, 9.6, 0.02, '#6a6a68', { y: -0.012 }); box(x + 0.1, 14.1, 5.8, 0.08, 0.004, '#f2c230', { y: 0.01 }); part(x, 14, x, 22.6, [], 0.9, '#b8b8b4'); if (k === 3) part(x + 6, 14, x + 6, 22.6, [], 0.9, '#b8b8b4');
+      for (const [dx, dy] of [[1.2, 15.4], [4.6, 15.4], [1.2, 20.8], [4.6, 20.8]]) box(x + dx, dy, 0.24, 0.24, 2.0, '#2a5aa8', { solid: true });
+      const lift = k === 1 ? 0 : k === 3 ? -1 : 1.0;
+      if (lift >= 0) { box(x + 1.4, 15.6, 3.2, 0.12, 0.1, '#2a5aa8', { y: lift + 0.1 }); box(x + 1.4, 20.7, 3.2, 0.12, 0.1, '#2a5aa8', { y: lift + 0.1 });
+        const c = pick(['#e8e8e8', '#c83a3a', '#2a5aa0', '#3a3a40'], hash(k, 4)), y0 = lift + 0.2;
+        box(x + 2.25, 15.9, 1.5, 4.6, 0.55, c, { y: y0 + 0.2 }); box(x + 2.35, 17.1, 1.3, 2.2, 0.5, c, { y: y0 + 0.75 }); box(x + 2.33, 17.25, 1.34, 1.9, 0.3, '#3a4a5a', { y: y0 + 0.86 }); box(x + 2.45, 17.08, 1.1, 2.24, 0.3, '#3a4a5a', { y: y0 + 0.86 });
+        for (const [wx, wy] of [[2.1, 16.4], [3.65, 16.4], [2.1, 19.6], [3.65, 19.6]]) box(x + wx, wy, 0.25, 0.6, 0.55, '#1a1a1a', { y: y0 }); }
+      solid(x + 1.2, 15.4, 3.6, 5.6);
+      label(x + 3, 23.1, 'Bay ' + (k + 1), 1.2);
+    }
+    // 6 stand motor praktik + meja kerja
+    const KND = ['bebek', 'matic', 'sport', 'trail', 'bebek', 'vespa'], CLR = ['#c83a3a', '#2a2a2e', '#2a6ac0', '#e8e8e8', '#3a9a5a', '#e07a2a'];
+    for (let k = 0; k < 6; k++) {
+      const x = 1 + k * 4.2; box(x, 9, 2.4, 1.2, 0.12, '#3a3a40', { solid: true });
+      const rd = makeRide('motor', KND[k], CLR[k]), [wx, wz] = world(x + 1.2, 9.6); rd.group.position.set(wx, 0.12, wz); rd.group.rotation.y = Math.PI / 2; scene.add(rd.group);
+      box(x, 7.4, 2.4, 0.8, 0.9, '#5a5a5e', { top: '#8a8a8a', solid: true }); box(x + 0.2, 7.55, 0.4, 0.3, 0.25, '#d8202a', { y: 0.9 }); box(x + 1.4, 7.6, 0.7, 0.2, 0.06, '#8a8a8a', { y: 0.9 });
+    }
+    // ruang belakang: kelas teori, R. guru produktif, toilet | ruang tune-up & dyno, gudang oli & part
+    part(0, 6.5, 27.5, 6.5, [[6, 7.6], [16.6, 18.2], [23.8, 25.2]]); part(13.5, 0, 13.5, 6.5); part(21.5, 0, 21.5, 6.5);
+    part(27.5, 0, 27.5, 14, [[7, 8.8], [11, 12.8]]); part(27.5, 9, 40, 9); part(27.5, 14, 40, 14, [[32.5, 34.5]]);
+    for (let k = 0; k < 3; k++) { const tx = 2.4 + k * 3.6 + 1.3; table(m, at(tx, 4.0), 2.4, 0.8); solid(tx - 1.2, 3.6, 2.4, 0.8); for (const dx of [-0.6, 0.6]) chair(m, at(tx + dx, 4.75, Math.PI)); }
+    R.sign('back', ['TSM: SISTEM BAHAN BAKAR', 'karburator • injeksi • busi'], 7 - 20, 1.7, 3.4, 0.8, '#f4f4f0', '#2a2a6a', 36);
+    table(m, at(17.5, 3.0), 2.4, 1.0); solid(16.3, 2.5, 2.4, 1.0); chair(m, at(17.5, 3.8, Math.PI)); box(14, 0.4, 1.2, 0.6, 1.8, '#8a7a5a', { solid: true });
+    for (let i = 0; i < 2; i++) { box(22 + i * 2.6, 0.2, 0.08, 2.2, 1.8, '#c8d0d8', { solid: true }); box(22.8 + i * 2.6, 0.5, 0.5, 0.6, 0.45, '#f4f4f0', { solid: true }); } box(27.3, 0.2, 0.08, 2.2, 1.8, '#c8d0d8');
+    box(29, 3.5, 5, 2.4, 0.3, '#1a1a1e', { solid: true }); for (const dy of [4.1, 5.1]) box(29.3, dy, 4.4, 0.3, 0.06, '#5a5a60', { y: 0.3 });
+    { const rd = makeRide('motor', 'sport', '#d83a2a'), [wx, wz] = world(31.5, 4.7); rd.group.position.set(wx, 0.32, wz); rd.group.rotation.y = Math.PI / 2; scene.add(rd.group); }
+    box(35, 3.5, 3, 1.6, 0.75, '#6a4428', { solid: true }); box(35.8, 3.7, 1.2, 0.08, 0.7, '#1a1a1e', { y: 0.75 }); box(35.85, 3.78, 1.1, 0.01, 0.6, '#2a8a5a', { y: 0.8 }); box(34.5, 1.2, 0.8, 0.8, 1.2, '#4a4a50', { solid: true });
+    shelfUnit(m, at(31, 10.4), 5, 1.6, 4, 77, 0.5, '#3a4a5a'); solid(28.5, 10.1, 5, 0.6); for (let i = 0; i < 4; i++) box(36 + (i % 2) * 0.6, 10.3 + Math.floor(i / 2) * 0.6, 0.48, 0.48, 0.8, ['#2a6a3a', '#c8a020', '#2a4a8a', '#c83a3a'][i]); solid(35.9, 10.2, 1.3, 1.3);
+    box(37.6, 12.2, 2, 0.8, 0.95, '#5a5a5e', { top: '#e8e4dc', solid: true });
+    shelfUnit(m, at(33, 15.6), 9.6, 1.9, 4, 91, 0.5, '#3a4a5a'); solid(28.2, 15.3, 9.6, 0.6);
+    box(28.3, 18.2, 3.4, 2.4, 0.85, '#d8dcdc', { solid: true }); box(28.5, 18.4, 3.0, 2.0, 0.02, '#4aa8d8', { y: 0.86 });
+    box(33.5, 18.6, 1.6, 0.8, 0.9, '#d8202a', { solid: true }); box(33.7, 18.7, 1.2, 0.6, 0.4, '#c8c8c8', { y: 0.9 }); box(35.6, 18.2, 2.8, 2.4, 0.04, '#3a3a36', { y: 0.005 });
+    for (const [x, y, t, w] of [[7, 0.6, 'Kelas teori', 2], [17.5, 0.6, 'R. guru produktif', 2.6], [24.5, 0.6, 'Toilet', 1.2], [33.7, 0.6, 'Tune-up & dyno', 2.6], [32, 9.6, 'Gudang oli & part', 2.8], [33, 14.5, 'Rak kunci & alat', 2.6], [13, 6.95, 'Stand motor praktik', 3]]) label(x, y, t, w);
+    R.sign('back', ['BENGKEL OTOMOTIF', 'TKR • TSM • STM KARYA BANGSA'], 20 - 20, 2.7, 5.2, 0.6, '#2a2a2a', '#f0c850', 44);
+    let workT = -999;
+    spot(3.2, 11.3, 1.3, 'Servis motor praktik (+Rp15.000)', () => {
+      if (performance.now() - workT < 60000) { toast('Pak Darmo: "Motornya udah beres semua. Nanti lagi."'); return; }
+      toast('Ganti oli...'); acts.doAct('squat', 2, () => { toast('Setel karbu...'); acts.doAct('crouch', 2, () => { toast('Ganti kampas rem...'); acts.doAct('squat', 2, () => { workT = performance.now(); shop.earn(15000, 'Servis beres! Upah praktik'); fight.gain('kelincahan', 1); }); }); });
+    });
+    spot(33, 7.6, 1.3, 'Ukur tenaga motor di dyno', () => { const u = (player.upg || {}).motor || 0; acts.doAct('crouch', 2.5, () => toast(`Dyno: motor bebek kamu ${(8.2 * (1 + 0.1 * u)).toFixed(1)} dk, top speed ±${Math.round(116 * (1 + 0.03 * u))} km/j (upgrade ${u}/5).`)); });
+    spot(36.5, 12.4, 1.3, 'Koperasi suku cadang (20% lebih murah)', () => shop.open({ title: 'Koperasi Suku Cadang STM', sub: 'Part murah anak STM, 20% di bawah bengkel kota', items: CATALOG.bengkel.map(([n, p, e, c]) => [n, Math.round(p * 0.8 / 1000) * 1000, e, c]), thanks: 'Pasang sendiri ya, anak STM.' }));
+    npc('bapakPeci', 'Pak Darmo (guru produktif)', 24, 10.5, ['Servis itu bukan asal bongkar. Catat urutannya.', 'Mau ukur tenaga motor? Dyno di pojok kanan.', 'Kirana paling rapi kalau nyetel karbu.'], 1.0);
+    npc('remaja', 'Ipul (siswa TSM)', 9, 11.3, ['Motor lo standar banget, bro.', 'Knalpot racing bikin berisik doang kalau karbu nggak disetel.'], 1.2);
+    npc('anakPunk', 'Gendon (siswa TKR)', 16, 13.2, ['Ngapain anak SMA 3 di bengkel kita?', 'Jangan pegang kunci-kunci, nanti hilang.'], 1.0);
+    finish(R); R.doorLabel = 'Masuk Bengkel Otomotif STM'; R.onEnter = stmEnter;
+  }
+  { const R = room('stm_gudang', 'Gudang Lama (markas Serigala Besi)', 9, 7, { ox: OX + 190, oz: OZB, wall: '#6a6a62', base: '#3a3a36', doorX: 2.6, h: 2.8, outside: '#d8d0b0', dark: true });
+    flat(R, '#5a5a54'); const m = R.st, P = R.P;
+    sofa(m, P(-2.4, -2.6), 2.4, '#6a5a3a'); R.solid(P(-2.4, -2.6), 2.4, 0.8); sofa(m, P(-3.9, -0.6, Math.PI / 2), 1.8, '#4a4a5a'); R.solid(P(-3.9, -0.6), 0.8, 1.8);
+    { const p = P(-1.6, -0.6); m.box(p, 0, 0, 0, 0.6, 0.85, 0.6, C('#3a4a5a')); m.box(p, 0, 0.85, 0, 0.5, 0.2, 0.5, C('#f28a1a')); m.box(p, 0, 0.98, 0, 0.3, 0.22, 0.3, C('#ffd84a')); R.solid(p, 0.6, 0.6); }   // drum api
+    for (const [x, z, c] of [[3.6, -2.9, '#2a4a8a'], [3.0, -2.9, '#c83a3a'], [3.6, -2.3, '#4a5a3a']]) { m.box(P(x, z), 0, 0, 0, 0.5, 0.85, 0.5, C(c)); } R.solid(P(3.3, -2.6), 1.2, 1.2);
+    for (let i = 0; i < 4; i++) crate(m, P(3.6 - (i % 2) * 0.6, 0.6 + Math.floor(i / 2) * 0.6), 0.55, '#6a5a3a'); R.solid(P(3.3, 0.9), 1.2, 1.2);
+    R.sign('back', ['SERIGALA BESI', 'STM KB • LINGKAR PUNYA KITA'], 0.4, 1.6, 2.6, 0.8, '#3a3a36', '#c8302a', 46);
+    R.sign('left', ['◎ TARGET', '10 • 20 • 50'], 0.8, 1.4, 1.0, 1.0, '#e8e4d0', '#c8302a', 40);
+    R.spot(-2.2, 0.8, 1.1, 'Lempar dart ke papan target', () => acts.doAct('straight', 1.2, () => { const sc = pick([10, 20, 20, 50, 0], Math.random()); toast(sc ? `Kena ${sc}! Anak Serigala Besi melirik.` : 'Meleset... diketawain satu gudang.'); if (sc >= 50) fight.gain('nyali', 1); }));
+    R.spot(-0.2, -1.6, 1.1, 'Tawarkan damai (Lampu Kota vs Serigala Besi)', () => toast('Codet: "Damai? Ngomong sama Kobar. Kalahin dia dulu di lingkar, baru kita dengerin."'));
+    addNPC(R, 'anakPunk', 'Codet (Serigala Besi)', -2.0, -1.6, ['Ini wilayah Serigala Besi. Salah masuk, lo.', 'Kobar lagi di depan. Mau ketemu?', 'Anak Lampu Kota sok jagoan.'], 0.5);
+    addNPC(R, 'pemuda', 'Bogel (Serigala Besi)', 1.4, -0.8, ['Ssst, jangan berisik. Bonar galak.', 'Malam Selasa sama Jumat, kita di lingkar.'], 0.5);
+    finish(R); R.doorLabel = 'Masuk gudang lama STM (Serigala Besi)'; R.onEnter = stmEnter;
   }
 
   /* ================= interior dari data guide 92 (docs/desain-sma/peta/interior_data.py -> data/interiors.json)
@@ -527,6 +705,14 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
   for (const [id, sp] of [['masjid_agung', 'masjid'], ['pasar', 'pasar'], ['plaza', 'plaza'], ['stasiun', 'stasiun'], ['rumah_bram', 'bram']]) {
     const b = kota.specials?.[sp]; if (!b || !dataRooms[id]) continue; const [x, z] = L({ x: b.x, z: b.y, a: b.a }, 0, b.h / 2 + 0.6); put(id, x, z, b.a + Math.PI / 2); }
   if (dataRooms.kontainer_proyek) put('kontainer_proyek', 220, 157.4, Math.PI / 2);
+  // STM: pintu bengkel di ujung depan sayap bengkel, pintu gudang lama di halaman; Pak Bonar jaga di depan
+  const stm = kota.specials?.stm;
+  if (stm) {
+    const xf = { x: stm.x, z: stm.y, a: stm.a }; let [x, z] = L(xf, stm.w / 2 - 1.6, 2.2 + 0.55); put('stm_bengkel', x, z, stm.a + Math.PI / 2);
+    [x, z] = L(xf, -3.4, -stm.h / 2 + 3.2 + 0.55); put('stm_gudang', x, z, stm.a + Math.PI / 2);
+    [x, z] = L(xf, -1.0, stm.h / 2 + 0.7); const p = collision.resolve({ x, z }, 0.3), c = new Character('satpam'); scene.add(c.group);
+    npcs.push({ sid: 'satpam', name: 'Pak Bonar (satpam STM)', filler: true, lines: ['Anak SMA 3? Mau ngapain ke sini?', 'Masuk boleh, bikin ribut jangan.', 'Kobar sama gengnya jangan diladenin.'], c, home: { ...p }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: 2, heading: stm.a + Math.PI / 2, say: null, greetT: 0, roam: 1.2, key: 'bonar' });
+  }
 
   /* ---------------- API */
   let back = null;
@@ -539,7 +725,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
       if (player.area === 'kota') {
         let best = null, bd = 1.5;
         for (const o of outDoors) { const d = Math.hypot(o.x - player.x, o.z - player.z); if (d < bd) { bd = d; best = o; } }
-        if (best) { const R = rooms[best.id]; return { kind: 'warp', label: best.label, to: { x: R.exit.x, z: R.exit.z, heading: -Math.PI / 2, area: 'dalam' }, after: () => { back = { x: best.x, z: best.z, heading: best.h, owner: best.owner }; cur = R; R.setOwner?.(best.owner); } }; }
+        if (best) { const R = rooms[best.id]; return { kind: 'warp', label: best.label, to: { x: R.exit.x, z: R.exit.z, heading: -Math.PI / 2, area: 'dalam' }, after: () => { back = { x: best.x, z: best.z, heading: best.h, owner: best.owner }; cur = R; R.setOwner?.(best.owner); R.onEnter?.(); } }; }
       } else if (player.area === 'dalam' && cur) {
         if (cur.exit && Math.hypot(cur.exit.x - player.x, cur.exit.z - player.z) < 0.9) return { kind: 'warp', label: 'Keluar', to: { ...(back || { x: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[0] : 40, z: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[1] : 90, heading: 0 }), area: 'kota' }, after: () => { cur = null; } };
         for (const s of cur.spots) if (Math.hypot(s.x - player.x, s.z - player.z) < s.r) {

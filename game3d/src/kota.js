@@ -749,14 +749,21 @@ function specialBuildings(ch, S, C, veg, M) {
     { const [x, z] = L(xf, -2.5, b.h / 2 + 0.75); motor(m, { x, z, a: xf.a + Math.PI / 2 }, '#2a2a2e'); }
     cl(xf, 0, 0, b.w, b.h);
   });
-  add(S.stm, (m, xf, b) => {   // STM: dua gedung L gaya pabrik
-    const g = col('#a8a8a4'), tin = col('#9aa0a6');
-    m.box(xf, 0, 0, -b.h / 2 + 1.6, b.w, 2 * FLOOR, 3.2, g); facade(m, { ...xf, z: xf.z }, b.w, b.h, 1, 2, {});
-    for (let i = 0; i < 4; i++) win(m, xf, -b.w / 2 + 1.2 + i * 2.4, i, -b.h / 2 + 3.2);
+  add(S.stm, (m, xf, b) => {   // STM Karya Bangsa (guide 88): gedung teori krem kusam + plint & balkon marun + atap seng biru; bengkel abu, pintu rolling merah, crane kuning
+    const g = col('#e4e0d4'), mar = col('#7a2a2a'), tin = col('#3a6aa8'), bk = col('#b8b8b4'), yel = col('#e2b84a'), zf = -b.h / 2 + 3.2;
+    m.box(xf, 0, 0, -b.h / 2 + 1.6, b.w, 2 * FLOOR, 3.2, g); m.box(xf, 0, 0, -b.h / 2 + 1.6, b.w + 0.04, 0.85, 3.24, mar);
+    facade(m, { ...xf, z: xf.z }, b.w, b.h, 1, 2, {});
+    for (let i = 0; i < 4; i++) win(m, xf, -b.w / 2 + 1.2 + i * 2.4, i, zf);
+    m.box(xf, -0.6, FLOOR - 0.08, zf + 0.3, b.w - 1.6, 0.1, 0.6, mar); m.box(xf, -0.6, FLOOR + 0.02, zf + 0.58, b.w - 1.6, 0.45, 0.05, mar);   // balkon marun
     m.gable(at0(xf, 0, -b.h / 2 + 1.6), 0, 2 * FLOOR, 0, b.w, 3.2, 1, tin, 0.3, g);
-    m.box(xf, b.w / 2 - 1.6, 0, 0.8, 3.2, FLOOR * 1.3, b.h - 3.2, g); m.box(xf, b.w / 2 - 1.6, FLOOR * 1.3, 0.8, 3.4, 0.12, b.h - 3, tin);
-    m.box(xf, 0, 2 * FLOOR - 0.75, -b.h / 2 + 3.25, 4.4, 0.7, 0.08, col('#d23a3a')); sign(xf, 0, 2 * FLOOR - 0.72, -b.h / 2 + 3.3, 4.2, 0.64, 'stm');
+    m.box(xf, b.w / 2 - 1.6, 0, 0.8, 3.2, FLOOR * 1.3, b.h - 3.2, bk); m.box(xf, b.w / 2 - 1.6, FLOOR * 1.3, 0.8, 3.4, 0.12, b.h - 3, col('#8a8f96'));
+    for (let i = 0; i < 3; i++) { m.box(xf, b.w / 2 - 1.6, FLOOR * 1.3 + 0.1, -0.2 + i * 0.9, 3.3, 0.42, 0.1, col('#8a8f96')); m.box(xf, b.w / 2 - 1.6, FLOOR * 1.3 + 0.12, -0.12 + i * 0.9, 3.2, 0.36, 0.03, GLASS); }   // atap gergaji
+    m.box(xf, b.w / 2 - 1.6, 0, 2.2 + 0.02, 2.3, 1.75, 0.04, col('#9a3a30')); for (let r = 0; r < 6; r++) m.box(xf, b.w / 2 - 1.6, 0.15 + r * 0.27, 2.2 + 0.045, 2.3, 0.04, 0.02, col('#7a2a24'));   // pintu rolling
+    m.box(xf, b.w / 2 - 0.25, FLOOR * 1.3, 1.9, 0.14, 1.5, 0.14, yel); m.box(xf, b.w / 2 - 1.2, FLOOR * 1.3 + 1.4, 1.9, 1.9, 0.12, 0.12, yel); m.box(xf, b.w / 2 - 2.1, FLOOR * 1.3 + 0.9, 1.9, 0.03, 0.5, 0.03, col('#3a3a3a'));   // crane
+    m.box(xf, 0, 2 * FLOOR - 0.75, -b.h / 2 + 3.25, 4.4, 0.7, 0.08, mar); sign(xf, 0, 2 * FLOOR - 0.72, -b.h / 2 + 3.3, 4.2, 0.64, 'stm');
+    m.box(xf, -3.4, 0, zf + 0.02, 1.0, 1.6, 0.04, col('#4a4a46')); m.box(xf, -3.4, 1.6, zf + 0.04, 1.2, 0.08, 0.06, mar);   // pintu gudang lama
     m.box(xf, -1.5, 0, 1.5, 2.4, 0.9, 1.2, col('#6a6a70'));   // meja praktik bengkel terbuka
+    for (const [lx, lz, w, d] of [[0.6, 1.2, 1.4, 0.9], [-0.4, 2.3, 0.8, 0.5], [2.4, 2.6, 0.9, 0.6]]) m.box(xf, lx, 0.004, lz, w, 0.01, d, col('#4a4a44'));   // noda oli di apron
     cl(xf, 0, -b.h / 2 + 1.6, b.w, 3.2); cl(xf, b.w / 2 - 1.6, 0.8, 3.2, b.h - 3.2); cl(xf, -1.5, 1.5, 2.4, 1.2);
   });
   add(S.bram, (m, xf, b) => {

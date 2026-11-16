@@ -76,13 +76,24 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   tangkis & parry, guling, banting bahu, kunci lengan saat lawan pusing, meter Nyali + jurus, tanda "!" merah sebelum lawan
   memukul, maksimal 2 lawan menyerang bersamaan. Tiap tokoh punya level kekuatan sesuai cerita (Tegar lv1 ... Bang Jaka lv9),
   terlihat di nama & panel Status. Statistik pemain naik lewat samsak, main bola/basket, lari di GOR, menang berantem.
-- **Interior** (`src/interior.js`): rumah Om Darto, Indomurah, warung kelontong, markas Lampu Kota, Bengkel Mas Fajar, GOR,
+- **Interior** (`src/interior.js`): rumah Om Darto, Indomurah, warung kelontong, markas Lampu Kota, Bengkel Mas Fajar, GOR, STM,
   pabrik es, Gua Kapur, rumah pohon, pondok. Dinding yang menghalangi kamera otomatis disembunyikan. Tidur, makan, belajar,
   latihan, peti tua, upgrade sepeda/motor.
   Ditambah 21 interior dari guide 92 (`src/data/interiors.json`, diekspor `tools/export_interiors.py` dari
   `peta/interior_data.py`): warnet, kafe, karaoke, pasar, Plaza (3 lantai), masjid agung, bank, puskesmas, polsek, studio foto,
   stasiun, kos Bu Narti, Bengkel Wijaya Motor, rumah Bram (2 lantai), rumah Laras, Gilang, Uti, Bimo, Sekar, Nadia, kontainer
   proyek. Pintu ada di bangunan yang bertanda papan nama di kota; tangga = pindah lantai.
+- **GOR Kota Wirabumi** (guide 89, interior besar): arena 32 x 16 (garis basket/futsal/voli/bulu tangkis, ring & gawang),
+  tribun utara-selatan 5 baris, panggung lipat, papan skor; gym & ruang beladiri (treadmill, sepeda statis, rak dumbel, bench,
+  squat rack, lat pulldown, leg press, ring tinju, 4 samsak, matras silat). Latihan gym: tiket harian Rp15.000 atau member
+  bulanan Rp150.000, maksimal 2 sesi sehari (sesi ketiga = cedera ringan, tidur = ganti hari), tiap sesi stat +1 level
+  (kardio & silat = Kelincahan, beban & mesin = Kekuatan, ring = Kekuatan + Nyali). Badminton sewa Rp20.000. Lobi (loket,
+  lemari piala, papan jadwal event), kantin, ganti & bilas, ruang medis, panitia, gudang alat, musala. Coach Herman.
+- **STM Karya Bangsa** (guide 88): tampak luar krem kusam dengan plint & balkon marun, atap seng biru, bengkel abu dengan
+  atap gergaji, pintu rolling merah & crane kuning; Pak Bonar (satpam) jaga di depan. Interior Bengkel Otomotif: 4 bay mobil
+  dengan lift, 6 stand motor praktik, ruang tune-up & dyno (ukur tenaga motor), gudang oli & part = koperasi suku cadang
+  (20% lebih murah dari bengkel kota), kelas teori, R. guru produktif. Servis motor praktik = upah Rp15.000. Gudang lama =
+  markas Serigala Besi (sofa bekas, drum api, papan dart, Codet & Bogel).
 - **Uang jajan & belanja** (`src/shop.js`, `src/jajan.js`): dompet, belanja di kasir/warung/gerobak (bakso, siomay, cendol,
   gorengan, martabak, cilok, sate, nasi goreng) yang memulihkan nyawa/nyali, jual ikan, bantu Om Darto jualan kopi.
 - **Balap liar drag** (`src/race.js`, guide 87): titik kumpul di trotoar Jl. Lingkar Selatan (joki Bang Ocid, penonton,
