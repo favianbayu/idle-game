@@ -787,6 +787,25 @@ const ANIMS = {
     return { lean: 0.22, hp: -0.18, tw: 0.15 * s, sy: 0.2 * c, thL: 0.15 + 0.85 * s, thR: 0.15 - 0.85 * s, knL: 0.3 + 1.5 * Math.max(0, c), knR: 0.3 + 1.5 * Math.max(0, -c),
              arL: 2.5 + 0.35 * s, arR: 2.5 - 0.35 * s, elL: 0.5 + 0.3 * c, elR: 0.5 - 0.3 * c, spL: 0.45, spR: 0.45, jump: 0.8 * Math.abs(s) ** 1.5 }; } },
   cower:    { name: 'Meringkuk takut', kind: 'full', n: 4, fps: 6, loop: true, pose: t => ({ lean: 0.45, hp: -0.25, thL: 1.2, thR: 1.1, knL: 1.9, knR: 1.8, arL: 2.3 + 0.08 * sinT(t), arR: 2.3 - 0.08 * sinT(t), elL: 2.1, elR: 2.1, spL: 0.7, spR: 0.7, hy: 0.15 * sinT(t) }) },
+  // --- berantem lanjutan (guide 70): tangkis, sapuan, tendangan putar, banting bahu, kunci lengan, provokasi, pusing ---
+  block:    { name: 'Tangkis', kind: 'full', n: 4, fps: 6, loop: true, pose: t => ({ arL: 1.95, elL: 2.35, arR: 1.95, elR: 2.35, spL: -0.12, spR: -0.12, lean: 0.12, hp: -0.18, thL: 0.35, thR: -0.25, knL: 0.4 + 0.03 * sinT(t), knR: 0.4 + 0.03 * sinT(t), tw: 0.15 }) },
+  sweepKick:{ name: 'Sapuan kaki', kind: 'full', n: 10, fps: 14, pose: keyed([
+    [0, GUARD], [0.18, { thL: 1.9, knL: 2.5, thR: 1.4, knR: 0.1, lean: 0.55, hp: -0.35, arL: 1.0, arR: 1.0, elL: 0.6, elR: 0.6, spL: 0.6, spR: 0.6, yaw: 0 }],
+    [0.8, { yaw: TAU }], [1, Object.assign({}, GUARD, { yaw: TAU })]]) },
+  spinKick: { name: 'Tendangan putar', kind: 'full', n: 10, fps: 13, pose: keyed([
+    [0, GUARD], [0.2, { thR: 0.5, knR: 1.1, yaw: 0.4, lean: 0.05 }], [0.55, { thR: 1.65, knR: 0.1, thL: 0.1, knL: 0.2, lean: -0.35, yaw: TAU * 0.7, jump: 4, arL: 1.5, spL: 1.0, arR: 1.3, spR: 1.0 }],
+    [0.85, { yaw: TAU, jump: 0, thR: 0.6, knR: 0.6 }], [1, Object.assign({}, GUARD, { yaw: TAU })]]) },
+  throwShoulder: { name: 'Banting bahu', kind: 'full', n: 10, fps: 12, pose: keyed([
+    [0, GUARD], [0.3, { arL: 1.55, arR: 1.55, elL: 0.3, elR: 0.3, spL: 0.1, spR: 0.1, lean: 0.12, tw: 0 }],
+    [0.65, { arL: 2.7, arR: 2.5, elL: 1.1, elR: 1.0, lean: 0.95, hp: -0.3, thL: 0.7, thR: 0.6, knL: 0.8, knR: 0.7, tw: 0.7 }], [1, GUARD]]) },
+  armlock:  { name: 'Kunci lengan', kind: 'full', n: 6, fps: 6, loop: true, pose: t => ({ arL: 1.0, elL: 0.9, spL: 0.3, arR: 1.2, elR: 1.6 + 0.08 * sinT(t), spR: -0.2, lean: 0.3, hp: -0.2, thL: 0.4, knL: 0.5, thR: -0.2, knR: 0.3 }) },
+  grabbed:  { name: 'Dikunci', kind: 'full', n: 6, fps: 8, loop: true, pose: t => ({ lean: 0.6, hp: 0.2, arL: -0.6, elL: 0.3, arR: 0.3 + 0.2 * sinT(t), elR: 0.4, spR: 0.6, thL: 0.3, knL: 0.6, thR: 0.1, knR: 0.5, hy: 0.3 * sinT(t) }) },
+  taunt:    { name: 'Provokasi', kind: 'upper', n: 10, fps: 10, pose: keyed([[0, {}], [0.25, { arR: 1.1, elR: 2.4, spR: -0.35, hp: 0.15 }], [0.4, { arR: 1.2, elR: 2.2 }], [0.55, { arR: 1.1, elR: 2.4 }],
+    [0.75, { arR: 0.3, elR: 0.3, arL: 1.6, elL: 1.4, spL: 0.3, hp: 0.25, hy: -0.2 }], [1, Object.assign({}, POSE0)]]) },
+  dizzy:    { name: 'Pusing', kind: 'full', n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t), c = cosT(t); return { hy: 0.4 * s, hp: 0.2 + 0.1 * c, sy: 0.35 * s, lean: 0.1 + 0.1 * c, arL: 0.3, arR: 0.3, spL: 0.45, spR: 0.45, elL: 0.5, elR: 0.5, knL: 0.35 + 0.1 * s, knR: 0.35 - 0.1 * s }; } },
+  backstep: { name: 'Mundur cepat', kind: 'full', n: 6, fps: 12, pose: keyed([[0, GUARD], [0.35, { thL: 0.6, thR: 0.6, knL: 1.0, knR: 1.0, lean: -0.15, jump: 3 }], [0.7, { jump: 1 }], [1, GUARD]]) },
+  bagPunch: { name: 'Latihan samsak', kind: 'upper', n: 12, fps: 12, loop: true, pose: keyed([[0, GUARD], [0.15, { arL: 1.57, elL: 0, spL: 0.05, tw: 0.35 }], [0.3, GUARD],
+    [0.5, { tw: -0.55, arR: 1.57, elR: 0, spR: 0.02, lean: 0.22 }], [0.65, GUARD], [0.82, { tw: 0.6, arR: 1.4, elR: 1.5, spR: 1.1 }], [1, GUARD]]) },
   // --- aktivitas (guide 71): berenang, memancing, bola basket & sepak bola ---
   swim:     { name: 'Berenang', kind: 'loco', n: 8, fps: 8, stride: 24, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
     return { lean: 1.38, hp: -0.85, hy: 0.25 * s, sy: 0.25 * s, arL: 1.9 + 1.25 * s, arR: 1.9 - 1.25 * s, elL: 0.35 + 0.35 * Math.max(0, c), elR: 0.35 + 0.35 * Math.max(0, -c), spL: 0.2, spR: 0.2,

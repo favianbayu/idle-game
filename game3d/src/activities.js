@@ -10,7 +10,7 @@ const FB = { x: 88, z: 104, hl: 5.6, gw: 1.2, gh: 1.15, gd: 0.85, w: 6.4, l: 6.6
 const BK = { x: 127, z: 46, hw: 4, hd: 3, rimY: 2.0, rimR: 0.21, rims: [] };
 const FISH = [['Nila', 0.25, 0.7, 30], ['Mujair', 0.2, 0.5, 26], ['Lele', 0.3, 1.2, 22], ['Ikan mas', 0.4, 1.6, 12], ['Gurame', 0.6, 2.2, 6], ['Patin', 0.8, 2.6, 4], ['Sandal jepit', 0, 0, 5], ['Kaleng bekas', 0, 0, 4]];
 
-export function makeActivities({ scene, kota, collision, player, Character, toast, npcs, say }) {
+export function makeActivities({ scene, kota, collision, player, Character, toast, npcs, say, gain = () => {} }) {
   const M = kota.M, P = kota.places || {}, white = col('#f4f4f0'), net = col('#dcdcd4');
   const mg = new Merger(), thin = new Merger();
   const box = (m, x, y, z, sx, sy, sz, c, a = 0) => m.box({ x, z, a }, 0, y, 0, sx, sy, sz, c);
@@ -148,6 +148,36 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
     }
   }
 
+  /* ---------------- samsak latihan (guide 70 "Upgrade diri"): depan markas Lampu Kota & halaman Om Darto. Aksi = 5 detik latihan, Kekuatan naik */
+  const bags = [];
+  { const cand = [];
+    const g = kota.specials?.gudang; if (g) { const xf = { x: g.x, z: g.y, a: g.a }; for (const lx of [g.w / 2 - 0.9, g.w / 2 - 1.8, -g.w / 2 + 0.9]) cand.push([xf, lx, g.h / 2 + 1.5, 'Samsak markas Lampu Kota']); }
+    const D = kota.darto; if (D) for (const lx of [-1.6, 1.6, -0.6]) cand.push([D.xf, lx, -D.d / 2 - 1.2, 'Samsak Om Darto'], [D.xf, D.w / 2 + 1.1, lx * 0.6, 'Samsak Om Darto']);
+    const used = new Set();
+    for (const [xf, lx, lz, name] of cand) {
+      if (used.has(name)) continue;
+      const c = Math.cos(xf.a), sn = Math.sin(xf.a), x = xf.x + lx * c - lz * sn, z = xf.z + lx * sn + lz * c;
+      const ok = [[0, 0], [0.7, 0], [-0.7, 0], [0, 0.7], [0, -0.7]].every(([u, v]) => !collision.blockedMask(x + u, z + v) && M.roadDist(x + u, z + v) > 0.5 && !M.waterAt(x + u, z + v));
+      const p = collision.resolve({ x, z }, 0.45); if (!ok || Math.hypot(p.x - x, p.z - z) > 0.05) continue;
+      used.add(name);
+      // rangka kayu + rantai + karung goni berisi pasir
+      const fr = new Merger(), wood = col('#6a4a2a'), a = xf.a;
+      fr.box({ x, z, a }, -0.55, 0, 0, 0.1, 2.15, 0.1, wood); fr.box({ x, z, a }, 0.55, 0, 0, 0.1, 2.15, 0.1, wood); fr.box({ x, z, a }, 0, 2.1, 0, 1.3, 0.1, 0.12, wood);
+      fr.box({ x, z, a }, -0.55, 0, 0, 0.3, 0.06, 0.5, wood); fr.box({ x, z, a }, 0.55, 0, 0, 0.3, 0.06, 0.5, wood);
+      scene.add(new THREE.Mesh(fr.build(), MAT.world));
+      const bm = new Merger(); bm.box({ x: 0, z: 0, a: 0 }, 0, -0.38, 0, 0.02, 0.38, 0.02, col('#8a8a8a'));
+      bm.box({ x: 0, z: 0, a: 0 }, 0, -1.25, 0, 0.36, 0.88, 0.36, col('#9a2a22')); bm.box({ x: 0, z: 0, a: 0 }, 0, -1.25, 0, 0.38, 0.08, 0.38, col('#2a2a2a')); bm.box({ x: 0, z: 0, a: 0 }, 0, -0.5, 0, 0.38, 0.08, 0.38, col('#2a2a2a'));
+      const piv = new THREE.Group(); piv.position.set(x, 2.1, z); piv.add(new THREE.Mesh(bm.build(), MAT.world)); piv.children[0].castShadow = true; scene.add(piv);
+      collision.circle(x, z, 0.24);
+      bags.push({ x, z, a, name, piv, sw: 0, sv: 0 });
+    } }
+  function trainBag(b) {
+    player.heading = Math.atan2(b.z - player.z, b.x - player.x); player.emote = null;
+    let hits = 0;
+    actT = { anim: 'bagPunch', t: 0, dur: 4.5, at: 99, tick: t => { const n = Math.floor(t * 12 / 6); if (n > hits) { hits = n; b.sv += 2.2; } }, fn: () => {} ,
+      end: () => { gain('kekuatan', 3); gain('nyali', 0.5); toast(`Latihan samsak selesai. Kekuatan ${player.stats?.kekuatan ?? 1} (xp ${Math.floor(player.stats?.kekuatanXp ?? 0)})`); } };
+  }
+
   /* ---------------- aksi pemain: tendang / tembak / pegang bola */
   let actT = null;   // { anim, t, dur, at, fn }
   const heading = () => ({ x: Math.cos(player.heading), z: Math.sin(player.heading) });
@@ -158,6 +188,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
       if (!nearBall(ball, 1.15)) return;
       let { x: hx, z: hz } = heading();
       for (const sd of [-1, 1]) { const gx = FB.x + sd * FB.hl, gz = FB.z, ux = gx - ball.p.x, uz = gz - ball.p.z, l = Math.hypot(ux, uz); if (l < 7 && (ux * hx + uz * hz) / l > 0.8) { hx = ux / l; hz = uz / l; const e = (Math.random() - 0.5) * 0.25; const c = Math.cos(e), s = Math.sin(e); [hx, hz] = [hx * c - hz * s, hx * s + hz * c]; } }
+      gain('kelincahan', 0.4);
       const pw = player.run ? 9.5 : 7; ball.v.x = hx * pw; ball.v.z = hz * pw; ball.v.y = player.run ? 2.8 : 1.6; ball.cd = 0.4;
     } };
     return true;
@@ -168,12 +199,12 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
       bball.held = false; const { x: hx, z: hz } = heading();
       bball.p.x = player.x + hx * 0.25; bball.p.z = player.z + hz * 0.25; bball.p.y = 1.45;
       const R = BK.rims.slice().sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z))[0];
-      const d = Math.hypot(R.x - bball.p.x, R.z - bball.p.z), skill = 1 + (player.stats?.agi || 0) * 0.04;
+      const d = Math.hypot(R.x - bball.p.x, R.z - bball.p.z), skill = 1 + ((player.stats?.kelincahan || 1) - 1) * 0.04;
       const pIn = Math.max(0.12, Math.min(0.92, (1.02 - d * 0.1 - (Math.hypot(player.vx, player.vz) > 1 ? 0.15 : 0)) * skill));
       const ok = Math.random() < pIn, ea = Math.random() * Math.PI * 2, er = ok ? Math.random() * 0.06 : 0.24 + Math.random() * 0.22;
       const tx = R.x + Math.cos(ea) * er, tz = R.z + Math.sin(ea) * er, ty = R.y + 0.02, T = 0.62 + d * 0.09;
       bball.v.x = (tx - bball.p.x) / T; bball.v.z = (tz - bball.p.z) / T; bball.v.y = (ty - bball.p.y + 0.5 * G * T * T) / T;
-      bball.shot = { d, made: false }; bball.cd = 0.8;
+      bball.shot = { d, made: false }; bball.cd = 0.8; gain('kelincahan', ok ? 0.6 : 0.3);
     } };
     return true;
   }
@@ -257,7 +288,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
 
   /* ---------------- API untuk main.js */
   return {
-    balls, score, poolAt, spots,
+    balls, score, poolAt, spots, bags,
     setHold(v) { hold = v; },
     get busy() { return !!fish || !!actT; }, get fishState() { return fish && fish.st + ' ' + fish.t.toFixed(2); },
     // tombol Pukul / F: tendang atau tembak dulu kalau sedang main bola
@@ -269,6 +300,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
       if (fish) return fish.st === 'bite' ? { kind: 'act', label: 'Tarik!', fn: () => { fish.st = 'reel'; fish.t = 0; fish.tension = 0.45; fishUI.style.display = 'block'; } } : fish.st === 'wait' ? { kind: 'act', label: 'Sabar... (gerak = gulung pancing)', fn: () => {} } : null;
       for (const s of spots) if (Math.hypot(s.x - player.x, s.z - player.z) < 1.1) return { kind: 'act', label: 'Mancing (' + s.name + ')', fn: () => startFish(s) };
       if (P.raft) for (const [e, o] of [[P.raft.a, P.raft.b], [P.raft.b, P.raft.a]]) if (Math.hypot(e.x - player.x, e.z - player.z) < 1.6) return { kind: 'go2', label: 'Naik rakit ke seberang (2rb)', to: o };
+      for (const b of bags) if (Math.hypot(b.x - player.x, b.z - player.z) < 1.2) return { kind: 'act', label: 'Latihan samsak (Kekuatan)', fn: () => trainBag(b) };
       if (P.fire && Math.hypot(P.fire.x - player.x, P.fire.z - player.z) < 2.2) return { kind: 'act', label: 'Duduk di api unggun', fn: () => { player.emote = 'sitDown'; player.heading = Math.atan2(P.fire.z - player.z, P.fire.x - player.x); } };
       if (!player.swim) { const { x: hx, z: hz } = heading(); for (const d of [0.7, 1.0, 1.3]) { const x = player.x + hx * d, z = player.z + hz * d; if (M.waterAt(x, z) && !M.waterAt(player.x, player.z) && M.roadDist(x, z) > 0.4) return { kind: 'swim', label: 'Nyebur (berenang)', x, z }; } }
       return null;
@@ -280,7 +312,8 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
       dribbleFoot(dt); holdBall(dt);
       for (const b of balls) b.mesh.position.set(b.p.x, b.p.y, b.p.z);
       let anim = null, lock = false;
-      if (actT) { actT.t += dt; if (!actT.done && actT.t >= actT.at) { actT.done = true; actT.fn(); } anim = actT.anim; lock = true; if (actT.t >= actT.dur) actT = null; }
+      for (const b of bags) { b.sv += (-b.sw * 9 - b.sv * 1.2) * dt; b.sw += b.sv * dt; b.piv.rotation.set(0, -b.a, 0); b.piv.rotateX(b.sw * 0.12); }
+      if (actT) { actT.t += dt; actT.tick?.(actT.t); if (!actT.done && actT.t >= actT.at) { actT.done = true; actT.fn(); } anim = actT.anim; lock = true; if (actT.t >= actT.dur) { actT.end?.(); actT = null; } }
       const fa = updateFish(dt, moving); if (fa) { anim = fa; lock = fish && fish.st !== 'wait' && fish.st !== 'bite' ? true : false; }
       if (!anim && bball.held && !moving) anim = 'dribble';
       return { anim, lock };

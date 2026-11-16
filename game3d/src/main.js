@@ -65,6 +65,7 @@ initChars(__WORKER_SRC__);
 const SPAWN = (() => { const [x, z] = L(kota.darto.xf, -0.4, kota.darto.d / 2 + 0.5); return { x, z }; })();
 const player = { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, heading: Math.PI / 2, run: false, area: 'kota' };
 if (saved?.p) Object.assign(player, saved.p);
+if (saved?.stats) player.stats = saved.stats;
 const raka = new Character('raka', { xray: true, prio: 10 });
 scene.add(raka.group);
 // kendaraan pemain: tidak muncul dari udara. Tiap kendaraan diparkir di dunia (awal: lorong samping rumah Om Darto),
@@ -130,8 +131,14 @@ let emoteI = -1;
 function emote(i) { if (ride) return; emoteI = i % EMOTES.length; player.emote = EMOTES[emoteI]; }
 
 const npcs = [];
-const fight = makeFight({ player, raka, npcs, collision, riding: () => !!ride, toast });
-const acts = makeActivities({ scene, kota, collision, player, Character, toast, npcs, say: (n, text) => { if (n) n.say = { text, t: 2.5 }; } });
+let fading = 0;
+// KO: pingsan, dibawa pulang Om Darto (layar gelap, bangun di depan rumah)
+function onKO() {
+  fading = 1; ui.fade.style.opacity = 1;
+  setTimeout(() => { if (ride) dismount(true); Object.assign(player, { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, area: 'kota', swim: null }); cam.x = player.x; cam.z = player.z; placeParked(); ui.fade.style.opacity = 0; fading = 0; toast('Kamu pingsan... Om Darto bawa kamu pulang. Latihan dulu biar kuat!'); }, 600);
+}
+const fight = makeFight({ player, raka, npcs, collision, riding: () => !!ride, toast, onKO: () => onKO(), save: () => { saveT = 99; } });
+const acts = makeActivities({ scene, kota, collision, player, Character, toast, npcs, gain: (k, x) => fight.gain(k, x), say: (n, text) => { if (n) n.say = { text, t: 2.5 }; } });
 onCharsReady(() => {
   preload('raka', ['idle', 'walk', 'run'], 10);
   const byRegion = {};
@@ -169,7 +176,13 @@ const keys = new Set();
 addEventListener('keydown', e => {
   if (e.repeat) { if (!['KeyQ', 'KeyE'].includes(e.code)) return; }
   keys.add(e.code);
-  if (e.code === 'KeyF') { if (!acts.action()) fight.attack(); }
+  const sh = e.shiftKey;
+  if (e.code === 'KeyF' || e.code === 'KeyJ') { if (!acts.action()) fight.attack('A', sh); }
+  if (e.code === 'KeyK') fight.attack('B', sh);
+  if (e.code === 'KeyL') fight.dodge(true);
+  if (e.code === 'KeyI') fight.grab();
+  if (e.code === 'KeyT') fight.taunt();
+  if (e.code === 'KeyU') toggleStatus();
   if (e.code === 'KeyQ') rotateCam(-1);
   if (e.code === 'KeyE') rotateCam(1);
   if (e.code === 'KeyC') toggleFollow();
@@ -181,7 +194,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Equal' || e.code === 'NumpadAdd') zoom(-1);
   if (e.code === 'Minus' || e.code === 'NumpadSubtract') zoom(1);
 });
-addEventListener('keyup', e => { keys.delete(e.code); if (e.code === 'Space' || e.code === 'Enter') acts.setHold(false); });
+addEventListener('keyup', e => { keys.delete(e.code); if (e.code === 'Space' || e.code === 'Enter') acts.setHold(false); if (e.code === 'KeyL') fight.dodge(false); });
 addEventListener('blur', () => keys.clear());
 
 const joy = { x: 0, y: 0, id: null, ox: 0, oy: 0 };
@@ -247,7 +260,7 @@ document.body.classList.toggle('touch', isTouch);
 ui.follow.classList.toggle('on', opt.follow);
 ui.mapWrap.style.display = opt.minimap ? '' : 'none';
 const tap = (el, fn) => el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); fn(); });
-tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack(); }); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
+tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack('A', player.fx.nyali >= 100); }); tap($('btnKick'), () => fight.attack('B')); tap($('btnGrab'), () => fight.grab()); tap($('btnDodge'), () => fight.dodge(true)); for (const ev of ['pointerup', 'pointercancel']) $('btnDodge').addEventListener(ev, () => fight.dodge(false)); tap($('btnStatus'), () => toggleStatus()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
 const menu = $('menu'); menu.classList.toggle('closed', isTouch);
 tap($('btnMenu'), () => menu.classList.toggle('closed'));
 tap(ui.run, () => { ui.run.classList.toggle('on'); player.run = ui.run.classList.contains('on'); });
@@ -258,6 +271,22 @@ tap(ui.quality, () => { opt.quality = (opt.quality + 1) % 3; applyQuality(); ui.
 tap($('btnPx'), () => { opt.px = opt.px >= 5 ? 0 : (opt.px || pxSize) + 1; resize(); $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto'); });
 ui.quality.textContent = 'Grafik: ' + QUALITY[opt.quality].name; $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto');
 const bigmap = makeBigMap({ kota, player, isTouch, parked: () => RIDES.flatMap((R, i) => R && R.holder.visible && player.area === 'kota' ? [{ x: garage.spot[i].x, z: garage.spot[i].z, icon: i === 1 ? 'S' : 'M' }] : []) });
+// panel status diri: Kekuatan / Kelincahan / Nyali, reputasi, dan peta kekuatan lawan (guide 70 "Upgrade diri")
+const statusEl = $('status');
+const NEEDXP = lv => 6 + lv * 6;
+const STAT_INFO = { kekuatan: ['Kekuatan', 'pukulan lebih sakit, nyawa lebih banyak · latihan samsak, menang berantem'], kelincahan: ['Kelincahan', 'serangan lebih cepat · main bola/basket, tangkis tepat'], nyali: ['Nyali', 'tahan gertakan · menang lawan berat, kunci lengan'] };
+const verdict = lv => { const k = player.stats.kekuatan; return lv >= k + 3 ? ['Masih berat', 'lvHard'] : lv >= k + 1 ? ['Seimbang', 'lvEven'] : ['Bisa dikalahkan', 'lvEasy']; };
+function renderStatus() {
+  const st = player.stats; let h = '<button class="x">✕</button><h3>Status Raka</h3>';
+  for (const [k, [nm, how]] of Object.entries(STAT_INFO)) h += `<div class="sr"><b>${nm} ${st[k]}</b><span class="sb"><i style="width:${st[k] >= 10 ? 100 : Math.min(100, st[k + 'Xp'] / NEEDXP(st[k]) * 100)}%"></i></span></div><div style="font-size:11px;opacity:.75;margin:-3px 0 4px">${how}</div>`;
+  h += `<div>Nyawa maks: <b>${fight.maxHP()}</b> · Reputasi: <b>${st.rep >= 0 ? '+' : ''}${st.rep}</b></div>`;
+  const seen = new Map(); for (const n of npcs) { const p = fight.STRENGTH[n.sid]; if (p && !n.ext && !seen.has(n.sid)) seen.set(n.sid, { name: p.boss || n.name, p }); }
+  h += '<table><tr><td><b>Lawan</b></td><td><b>Lv</b></td><td><b>Tipe</b></td><td></td></tr>' + [...seen.values()].sort((a, b) => a.p.lv - b.p.lv).map(({ name, p }) => { const [v, c] = verdict(p.lv); return `<tr><td>${name}</td><td>${p.lv}</td><td>${p.type}</td><td style="font-weight:bold;color:${c === 'lvHard' ? '#c0392b' : c === 'lvEven' ? '#b07a00' : '#2a8a3a'}">${v}</td></tr>`; }).join('') + '</table>';
+  h += '<p style="font-size:11px;margin:8px 0 0">Pukul (J/F) · Tendang (K) · Hindar (L, tahan = tangkis, tepat waktu = parry) · Pegang (I, lawan pusing = kunci lengan) · Provokasi (T) · Nyali penuh: Shift+J / tombol JURUS.<br>Combo: A-A-A-B Bel Pulang, A-A-B Ojek Lewat, A-B Sapu Pasar, B-B Angkot Ngerem.</p>';
+  statusEl.innerHTML = h; statusEl.querySelector('.x').addEventListener('pointerdown', e => { e.stopPropagation(); toggleStatus(); });
+}
+function toggleStatus() { const on = statusEl.style.display !== 'block'; statusEl.style.display = on ? 'block' : 'none'; if (on) renderStatus(); }
+statusEl.addEventListener('pointerdown', e => e.stopPropagation());
 let toastT = 0;
 function toast(t) { ui.toast.textContent = t; ui.toast.style.opacity = 1; toastT = 2.2; }
 
@@ -284,7 +313,6 @@ function findTarget() {
   } else if (Math.hypot(player.x - EXIT_SCHOOL.x, player.z - EXIT_SCHOOL.z) < 3) return { kind: 'go', to: 'kota', label: 'Keluar ke kota (Jl. Merdeka)' };
   return null;
 }
-let fading = 0;
 function act() {
   if (!target || fading) return;
   if (target.kind === 'act') { target.fn(); return; }
@@ -329,6 +357,7 @@ function drawMinimap() {
 
 /* ------------------------------------------------------------------ update */
 const tmp = { x: 0, z: 0 };
+var saveT = 0;
 function updatePlayer(dt) {
   let ix = 0, iy = 0;
   if (keys.has('KeyW') || keys.has('ArrowUp')) iy -= 1;
@@ -336,6 +365,9 @@ function updatePlayer(dt) {
   if (keys.has('KeyA') || keys.has('ArrowLeft')) ix -= 1;
   if (keys.has('KeyD') || keys.has('ArrowRight')) ix += 1;
   ix += joy.x; iy += joy.y;
+  { const l0 = Math.hypot(ix, iy), fx0 = -Math.sin(cam.yaw), fz0 = -Math.cos(cam.yaw), rx0 = Math.cos(cam.yaw), rz0 = -Math.sin(cam.yaw);
+    player.inMove = l0 > 0.15; const wx0 = fx0 * -iy + rx0 * ix, wz0 = fz0 * -iy + rz0 * ix, wl = Math.hypot(wx0, wz0);
+    player.inDir = player.inMove && wl > 1e-3 ? { x: wx0 / wl, z: wz0 / wl } : null; }
   const lock = player.area ? fight.updatePlayer(dt) : null;
   player.riding = !!ride;
   const inp = Math.hypot(ix, iy) > 0.15 && !bigmap.isOpen;
@@ -451,16 +483,17 @@ function drawBubbles() {
   for (const n of npcs) {
     if (!n.c.group.visible) continue;
     const d = Math.hypot(n.x - player.x, n.z - player.z);
-    if (n.say) show(n.key, n.x, 2.0, n.z, n.say.text, n.filler ? 'bubble filler' : 'bubble');
-    else if (d < 6) show(n.key, n.x, 1.85, n.z, n.name, n.filler ? 'tag filler' : 'tag');
+    if (n.say) show(n.key, n.x, 2.0, n.z, n.say.text, n.say.cls ? 'bubble ' + n.say.cls : n.filler ? 'bubble filler' : 'bubble');
+    else if (d < 6) { const p = fight.STRENGTH[n.sid]; if (p && !n.ext) { const [, c] = verdict(p.lv); show(n.key, n.x, 1.85, n.z, `${n.name} · lv ${p.lv}`, 'tag ' + c); } else show(n.key, n.x, 1.85, n.z, n.name, n.filler ? 'tag filler' : 'tag'); }
   }
   for (const [k, el] of bubbleEls) if (!seen.has(k)) { el.remove(); bubbleEls.delete(k); }
 }
 
-let last = performance.now(), fpsAcc = 0, fpsN = 0, saveT = 0, areaName = '';
+let last = performance.now(), fpsAcc = 0, fpsN = 0, areaName = '';
 function loop(now) {
   requestAnimationFrame(loop);
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const rdt = Math.min(0.05, (now - last) / 1000); last = now;
+  const dt = rdt * fight.stopFactor(rdt);   // hit-stop: dunia membeku sebentar saat pukulan kena
   const v = updatePlayer(dt);
   for (const n of npcs) updateNPC(n, dt);
   kota.traffic.update(dt, player);
@@ -483,6 +516,7 @@ function loop(now) {
   const cp = Math.cos(cam.pitch) * dist;
   camera.position.set(cam.x + Math.sin(cam.yaw) * cp, Math.sin(cam.pitch) * dist + 0.8, cam.z + Math.cos(cam.yaw) * cp);
   camera.lookAt(cam.x, 0.8, cam.z);
+  { const sk = fight.shake(rdt); if (sk) { camera.position.x += (Math.random() - 0.5) * sk; camera.position.y += (Math.random() - 0.5) * sk; } }
   scene.fog.near = dist * 2.6; scene.fog.far = dist * 2.6 + 50;
   // matahari ikut pemain, dibulatkan ke grid texel bayangan supaya tidak berkedip
   if (sun.castShadow) {
@@ -498,13 +532,14 @@ function loop(now) {
   const an = player.area === 'kota' ? kota.regionAt(player.x, player.z) : sekolah.zoneAt(player.x, player.z);
   if (an !== areaName) { areaName = an; ui.area.textContent = an; }
   drawBubbles();
+  if (isTouch) { const sp = player.fx.nyali >= 100, b = $('btnHit'); if (b.classList.contains('on') !== sp) { b.classList.toggle('on', sp); b.textContent = sp ? 'JURUS' : 'Pukul'; } }
   bigmap.update(dt);
   if (opt.minimap) drawMinimap();
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) ui.toast.style.opacity = 0; }
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { ui.fps.textContent = `${Math.round(fpsN / fpsAcc)} fps · ${renderer.info.render.calls} draw · ${renderer.domElement.width}x${renderer.domElement.height}`; fpsAcc = 0; fpsN = 0; }
   saveT += dt;
-  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage })); }
+  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage, stats: player.stats })); }
 }
 
 resize(); applyQuality();
