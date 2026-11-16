@@ -150,7 +150,7 @@ export function makeAnimals({ scene, kota, collision, player, toast }) {
       if (A.y < 0) { A.y = 0; A.st = 'idle'; A.t = 2; }
       mx = Math.cos(A.fh); mz = Math.sin(A.fh); move = 2.4;
       const nx = A.x + mx * move * dt, nz = A.z + mz * move * dt; if (A.y > 0.5 || okGround(nx, nz, 0.08)) { A.x = nx; A.z = nz; } A.heading = A.fh;
-      A.root.position.set(A.x, A.y, A.z); A.root.rotation.y = -A.heading;
+      A.root.position.set(A.x, A.y + kota.groundY(A.x, A.z), A.z); A.root.rotation.y = -A.heading;
       const f = Math.sin(A.ph * 22) * 0.9; A.wingL.rotation.x = -f; A.wingR.rotation.x = f; return;
     } else if (A.st === 'walk') {
       const tx = A.tx - A.x, tz = A.tz - A.z, d = Math.hypot(tx, tz);
@@ -182,7 +182,7 @@ export function makeAnimals({ scene, kota, collision, player, toast }) {
     if (A.kind === 'bebek') { headZ = Math.sin(A.ph * 1.3) > 0.85 ? -1.2 : 0; }
     if (A.kind === 'ikan') { A.tail.rotation.y = Math.sin(A.ph * 10) * 0.5; ry = Math.sin(A.ph * 5) * 0.15; if (A.jump > 0) { A.jump -= dt; y = SURF - 0.12 + Math.sin((1 - A.jump / 0.6) * Math.PI) * 0.45; rz = Math.cos((1 - A.jump / 0.6) * Math.PI) * 0.8; } else if (Math.random() < dt * 0.02) A.jump = 0.6; }
     if (A.head) { A.head.rotation.z = headZ; A.head.rotation.y = headX; }
-    A.root.position.set(A.x, y + by, A.z); A.root.rotation.set(0, -A.heading + ry, rz, 'YXZ');
+    A.root.position.set(A.x, y + by + (A.kind === 'ikan' || A.kind === 'bebek' ? 0 : kota.groundY(A.x, A.z)), A.z); A.root.rotation.set(0, -A.heading + ry, rz, 'YXZ');
   }
   function pickPose(A) {
     const r = Math.random();

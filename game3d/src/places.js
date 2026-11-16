@@ -197,14 +197,14 @@ export function buildPlaces({ ch, thin, K, M, C, veg, SB, S, occ, waterMat, BED,
     const cols = ['#e8782a', '#3a8a4a', '#3a6ab4', '#d8c040', '#c83a3a', '#7a4a9a'];
     for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + 0.3, x = cx + Math.cos(a) * 4.2, z = cz + Math.sin(a) * 3.0; tent(x, z, Math.atan2(cz - z, cx - x) - Math.PI / 2, C_(cols[i])); }
     { const t = { x: cx, z: cz, a: 0 }, mm = ch.at(cx, cz);   // api unggun
-      for (let i = 0; i < 9; i++) { const a = i / 9 * 6.28; mm.box({ x: cx + Math.cos(a) * 0.45, z: cz + Math.sin(a) * 0.45, a }, 0, 0, 0, 0.22, 0.16, 0.2, C_('#8a8680')); }
-      for (let i = 0; i < 4; i++) mm.box({ ...t, a: i * 0.8 }, 0, 0.08, 0, 0.7, 0.1, 0.1, C_('#5a3a22'));
-      mm.box(t, 0, 0.15, 0, 0.3, 0.35, 0.3, C_('#f6a01a')); mm.box(t, 0.05, 0.3, 0, 0.18, 0.35, 0.18, C_('#f6d84a')); mm.box(t, -0.08, 0.2, 0.06, 0.14, 0.25, 0.14, C_('#e8501a'));
-      for (let i = 0; i < 3; i++) { const a = i / 3 * 6.28 + 0.5, q = { x: cx + Math.cos(a) * 1.5, z: cz + Math.sin(a) * 1.5, a: a + Math.PI / 2 }; mm.box(q, 0, 0, 0, 1.3, 0.32, 0.32, C_('#7a5434')); cl(q, 0, 0, 1.3, 0.3); }
+      for (let i = 0; i < 9; i++) { const a = i / 9 * 6.28; mm.ball({ x: cx + Math.cos(a) * 0.45, z: cz + Math.sin(a) * 0.45, a }, 0, 0.06, 0, 0.12, C_(i % 2 ? '#8a8680' : '#9a968e'), { sy: 0.7, detail: 0 }); }
+      for (let i = 0; i < 4; i++) mm.cylX({ ...t, a: i * 0.8 }, 0, 0.1, 0, 0.05, 0.7, C_('#5a3a22'), { seg: 5 });
+      mm.cyl(t, 0, 0.12, 0, 0.17, 0.42, C_('#f6a01a'), { r2: 0.02, seg: 6 }); mm.cyl(t, 0.05, 0.15, 0.02, 0.1, 0.42, C_('#f6d84a'), { r2: 0.01, seg: 5 }); mm.cyl(t, -0.08, 0.12, 0.06, 0.08, 0.3, C_('#e8501a'), { r2: 0.01, seg: 5 });   // api
+      for (let i = 0; i < 3; i++) { const a = i / 3 * 6.28 + 0.5, q = { x: cx + Math.cos(a) * 1.5, z: cz + Math.sin(a) * 1.5, a: a + Math.PI / 2 }; mm.cylX(q, 0, 0.17, 0, 0.17, 1.3, C_('#7a5434'), { seg: 7 }); for (const sd of [-0.65, 0.65]) mm.cyl({ ...q, a: q.a + Math.PI / 2 }, 0, 0.17, sd, 0.15, 0.005, C_('#c8a070'), { seg: 7, rx: Math.PI / 2 }); cl(q, 0, 0, 1.3, 0.3); }   // batang kayu duduk
       C.circle(cx, cz, 0.5); out.fire = { x: cx, z: cz }; }
     { const fx = cx + 5.5, fz = cz - 1, t = { x: fx, z: fz, a: 0 }, mm = thin.at(fx, fz);   // tiang bendera bambu
-      mm.box(t, 0, 0, 0, 0.1, 4.4, 0.1, BAMBU); mm.box(t, 0.4, 3.9, 0, 0.7, 0.24, 0.02, C_('#d82a2a')); mm.box(t, 0.4, 3.66, 0, 0.7, 0.24, 0.02, WHITE);
-      for (const [u, v] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) ch.at(fx, fz).box(t, u, 0, v, 0.25, 0.2, 0.25, C_('#a8a49a')); C.circle(fx, fz, 0.12); }
+      mm.cyl(t, 0, 0, 0, 0.05, 4.4, BAMBU, { seg: 6 }); mm.box(t, 0.4, 3.9, 0, 0.7, 0.24, 0.02, C_('#d82a2a')); mm.box(t, 0.4, 3.66, 0, 0.7, 0.24, 0.02, WHITE);
+      for (const [u, v] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) ch.at(fx, fz).ball(t, u * 0.7, 0.08, v * 0.7, 0.16, C_('#a8a49a'), { sy: 0.6, detail: 0 }); C.circle(fx, fz, 0.12); }
     { let best = null; for (let a = 0; a < 6.28; a += 0.2) { const x = cx + Math.cos(a) * 6.5, z = cz + Math.sin(a) * 5, d = M.roadDist(x, z); if (d > 0.4 && (!best || d < best.d)) best = { x, z, d, a }; }   // gapura bambu ke arah jalan
       if (best) { const t = { x: best.x, z: best.z, a: best.a + Math.PI / 2 }, mm = ch.at(t.x, t.z);
         for (const sd of [-1, 1]) { mm.box(t, sd * 1.2, 0, 0, 0.16, 2.5, 0.16, BAMBU); cl(t, sd * 1.2, 0, 0.16, 0.16); }
@@ -344,8 +344,10 @@ export function buildPlaces({ ch, thin, K, M, C, veg, SB, S, occ, waterMat, BED,
           const ex = cx - nx * r, ez = cz - nz * r, t = { x: ex + nx * 0.3, z: ez + nz * 0.3, a: Math.atan2(nz, nx) }, mm = ch.at(t.x, t.z);
           mm.box(t, 0.3, -0.05, 0, 1.9, 0.1, 1.0, WOOD); for (let u = -0.6; u < 1.2; u += 0.25) mm.box(t, u, 0.05, 0, 0.02, 0.005, 1.0, WOOD2);
           for (const [u, v] of [[1.1, -0.45], [1.1, 0.45]]) mm.box(t, u, SURF - 0.3, v, 0.1, 0.4 - SURF, 0.1, WOOD2);
-          mm.box(t, 0.4, 0.05, 0.38, 0.32, 0.3, 0.3, C_(i % 2 ? '#3a8ad8' : '#e84a3a'));   // kursi plastik
-          mm.box(t, -0.2, 0.05, -0.35, 0.25, 0.22, 0.25, C_('#e8e4d8'));                     // ember
+          { const kc = C_(i % 2 ? '#3a8ad8' : '#e84a3a');   // kursi plastik bundar: dudukan + 4 kaki miring
+            mm.cyl(t, 0.4, 0.31, 0.38, 0.17, 0.04, kc, { seg: 10 }); for (const [u, v] of [[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]]) mm.cyl(t, 0.4 + u, 0.05, 0.38 + v, 0.025, 0.27, shade(kc, 0.85), { seg: 4, r2: 0.02 }); }
+          mm.cyl(t, -0.2, 0.05, -0.35, 0.09, 0.22, C_('#e8e4d8'), { seg: 9, r2: 0.12, open: true }); mm.cyl(t, -0.2, 0.05, -0.35, 0.09, 0.01, C_('#c8c4b8'), { seg: 9 });   // ember
+          mm.cylX({ ...t, a: t.a + Math.PI / 2 }, 0.38, 0.27, -0.2, 0.004, 0.24, C_('#5a5a60'), { seg: 3 });   // gagang ember
           const sx = ex + nx * 1.0, sz = ez + nz * 1.0;
           out.fish.push({ x: sx, z: sz, h: Math.atan2(nz, nx), name: 'Kolam Pak Haji', pond: true });
         }

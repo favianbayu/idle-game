@@ -502,6 +502,7 @@ export function buildKota(scene, C) {
 
   // tanah
   // tanah dipotong jadi beberapa tekstur <= 2048 px (batas aman GPU HP), tiap potong satu bidang
+  const grounds = [];
   const gcv = paintGround(K, houses, M, specials), TS = 2048 / PX;
   for (let tx = 0; tx < W; tx += TS) for (let tz = 0; tz < H; tz += TS) {
     const tw = Math.min(TS, W - tx), th = Math.min(TS, H - tz), c = document.createElement('canvas');
@@ -509,8 +510,8 @@ export function buildKota(scene, C) {
     waterHoles(cg, K, tx, tz, c.width, c.height);   // sungai & danau dilubangi: airnya ada di bawah permukaan tanah
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.anisotropy = 4;
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(tw, th), groundDetail(new THREE.MeshLambertMaterial({ map: tex, alphaTest: 0.5 })));
-    ground.rotation.x = -Math.PI / 2; ground.position.set(tx + tw / 2, 0, tz + th / 2); ground.receiveShadow = true; scene.add(ground);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(tw, th, tw, th), groundDetail(new THREE.MeshLambertMaterial({ map: tex, alphaTest: 0.5 })));
+    ground.rotation.x = -Math.PI / 2; ground.position.set(tx + tw / 2, 0, tz + th / 2); ground.receiveShadow = true; scene.add(ground); grounds.push(ground);
   }
   const tex = { image: gcv };
   const outer = new THREE.Mesh(new THREE.PlaneGeometry(900, 700), new THREE.MeshLambertMaterial({ color: new THREE.Color('#9cbc78') }));
@@ -552,8 +553,13 @@ export function buildKota(scene, C) {
   const street = {}; streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, street);
   const portal = perumGate(ch, K, M, C, occ, SB, scene);
   if (globalThis.__TRACE) { globalThis.__BOXES = globalThis.__TRACE; globalThis.__ROAD = globalThis.__TRACE.filter(t => t.p.some(([x, , z]) => M.roadDist(x, z) < -0.12 && !M.waterAt(x, z) && x > 0 && z > 0 && x < W && z < H)); globalThis.__TRACE = null; }
-  for (const m of ch.meshes(MAT.world)) scene.add(m);
-  for (const m of thin.meshes(MAT.world, { cast: false })) { m.userData.thin = true; scene.add(m); }
+  // kontur tanah: perbukitan utara & hutan naik-turun; jalan, air, rel, rumah/halaman, gedung kunci & tempat (occ) tetap rata,
+  // dengan lereng halus di sekelilingnya. Semua geometri statis ikut digeser ke atas sesuai tinggi tanah di titiknya.
+  const HT = terrain(K, M, occ, specials);
+  const lift = mesh => { const pa = mesh.geometry.attributes.position; let any = false; for (let i = 0; i < pa.count; i++) { const h = HT(pa.getX(i), pa.getZ(i)); if (h > 0.001) { pa.setY(i, pa.getY(i) + h); any = true; } } if (any) { pa.needsUpdate = true; mesh.geometry.computeBoundingSphere(); mesh.geometry.computeBoundingBox(); } };
+  for (const g of grounds) { const pa = g.geometry.attributes.position; for (let i = 0; i < pa.count; i++) pa.setZ(i, HT(g.position.x + pa.getX(i), g.position.z - pa.getY(i))); pa.needsUpdate = true; g.geometry.computeVertexNormals(); g.geometry.computeBoundingSphere(); }
+  for (const m of ch.meshes(MAT.world)) { lift(m); scene.add(m); }
+  for (const m of thin.meshes(MAT.world, { cast: false })) { lift(m); m.userData.thin = true; scene.add(m); }
   const signs = SB.build(scene);
   const water = riverMesh(K); scene.add(water); scene.add(waterBanks(K, M));
   // tanaman
@@ -570,12 +576,13 @@ export function buildKota(scene, C) {
   { // pohon besar: batang & tajuk tidak boleh menjorok ke badan jalan (kendaraan lewat di bawahnya)
     const R = { bulat: 0.95, ketapang: 1.1, cemara: 0.7, kelapa: 0.5, pisang: 0.55, bambu: 0.45 };
     for (let i = veg.length - 1; i >= 0; i--) { const v = veg[i], r = R[v.k]; if (r && M.roadDist(v.x, v.z) < r * (v.s || 1) * 0.8) veg.splice(i, 1); } }
+  for (const v of veg) { const h = HT(v.x, v.z); if (h > 0.001) v.y = (v.y || 0) + h; }
   if (globalThis.__TRACEON) globalThis.__VEGROAD = veg.filter(v => M.roadDist(v.x, v.z) < 0.1).map(v => v.k);
   plant(scene, veg);
   const traffic = buildTraffic(scene, K, C, M);
   return {
     traffic, signs, parkir, portal, posSatpam: portal?.pos, M, places, specials,
-    walkPaths: street.walkPaths, groundY: (x, z) => street.walkAt(x, z) ? 0.1 : 0,
+    walkPaths: street.walkPaths, groundY: (x, z) => street.walkAt(x, z) ? 0.1 : HT(x, z), heightAt: HT,
     regionAt: (x, z) => { const r = regionAt(x, z); return r ? REGIONS[REGION_KEY.indexOf(r)] : 'Wirabumi'; },
     regionKey: regionAt, labels: K.labels,
     marks: K.marks.map(m => ({ ...m, name: m.desc.replace(/\s*\(.*$/, '') })),
@@ -662,17 +669,29 @@ function specialBuildings(ch, S, C, veg, M) {
   });
   add(S.pasar, (m, xf, b) => {
     const tin = col('#9aa0a6');
-    for (let i = 0; i < 6; i++) for (const s of [-1, 1]) { m.box(xf, -b.w / 2 + 0.3 + i * (b.w - 0.6) / 5, 0, s * (b.h / 2 - 0.3), 0.3, 2.6, 0.3, col('#c8c2b8')); cl(xf, -b.w / 2 + 0.3 + i * (b.w - 0.6) / 5, s * (b.h / 2 - 0.3), 0.3, 0.3); }
+    for (let i = 0; i < 6; i++) for (const s of [-1, 1]) { const u = -b.w / 2 + 0.3 + i * (b.w - 0.6) / 5, v = s * (b.h / 2 - 0.3); m.cyl(xf, u, 0, v, 0.2, 0.25, col('#a8a29a'), { seg: 8 }); m.cyl(xf, u, 0.25, v, 0.14, 2.35, col('#c8c2b8'), { seg: 8 }); cl(xf, u, v, 0.3, 0.3); }
     m.box(xf, 0, 0, 0, b.w - 0.6, 0.1, b.h - 0.6, col('#7a7670'));
     for (let r = 0; r < 2; r++) for (let i = 0; i < 4; i++) { const x = -b.w / 2 + 1.6 + i * (b.w - 3.2) / 3, z = r ? 1.4 : -1.4, cc = col(pick(['#c8503a', '#3a7ac0', '#3a9a6a', '#e8c040'], hash(i, r + 3)));
-      m.box(xf, x, 0, z, 2, 0.8, 1.2, col('#a8885a')); m.box(xf, x, 0.8, z, 1.8, 0.25, 1, col(pick(['#6ab84a', '#e85a3a', '#f0d040', '#c86aa8'], hash(i, r + 7)))); m.box(xf, x, 1.8, z, 2.2, 0.05, 1.5, cc); cl(xf, x, z, 2, 1.2); }
+      // lapak: meja papan berkaki, tampah & keranjang bambu berisi sayur/buah bulat, terpal di tiang bambu
+      const wood = col('#a8885a'), kind = Math.floor(hash(i, r + 7) * 4);
+      m.box(xf, x, 0.7, z, 2, 0.08, 1.2, wood); m.box(xf, x, 0.1, z + 0.55, 1.95, 0.6, 0.04, shade(wood, 0.8));
+      for (const [u, v] of [[-0.9, -0.5], [0.9, -0.5], [-0.9, 0.5], [0.9, 0.5]]) m.cyl(xf, x + u, 0, z + v, 0.04, 0.7, shade(wood, 0.7), { seg: 5 });
+      for (let k = 0; k < 3; k++) { const u = x - 0.6 + k * 0.6, tz = z + (k % 2 ? 0.15 : -0.15);
+        m.cyl(xf, u, 0.78, tz, 0.26, 0.03, col('#c8a868'), { seg: 10 });   // tampah
+        const fc = [['#d83a2a', '#e8502a'], ['#f29a2a', '#f2b23a'], ['#6ab84a', '#8ac85a'], ['#7a3a8a', '#9a5aa8']][(kind + k) % 4];
+        for (let j = 0; j < 6; j++) { const aa = j / 6 * 6.28 + k; m.ball(xf, u + Math.cos(aa) * 0.13, 0.86, tz + Math.sin(aa) * 0.13, 0.07, col(fc[j % 2]), { detail: 0 }); }
+        m.ball(xf, u, 0.92, tz, 0.08, col(fc[0]), { detail: 0 }); }
+      for (const sd of [-1, 1]) { m.cyl(xf, x + sd * 0.85, 0, z + 0.85, 0.11, 0.3, col('#b8945a'), { r2: 0.14, seg: 8 }); for (let j = 0; j < 3; j++) m.ball(xf, x + sd * 0.85 + (j - 1) * 0.06, 0.32, z + 0.85, 0.06, col(sd > 0 ? '#e8d050' : '#c84a3a'), { detail: 0 }); }   // keranjang
+      for (const [u, v] of [[-1.05, -0.6], [1.05, -0.6], [-1.05, 0.6], [1.05, 0.6]]) m.cyl(xf, x + u, 0, z + v, 0.035, 1.85, col('#c8b070'), { seg: 5 });
+      m.box(xf, x, 1.83, z, 2.3, 0.04, 1.5, cc); for (let k = 0; k < 9; k++) m.box(xf, x - 1.1 + k * 0.275, 1.7, z + 0.76, 0.24, 0.13, 0.02, k % 2 ? cc : shade(cc, 1.25));   // terpal + rumbai
+      cl(xf, x, z, 2, 1.2); }
     m.gable(xf, 0, 2.6, 0, b.w, b.h, 1.2, tin, 0.4, tin); m.gable(xf, 0, 3.7, 0, b.w * 0.6, b.h * 0.4, 0.8, shade(tin, 1.1), 0.2, tin);
     m.box(xf, 0, 2.2, b.h / 2 + 0.1, 5, 0.45, 0.06, col('#2a6ac0'));   // spanduk PASAR TERTIB
     // terminal angkot di depan pasar: halte + angkot biru muda berjajar
     const t = { x: 114 + (b.dx || 0), z: 106 + (b.dy || 0), a: 0 };
     m.box(t, 0, 0, -0.6, 10, 0.12, 2, col('#a8a8a4')); m.box(t, 0, 2.2, -0.6, 10, 0.1, 2.2, col('#5a7aa8'));
-    for (const x of [-4.8, 0, 4.8]) { m.box(t, x, 0.12, -1.4, 0.15, 2.1, 0.15, col('#5a5a60')); cl(t, x, -1.4, 0.2, 0.2); }
-    m.box(t, 0, 0.12, -1.2, 8, 0.4, 0.5, col('#8a5a34'));
+    for (const x of [-4.8, 0, 4.8]) { m.cyl(t, x, 0.12, -1.4, 0.08, 2.1, col('#5a5a60'), { seg: 8 }); cl(t, x, -1.4, 0.2, 0.2); }
+    for (const x of [-3.6, -1.2, 1.2, 3.6]) { m.box(t, x, 0.5, -1.2, 2.2, 0.06, 0.45, col('#8a5a34')); m.box(t, x, 0.56, -1.42, 2.2, 0.4, 0.05, col('#7a4a2a')); for (const u of [-1, 1]) m.cyl(t, x + u, 0.12, -1.2, 0.03, 0.38, col('#3a3a40'), { seg: 5 }); }   // bangku halte berkaki
     for (let i = 0; i < 4; i++) { const a = { x: 109 + (b.dx || 0) + i * 3.4, z: 108.4 + (b.dy || 0), a: Math.PI / 2 }; if (!clear(a.x, a.z, 2)) continue; car(m, a, '#8ac8e0', 'angkot'); cl(a, 0, 0, 1.5, 3.2); }
   });
   add(S.plaza, (m, xf, b) => {
@@ -786,6 +805,44 @@ function perumGate(ch, K, M, C, occ, SB, scene) {
   };
 }
 
+/* ------------------------------------------------------------------ kontur tanah */
+function terrain(K, M, occ, specials) {
+  const [W, H] = K.size, R = 2, gw = W * R + 1, gh = H * R + 1, D = new Float32Array(gw * gh).fill(1e9);
+  // bidang peta digambar ke kanvas (merah = daerah rata: sawah, lapangan, alun-alun, makam...; hijau = hutan)
+  const cv = document.createElement('canvas'); cv.width = gw; cv.height = gh; const g = cv.getContext('2d');
+  K.areas.forEach((a, i) => { if (i <= 6) return; g.fillStyle = AREA.forest.includes(i) ? '#00ff00' : '#ff0000'; g.beginPath(); a.pts.forEach(([x, z], k) => k ? g.lineTo(x * R, z * R) : g.moveTo(x * R, z * R)); g.closePath(); g.fill(); });
+  const px = g.getImageData(0, 0, gw, gh).data, areaFlat = k => px[k * 4] > 128, areaForest = k => px[k * 4 + 1] > 128 && px[k * 4] < 128;
+  const sp = Object.values(specials).map(b => ({ x: b.x, z: b.y, c: Math.cos(b.a), s: Math.sin(b.a), hw: b.w / 2 + 2.5, hd: b.h / 2 + 2.5 }));
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+    const x = i / R, z = j / R;
+    const flat = M.roadDist(x, z) < 1.2 || M.waterAt(x, z) || M.railAt(x, z) || occ.get(x, z) || x < 1 || z < 0.5 || x > W - 1 || z > H - 1
+      || areaFlat(j * gw + i) || sp.some(b => { const dx = x - b.x, dz = z - b.z; return Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd; });
+    if (flat) D[j * gw + i] = 0;
+  }
+  // jarak (petak) ke daerah rata: chamfer 2 lintasan
+  const d1 = 1 / R, d2 = Math.SQRT2 / R;
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const k = j * gw + i; let v = D[k];
+    if (i > 0) v = Math.min(v, D[k - 1] + d1); if (j > 0) { v = Math.min(v, D[k - gw] + d1); if (i > 0) v = Math.min(v, D[k - gw - 1] + d2); if (i < gw - 1) v = Math.min(v, D[k - gw + 1] + d2); } D[k] = v; }
+  for (let j = gh - 1; j >= 0; j--) for (let i = gw - 1; i >= 0; i--) { const k = j * gw + i; let v = D[k];
+    if (i < gw - 1) v = Math.min(v, D[k + 1] + d1); if (j < gh - 1) { v = Math.min(v, D[k + gw] + d1); if (i < gw - 1) v = Math.min(v, D[k + gw + 1] + d2); if (i > 0) v = Math.min(v, D[k + gw - 1] + d2); } D[k] = v; }
+  const ss = v => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); };
+  const noise = (x, z) => 0.5 + 0.25 * Math.sin(x * 0.11 + Math.sin(z * 0.07) * 2) * Math.cos(z * 0.13 - x * 0.03) + 0.15 * Math.sin(x * 0.29 + z * 0.23 + 1.3) + 0.1 * Math.cos(x * 0.47 - z * 0.41);
+  const HG = new Float32Array(gw * gh);
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+    const k = j * gw + i; if (!D[k]) continue;
+    const x = i / R, z = j / R, n = noise(x, z);
+    let b = 4.2 * ss((42 - z) / 30) * (0.45 + 0.75 * n);                       // perbukitan utara: makin ke utara makin tinggi
+    if (areaForest(k)) b += 1.3 * n;                        // hutan: gundukan
+    b += 0.45 * n;                                                               // padang rumput: naik-turun landai
+    HG[k] = b * ss((D[k] - 1.0) / 6);                                            // lereng halus dari tepi daerah rata
+  }
+  return (x, z) => {
+    const fx = x * R, fz = z * R, i = Math.floor(fx), j = Math.floor(fz); if (i < 0 || j < 0 || i >= gw - 1 || j >= gh - 1) return 0;
+    const u = fx - i, v = fz - j, k = j * gw + i;
+    return (HG[k] * (1 - u) + HG[k + 1] * u) * (1 - v) + (HG[k + gw] * (1 - u) + HG[k + gw + 1] * u) * v;
+  };
+}
+
 /* ------------------------------------------------------------------ jalanan: kanstin, trotoar, jembatan, tiang listrik, lampu */
 function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = {}) {
   const curb = col('#d8d6ce'), curb2 = col('#c83a3a');
@@ -881,8 +938,10 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = 
   for (const A of poles) {
     if (!A.n.length) continue;
     const m = thin.at(A.x, A.z), xf = { x: A.x, z: A.z, a: A.a };
-    m.box(xf, 0, 0, 0, 0.16, 4.2, 0.16, col('#7a7a80')); m.box(xf, 0, 3.9, 0, 0.1, 0.08, 0.9, col('#5a5a60'));
-    m.box(xf, 0, 3.6, 0.3, 0.28, 0.36, 0.22, col('#5a6a5a'));
+    m.cyl(xf, 0, 0, 0, 0.1, 4.2, col('#8a8a8e'), { r2: 0.07, seg: 6 }); m.box(xf, 0, 3.9, 0, 0.1, 0.08, 0.9, col('#5a5a60'));   // tiang beton meruncing + palang
+    for (const o of [-0.4, 0.4]) m.cyl(xf, 0, 3.98, o, 0.035, 0.08, col('#e8e4d8'), { seg: 5 });                                         // isolator
+    if (hash(Math.round(A.x * 3), Math.round(A.z * 3)) < 0.35) { m.cyl(xf, 0.24, 3.3, 0, 0.13, 0.42, col('#6a7a6a'), { seg: 8 }); m.cyl(xf, 0.24, 3.72, 0, 0.14, 0.04, col('#5a6a5a'), { seg: 8 }); }   // trafo tabung
+    m.box(xf, 0, 2.4, 0.09, 0.06, 0.1, 0.02, col('#f2f2ee'));   // pelat nomor tiang
     C.circle(A.x, A.z, 0.14);
     for (const B of A.n) {
       if (wired.has(B)) continue;
@@ -907,9 +966,22 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = 
     const t = i / 64 * Math.PI * 2; if (Math.abs(Math.sin(t * 2)) < 0.12) continue;
     const x = 146 + Math.cos(t) * 10.2, z = 76 + Math.sin(t) * 6.3, m = ch.at(x, z), a = Math.atan2(Math.cos(t) * 6.3, -Math.sin(t) * 10.2);
     m.box({ x, z, a }, 0, 0, 0, 0.92, 0.5, 0.06, col('#2f6a4a'));
-    if (i % 8 === 4) { m.box({ x, z, a }, 0, 0, 0.4, 0.08, 1.4, 0.08, col('#2a2a2e')); m.box({ x, z, a }, 0, 1.4, 0.4, 0.26, 0.26, 0.26, col('#fff6d0')); }
+    if (i % 8 === 4) { const q = { x, z, a }; m.cyl(q, 0, 0, 0.4, 0.09, 0.12, col('#3a3a3e'), { seg: 8 }); m.cyl(q, 0, 0.12, 0.4, 0.04, 1.3, col('#2a2a2e'), { seg: 6 }); m.cyl(q, 0, 1.4, 0.4, 0.05, 0.06, col('#3a3a3e'), { r2: 0.09, seg: 8 });
+      m.ball(q, 0, 1.6, 0.4, 0.16, col('#fff6d0')); m.cyl(q, 0, 1.74, 0.4, 0.07, 0.05, col('#2a2a2e'), { seg: 8 }); }   // lampu taman bola
   }
-  { const m = ch.at(146, 71), xf = { x: 146, z: 70.6, a: 0 }; m.box(xf, 0, 0, 0, 4.4, 0.6, 2.2, col('#8a5a34')); m.box(xf, 0, 0.6, -0.9, 4.4, 1.8, 0.1, col('#c83a3a')); colLocal(C, xf, 0, 0, 4.4, 2.2); }
+  { // panggung alun-alun: lantai papan berlis, rok kain merah-putih, tangga, tiang & atap kain, latar bergambar, pengeras suara
+    const m = ch.at(146, 71), xf = { x: 146, z: 70.6, a: 0 }, wood = col('#8a5a34'), red = col('#c83a3a'), wht = col('#f2f0e8'), iron = col('#3a3a40');
+    m.box(xf, 0, 0, 0, 4.4, 0.55, 2.2, shade(wood, 0.8)); for (let k = 0; k < 11; k++) m.box(xf, -2.0 + k * 0.4, 0.55, 0, 0.38, 0.05, 2.2, shade(wood, 0.9 + hash(k, 3) * 0.2));
+    for (let k = 0; k < 22; k++) m.box(xf, -2.1 + k * 0.2, 0.08, 1.11, 0.18, 0.4, 0.02, k % 2 ? red : wht);                 // rok lipit merah-putih
+    for (const sd of [-1, 1]) m.box(xf, sd * 2.21, 0.08, 0, 0.02, 0.4, 2.1, red);
+    for (let k = 0; k < 3; k++) m.box(xf, 1.5, k * 0.18, 1.2 + (2 - k) * 0.25, 0.9, 0.18, 0.25, shade(wood, 0.85 + k * 0.05));   // tangga
+    for (const [u, v] of [[-2.05, -0.95], [2.05, -0.95], [-2.05, 0.95], [2.05, 0.95]]) { m.cyl(xf, u, 0.6, v, 0.06, 2.2, iron, { seg: 6 }); m.ball(xf, u, 2.82, v, 0.08, col('#e8c040')); }
+    m.box(xf, 0, 2.8, 0, 4.5, 0.06, 2.3, red); for (let k = 0; k < 15; k++) m.box(xf, -2.1 + k * 0.3, 2.6, 1.15, 0.28, 0.2 - (k % 2) * 0.08, 0.02, k % 2 ? wht : red);   // atap kain + rumbai
+    m.box(xf, 0, 0.6, -0.95, 4.0, 1.9, 0.08, col('#2a3a6a')); m.box(xf, 0, 2.0, -0.9, 3.6, 0.36, 0.02, col('#f2d23a')); m.box(xf, 0, 0.8, -0.9, 3.6, 1.1, 0.02, col('#3a5aa8'));   // latar
+    for (let k = 0; k < 5; k++) m.ball(xf, -1.4 + k * 0.7, 1.35, -0.88, 0.12, col(['#e85a3a', '#f2c230', '#5ac05a', '#f28ab0', '#7ad0f0'][k]), { sy: 0.4 });
+    for (const sd of [-1, 1]) { const sx = sd * 1.75; m.rbox(xf, sx, 0.6, 0.6, 0.45, 0.8, 0.4, col('#1e1e22'), 0.05); for (const y of [0.85, 1.2]) { m.cyl(xf, sx, y, 0.81, 0.13, 0.02, col('#5a5a60'), { seg: 10, rx: Math.PI / 2 }); m.ball(xf, sx, y, 0.82, 0.05, col('#2a2a2e'), { detail: 0 }); } }
+    m.cyl(xf, -0.3, 0.6, 0.5, 0.025, 1.1, iron, { seg: 5 }); m.ball(xf, -0.3, 1.73, 0.5, 0.05, col('#2a2a2e'), { detail: 0 });   // stand mic
+    colLocal(C, xf, 0, 0, 4.4, 2.2); }
   for (const t of [[143.5, 77], [148.5, 77]]) { veg.push({ k: 'bulat', x: t[0], z: t[1], s: 1.6 }); C.circle(t[0], t[1], 0.5); }
   // lapangan bola kampung & ring basket umum: dibangun di activities.js (gawang berjaring, ring, bola)
   // taman kota & lapangan basket umum (no. 18)
@@ -919,8 +991,18 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = 
   // gapura Gang Kenanga: di mulut gang utama dari jalan raya
   { const g1 = K.roads.find(r => r.kind === 'gang' && Math.hypot(r.pts[0][0] - 34, r.pts[0][1] - 77) < 1.5);
     if (g1) { const P = resample(g1.pts, 0.25), p = P[Math.round(5.5 / 0.25)], a = Math.atan2(p.tz, p.tx), xf = { x: p.x, z: p.z, a: a + Math.PI / 2 }, m = ch.at(p.x, p.z);
-      for (const s of [-1, 1]) { m.box(xf, s * (g1.w / 2 + 0.85), 0, 0, 0.9, 2.2, 0.9, col('#b06a4a')); colLocal(C, xf, s * (g1.w / 2 + 0.85), 0, 0.9, 0.9); }
-      m.box(xf, 0, 2.2, 0, g1.w + 2.7, 0.6, 0.5, col('#d23a3a')); m.box(xf, 0, 2.35, 0.26, g1.w, 0.3, 0.02, col('#f4f4f0')); } }
+      // tiang gapura berundak: umpak, badan bata berlis, kepala bertingkat, ornamen kuncup di puncak; balok merah-putih bertulisan
+      const brick = col('#b06a4a'), base = col('#d8d2c0'), red = col('#d23a3a'), wht = col('#f4f4f0'), gold = col('#e8c040');
+      for (const s of [-1, 1]) { const u = s * (g1.w / 2 + 0.85);
+        m.rbox(xf, u, 0, 0, 1.1, 0.3, 1.1, base, 0.06); m.rbox(xf, u, 0.3, 0, 0.8, 1.7, 0.8, brick, 0.05);
+        for (const y of [0.75, 1.3]) m.box(xf, u, y, 0, 0.86, 0.06, 0.86, base);
+        for (let k = 0; k < 4; k++) m.box(xf, u + (k % 2 ? 0.2 : -0.2), 0.45 + Math.floor(k / 2) * 0.55, 0.405, 0.14, 0.22, 0.02, shade(brick, 0.75));   // relung hias
+        m.rbox(xf, u, 2.0, 0, 1.0, 0.2, 1.0, base, 0.05); m.rbox(xf, u, 2.8, 0, 0.9, 0.15, 0.9, base, 0.05); m.cyl(xf, u, 2.95, 0, 0.3, 0.25, red, { r2: 0.18, seg: 8 });
+        m.ball(xf, u, 3.32, 0, 0.16, gold, { sy: 1.3 }); m.cyl(xf, u, 3.45, 0, 0.03, 0.2, gold, { seg: 5, r2: 0.005 });
+        colLocal(C, xf, u, 0, 1.1, 1.1); }
+      m.box(xf, 0, 2.2, 0, g1.w + 2.7, 0.6, 0.5, red); m.box(xf, 0, 2.17, 0, g1.w + 2.9, 0.06, 0.56, wht); m.box(xf, 0, 2.77, 0, g1.w + 2.9, 0.06, 0.56, wht);
+      m.box(xf, 0, 2.3, 0.26, g1.w + 0.4, 0.4, 0.02, wht); for (const sd of [-1, 1]) m.box(xf, 0, 2.3, sd * 0.26, g1.w + 0.6, 0.02, 0.02, gold);
+      for (let k = 0; k < 7; k++) m.box(xf, -g1.w / 2 + 0.3 + k * (g1.w - 0.6) / 6, 2.4, 0.275, 0.18, 0.2, 0.01, k % 2 ? red : col('#2a2a2e')); } }   // huruf GANG KENANGA (simbolik)
   // pos ronda dekat simpang gang
   { const xf = { x: 38.5, z: 86, a: 0.3 }, m = ch.at(38.5, 86);
     if (!M.roadAt(38.5, 86) && !occ.get(38.5, 86)) {

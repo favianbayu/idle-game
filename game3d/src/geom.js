@@ -111,6 +111,26 @@ export class Merger {
     if (r > 0.2) this.box(xf, lx, y1 - 0.06, lz, r * 2 + 0.1, 0.12, 0.14, shade(c, 0.62));   // nok
     this.box(xf, lx, ly - 0.08, lz, sx + ov * 2, 0.08, sz + ov * 2, shade(c, 0.5), { bottom: true });   // tepi/lisplang
   }
+  // silinder (tabung) tegak: pusat dasar (lx, ly, lz) lokal, jari-jari r, tinggi h; o.r2 = jari-jari atas (kerucut terpancung)
+  cyl(xf, lx, ly, lz, r, h, c, o = {}) {
+    const ca = Math.cos(xf.a || 0), sa = Math.sin(xf.a || 0), x = xf.x + lx * ca - lz * sa, z = xf.z + lx * sa + lz * ca;
+    this.addGeo(new THREE.CylinderGeometry(o.r2 ?? r, r, h, o.seg || 8, 1, !!o.open), { x, y: o.rx ? ly : ly + h / 2, z, rx: o.rx || 0, ry: -(xf.a || 0) + (o.rot || 0) }, c);
+  }
+  // silinder rebah sepanjang sumbu x lokal (pipa, batang kayu, gulungan)
+  cylX(xf, lx, ly, lz, r, len, c, o = {}) {
+    const ca = Math.cos(xf.a || 0), sa = Math.sin(xf.a || 0), x = xf.x + lx * ca - lz * sa, z = xf.z + lx * sa + lz * ca;
+    this.addGeo(new THREE.CylinderGeometry(r, r, len, o.seg || 8), { x, y: ly, z, ry: -(xf.a || 0), rz: Math.PI / 2 }, c);
+  }
+  // bola low-poly: pusat (lx, ly, lz); o.sy = pipih/lonjong
+  ball(xf, lx, ly, lz, r, c, o = {}) {
+    const ca = Math.cos(xf.a || 0), sa = Math.sin(xf.a || 0), x = xf.x + lx * ca - lz * sa, z = xf.z + lx * sa + lz * ca;
+    this.addGeo(new THREE.IcosahedronGeometry(r, o.detail ?? 1), { x, y: ly, z, sy: o.sy ?? 1, sx: 1, sz: 1, ry: -(xf.a || 0) }, c, o);
+  }
+  // kotak bersudut tumpul: badan + tepi dibulatkan (silinder di 4 rusuk tegak)
+  rbox(xf, lx, ly, lz, sx, sy, sz, c, r = 0.06) {
+    this.box(xf, lx, ly, lz, sx - r * 2, sy, sz, c); this.box(xf, lx, ly, lz, sx, sy, sz - r * 2, c);
+    for (const ux of [-1, 1]) for (const uz of [-1, 1]) this.cyl(xf, lx + ux * (sx / 2 - r), ly, lz + uz * (sz / 2 - r), r, sy, c, { seg: 6 });
+  }
   // kubah berundak (gaya voxel)
   dome(xf, lx, ly, lz, r, c, steps = 5) {
     for (let i = 0; i < steps; i++) {

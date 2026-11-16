@@ -558,8 +558,9 @@ function loop(now) {
   // layar tegak (HP portrait): mundurkan kamera supaya lebar pandang tetap cukup
   const dist = cam.dist * (camera.aspect < 1 ? Math.pow(1 / camera.aspect, 0.6) : 1);
   const cp = Math.cos(cam.pitch) * dist;
-  camera.position.set(cam.x + Math.sin(cam.yaw) * cp, Math.sin(cam.pitch) * dist + 0.8, cam.z + Math.cos(cam.yaw) * cp);
-  camera.lookAt(cam.x, 0.8, cam.z);
+  cam.y = (cam.y ?? 0) + ((player.gy || 0) - (cam.y ?? 0)) * lk;   // ikut naik-turun kontur tanah
+  camera.position.set(cam.x + Math.sin(cam.yaw) * cp, Math.sin(cam.pitch) * dist + 0.8 + cam.y, cam.z + Math.cos(cam.yaw) * cp);
+  camera.lookAt(cam.x, 0.8 + cam.y, cam.z);
   { const sk = fight.shake(rdt); if (sk) { camera.position.x += (Math.random() - 0.5) * sk; camera.position.y += (Math.random() - 0.5) * sk; } }
   scene.fog.near = dist * 2.6; scene.fog.far = dist * 2.6 + 50;
   // matahari ikut pemain, dibulatkan ke grid texel bayangan supaya tidak berkedip
