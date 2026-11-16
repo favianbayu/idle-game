@@ -16,6 +16,7 @@ import { makeInteriors } from './interior.js';
 import { makeJajan } from './jajan.js';
 import { makeAnimals } from './animals.js';
 import { makeRace } from './race.js';
+import { parked } from './parked.js';
 
 /* ------------------------------------------------------------------ pengaturan */
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -534,7 +535,7 @@ function updateNPC(n, dt) {
     }
     else if (d < 0.2) { n.idle = pickIdle(n); n.wait = n.idle === 'idle' ? 2 + Math.random() * 5 : 5 + Math.random() * 8; const a = Math.random() * 6.28, r = Math.random() * (n.roam ?? 3); n.tx = n.home.x + Math.cos(a) * r; n.tz = n.home.z + Math.sin(a) * r; }
     else {
-      const s = 1.1 * dt; const p = collision.move(n, n.x + tx / d * s, n.z + tz / d * s, 0.26); kota.traffic.push(p, 0.26);
+      const s = 1.1 * dt; const p = n.parkir ? { x: n.x + tx / d * s, z: n.z + tz / d * s } : collision.move(n, n.x + tx / d * s, n.z + tz / d * s, 0.26); if (!n.parkir) kota.traffic.push(p, 0.26);   // tukang parkir menyusup di sela motor
       if (Math.hypot(p.x - n.x, p.z - n.z) < s * 0.3) { n.tx = n.x; n.tz = n.z; }
       n.x = p.x; n.z = p.z; n.heading = Math.atan2(tz, tx); moving = true;
     }
@@ -630,10 +631,14 @@ function loop(now) {
   if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage, stats: player.stats, uang: player.uang, inv: player.inv, flags: player.flags, upg: player.upg })); }
 }
 
+// kendaraan parkir kota & sekolah: jumlahnya ganti tiap hari (hari berganti saat Raka tidur)
+const parkAvoid = () => [player, ...RIDES.flatMap((R, i) => R && garage.owned[i] ? [garage.spot[i]] : [])];
+parked.setDay(player.flags?.day || 0, parkAvoid());
+addEventListener('newday', e => parked.setDay(e.detail, parkAvoid()));
 resize(); applyQuality();
 cam.x = player.x; cam.z = player.z;
 renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

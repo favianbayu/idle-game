@@ -128,7 +128,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     npcs.push(n); return n;
   }
   const restOK = { t: -99 };
-  const sleep = () => acts.doAct('lie', 3.2, () => { player.fx.hp = fight.maxHP(); const f = player.flags || (player.flags = {}); f.gymN = 0; f.gymPaid = false; toast('Tidur sebentar... Nyawa pulih penuh. (Tersimpan)'); fight.gain('nyali', 0.5); });   // tidur = ganti hari (jatah sesi gym)
+  const sleep = () => acts.doAct('lie', 3.2, () => { player.fx.hp = fight.maxHP(); const f = player.flags || (player.flags = {}); f.gymN = 0; f.gymPaid = false; f.day = (f.day || 0) + 1; dispatchEvent(new CustomEvent('newday', { detail: f.day })); toast('Tidur... bangun, hari baru! Nyawa pulih penuh. (Tersimpan)'); fight.gain('nyali', 0.5); });   // tidur = ganti hari (jatah sesi gym)
 
   // ruangan besar (GOR, bengkel STM) pakai koordinat denah guide: (x, y) petak dari pojok kiri atas, y ke bawah = ke arah pintu
   function plan(R) {

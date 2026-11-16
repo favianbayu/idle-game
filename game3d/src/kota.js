@@ -11,6 +11,7 @@ import { SignBatch, WARUNGS } from './signs.js';
 import { buildPlaces } from './places.js';
 import { rukoShop, hotelKos, kantor, warung, minimarket, lahanParkir, parkedMotors } from './toko.js';
 import { setParkGuard } from './vehicles.js';
+import { parked } from './parked.js';
 
 const PX = 16;   // piksel tekstur tanah per petak (1 piksel = 2 voxel)
 // indeks area dicari dari warnanya (urutan di peta_organik.py bisa berubah)
@@ -545,6 +546,7 @@ export function buildKota(scene, C) {
 
   const ch = new Chunks(32), veg = [], SB = new SignBatch(), parkir = []; SBG = SB;
   setParkGuard(pts => pts.every(([x, , z]) => M.roadDist(x, z) >= 0.3));   // guide 90 aturan 4: kendaraan parkir tidak masuk aspal
+  parked.begin(); parked.attach(scene);   // kendaraan parkir: mesh & tabrakan sendiri, muncul per hari (parked.js)
   // rumah
   globalThis.__TRACE = globalThis.__TRACEON ? [] : null;
   for (const h of houses) {
@@ -587,6 +589,7 @@ export function buildKota(scene, C) {
   // kontur tanah: perbukitan utara & hutan naik-turun; jalan, air, rel, rumah/halaman, gedung kunci & tempat (occ) tetap rata,
   // dengan lereng halus di sekelilingnya. Semua geometri statis ikut digeser ke atas sesuai tinggi tanah di titiknya.
   const HT = terrain(K, M, occ, specials);
+  parked.end(C, HT);
   const lift = mesh => { const pa = mesh.geometry.attributes.position; let any = false; for (let i = 0; i < pa.count; i++) { const h = HT(pa.getX(i), pa.getZ(i)); if (h > 0.001) { pa.setY(i, pa.getY(i) + h); any = true; } } if (any) { pa.needsUpdate = true; mesh.geometry.computeBoundingSphere(); mesh.geometry.computeBoundingBox(); } };
   for (const g of grounds) { const pa = g.geometry.attributes.position; for (let i = 0; i < pa.count; i++) pa.setZ(i, HT(g.position.x + pa.getX(i), g.position.z - pa.getY(i))); pa.needsUpdate = true; g.geometry.computeVertexNormals(); g.geometry.computeBoundingSphere(); }
   for (const m of ch.meshes(MAT.world)) { lift(m); scene.add(m); }
@@ -857,6 +860,19 @@ function perumGate(ch, K, M, C, occ, SB, scene) {
 }
 
 /* ------------------------------------------------------------------ kontur tanah */
+const ROAD_SLOPE = 0.07, GROUND_SLOPE = 0.3;   // kenaikan maks per petak: badan jalan & tanah biasa
+// selubung kemiringan pada grid: dir -1 = turunkan sel yang lebih tinggi dari tetangga + s*jarak, +1 = naikkan sel yang
+// lebih rendah dari tetangga - s*jarak. Hanya sel yang lolos ok(k) yang diubah; sel lain jadi sumber. Chamfer bolak-balik.
+function lipschitz(F, gw, gh, ok, s, dir, passes, src = () => true) {
+  const s2 = s * Math.SQRT2, nb = [[-1, 0, s], [0, -1, s], [-1, -1, s2], [1, -1, s2]];
+  const fix = (k, q, d) => { if (!src(q)) return; const v = F[q] - dir * d; if (dir < 0 ? F[q] + d < F[k] : v > F[k]) F[k] = dir < 0 ? F[q] + d : v; };
+  for (let p = 0; p < passes; p++) {
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const k = j * gw + i; if (!ok(k)) continue;
+      for (const [di, dj, d] of nb) { const a = i + di, b = j + dj; if (a >= 0 && b >= 0 && a < gw) fix(k, b * gw + a, d); } }
+    for (let j = gh - 1; j >= 0; j--) for (let i = gw - 1; i >= 0; i--) { const k = j * gw + i; if (!ok(k)) continue;
+      for (const [di, dj, d] of nb) { const a = i - di, b = j - dj; if (a >= 0 && b < gh && a < gw) fix(k, b * gw + a, d); } }
+  }
+}
 function terrain(K, M, occ, specials) {
   const [W, H] = K.size, R = 2, gw = W * R + 1, gh = H * R + 1, D = new Float32Array(gw * gh).fill(1e9);
   // bidang peta digambar ke kanvas (merah = daerah rata: sawah, lapangan, alun-alun, makam...; hijau = hutan)
@@ -916,12 +932,19 @@ function terrain(K, M, occ, specials) {
         let s2 = A[k] * 2, n = 2; for (const q of [k - 1, k + 1, k - gw, k + gw]) if (road(q)) { s2 += A[q]; n++; } B[k] = s2 / n; }
       [A, B] = [B, A];
     }
+    // batas kemiringan badan jalan: tinggi tiap sel jalan dibatasi tetangganya + ROAD_SLOPE per petak (selubung bawah,
+    // dirambatkan bolak-balik sepanjang jalan) -> tanjakan selalu bertahap, tidak tiba-tiba naik di simpang/ujung jalan
+    lipschitz(A, gw, gh, road, ROAD_SLOPE / R, -1, 8, road);
     // bahu jalan: rambatkan tinggi tepi jalan keluar (rata-rata tetangga yang sudah terisi), lalu landaikan ke tanah
     const has = new Uint8Array(A.length); for (let k = 0; k < A.length; k++) has[k] = road(k) ? 1 : 0;
     for (let ring = 0; ring < 6; ring++) { const add = [];
       for (let j = 1; j < gh - 1; j++) for (let i = 1; i < gw - 1; i++) { const k = j * gw + i; if (has[k] || RD[k] > 2.8) continue; let s2 = 0, n = 0; for (const q of [k - 1, k + 1, k - gw, k + gw]) if (has[q]) { s2 += A[q]; n++; } if (n) add.push([k, s2 / n]); }
       for (const [k, v] of add) { A[k] = v; has[k] = 1; } }
     for (let k = 0; k < HG.length; k++) { if (!has[k] || (D[k] === 0 && RD[k] > 0.3)) continue; const t = ss((RD[k] - 0.6) / 2.2); HG[k] = A[k] * (1 - t) + HG[k] * t; }
+    // tanah di luar jalan & daerah rata juga dibatasi kemiringannya (turun lalu naik), supaya bahu jalan dan kaki bukit landai
+    const free = k => !road(k) && D[k] !== 0;
+    lipschitz(HG, gw, gh, free, GROUND_SLOPE / R, -1, 3);
+    lipschitz(HG, gw, gh, free, GROUND_SLOPE / R, 1, 3);
   }
   return (x, z) => {
     const fx = x * R, fz = z * R, i = Math.floor(fx), j = Math.floor(fz); if (i < 0 || j < 0 || i >= gw - 1 || j >= gh - 1) return 0;

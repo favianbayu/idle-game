@@ -29,7 +29,7 @@ export class Collision {
   }
   box(x, z, hw, hd, a = 0) {   // kotak berputar (OBB)
     const o = { t: 0, x, z, hw, hd, c: Math.cos(a), s: Math.sin(a) };
-    const r = Math.hypot(hw, hd); this._add(o, x - r, z - r, x + r, z + r);
+    const r = Math.hypot(hw, hd); this._add(o, x - r, z - r, x + r, z + r); return o;
   }
   circle(x, z, r) { const o = { t: 1, x, z, r }; this._add(o, x - r, z - r, x + r, z + r); }
   // mask: { ox, oz, res, w, h, data(Uint8: 1 = tidak bisa dilewati) }
@@ -59,6 +59,7 @@ export class Collision {
       for (let ix = gx - 1; ix <= gx + 1; ix++) for (let iz = gz - 1; iz <= gz + 1; iz++) {
         const a = this.grid.get(ix * 4096 + iz); if (!a) continue;
         for (const o of a) {
+          if (o.off) continue;   // penghalang nonaktif (mis. kendaraan parkir yang hari ini tidak ada)
           if (o.t === 1) {
             const dx = p.x - o.x, dz = p.z - o.z, d = Math.hypot(dx, dz), m = o.r + r;
             if (d < m && d > 1e-6) { p.x = o.x + dx / d * m; p.z = o.z + dz / d * m; }

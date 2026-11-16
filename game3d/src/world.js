@@ -6,6 +6,7 @@ import { Chunks, col, shade, mix } from './geom.js';
 import { hash, pick, MAT, GLASS, GLASS2, FRAME, makePatterns, PAT, groundDetail } from './common.js';
 import { plant } from './veg.js';
 import * as V from './vehicles.js';
+import { parked } from './parked.js';
 export { Collision } from './common.js';
 export { buildKota } from './kota.js';
 
@@ -100,6 +101,7 @@ function paintSekolah() {
 /* ------------------------------------------------------------------ bangun */
 export function buildSekolah(scene, C) {
   const OX = SCHOOL_OX, ch = new Chunks(32);
+  parked.begin();
   const tex = new THREE.CanvasTexture(paintSekolah());
   tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.anisotropy = 4;
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(GW, GH), groundDetail(new THREE.MeshLambertMaterial({ map: tex })));
@@ -609,6 +611,7 @@ export function buildSekolah(scene, C) {
   for (let i = 0; i < 10; i++) { const x = -8 + i * 10 + hash(i, 9) * 3; veg.push({ k: 'bulat', x: OX + x, z: 63.4, s: 0.8, a: i }); C.circle(OX + x, 63.4, 0.3); }
   plant(scene, veg);
 
+  parked.end(C, null);
   // batas luar area sekolah (jalan depan bisa dilalui, tapi tidak bisa jauh-jauh)
   C.box(OX + 40, 62.6, 56, 0.5); C.box(OX - 12, 26, 0.5, 40); C.box(OX + 92, 26, 0.5, 40); C.box(OX + 40, -9.5, 56, 0.5);
   const zones = SCHOOL_ZONES.map(([x0, z0, x1, z1, k, name]) => ({ x0: OX + x0, z0, x1: OX + x1, z1, k, name }));

@@ -19,6 +19,11 @@ let VID = 0;
 // penjaga parkir (guide 90 aturan 4): selama kota dibangun, kendaraan statis yang badannya masuk aspal tidak dipasang
 let GUARD = null;
 export function setParkGuard(f) { GUARD = f; }
+// penampung kendaraan parkir: selama kota/sekolah dibangun, tiap kendaraan statis digambar ke Merger sendiri
+// (parked.js) supaya bisa muncul/hilang per hari dan punya kotak tabrakan
+let SINK = null;
+export function setParkSink(f) { SINK = f; }
+const sinkOr = (m, xf, hw, hl, o) => (!o.wheels && SINK && SINK(xf, hw * (xf.k || 1), hl * (xf.k || 1))) || m;
 const P4 = (xf, hw, hl) => [P(xf, -hw, 0, -hl), P(xf, hw, 0, -hl), P(xf, hw, 0, hl), P(xf, -hw, 0, hl), P(xf, 0, 0, 0)];
 function trk(xf, hw, hl) {
   if (!globalThis.__TRACE) return;
@@ -103,7 +108,7 @@ export const MOTOR_FIT = {
   vespa: { seat: [0.7, -0.2], back: [0.72, -0.48], bar: [0.96, 0.33], anim: 'rideScooter' },
 };
 export const MOTOR_KINDS = Object.keys(MOTOR_FIT);
-export function motor(m, xf, c = '#c83a3a', kind = 'bebek', o = {}) { xf = scaled(xf, VK.motor); if (!o.wheels && GUARD && !GUARD(P4(xf, 0.35, 1.0))) return null; LO = !o.wheels; trk(xf, 0.35, 1.0); try { return motor_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
+export function motor(m, xf, c = '#c83a3a', kind = 'bebek', o = {}) { xf = scaled(xf, VK.motor); if (!o.wheels && GUARD && !GUARD(P4(xf, 0.35, 1.0))) return null; LO = !o.wheels; trk(xf, 0.35, 1.0); m = sinkOr(m, xf, 0.3, 0.92, o); try { return motor_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
 function motor_(m, xf, c, kind, o) {
   const body = col(c), dark = shade(body, 0.7), hi = shade(body, 1.15);
   const R = kind === 'trail' ? 0.27 : kind === 'vespa' ? 0.17 : kind === 'sport' ? 0.23 : 0.21, Wt = kind === 'sport' ? 0.13 : kind === 'trail' ? 0.1 : 0.09;
@@ -195,7 +200,7 @@ export const BIKE_FIT = {
   bmx: { seat: [0.56, -0.16], crank: [0.2, 0.0], bar: [0.71, 0.31], anim: 'pedal' },
 };
 export const BIKE_KINDS = Object.keys(BIKE_FIT);
-export function sepeda(m, xf, c = '#2a8ae0', o = {}) { xf = scaled(xf, VK.sepeda); LO = !o.wheels; trk(xf, 0.3, 0.9); try { return sepeda_(m, xf, c, o); } finally { globalThis.__VEHCUR = 0; } }
+export function sepeda(m, xf, c = '#2a8ae0', o = {}) { xf = scaled(xf, VK.sepeda); LO = !o.wheels; trk(xf, 0.3, 0.9); m = sinkOr(m, xf, 0.22, 0.85, o); try { return sepeda_(m, xf, c, o); } finally { globalThis.__VEHCUR = 0; } }
 function sepeda_(m, xf, c, o) {
   const kind = o.kind || 'kota', F = BIKE_FIT[kind], fr = col(kind === 'onthel' ? '#1e1e22' : c);
   const R = kind === 'onthel' ? 0.31 : kind === 'bmx' ? 0.21 : 0.27, zf = kind === 'onthel' ? 0.58 : kind === 'bmx' ? 0.42 : 0.52, zr = kind === 'onthel' ? -0.55 : kind === 'bmx' ? -0.4 : -0.48, y = R;
@@ -224,7 +229,7 @@ function sepeda_(m, xf, c, o) {
 
 /* ---------------------------------------------------------------- MOBIL */
 // kind: 'sedan' | 'mpv' | 'angkot' | 'pikap'; panjang ±3.4 (z), lebar ±1.45 (x)
-export function car(m, xf, c = '#e8e8e8', kind = 'mpv', o = {}) { xf = scaled(xf, VK.car); if (!o.wheels && GUARD && !GUARD(P4(xf, 0.75, kind === 'sedan' ? 1.75 : 1.72))) return null; LO = !o.wheels; trk(xf, 0.75, kind === 'sedan' ? 1.75 : 1.72); try { return car_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
+export function car(m, xf, c = '#e8e8e8', kind = 'mpv', o = {}) { xf = scaled(xf, VK.car); if (!o.wheels && GUARD && !GUARD(P4(xf, 0.75, kind === 'sedan' ? 1.75 : 1.72))) return null; LO = !o.wheels; trk(xf, 0.75, kind === 'sedan' ? 1.75 : 1.72); m = sinkOr(m, xf, kind === 'suv' ? 0.78 : 0.74, { sedan: 1.75, angkot: 1.65, hatch: 1.48, suv: 1.8 }[kind] || 1.74, o); try { return car_(m, xf, c, kind, o); } finally { globalThis.__VEHCUR = 0; } }
 function car_(m, xf, c, kind, o) {
   const truk = kind === 'truk', taksi = kind === 'taksi';
   if (truk) kind = 'pikap'; if (taksi) kind = 'sedan';
