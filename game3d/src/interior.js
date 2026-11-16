@@ -7,6 +7,7 @@ import { MAT, hash, pick } from './common.js';
 import { L } from './buildings.js';
 import { CATALOG } from './shop.js';
 import { WARUNGS } from './signs.js';
+import INTERIORS from './data/interiors.json';
 
 const OX = 700, OZ = 30, GAP = 40;
 const C = c => col(c);
@@ -33,7 +34,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
 
   /* ---------------- kerangka ruangan */
   function room(id, name, w, d, o = {}) {
-    const ox = OX + slot * GAP, oz = OZ; slot++;
+    const ox = o.ox ?? OX + slot * GAP, oz = OZ; slot++;
     const H = o.h || 2.5, wc = C(o.wall || '#e8e0cc'), doorX = o.doorX || 0, dw = o.doorW || 1.2;
     const P = (lx, lz, a = 0) => ({ x: ox + lx, z: oz + lz, a });
     const st = new Merger(), W = { back: new Merger(), front: new Merger(), left: new Merger(), right: new Merger() };
@@ -41,21 +42,22 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     // dinding: bagian bawah warna lis, atas warna dinding; sisi dalam saja yang penting
     const wall = (m, lx, lz, sx, sz) => { m.box(X, lx, 0, lz, sx, 0.9, sz, base); m.box(X, lx, 0.9, lz, sx, 0.06, sz, trim); m.box(X, lx, 0.96, lz, sx, H - 0.96, sz, wc); };
     wall(W.back, 0, -d / 2 - t / 2, w + t * 2, t); wall(W.left, -w / 2 - t / 2, 0, t, d); wall(W.right, w / 2 + t / 2, 0, t, d);
-    const l0 = -w / 2 - t, l1 = doorX - dw / 2, r0 = doorX + dw / 2, r1 = w / 2 + t;
+    const l0 = -w / 2 - t, l1 = o.noDoor ? 0 : doorX - dw / 2, r0 = o.noDoor ? 0 : doorX + dw / 2, r1 = w / 2 + t;   // lantai atas: dinding depan utuh
     wall(W.front, (l0 + l1) / 2, d / 2 + t / 2, l1 - l0, t); wall(W.front, (r0 + r1) / 2, d / 2 + t / 2, r1 - r0, t);
+    if (!o.noDoor) {
     W.front.box(X, doorX, 2.1, d / 2 + t / 2, dw, H - 2.1, t, wc); W.front.box(X, doorX, 2.05, d / 2 + t / 2, dw + 0.12, 0.08, t + 0.04, shade(wc, 0.6));
     // ambang pintu: cahaya luar & keset
     W.front.box(X, doorX, 0, d / 2 + t / 2, dw, 2.05, 0.02, C(o.outside || '#fff6d8'));
-    st.box(X, doorX, 0.005, d / 2 - 0.45, dw * 0.8, 0.02, 0.5, C('#8a3a2a'));
+    st.box(X, doorX, 0.005, d / 2 - 0.45, dw * 0.8, 0.02, 0.5, C('#8a3a2a')); }
     // lis rendah tetap terlihat walau dinding disembunyikan
     for (const [lx, lz, sx, sz] of [[0, -d / 2 - t / 2, w + t * 2, t], [-w / 2 - t / 2, 0, t, d], [w / 2 + t / 2, 0, t, d], [(l0 + l1) / 2, d / 2 + t / 2, l1 - l0, t], [(r0 + r1) / 2, d / 2 + t / 2, r1 - r0, t]]) st.box(X, lx, 0, lz, sx, 0.3, sz, base);
     // lantai + alas gelap di bawahnya
     st.box(X, 0, -0.4, 0, w + 3, 0.38, d + 3, C('#141418'));
     collision.box(ox, oz - d / 2 - t / 2, w / 2 + t, t / 2); collision.box(ox - w / 2 - t / 2, oz, t / 2, d / 2 + t); collision.box(ox + w / 2 + t / 2, oz, t / 2, d / 2 + t);
     collision.box(ox + (l0 + l1) / 2, oz + d / 2 + t / 2, (l1 - l0) / 2, t / 2); collision.box(ox + (r0 + r1) / 2, oz + d / 2 + t / 2, (r1 - r0) / 2, t / 2);
-    collision.box(ox + doorX, oz + d / 2 + 0.3, dw / 2, 0.12);   // ambang: tidak bisa jalan keluar tembus, harus lewat Aksi
+    if (!o.noDoor) collision.box(ox + doorX, oz + d / 2 + 0.3, dw / 2, 0.12);   // ambang: tidak bisa jalan keluar tembus, harus lewat Aksi
     const R = { id, name, ox, oz, w, d, H, P, st, W, X, wc, spots: [], walls: {}, extra: { back: [], left: [], right: [], front: [] },
-      exit: { x: ox + doorX, z: oz + d / 2 - 0.75 }, dark: o.dark,
+      exit: o.noDoor ? null : { x: ox + doorX, z: oz + d / 2 - 0.75 }, dark: o.dark,
       solid: (p, sx, sz) => collision.box(p.x, p.z, sx / 2, sz / 2, p.a || 0),
       spot: (lx, lz, r, label, fn) => R.spots.push({ x: ox + lx, z: oz + lz, r, label, fn }),
       sign: (wallName, lines, lx, y, w2, h2, bg, fg, px) => {   // papan di dinding (ikut disembunyikan bersama dindingnya)
@@ -366,6 +368,150 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     finish(R); R.doorLabel = 'Masuk Bengkel Mas Fajar';
   }
 
+  /* ================= interior dari data guide 92 (docs/desain-sma/peta/interior_data.py -> data/interiors.json)
+     Denah: petak dari pojok kiri atas, pintu utama di sisi bawah (= jalan). Bangunan bertingkat (R berlabel LT/Lantai/Loteng)
+     dipecah jadi satu ruangan per lantai, tangga = pindah lantai. Sekat antarkamar setinggi dada supaya isi tetap kelihatan. */
+  const HAND = new Set(['indomurah', 'warung_kelontong', 'rumah_pohon']);                                   // sudah ada versi buatan tangan
+  const AWAY = new Set(['basecamp', 'warung_seafood', 'rumah_wulan', 'rumah_dimas', 'warung_mak_iyah']);   // di luar kota / di sekolah
+  const FLOORC = { toko: '#e6e4de', gudang: '#9a968c', warung: '#c8a878', luar: '#b8b4a8', koridor: '#d8d0c0', seni: '#b89a78', kantin: '#e0d4b8', kelas: '#d8ccb0', ibadah: '#3a7a5a', kantor: '#c8c8c0', toilet: '#dde6ea', rumah: '#c89a6a', rahasia: '#6a5a4a', balkon: '#a8784a', bengkel: '#7a7a78' };
+  const WALLC = { toko: '#f4f2ec', warung: '#e8d8b0', koridor: '#e8e2d0', seni: '#e6d6c0', kantin: '#f0e6d0', kelas: '#efe6d0', ibadah: '#f2eee2', kantor: '#e4e8ec', rumah: '#f0e2c8', bengkel: '#c8c4b8', luar: '#e8e2d0', gudang: '#c8c0b0', rahasia: '#8a7a64' };
+  const FC = { rak: '#9aa0a8', meja: '#8a5a34', kasur: '#4a7ac0', sofa: '#5a6a8a', putih: '#ecece8', logam: '#a8acb0', hitam: '#2a2a30', kain: '#c84a6a', kuning: '#f2c230', merah: '#c83a3a', hijau: '#3a8a4a', air: '#4aa8d8' };
+  // penjaga tiap tempat usaha: [sid, nama, kalimat]
+  const KEEP = {
+    warnet: ['pemuda', 'Bang Opik', ['Sejam empat ribu. Mi rebus ada.', 'Jangan teriak, yang sebelah lagi ranked.']],
+    kafe: ['pemuda', 'Kak Dion', ['Kopi susu gula aren? Andalan kita.', 'Jumat malam ada akustik, datang ya.']],
+    karaoke: ['mbak', 'Mbak Lilis', ['Bilik kosong tinggal satu, sejam lima puluh.', 'Mikrofonnya jangan dibanting ya.']],
+    pasar: ['ibuHijab', 'Bu Sumi', ['Cabe lagi mahal, Mas.', 'Pagi-pagi ke sini, sayurnya masih seger.']],
+    plaza: ['mbak', 'Mbak SPG', ['Diskon akhir pekan, Kak!', 'Bioskop lantai tiga, ya.']],
+    masjid_agung: ['bapakPeci', 'Pak Marbot', ['Sandalnya taruh di rak, Nak.', 'Atap? Nggak boleh naik sembarangan.']],
+    bank: ['mbak', 'Teller Bank', ['Mau setor atau tarik, Kak?', 'Ambil nomor antrean dulu, ya.']],
+    puskesmas: ['ibuHijab', 'Bidan Rina', ['Luka habis berantem lagi? Sini diobati.', 'Jangan lupa minum air putih.']],
+    polsek: ['pakRT', 'Pak Polisi Darsono', ['Ada perlu apa, Dik?', 'Balap liar itu bahaya. Ingat.']],
+    studio_foto: ['kakek', 'Pak Jono', ['Pas foto 3x4, sepuluh menit jadi.', 'Jojo lagi di kamarnya, atas.']],
+    stasiun: ['pakRT', 'Petugas Stasiun', ['Kereta berikutnya dua jam lagi.', 'Tiket lima ribu, Dik.']],
+    bengkel_wijaya: ['pemuda', 'Bang Wijaya', ['Motor balap? Sini, saya setel.', 'Kirana lagi di dalam, jangan ganggu.']],
+    kos_narti: ['buNarti', 'Bu Narti', ['Kamar nomor lima masih kosong.', 'Jam sepuluh malam pagar dikunci!']],
+    kontainer_proyek: ['pemuda', 'Mandor Proyek', ['Ini area proyek. Keluar, Dik.', 'Pak Haris nggak suka orang asing di sini.']],
+  };
+  const SIGN_BG = { warnet: ['#2a1a4a', '#d8c8ff'], kafe: ['#3a2a1e', '#f6e0b0'], karaoke: ['#5a1a4a', '#ffe08a'], bank: ['#1e4a8a', '#ffffff'], puskesmas: ['#2a8a5a', '#ffffff'], polsek: ['#2a2a3a', '#f2d23a'], studio_foto: ['#c83a3a', '#ffffff'], stasiun: ['#f6f4ec', '#1e1e1e'], masjid_agung: ['#2f6a4a', '#f0d27a'], pasar: ['#8a3a1a', '#f6e0a0'], plaza: ['#1a2a4a', '#f2c230'], bengkel_wijaya: ['#1a1a1a', '#e83a2a'] };
+  const dataRooms = {};
+  let nextX = OX + 12 * GAP;
+  for (const I of INTERIORS) {
+    if (HAND.has(I.id) || AWAY.has(I.id)) continue;
+    const Rs = I.isi.filter(e => e.t === 'R'), Fl = Rs.filter(r => /^(LT|Lantai|Loteng)/i.test(r.label));
+    const floors = Fl.length >= 2 ? Fl.sort((a, b) => a.x - b.x) : [{ x: 0, y: 0, w: I.w, h: I.h, label: '' }];
+    const inF = (f, x, y) => x >= f.x - 0.05 && x <= f.x + f.w + 0.05 && y >= f.y - 0.05 && y <= f.y + f.h + 0.05;
+    const list = [];
+    floors.forEach((f, k) => {
+      const W = f.w, Dd = f.h, items = I.isi.filter(e => e.t !== 'R' || e !== f).filter(e => inF(f, e.x + (e.w || 0) / 2, e.y + (e.h || 0) / 2));
+      const outer = I.isi.filter(e => e.t === 'D' && !e.v && e.x >= f.x - 0.05 && e.x + e.n <= f.x + f.w + 0.05);
+      let main = outer.filter(e => Math.abs(e.y - (f.y + f.h)) < 0.06).sort((a, b) => b.n - a.n)[0], mirror = false;
+      if (!main && k === 0) { main = outer.filter(e => Math.abs(e.y - f.y) < 0.06).sort((a, b) => b.n - a.n)[0]; mirror = !!main; }
+      const T = (x, y) => [x - f.x - W / 2, mirror ? -(y - f.y - Dd / 2) : y - f.y - Dd / 2];
+      const subs = items.filter(e => e.t === 'R' && !(e.w >= W - 0.1 && e.h >= Dd - 0.1));
+      const bigR = items.filter(e => e.t === 'R').sort((a, b) => b.w * b.h - a.w * a.h)[0], mk = f.kind || bigR?.kind || Rs[0]?.kind || 'rumah';
+      const doorX = main ? T(main.x + main.n / 2, 0)[0] : 0;
+      const R = room(I.id + (k ? '_' + k : ''), I.name.replace(/\s*\(.*\)$/, '') + (floors.length > 1 ? ' · ' + f.label : ''), W, Dd,
+        { ox: nextX + W / 2, wall: WALLC[mk] || '#e8e0cc', doorX, doorW: main ? Math.min(main.n, 3) : 1.2, h: 2.7, noDoor: !main, outside: '#fff6d8' });
+      nextX += W + 30;
+      const { P, st: m, X } = R;
+      if (mk === 'toko' || mk === 'kantor' || mk === 'toilet' || mk === 'koridor' || mk === 'kantin') tiles(R, FLOORC[mk], '#d2cec6', 0.6);
+      else if (mk === 'rumah' || mk === 'seni' || mk === 'warung') planks(R, FLOORC[mk]);
+      else flat(R, FLOORC[mk] || '#c8b89a');
+      // sub-ruang: lantai sendiri + sekat setinggi dada dengan celah di pintu dalam
+      const doorsIn = I.isi.filter(e => e.t === 'D');
+      for (const r of subs) {
+        const [cx, cz] = T(r.x + r.w / 2, r.y + r.h / 2);
+        m.box(X, cx, -0.018, cz, r.w, 0.021, r.h, C(FLOORC[r.kind] || '#c8b89a'));
+        const edges = [[r.x, r.y, r.x + r.w, r.y], [r.x, r.y + r.h, r.x + r.w, r.y + r.h], [r.x, r.y, r.x, r.y + r.h], [r.x + r.w, r.y, r.x + r.w, r.y + r.h]]
+          .filter(([x0, y0, x1, y1]) => !(y0 === y1 && (Math.abs(y0 - f.y) < 0.25 || Math.abs(y0 - f.y - Dd) < 0.25)) && !(x0 === x1 && (Math.abs(x0 - f.x) < 0.25 || Math.abs(x0 - f.x - W) < 0.25)));
+        const gaps = edges.map(([x0, y0, x1, y1]) => doorsIn.filter(d => y0 === y1 ? !d.v && Math.abs(d.y - y0) < 0.3 && d.x + d.n > x0 && d.x < x1 : d.v && Math.abs(d.x - x0) < 0.3 && d.y + d.n > y0 && d.y < y1).map(d => y0 === y1 ? [d.x, d.x + d.n] : [d.y, d.y + d.n]));
+        if (edges.length && gaps.every(g => !g.length)) { const i = Math.max(0, edges.findIndex(([, y0, , y1]) => y0 === y1 && y0 > r.y)); const [x0, y0, x1, y1] = edges[i], c = y0 === y1 ? (x0 + x1) / 2 : (y0 + y1) / 2; gaps[i] = [[c - 0.6, c + 0.6]]; }
+        edges.forEach(([x0, y0, x1, y1], i) => {
+          const hor = y0 === y1, a0 = hor ? x0 : y0, a1 = hor ? x1 : y1, cuts = gaps[i].sort((p, q) => p[0] - q[0]); let s0 = a0;
+          for (const seg of [...cuts, [a1, a1]]) { const e0 = Math.min(a1, seg[0]); if (e0 - s0 > 0.15) { const mid = (s0 + e0) / 2, [px, pz] = hor ? T(mid, y0) : T(x0, mid), sx = hor ? e0 - s0 : 0.1, sz = hor ? 0.1 : e0 - s0;
+            m.box(X, px, 0, pz, sx, 1.15, sz, shade(C(WALLC[r.kind] || '#e8e0cc'), 0.9)); m.box(X, px, 1.15, pz, sx + 0.02, 0.05, sz + 0.02, C('#8a6a4a')); collision.box(R.ox + px, R.oz + pz, sx / 2, sz / 2); } s0 = Math.max(s0, seg[1]); }
+        });
+        if (r.label) { const lab = textPlane([r.label], Math.min(r.w - 0.3, 2.6), 0.42, '#2a2014', '#fff6d8', 46), [lx, lz] = T(r.x + r.w / 2, r.y + r.h - 0.45); lab.rotation.x = -Math.PI / 2; lab.position.set(R.ox + lx, 0.012, R.oz + lz); scene.add(lab); }
+      }
+      // perabot
+      for (const e of items.filter(e => e.t === 'F')) {
+        let [cx, cz] = T(e.x + e.w / 2, e.y + e.h / 2); const sw = e.w, sd = e.h, c = FC[e.kind] || '#a8a8a0', long = Math.max(sw, sd), short = Math.min(sw, sd), rot = sw >= sd ? 0 : Math.PI / 2;
+        // jalur masuk dari pintu (lebar pintu x 2 petak) harus bebas: perabot yang menghalangi digeser ke dalam
+        if (main && Math.min(sw, sd) >= 0.35 && Math.abs(cx - doorX) < sw / 2 + Math.min(main.n, 3) / 2 + 0.1 && cz + sd / 2 > Dd / 2 - 2.4) { const nz = Dd / 2 - 2.5 - sd / 2; if (nz - sd / 2 > -Dd / 2) cz = nz; else continue; }
+        const p = P(cx, cz, rot), seed = Math.round(e.x * 13 + e.y * 7);
+        if (short < 0.35) { m.box(X, cx, 0.001, cz, sw, 0.02, sd, C(c)); continue; }   // garis lantai, saf, renceng
+        if (long <= 2.6) {
+          if (e.kind === 'rak') shelfUnit(m, p, long - 0.1, 1.5, 4, seed, Math.min(0.6, Math.max(0.3, short)), '#9aa0a8', short > 0.7);
+          else if (e.kind === 'meja') { table(m, p, long, Math.min(short, 1.4), 0.75, '#8a5a34'); if (short >= 1) for (const sx of [-1, 1]) chair(m, P(cx + (rot ? 0 : sx * (long / 2 + 0.3)), cz + (rot ? sx * (long / 2 + 0.3) : 0), rot ? (sx > 0 ? Math.PI : 0) : sx * -Math.PI / 2)); }
+          else if (e.kind === 'kasur' && long >= 1.8 && short >= 0.9) bed(m, P(cx, cz, sw >= sd ? Math.PI / 2 : 0), pick(['#4a7ac0', '#c84a6a', '#5aa85a', '#e0a040'], hash(seed, 1)));
+          else if (e.kind === 'sofa') sofa(m, p, long, '#5a6a8a');
+          else if (e.kind === 'hitam' && short <= 1.6) { table(m, p, long, short * 0.8, 0.72, '#3a3a40'); m.box(p, 0, 0.72, -short * 0.2, 0.6, 0.42, 0.05, C('#1a1a1e')); m.box(p, 0, 0.76, -short * 0.2 + 0.03, 0.54, 0.34, 0.01, C('#3a8ac8')); chair(m, P(cx + (rot ? short / 2 + 0.2 : 0), cz + (rot ? 0 : short / 2 + 0.2), rot ? -Math.PI / 2 : Math.PI), '#2a2a2e'); }
+          else if (e.kind === 'air') { m.box(p, 0, 0, 0, long, 0.5, short, C('#e8e4dc')); m.box(p, 0, 0.5, 0, long - 0.15, 0.02, short - 0.15, C('#4aa8d8')); }
+          else if (e.kind === 'putih') m.box(p, 0, 0, 0, long, 1.3, short, C(c), { top: C('#ffffff') });
+          else if (e.kind === 'logam') { m.box(p, 0, 0, 0, long, 0.92, short, C(c)); m.box(p, 0, 0.92, 0, long + 0.04, 0.04, short + 0.04, C('#d8dcdc')); }
+          else if (e.kind === 'kain') { m.box(p, 0, 0, 0, long, 0.5, short, C(c)); m.box(p, 0, 0.5, 0, long - 0.1, 0.08, short - 0.1, shade(C(c), 1.15)); }
+          else { m.box(p, 0, 0, 0, long, 0.9, short, C(c)); m.box(p, 0, 0.9, 0, long + 0.04, 0.05, short + 0.04, shade(C(c), 0.8)); }
+          collision.box(R.ox + cx, R.oz + cz, sw / 2, sd / 2);
+          continue;
+        }
+        // area besar: alas warna + isi sesuai jenis + papan nama gantung
+        m.box(X, cx, -0.01, cz, sw - 0.1, 0.015, sd - 0.1, mix(C(c), C(FLOORC[mk] || '#c8b89a'), 0.55));
+        const solid = (lx, lz, a, w2, d2) => { const q = L({ x: R.ox + cx, z: R.oz + cz, a: rot }, lx, lz); collision.box(q[0], q[1], w2 / 2, d2 / 2, rot + a); };
+        const Q = (lx, lz, a = 0) => { const q = L({ x: cx, z: cz, a: rot }, lx, lz); return P(q[0], q[1], rot + a); };
+        const lab = (e.label + ' ' + e.fn).toLowerCase();
+        if (/piano/.test(lab)) { m.box(Q(0, -0.2), 0, 0, 0, 1.6, 1.0, 0.6, C('#1a1a1e')); m.box(Q(0, 0.12), 0, 0.72, 0, 1.5, 0.04, 0.2, C('#f2f2ee')); for (let i = 0; i < 14; i++) m.box(Q(-0.7 + i * 0.105, 0.1), 0, 0.765, 0, 0.05, 0.03, 0.12, C('#1a1a1e')); m.box(Q(0, 0.75), 0, 0, 0, 0.8, 0.45, 0.35, C('#2a2a2e')); solid(0, -0.2, 0, 1.6, 0.6); }
+        else if (/gym|latihan|beban/.test(lab)) { for (let i = 0; i < 2; i++) { const lx = -long / 4 + i * long / 2; m.box(Q(lx, 0), 0, 0, 0, 0.5, 0.45, 1.4, C('#2a2a2e')); m.box(Q(lx, -0.5), 0, 0.9, 0, 1.4, 0.05, 0.05, C('#a8acb0')); for (const sx of [-0.6, 0.6]) m.box(Q(lx + sx, -0.5), 0, 0.72, 0, 0.08, 0.4, 0.4, C('#1a1a1e')); for (const sx of [-0.4, 0.4]) m.box(Q(lx + sx, -0.5), 0, 0, 0, 0.06, 0.9, 0.06, C('#6a6a70')); solid(lx, -0.2, 0, 1.4, 1.6); }
+          m.box(Q(0, -short / 2 + 0.3), 0, 0, 0, long - 0.6, 0.35, 0.4, C('#5a5a60')); for (let i = 0; i < Math.floor((long - 0.8) / 0.4); i++) m.box(Q(-long / 2 + 0.6 + i * 0.4, -short / 2 + 0.3), 0, 0.35, 0, 0.16, 0.16, 0.16, C('#1a1a1e')); }
+        else if (/dapur|bar\b/.test(lab)) { counter(m, Q(0, -short / 2 + 0.35), long - 0.4, '#e8e4dc', '#8a8e94'); solid(0, -short / 2 + 0.35, 0, long - 0.4, 0.6); m.box(Q(-long / 4, -short / 2 + 0.35), 0, 1.0, 0, 0.6, 0.06, 0.4, C('#2a2a2e')); m.box(Q(long / 4, -short / 2 + 0.35), 0, 0.96, 0, 0.5, 0.05, 0.35, C('#a8c8d8'));
+          m.box(Q(0, -short / 2 + 0.15), 0, 1.6, 0, long - 0.4, 0.6, 0.3, C('#c8b8a0')); if (short > 2.4) { counter(m, Q(0, 0.4), Math.min(long - 1.2, 2.4), '#6a4428', '#e8e4dc'); solid(0, 0.4, 0, Math.min(long - 1.2, 2.4), 0.6); for (let i = 0; i < 3; i++) stool(m, Q(-0.8 + i * 0.8, 1.05), '#2a2a2e'); } }
+        else if (/arkade|dance|capit/.test(lab)) { for (let i = 0; i < Math.floor((long - 0.4) / 1.0); i++) for (const sz of [-1, 1]) { const lx = -long / 2 + 0.7 + i * 1.0, lz = sz * (short / 2 - 0.5), a = sz > 0 ? Math.PI : 0; m.box(Q(lx, lz, a), 0, 0, 0, 0.7, 1.7, 0.6, C(pick(['#c83a8a', '#3a6ac8', '#f2c230', '#3ac87a'], hash(seed + i, sz)))); m.box(Q(lx, lz - sz * 0.31, a), 0, 1.0, 0, 0.5, 0.4, 0.01, C('#5ac8f8')); solid(lx, lz, 0, 0.7, 0.6); } }
+        else if (/bangku|kursi|lesehan/.test(lab)) { const n = Math.max(1, Math.floor(short / 1.2)); for (let i = 0; i < n; i++) { const lz = -short / 2 + (i + 0.5) * short / n; sofa(m, Q(0, lz), Math.min(long - 0.4, 4.2), c === FC.kuning ? '#3a6ac0' : c); solid(0, lz, 0, Math.min(long - 0.4, 4.2), 0.8); } }
+        else if (/sandal/.test(lab)) { m.box(Q(0, 0), 0, 0, 0, long - 0.2, 0.5, Math.min(short, 0.6), C('#7a5030')); for (let i = 0; i < Math.floor(long / 0.3); i++) m.box(Q(-long / 2 + 0.25 + i * 0.3, 0), 0, 0.5, 0, 0.2, 0.05, 0.4, C(pick(['#2a2a2e', '#3a6ac0', '#c83a3a', '#e8e8e8', '#6a4428'], hash(seed, i)))); solid(0, 0, 0, long - 0.2, 0.6); }
+        else if (e.kind === 'rak') { const n = Math.max(1, Math.floor(short / 1.4)); for (let i = 0; i < n; i++) { const lz = -short / 2 + (i + 0.5) * short / n; shelfUnit(m, Q(0, lz), long - 0.6, 1.6, 4, seed + i, 0.6, '#9aa0a8', true); solid(0, lz, 0, long - 0.5, 0.65); } }
+        else if (e.kind === 'meja') { const tw = Math.min(long - 0.8, 3.2), td = Math.min(short - 0.8, 1.4); table(m, Q(0, 0), tw, td, 0.75); for (let i = 0; i < Math.max(1, Math.floor(tw / 0.8)); i++) for (const sz of [-1, 1]) chair(m, Q(-tw / 2 + 0.4 + i * 0.8, sz * (td / 2 + 0.3), sz > 0 ? Math.PI : 0)); solid(0, 0, 0, tw, td); }
+        else if (e.kind === 'kasur') { bed(m, Q(0, -short / 2 + 1.1, 0), pick(['#4a7ac0', '#c84a6a', '#5aa85a'], hash(seed, 2))); solid(0, -short / 2 + 1.1, 0, 1.1, 2.0); m.box(Q(long / 2 - 0.5, -short / 2 + 0.35), 0, 0, 0, 0.8, 1.8, 0.5, C('#7a5030')); solid(long / 2 - 0.5, -short / 2 + 0.35, 0, 0.8, 0.5); }
+        else if (e.kind === 'sofa') { sofa(m, Q(0, -short / 2 + 0.5), Math.min(long - 0.6, 3.6)); table(m, Q(0, 0.4), 1.2, 0.6, 0.4, '#6a4428'); rug(m, Q(0, 0.3), Math.min(long - 0.4, 3.2), Math.min(short - 0.6, 2.2), '#8a3a2a', '#c87a4a'); solid(0, -short / 2 + 0.5, 0, Math.min(long - 0.6, 3.6), 0.8); }
+        else if (e.kind === 'hitam') { m.box(Q(0, -short / 2 + 0.2), 0, 0.3, 0, long - 0.4, 1.6, 0.1, C('#1a1a1e')); m.box(Q(0, -short / 2 + 0.26), 0, 0.42, 0, long - 0.7, 1.36, 0.01, C('#3a6a9a')); solid(0, -short / 2 + 0.2, 0, long - 0.4, 0.15);
+          for (let j = 0; j < Math.floor((short - 1.2) / 1.0); j++) for (let i = 0; i < Math.floor((long - 0.8) / 0.7); i++) stool(m, Q(-long / 2 + 0.75 + i * 0.7, -short / 2 + 1.4 + j * 1.0), '#c83a3a'); }
+        else if (e.kind === 'air') { m.box(Q(0, 0), 0, 0, 0, long, 0.45, short, C('#e8e4dc')); m.box(Q(0, 0), 0, 0.45, 0, long - 0.3, 0.02, short - 0.3, C('#4aa8d8')); solid(0, 0, 0, long, short); }
+        else if (e.kind === 'kain') { for (let i = 0; i < Math.max(1, Math.floor(short / 1.3)); i++) { const lz = -short / 2 + 0.65 + i * 1.3; m.box(Q(0, lz), 0, 1.3, 0, long - 0.8, 0.05, 0.05, C('#8a8a90')); for (let j = 0; j < Math.floor((long - 0.9) / 0.22); j++) m.box(Q(-long / 2 + 0.55 + j * 0.22, lz), 0, 0.45, 0, 0.16, 0.85, 0.45, C(pick(['#c84a6a', '#3a6ac0', '#f2c230', '#2a2a2e', '#e8e8e8', '#5aa85a'], hash(seed + i, j)))); solid(0, lz, 0, long - 0.8, 0.5); } }
+        else if (e.kind === 'hijau') { for (let i = 0; i < Math.floor(long / 0.9); i++) for (const sz of [-1, 1]) pot(m, Q(-long / 2 + 0.45 + i * 0.9, sz * (short / 2 - 0.3)), 1.4); }
+        else { const col2 = C(c); counter(m, Q(0, short / 2 - 0.4), long - 0.4, e.kind === 'logam' ? '#8a8e94' : e.kind === 'putih' ? '#dcdcd8' : c); solid(0, short / 2 - 0.4, 0, long - 0.4, 0.6);
+          m.box(Q(0, -short / 2 + 0.25), 0, 0, 0, long - 0.4, 1.7, 0.4, shade(col2, 0.85)); solid(0, -short / 2 + 0.25, 0, long - 0.4, 0.4);
+          if (e.kind === 'putih') shelfUnit(m, Q(0, -short / 2 + 0.7), long - 1, 1.4, 3, seed, 0.4, '#a8acb0'); }
+        if (e.label) { const lab = textPlane([e.label], Math.min(long, 3), 0.42, '#2a2014', '#fff6d8', 46), [lx, lz] = [cx, cz - sd / 2 + 0.05]; lab.position.set(R.ox + lx, 2.15, R.oz + lz); scene.add(lab); }
+      }
+      // tangga
+      for (const e of items.filter(e => e.t === 'S')) {
+        const [cx, cz] = T(e.x + e.w / 2, e.y + e.h / 2), long = Math.max(e.w, e.h), short = Math.min(e.w, e.h), rot = e.w >= e.h ? Math.PI / 2 : 0, p = P(cx, cz, rot);
+        const n = 7; for (let i = 0; i < n; i++) m.box(p, 0, 0, -long / 2 + (i + 0.5) * long / n, short - 0.1, (i + 1) * 0.18, long / n, shade(C('#b8b0a0'), 0.8 + (i % 2) * 0.1));
+        for (const sx of [-1, 1]) m.box(p, sx * (short / 2 - 0.03), 0.9, 0, 0.05, 0.05, long, C('#5a4a3a'));
+        const ax = rot ? 1 : 0, cand = [[ax ? long / 2 + 0.7 : 0, ax ? 0 : long / 2 + 0.7], [ax ? -long / 2 - 0.7 : 0, ax ? 0 : -long / 2 - 0.7], [ax ? 0 : short / 2 + 0.7, ax ? short / 2 + 0.7 : 0], [ax ? 0 : -short / 2 - 0.7, ax ? -short / 2 - 0.7 : 0]]
+          .map(([dx, dz]) => [cx + dx, cz + dz]).filter(([x, z]) => Math.abs(x) < W / 2 - 0.4 && Math.abs(z) < Dd / 2 - 0.4).sort((p1, p2) => Math.hypot(...p1) - Math.hypot(...p2));
+        const [lx, lz] = cand[0] || [0, Dd / 2 - 1];
+        R.stairs = { lx, lz, label: e.label || 'Tangga' };
+      }
+      // titik interaksi bernomor
+      for (const e of items.filter(e => e.t === 'M')) { const [lx, lz] = T(e.x, e.y), desc = e.desc; R.spot(lx, lz, 1.1, desc.length > 46 ? desc.slice(0, 44) + '…' : desc, () => toast(desc)); }
+      // papan nama di dinding belakang & penjaga
+      const sb = SIGN_BG[I.id]; if (sb && k === 0) R.sign('back', [I.name.replace(/\s*\(.*\)$/, '').toUpperCase()], 0, 2.05, Math.min(W - 1, 5), 0.5, sb[0], sb[1], 44);
+      const kp = KEEP[I.id]; if (kp && k === 0) { const m1 = items.find(e => e.t === 'M'); const [lx, lz] = m1 ? T(m1.x, m1.y) : [0, 0]; addNPC(R, kp[0], kp[1], lx, Math.max(-Dd / 2 + 0.6, lz - 0.9), kp[2], 0.6); }
+      finish(R); R.doorLabel = 'Masuk ' + R.name.split(' · ')[0];
+      list.push(R);
+    });
+    // pindah lantai: tangga di lantai ini -> lantai berikutnya (lantai teratas: turun ke bawah)
+    list.forEach((R, k) => {
+      const up = list[k + 1], dn = list[k - 1];
+      const land = T2 => T2.stairs ? { x: T2.ox + T2.stairs.lx, z: T2.oz + T2.stairs.lz } : { x: T2.ox, z: T2.oz + T2.d / 2 - 1 };
+      const at = R.stairs ? { lx: R.stairs.lx, lz: R.stairs.lz } : { lx: 0, lz: R.d / 2 - 1 };
+      if (up) R.spot(at.lx, at.lz, 1.3, 'Naik ke ' + up.name.split(' · ')[1], null), R.spots.at(-1).warp = () => ({ ...land(up), room: up });
+      if (dn) R.spot(at.lx + (up ? 1.4 : 0), at.lz, 1.3, 'Turun ke ' + dn.name.split(' · ')[1], null), R.spots.at(-1).warp = () => ({ ...land(dn), room: dn });
+      if (!up && !dn && R.stairs) R.spot(at.lx, at.lz, 1.2, R.stairs.label, () => toast(R.stairs.label + ': belum bisa naik sekarang.'));
+    });
+    dataRooms[I.id] = list[0];
+  }
+
   /* ---------------- pintu di dunia luar */
   const put = (id, x, z, h, label) => outDoors.push({ id, x, z, h, label: label || rooms[id].doorLabel });
   if (kota.darto) { const D = kota.darto, [x, z] = L(D.xf, -0.6, D.d / 2 + 0.55); put('rumah', x, z, D.xf.a + Math.PI / 2); }
@@ -376,6 +522,11 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
   }
   const g = kota.specials?.gudang; if (g) { const [x, z] = L({ x: g.x, z: g.y, a: g.a }, -0.6, g.h / 2 + 0.5); put('markas', x, z, g.a + Math.PI / 2); }
   for (const d of kota.places?.doors || []) if (rooms[d.id]) put(d.id, d.x, d.z, d.h);
+  // pintu interior guide 92: usaha & rumah NPC (ditandai h.named di kota.js), gedung kunci, kontainer proyek
+  for (const h of kota.houses) if (h.named && dataRooms[h.named]) { const [x, z] = L(h.xf, h.type === 'R3' ? -h.w / 4 : 0, h.d / 2 + 0.55); put(h.named, x, z, h.xf.a + Math.PI / 2); }
+  for (const [id, sp] of [['masjid_agung', 'masjid'], ['pasar', 'pasar'], ['plaza', 'plaza'], ['stasiun', 'stasiun'], ['rumah_bram', 'bram']]) {
+    const b = kota.specials?.[sp]; if (!b || !dataRooms[id]) continue; const [x, z] = L({ x: b.x, z: b.y, a: b.a }, 0, b.h / 2 + 0.6); put(id, x, z, b.a + Math.PI / 2); }
+  if (dataRooms.kontainer_proyek) put('kontainer_proyek', 220, 157.4, Math.PI / 2);
 
   /* ---------------- API */
   let back = null;
@@ -390,8 +541,11 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
         for (const o of outDoors) { const d = Math.hypot(o.x - player.x, o.z - player.z); if (d < bd) { bd = d; best = o; } }
         if (best) { const R = rooms[best.id]; return { kind: 'warp', label: best.label, to: { x: R.exit.x, z: R.exit.z, heading: -Math.PI / 2, area: 'dalam' }, after: () => { back = { x: best.x, z: best.z, heading: best.h, owner: best.owner }; cur = R; R.setOwner?.(best.owner); } }; }
       } else if (player.area === 'dalam' && cur) {
-        if (Math.hypot(cur.exit.x - player.x, cur.exit.z - player.z) < 0.9) return { kind: 'warp', label: 'Keluar', to: { ...(back || { x: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[0] : 40, z: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[1] : 90, heading: 0 }), area: 'kota' }, after: () => { cur = null; } };
-        for (const s of cur.spots) if (Math.hypot(s.x - player.x, s.z - player.z) < s.r) return { kind: 'act', label: s.label, fn: s.fn };
+        if (cur.exit && Math.hypot(cur.exit.x - player.x, cur.exit.z - player.z) < 0.9) return { kind: 'warp', label: 'Keluar', to: { ...(back || { x: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[0] : 40, z: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[1] : 90, heading: 0 }), area: 'kota' }, after: () => { cur = null; } };
+        for (const s of cur.spots) if (Math.hypot(s.x - player.x, s.z - player.z) < s.r) {
+          if (s.warp) { const T = s.warp(); return { kind: 'warp', label: s.label, to: { x: T.x, z: T.z, heading: T.heading ?? -Math.PI / 2, area: 'dalam' }, after: () => { cur = T.room; } }; }
+          return { kind: 'act', label: s.label, fn: s.fn };
+        }
       }
       return null;
     },

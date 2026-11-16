@@ -71,6 +71,12 @@ export const PLACE_SIGNS = [
   ['kandang', 'KANDANG SAPI', 'NENEK SARI', '#6a4a24', '#f6e8c0', '#c8a060'], ['pondok', 'DILARANG MASUK', '', '#c8c0a8', '#b82a2a', '#b82a2a'],
   ['bengkel', 'BENGKEL', 'MAS FAJAR', '#1a1a1a', '#f6c81a', '#f6c81a'], ['markas', 'LAMPU KOTA', '', '#1a1a1a', '#f6c81a', '#f6c81a'],
   ['warkop', 'WARKOP SIMPANG', 'KOPI • GORENGAN', '#2f6a3a', '#ffffff', '#f6c81a'],
+  // usaha yang bisa dimasuki (guide 92)
+  ['warnet', 'NEBULA NET', 'WARNET • GAME ONLINE', '#2a1a4a', '#d8c8ff', '#7affff'], ['kafe', 'KAFE SENJA', 'KOPI • LIVE AKUSTIK', '#3a2a1e', '#f6e0b0', '#f2a23a'],
+  ['karaoke', 'KARAOKE', 'SUARA EMAS', '#5a1a4a', '#ffe08a', '#ff6ab0'], ['bank', 'BANK WIRA', 'ATM 24 JAM', '#1e4a8a', '#ffffff', '#f2c230'],
+  ['puskesmas', 'PUSKESMAS', 'WIRABUMI', '#2a8a5a', '#ffffff', '#ffffff'], ['polsek', 'POLSEK', 'WIRABUMI', '#2a2a3a', '#f2d23a', '#f2d23a'],
+  ['studio_foto', 'STUDIO FOTO KILAT', 'CETAK 1 JAM', '#c83a3a', '#ffffff', '#f2c230'], ['kos_narti', 'KOS BU NARTI', 'PUTRA • ADA KAMAR', '#5a7a3a', '#ffffff', '#f2d23a'],
+  ['bengkel_wijaya', 'WIJAYA MOTOR', 'BENGKEL • SPAREPART', '#1a1a1a', '#e83a2a', '#f2c230'],
 ];
 // warung kelontong (R7): tiap warung punya pemilik sendiri. [papan, keterangan, latar, huruf, aksen, sid NPC, nama pemilik]
 // indeks 0 = Warung Bu Ijah (yang paling dekat rumah Om Darto), sisanya dibagi ke warung lain

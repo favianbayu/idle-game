@@ -508,6 +508,17 @@ export function buildKota(scene, C) {
     ws.forEach((h, i) => { h.owner = i < WARUNGS.length ? i : 1 + (i - 1) % (WARUNGS.length - 1); }); }
   // bengkel Mas Fajar: ruko (bukan warung/minimarket/kantor) terdekat ke titik bengkel di peta
   { let best = null, bd = 9; for (const h of houses) if (/^R[1-4]$/.test(h.type)) { const d = Math.hypot(h.xf.x - 170, h.xf.z - 86); if (d < bd) { bd = d; best = h; } } if (best) best.bengkel = true; }
+  // tempat bernama dari guide 92 yang bisa dimasuki: usaha di ruko pusat kota (dekat titik acuan), rumah NPC (sama dengan rumah di npcs.js)
+  { const free = h => !h.bengkel && !h.named && !h.special && !h.back;
+    const nearest = (x, z, ok) => { let best = null, bd = 1e9; for (const h of houses) if (free(h) && ok(h)) { const d = Math.hypot(h.xf.x - x, h.xf.z - z); if (d < bd) { bd = d; best = h; } } return best; };
+    const ruko = h => /^R[1-6]$/.test(h.type) && h.region === 'pusat';
+    for (const [id, x, z, ok] of [['warnet', 118, 70, ruko], ['kafe', 152, 86, ruko], ['karaoke', 175, 106, ruko], ['bank', 140, 96, ruko], ['puskesmas', 96, 84, ruko], ['polsek', 130, 82, ruko],
+      ['studio_foto', 125, 92, ruko], ['kos_narti', 104, 74, h => /^R[56]$/.test(h.type) || ruko(h)], ['bengkel_wijaya', 186, 162, h => h.w >= 4]]) { const h = nearest(x, z, ok); if (h) h.named = id; }
+    const byReg = r => houses.filter(h => h.region === r && !h.special && !h.noHome);
+    const kp = byReg('kampung'), bt = byReg('bantaran');
+    const pickN = (arr, n) => arr.length ? arr[n % arr.length] : null;
+    for (const [id, h] of [['rumah_uti', pickN(kp, 11)], ['rumah_gilang', pickN(bt, 3)], ['rumah_sekar', pickN(kp, 24)], ['rumah_bimo', nearest(darto ? darto.xf.x : 46, darto ? darto.xf.z : 86, h => h.region === 'kampung' && h !== darto)],
+      ['rumah_laras', nearest(111, 103.5, h => h.region === 'bantaran')], ['rumah_nadia', nearest(0, 0, h => h.region === 'perum')]]) if (h && free(h)) h.named = id; }
 
   // tanah
   // tanah dipotong jadi beberapa tekstur <= 2048 px (batas aman GPU HP), tiap potong satu bidang
@@ -541,7 +552,7 @@ export function buildKota(scene, C) {
     else if (/^P\d/.test(h.type)) perum(m, h.xf, h.type, { ...o, wall: pick(PAL.perum.wall, r(1)), roof: pick(PAL.perum.roof, r(2)) });
     else {
       const liar = !h.back && h.region === 'pusat' && /^R[1-4]$/.test(h.type) && r(60) < 0.55;
-      const ro = { ...o, wall: pick(PAL.ruko.wall, r(1)), canopy: pick(PAL.ruko.canopy, r(3)), setback: h.setback, liar, owner: h.owner, cell: h.bengkel ? SB.kinds.txt.bengkel : null };
+      const ro = { ...o, wall: pick(PAL.ruko.wall, r(1)), canopy: pick(PAL.ruko.canopy, r(3)), setback: h.setback, liar, owner: h.owner, cell: h.bengkel ? SB.kinds.txt.bengkel : h.named && SB.kinds.txt[h.named] || null };
       if (h.type === 'MM') parkir.push(minimarket(m, SB, h.xf, ro));
       else if (h.type === 'PK') parkir.push(lahanParkir(m, SB, h.xf, ro));
       else if (h.type === 'R5') hotelKos(m, SB, h.xf, ro);

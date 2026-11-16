@@ -79,6 +79,10 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
 - **Interior** (`src/interior.js`): rumah Om Darto, Indomurah, warung kelontong, markas Lampu Kota, Bengkel Mas Fajar, GOR,
   pabrik es, Gua Kapur, rumah pohon, pondok. Dinding yang menghalangi kamera otomatis disembunyikan. Tidur, makan, belajar,
   latihan, peti tua, upgrade sepeda/motor.
+  Ditambah 21 interior dari guide 92 (`src/data/interiors.json`, diekspor `tools/export_interiors.py` dari
+  `peta/interior_data.py`): warnet, kafe, karaoke, pasar, Plaza (3 lantai), masjid agung, bank, puskesmas, polsek, studio foto,
+  stasiun, kos Bu Narti, Bengkel Wijaya Motor, rumah Bram (2 lantai), rumah Laras, Gilang, Uti, Bimo, Sekar, Nadia, kontainer
+  proyek. Pintu ada di bangunan yang bertanda papan nama di kota; tangga = pindah lantai.
 - **Uang jajan & belanja** (`src/shop.js`, `src/jajan.js`): dompet, belanja di kasir/warung/gerobak (bakso, siomay, cendol,
   gorengan, martabak, cilok, sate) yang memulihkan nyawa/nyali, jual ikan, bantu Om Darto jualan kopi.
 - **Aktivitas** (`src/activities.js`): sepak bola (gawang berjaring, Dodi & Didi ikut main), basket 3x3, mancing (tarik-ulur),

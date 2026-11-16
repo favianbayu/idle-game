@@ -611,4 +611,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
