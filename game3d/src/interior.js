@@ -317,6 +317,29 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     finish(R); R.doorLabel = 'Masuk pondok';
   }
 
+  /* ================= 10. Bengkel Mas Fajar: lift motor, kompresor, rak suku cadang, ban, kamar Fajar (guide 82) */
+  { const R = room('bengkel', 'Bengkel Mas Fajar', 11, 8, { wall: '#c8c4b8', base: '#3a3a40', doorX: 0, h: 2.8, outside: '#e8e4d8' });
+    flat(R, '#7a7a76'); for (let i = 0; i < 12; i++) R.st.box(R.X, -5 + hash(i, 3) * 10, -0.01, -3.6 + hash(i, 8) * 7, 0.5 + hash(i, 1) * 0.7, 0.02, 0.4 + hash(i, 2) * 0.5, C('#4a4a46'));
+    const m = R.st, P = R.P;
+    { const p = P(-2.6, -1.2); m.box(p, 0, 0, 0, 2.2, 0.5, 0.9, C('#d8202a')); m.box(p, 0, 0.5, 0, 2.3, 0.06, 1.0, C('#5a5a5a')); m.box(p, 0, 0.56, 0, 1.5, 0.4, 0.3, C('#2a6ac0')); m.box(p, 0.7, 0.56, 0, 0.12, 0.5, 0.5, C('#1a1a1a')); m.box(p, -0.7, 0.56, 0, 0.12, 0.5, 0.5, C('#1a1a1a')); m.box(p, 0.6, 1.0, 0, 0.08, 0.35, 0.5, C('#8a8a8a')); R.solid(p, 2.3, 1.0); }   // lift + motor
+    { const p = P(-4.6, 1.2); m.box(p, 0, 0, 0, 0.6, 0.55, 0.45, C('#d8202a')); m.box(p, 0, 0.55, 0, 0.36, 0.36, 0.36, C('#c8c8c8')); m.box(p, 0, 0.1, 0.25, 0.1, 0.1, 0.1, C('#2a2a2a')); R.solid(p, 0.6, 0.45); }   // kompresor
+    shelfUnit(m, P(1.5, -3.75), 4.0, 1.9, 4, 201, 0.45, '#3a4a5a'); R.solid(P(1.5, -3.75), 4.0, 0.45);
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 3 - (i % 2); j++) m.box(P(4.9, -1.5 + i * 0.55), 0, j * 0.14, 0, 0.5, 0.13, 0.5, C(j % 2 ? '#2a2a2a' : '#1a1a1a'));   // tumpukan ban
+    R.solid(P(4.9, -0.4), 0.5, 2.8);
+    for (let i = 0; i < 3; i++) { m.box(P(-4.7 + i * 0.5, -3.5), 0, 0, 0, 0.42, 0.75, 0.42, C(['#2a6a3a', '#c8a020', '#2a4a8a'][i])); m.box(P(-4.7 + i * 0.5, -3.5), 0, 0.75, 0, 0.3, 0.03, 0.3, C('#5a5a5a')); } R.solid(P(-4.2, -3.5), 1.5, 0.45);   // drum oli
+    table(m, P(2.6, 0.4), 2.0, 0.8, 0.9, '#5a5a5e', '#8a8a8a'); R.solid(P(2.6, 0.4), 2.0, 0.8); m.box(P(2.6, 0.4), -0.5, 0.9, 0, 0.4, 0.25, 0.3, C('#d8202a')); m.box(P(2.6, 0.4), 0.3, 0.9, 0.1, 0.5, 0.06, 0.2, C('#8a8a8a')); m.box(P(2.6, 0.4), 0.6, 0.9, -0.15, 0.15, 0.3, 0.15, C('#3a3a3a'));   // meja kerja + toolbox + ragum
+    for (let i = 0; i < 8; i++) R.W.back.box(R.X, -0.5 + i * 0.22, 1.0 + (i % 2) * 0.25, -3.97, 0.05, 0.3, 0.03, C('#9a9aa0'));   // kunci pas di papan
+    R.W.back.box(R.X, 0.3, 0.9, -3.99, 1.9, 0.75, 0.02, C('#c8a060'));
+    // kamar Fajar (pojok kanan belakang): kasur lipat, kipas, foto
+    m.box(R.X, 3.6, 0, -2.0, 0.1, 2.0, 2.6, C('#a8a49a')); R.solid(P(3.6, -2.0), 0.12, 2.6);
+    m.box(P(4.6, -2.8), 0, 0, 0, 0.9, 0.15, 1.6, C('#3a6aa8')); m.box(P(4.6, -3.4), 0, 0.15, 0, 0.6, 0.1, 0.3, C('#f2f2ee'));
+    R.sign('back', ['BENGKEL MAS FAJAR', 'servis • tambal ban • oli • modif ringan'], -2.6, 1.9, 3.2, 0.55, '#1a1a1a', '#f6c81a', 44);
+    R.sign('left', ['DAFTAR HARGA', 'Ganti oli 35rb • Servis 50rb', 'Tambal ban 10rb'], 0.5, 1.6, 1.8, 0.8, '#f4f0e0', '#2a2014', 30);
+    R.spot(0.6, 0.4, 1.3, 'Upgrade sepeda / motor (Mas Fajar)', () => shop.open({ title: 'Bengkel Mas Fajar', sub: 'Upgrade kendaraan', items: CATALOG.bengkel, thanks: 'Mantap, makin ngebut!' }));
+    addNPC(R, 'fajar', 'Mas Fajar', 0.8, -0.6, ['Motor Om Darto udah waktunya ganti oli.', 'Kalau mau ngebut, rem dulu yang bener.', 'Malam aku sekolah paket C, bengkel tutup jam 6.'], 0.8);
+    finish(R); R.doorLabel = 'Masuk Bengkel Mas Fajar';
+  }
+
   /* ---------------- pintu di dunia luar */
   const put = (id, x, z, h, label) => outDoors.push({ id, x, z, h, label: label || rooms[id].doorLabel });
   if (kota.darto) { const D = kota.darto, [x, z] = L(D.xf, -0.6, D.d / 2 + 0.55); put('rumah', x, z, D.xf.a + Math.PI / 2); }
@@ -324,6 +347,8 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     if (h.type === 'MM') { const [x, z] = L(h.xf, 0.3, h.d / 2 + 0.5); put('indomurah', x, z, h.xf.a + Math.PI / 2); }
     else if (h.type === 'R7') { const [x, z] = L(h.xf, 0, h.d / 2 + 0.55); put('warung', x, z, h.xf.a + Math.PI / 2); }
   }
+  { let best = null, bd = 9; for (const h of kota.houses) if (h.type[0] === 'R' && h.type !== 'R7') { const d = Math.hypot(h.xf.x - 170, h.xf.z - 86); if (d < bd) { bd = d; best = h; } }
+    if (best) { const [x, z] = L(best.xf, 0, best.d / 2 + 0.5); put('bengkel', x, z, best.xf.a + Math.PI / 2); } }
   const g = kota.specials?.gudang; if (g) { const [x, z] = L({ x: g.x, z: g.y, a: g.a }, -0.6, g.h / 2 + 0.5); put('markas', x, z, g.a + Math.PI / 2); }
   for (const d of kota.places?.doors || []) if (rooms[d.id]) put(d.id, d.x, d.z, d.h);
 

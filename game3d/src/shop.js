@@ -16,6 +16,7 @@ export const CATALOG = {
   martabak: [['Martabak manis cokelat', 25000, { hp: 8, ny: 10 }, '#6a3a1a'], ['Martabak telor', 22000, { hp: 8 }, '#e8c050']],
   cilok: [['Cilok bumbu kacang', 5000, { hp: 3 }, '#e8e0d0'], ['Cimol', 5000, { hp: 2 }, '#f2f2e8']],
   sate: [['Sate ayam 10 tusuk', 15000, { hp: 6 }, '#a8582a'], ['Lontong', 3000, { hp: 2 }, '#8ab85a']],
+  bengkel: [['Servis sepeda onthel (+10% laju)', 30000, { up: 'sepeda' }, '#2f5a3e'], ['Ganti knalpot & karbu motor (+10% laju)', 75000, { up: 'motor' }, '#c83a3a'], ['Ganti oli motor', 35000, {}, '#c8a020'], ['Tambal ban', 10000, {}, '#1a1a1a']],
   kopi: [['Kopi tubruk Om Darto', 0, { ny: 10 }, '#3a2214'], ['Teh tubruk', 0, { hp: 2 }, '#a85a2a']],
 };
 
@@ -36,12 +37,13 @@ export function makeShop({ player, toast, fight }) {
     const fx = player.fx; if (!fx) return;
     if (ef.hp) fx.hp = Math.min(fight.maxHP(), fx.hp + ef.hp);
     if (ef.ny) fx.nyali = Math.min(100, fx.nyali + ef.ny);
+    if (ef.up) { const u = player.upg || (player.upg = {}); u[ef.up] = Math.min(5, (u[ef.up] || 0) + 1); }
   }
   function render() {
     const { title, sub, items, sellFish } = cur;
     let h = `<button class="x">✕</button><h3>${title}</h3><div class="sub">${sub || ''} · Uangmu: <b>${rp(player.uang)}</b> · Nyawa ${Math.ceil(player.fx?.hp ?? 0)}/${fight.maxHP()}</div>`;
     items.forEach(([nm, pr, ef, c], i) => {
-      const efs = [ef.hp && `+${ef.hp} nyawa`, ef.ny && `+${ef.ny} nyali`].filter(Boolean).join(' · ') || 'manis aja';
+      const efs = [ef.hp && `+${ef.hp} nyawa`, ef.ny && `+${ef.ny} nyali`, ef.up && `level sekarang ${(player.upg || {})[ef.up] || 0}/5`].filter(Boolean).join(' · ') || 'biar awet';
       h += `<div class="it"><span class="ic" style="background:${c}"></span><span class="nm">${nm}<br><span class="ef">${efs}</span></span><b>${pr ? rp(pr) : 'gratis'}</b><button data-i="${i}" ${player.uang < pr ? 'disabled' : ''}>Beli</button></div>`;
     });
     if (sellFish) {

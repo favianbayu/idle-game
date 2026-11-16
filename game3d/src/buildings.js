@@ -78,6 +78,13 @@ export function leanTo(m, xf, w, z0, z1, y0, y1, roof) {
   }
   m.box(xf, 0, y1 - 0.14, z1, w + 0.04, 0.14, 0.05, col('#f2eee4'));   // lis depan
 }
+// deretan pot berisi tanaman beragam di depan rumah (mawar, kembang sepatu di kaleng cat, lidah mertua, aglonema, kaktus, anggrek, rak pot)
+const POTS = ['potMawar', 'potSepatu', 'potLidah', 'potAglo', 'potKaktus', 'potAnggrek', 'potSepatu', 'potMawar'];
+function potRow(veg, seed, lx0, lx1, lz, o = {}) {
+  const n = Math.max(1, Math.floor((lx1 - lx0) / 0.36));
+  if (o.rack && hash(seed, 77) < 0.35 && lx1 - lx0 > 1) { veg('rakPot', lx0 + 0.45, lz - 0.05); lx0 += 0.95; }
+  for (let i = 0; i < n; i++) { if (hash(seed, 60 + i) < 0.25) continue; const lx = lx0 + (i + 0.5) * (lx1 - lx0) / n; veg(POTS[Math.floor(hash(seed, 70 + i) * POTS.length)], lx, lz + (hash(seed, 90 + i) - 0.5) * 0.08, { s: 0.9 + hash(seed, 80 + i) * 0.35 }); }
+}
 /* ---------- RUMAH KAMPUNG */
 // o: { wall, roof, accent, seed, veg(list), C(collision), darto }
 export function kampung(m, xf, type, o) {
@@ -93,6 +100,7 @@ export function kampung(m, xf, type, o) {
     gableZ(m, xf, 0, H, z0, w, d, 1.0, roof, wall);
     if (r(1) < 0.6) jemuran(m, xf, w / 2 + 0.6, 0.3, 1.6, seed);
     if (r(2) < 0.5) veg('pot', -w / 2 + 0.3, z0 + d / 2 + 0.5);
+    potRow(veg, seed, 0.15, 1.4, z0 + d / 2 + 0.75);
     C(0, z0, w, d);
   } else if (type === 'K2') {     // rumah teras 4 x 5: pelana + teras beratap 2 tiang
     const w = 4, d = 3.6, z0 = -0.7;
@@ -103,14 +111,14 @@ export function kampung(m, xf, type, o) {
     m.box(xf, 0, 0, z0 + d / 2 + 0.7, w, 0.14, 1.4, col(o.darto ? '#b8b0a0' : '#c8c0b0'));                // lantai teras
     for (const s of [-1, 1]) m.box(xf, s * (w / 2 - 0.15), 0.14, z0 + d / 2 + 1.25, 0.18, H - 0.3, 0.18, FRAME);   // tiang teras
     leanTo(m, xf, w + 0.4, z0 + d / 2 - 0.15, z0 + d / 2 + 1.6, H + 0.28, H - 0.12, roof);              // atap teras genteng sampai depan pilar
-    if (o.darto) { m.box(xf, -1.0, 0.14, z0 + d / 2 + 0.45, 1.7, 0.42, 0.42, col('#8a5a34')); motor(m, at(xf, w / 2 + 0.55, z0 + d / 2 - 0.2, 0.1), '#3a6a8a'); veg('pot', 1.75, z0 + d / 2 + 0.18, { c: '#a0d080' }); }
-    else { chair(m, at(xf, -1.2, z0 + d / 2 + 0.6, 0.3), pick(['#d23a3a', '#2a6ac0', '#3a9a4a'], r(3))); if (r(4) < 0.35) motor(m, at(xf, 1.3, z0 + d / 2 + 0.78, Math.PI / 2), pick(['#2a2a2e', '#c83a3a', '#2a6ac0'], r(5))); veg('pot', 1.75, z0 + d / 2 + 1.25); }
+    if (o.darto) { potRow(veg, seed + 5, 0.55, 1.5, z0 + d / 2 + 1.55); veg('potGantung', 1.2, z0 + d / 2 + 1.2, { y: H - 0.15 }); veg('potGantung', -1.6, z0 + d / 2 + 1.2, { y: H - 0.15 }); m.box(xf, -1.0, 0.14, z0 + d / 2 + 0.45, 1.7, 0.42, 0.42, col('#8a5a34')); motor(m, at(xf, w / 2 + 0.55, z0 + d / 2 - 0.2, 0.1), '#3a6a8a'); veg('pot', 1.75, z0 + d / 2 + 0.18, { c: '#a0d080' }); }
+    else { chair(m, at(xf, -1.2, z0 + d / 2 + 0.6, 0.3), pick(['#d23a3a', '#2a6ac0', '#3a9a4a'], r(3))); if (r(4) < 0.35) motor(m, at(xf, 1.3, z0 + d / 2 + 0.78, Math.PI / 2), pick(['#2a2a2e', '#c83a3a', '#2a6ac0'], r(5))); veg('pot', 1.75, z0 + d / 2 + 1.25); potRow(veg, seed, 0.5, 1.6, z0 + d / 2 + 1.55, { rack: true }); if (r(9) < 0.5) veg('potGantung', -1.2, z0 + d / 2 + 1.2, { y: H - 0.15 }); }
     if (r(6) < 0.3) m.box(xf, w / 2 - 0.4, H + 0.6, z0 - 0.6, 0.3, 0.3, 0.4, col('#c8c0b0'));               // kandang burung
     C(0, z0, w, d); C(-w / 2 + 0.15, z0 + d / 2 + 1.25, 0.25, 0.25); C(w / 2 - 0.15, z0 + d / 2 + 1.25, 0.25, 0.25);
   } else if (type === 'K3') {     // rumah tumbuh: lt1 bata, lt2 setengah jadi, tandon oranye, tangga besi luar
     const w = 4, d = 3.6, z0 = -0.3, brick = col('#b06a4a');
     body(m, xf, 0, z0, w, d, H, wall);
-    door(m, xf, -0.8, z0 + d / 2, acc); win(m, xf, 0.9, 0.56, z0 + d / 2); windowsSide(m, at(xf, 0, z0), w, d, 1, 3, {});
+    door(m, xf, -0.8, z0 + d / 2, acc); win(m, xf, 0.9, 0.56, z0 + d / 2); windowsSide(m, at(xf, 0, z0), w, d, 1, 3, {}); potRow(veg, seed, 0.1, 1.6, z0 + d / 2 + 0.25);
     m.box(xf, 0, H, z0, w + 0.1, 0.14, d + 0.1, col('#a8a49a'));
     m.box(xf, 0.4, H + 0.14, z0 - 0.5, w - 0.8, FLOOR * 0.7, d - 1.4, brick);
     win(m, xf, 0.4, H + 0.6, z0 - 0.5 + (d - 1.4) / 2, 0.6, 0.5, col('#2a2a2e'));
@@ -152,7 +160,7 @@ export function kampung(m, xf, type, o) {
     windowsSide(m, at(xf, 0, z0), w, d, 2, 2, { spacing: 2 });
     gableZ(m, xf, 0, 2 * H, z0, w, d, 0.9, roof, wall);
     parabola(m, xf, w / 2 - 0.3, 2 * H + 0.3, z0 - d / 2 + 0.4);
-    veg('pot', w / 2 - 0.3, z0 + d / 2 + 0.25);
+    veg('pot', w / 2 - 0.3, z0 + d / 2 + 0.25); potRow(veg, seed, 0.05, 0.85, z0 + d / 2 + 0.25);
     C(0, z0, w, d);
   }
 }
@@ -233,6 +241,13 @@ export function perum(m, xf, type, o) {
   seg(-hw, bz, hw, bz); seg(-hw, bz, -hw, fz); seg(hw, bz, hw, fz);
   seg(-hw, fz, gx - gate / 2, fz); seg(gx + gate / 2, fz, hw, fz);
   for (const x of [gx - gate / 2, gx + gate / 2]) { m.box(xf, x, 0, fz, 0.3, 1.2, 0.3, col('#d8d4cc')); m.box(xf, x, 1.2, fz, 0.22, 0.2, 0.22, col('#fff6d0')); }
+  // taman depan di balik pagar: bugenvil, melati, pot berderet, kadang bunga matahari
+  { const sd = o.seed, z = fz - 0.4;
+    for (let [a, b] of [[-hw + 0.35, gx - gate / 2 - 0.35], [gx + gate / 2 + 0.35, hw - 0.35]]) if (b - a > 0.5) {
+      if (type !== 'P4' && b - a > 1.2) { veg(hash(sd, Math.round(a * 9)) < 0.6 ? 'bugenvil' : 'melati', a + 0.3, z - 0.05, { s: 0.9 + hash(sd, 7) * 0.3 }); a += 0.8; }
+      if (hash(sd, 55) < 0.3 && b - a > 1) { veg('matahari', b - 0.3, z - 0.05); b -= 0.6; }
+      for (let i = 0; i < Math.floor((b - a) / 0.42); i++) if (hash(sd, 100 + i) > 0.3) veg(POTS[Math.floor(hash(sd, 120 + i) * POTS.length)], a + 0.2 + i * 0.42, z, { s: 1 + hash(sd, 140 + i) * 0.3 });
+    } }
   veg('semak', -hw + 0.7, fz - 0.6); veg('semak', hw - 0.7, fz - 0.6); veg('bunga', -hw + 1.4, fz - 0.5, { c: '#f06080' }); veg('bunga', hw - 1.4, fz - 0.5, { c: '#f0d040' });
 }
 

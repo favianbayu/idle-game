@@ -14,6 +14,7 @@ import { makeActivities } from './activities.js';
 import { makeShop } from './shop.js';
 import { makeInteriors } from './interior.js';
 import { makeJajan } from './jajan.js';
+import { makeAnimals } from './animals.js';
 
 /* ------------------------------------------------------------------ pengaturan */
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -70,7 +71,7 @@ const SPAWN = (() => { const [x, z] = L(kota.darto.xf, -0.4, kota.darto.d / 2 + 
 const player = { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, heading: Math.PI / 2, run: false, area: 'kota' };
 if (saved?.p) Object.assign(player, saved.p);
 if (saved?.stats) player.stats = saved.stats;
-if (saved) { if (saved.uang != null) player.uang = saved.uang; if (saved.inv) player.inv = saved.inv; if (saved.flags) player.flags = saved.flags; }
+if (saved) { if (saved.uang != null) player.uang = saved.uang; if (saved.inv) player.inv = saved.inv; if (saved.flags) player.flags = saved.flags; if (saved.upg) player.upg = saved.upg; }
 const raka = new Character('raka', { xray: true, prio: 10 });
 scene.add(raka.group);
 // kendaraan pemain: tidak muncul dari udara. Tiap kendaraan diparkir di dunia (awal: lorong samping rumah Om Darto),
@@ -148,6 +149,7 @@ const acts = makeActivities({ scene, kota, collision, player, Character, toast, 
 const interiors = makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast });
 interiors.locate();
 const jajan = makeJajan({ scene, kota, collision, player, Character, npcs, shop, acts, toast });
+const animals = makeAnimals({ scene, kota, collision, player, toast });
 if (player.area === 'dalam' && !interiors.cur) Object.assign(player, { x: SPAWN.x, z: SPAWN.z, area: 'kota' });
 onCharsReady(() => {
   preload('raka', ['idle', 'walk', 'run'], 10);
@@ -311,7 +313,7 @@ function findTarget() {
     if (player.area === 'kota' && Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Parkir & masuk SMA Negeri 3' };
     return { kind: 'park', label: 'Turun & parkir' };
   }
-  const at = acts.target(), it = interiors.target() || jajan.target();
+  const at = acts.target(), it = interiors.target() || jajan.target() || animals.target();
   if (at && at.kind === 'act' && !at.label.startsWith('Duduk')) return at;
   if (it) return it;
   for (const [i, R] of RIDES.entries()) if (R && R.holder.visible) { const sp = garage.spot[i], d = Math.hypot(sp.x - player.x, sp.z - player.z); if (d < 1.4 && d < bd) { bd = d; best = { kind: 'ride', i, label: 'Naik ' + R.name.toLowerCase() }; } }
@@ -390,7 +392,7 @@ function updatePlayer(dt) {
   let l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; l = 1; }
   const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || player.run;
   const RD = RIDES[ride], swim = player.swim;
-  const sp = (RD ? (run ? RD.run : RD.walk) : swim ? (run ? 2.3 : 1.5) : (run ? 4.6 : 2.1)) * Math.min(1, l * 1.3);
+  const sp = (RD ? (run ? RD.run : RD.walk) * (1 + 0.1 * ((player.upg || {})[ride === 1 ? 'sepeda' : 'motor'] || 0)) : swim ? (run ? 2.3 : 1.5) : (run ? 4.6 : 2.1)) * Math.min(1, l * 1.3);
   // arah relatif kamera: atas layar = arah pandang kamera
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   const wx = (fx * -iy + rx * ix), wz = (fz * -iy + rz * ix);
@@ -500,6 +502,7 @@ function drawBubbles() {
     if (n.say) show(n.key, n.x, 2.0, n.z, n.say.text, n.say.cls ? 'bubble ' + n.say.cls : n.filler ? 'bubble filler' : 'bubble');
     else if (d < 6) { const p = fight.STRENGTH[n.sid]; if (p && !n.ext) { const [, c] = verdict(p.lv); show(n.key, n.x, 1.85, n.z, `${n.name} · lv ${p.lv}`, 'tag ' + c); } else show(n.key, n.x, 1.85, n.z, n.name, n.filler ? 'tag filler' : 'tag'); }
   }
+  for (const b of animals.bubbles()) show(b.key, b.x, b.y, b.z, b.text, 'bubble filler');
   for (const [k, el] of bubbleEls) if (!seen.has(k)) { el.remove(); bubbleEls.delete(k); }
 }
 
@@ -538,7 +541,7 @@ function loop(now) {
     const sx = Math.round(cam.x / step) * step, sz = Math.round(cam.z / step) * step;
     sun.target.position.set(sx, 0, sz); sun.position.set(sx + 22, 45, sz + 14);
   }
-  jajan.update(dt);
+  jajan.update(dt); animals.update(dt);
   const inside = player.area === 'dalam';
   if (inside !== wasInside) { wasInside = inside; scene.background = inside ? DARKBG : SKY; scene.fog.color.copy(inside ? DARKBG : SKY); }
   if (inside) { scene.fog.near = 60; scene.fog.far = 140; interiors.update(camera); }
@@ -557,7 +560,7 @@ function loop(now) {
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { ui.fps.textContent = `${Math.round(fpsN / fpsAcc)} fps · ${renderer.info.render.calls} draw · ${renderer.domElement.width}x${renderer.domElement.height}`; fpsAcc = 0; fpsN = 0; }
   saveT += dt;
-  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage, stats: player.stats, uang: player.uang, inv: player.inv, flags: player.flags })); }
+  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage, stats: player.stats, uang: player.uang, inv: player.inv, flags: player.flags, upg: player.upg })); }
 }
 
 resize(); applyQuality();
@@ -566,4 +569,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { fight, acts, shop, interiors, jajan, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

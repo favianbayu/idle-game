@@ -46,7 +46,9 @@
   #pad button { width: 64px; height: 64px; border-radius: 50%; font-size: 14px; padding: 0; }
   #pad #btnAct { width: 84px; height: 84px; font-size: 16px; background: #ffd84a; }
   #pad #btnEmote, #pad #btnRide, #pad #btnHit { width: 52px; height: 52px; font-size: 12px; }
-  #camPad { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 160px); display: none; gap: 8px; }
+  #camPad { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 222px); display: none; gap: 8px; }
+  body.touch #prompt { bottom: calc(max(18px, env(safe-area-inset-bottom)) + 162px); }
+  @media (max-width: 640px) { #fightHud { top: calc(max(10px, env(safe-area-inset-top)) + 66px) !important; } }
   #fpad { position: fixed; right: calc(max(16px, env(safe-area-inset-right)) + 94px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 96px); display: none; gap: 8px; }
   #fpad button { width: 52px; height: 52px; border-radius: 50%; font-size: 11px; padding: 0; background: #ffe2c8; }
   body.touch #fpad { display: flex; }

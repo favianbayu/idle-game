@@ -9,13 +9,17 @@ dibangun ulang di Three.js (GPU) supaya kamera berputar tidak lag lagi.
 |---|---|---|
 | Jalan | WASD / panah | joystick (sentuh layar kiri) |
 | Lari | Shift | tombol Lari / dorong joystick jauh |
-| Aksi (ngobrol, masuk sekolah) | Spasi / F / Enter | tombol Aksi |
+| Aksi (ngobrol, masuk bangunan, naik/turun & parkir kendaraan, mancing, belanja, elus kucing) | Spasi / Enter | tombol Aksi |
+| Pukul / Tendang | J atau F / K (Shift+J = jurus saat Nyali penuh) | Pukul (jadi JURUS saat Nyali penuh) / Tendang |
+| Hindar (tekan = guling/mundur, tahan = tangkis, tepat waktu = parry) | L | Hindar |
+| Pegang (banting / kunci lengan) · Provokasi | I · T | Pegang |
+| Status diri (Kekuatan, Kelincahan, Nyali, daftar lawan) | U | Menu → Status diri |
 | Putar kamera | Q / E, seret mouse | tombol ⟲ ⟳, geser dua jari |
 | Zoom | roda mouse, + / − | cubit dua jari |
 | Kamera ikut karakter | C | Menu → Kamera ikut |
 | Sudut kamera (Rendah / Sedang / Tinggi) | V, seret mouse naik-turun | tombol Sudut, geser dua jari naik-turun |
-| Peta mini | M | Menu → Peta |
-| Naik sepeda / motor / turun | R | tombol Naik |
+| Peta besar (seluruh kota, posisi & arah pemain, kendaraan parkir) | M (Esc tutup) | tombol Peta / ketuk minimap |
+| Peta mini | N | Menu → Minimap |
 | Gaya (melambai, duduk, jongkok, HP, joget, hormat, angkat tangan, baca, berbaring, tepuk tangan, tertawa, berpikir, bawa kardus, salam, peregangan) | 1-9, 0 | tombol Gaya (berganti tiap tekan) |
 
 Menu juga punya **Grafik** (Rendah: tanpa bayangan matahari dan rumput kecil, Sedang, Tinggi) dan **Pixel** (besar piksel; auto menyesuaikan layar).
@@ -66,9 +70,21 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   bertulisan khas pertokoan Indonesia (fotokopi, service HP, apotek, RM Padang, laundry kiloan, dll.).
 - **Parkir liar & tukang parkir**: motor berjajar di depan ruko; tukang parkir berompi oranye mondar-mandir, memberi
   aba-aba ("Priiit! Kiri, kiri...") dan menyapa pemain yang lewat naik motor.
-- **Berantem** (`src/fight.js`): tombol F / "Pukul" (combo jab, straight, hook, tendangan). NPC "jagoan" (preman, punk,
-  ojol, satpam, pemuda, tukang parkir, dll.) ngelawan dengan kuda-kuda & pukulan; yang lain lari panik atau meringkuk.
-  Saksi ikut bereaksi (satpam/polisi datang melerai). NPC yang KO jatuh lalu bangun lagi; nyawa pemain pulih pelan.
+- Warga biasa yang dipukul lari panik atau meringkuk (reputasi turun); saksi ikut bereaksi, satpam/polisi datang melerai.
+- **Berantem versi guide 70** (`src/fight.js`): combo dari urutan Pukul/Tendang (A-A-A-B "Bel Pulang", A-B "Sapu Pasar", dll.),
+  tangkis & parry, guling, banting bahu, kunci lengan saat lawan pusing, meter Nyali + jurus, tanda "!" merah sebelum lawan
+  memukul, maksimal 2 lawan menyerang bersamaan. Tiap tokoh punya level kekuatan sesuai cerita (Tegar lv1 ... Bang Jaka lv9),
+  terlihat di nama & panel Status. Statistik pemain naik lewat samsak, main bola/basket, lari di GOR, menang berantem.
+- **Interior** (`src/interior.js`): rumah Om Darto, Indomurah, warung kelontong, markas Lampu Kota, Bengkel Mas Fajar, GOR,
+  pabrik es, Gua Kapur, rumah pohon, pondok. Dinding yang menghalangi kamera otomatis disembunyikan. Tidur, makan, belajar,
+  latihan, peti tua, upgrade sepeda/motor.
+- **Uang jajan & belanja** (`src/shop.js`, `src/jajan.js`): dompet, belanja di kasir/warung/gerobak (bakso, siomay, cendol,
+  gorengan, martabak, cilok, sate) yang memulihkan nyawa/nyali, jual ikan, bantu Om Darto jualan kopi.
+- **Aktivitas** (`src/activities.js`): sepak bola (gawang berjaring, Dodi & Didi ikut main), basket 3x3, mancing (tarik-ulur),
+  berenang di kolam umum & kali, rakit penyeberangan, api unggun. Sepeda & motor diparkir di dunia (awal di rumah Om Darto).
+- **Binatang & tanaman** (`src/animals.js`, `src/veg.js`): kucing, anjing, ayam & anak ayam, merpati, burung terbang, bebek,
+  ikan, sapi, kambing; pot mawar, kembang sepatu di kaleng cat, lidah mertua, aglonema, kaktus, anggrek, pot gantung,
+  rak pot, bugenvil, melati, bunga matahari.
 - **Lalu lintas**: kendaraan yang keluar di tepi peta menghilang, lalu masuk lagi dari ujung jalan di tepi peta lain.
   Kendaraan saling jaga jarak & memberi jalan di simpang; pemain/NPC tidak bisa menembus badan kendaraan.
 - **Gerbang Perumahan Bukit Asri**: gapura papan nama, pos satpam, portal yang naik saat ada kendaraan mendekat.

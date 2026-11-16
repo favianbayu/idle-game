@@ -51,7 +51,7 @@ export function makeFight({ player, raka, npcs, collision, riding, toast, onKO, 
   const maxHP = () => 8 + st.kekuatan * 2;
   const fx = player.fx = { atk: null, hp: maxHP(), hurt: 0, down: 0, lastEnd: -9, seq: '', t: 0, seen: -99, nyali: 0, block: false, blockT: 0, counterT: 0, roll: 0, rollDir: null, inv: 0, grab: null, stop: 0, shake: 0, fleeT: 0 };
   // HUD: nyawa (hijau), nyali (oranye), bos
-  const hud = document.createElement('div');
+  const hud = document.createElement('div'); hud.id = 'fightHud';
   hud.style.cssText = 'position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);padding:5px 10px;border-radius:8px;background:rgba(20,20,24,.7);color:#fff;font:600 12px system-ui;pointer-events:none;opacity:0;transition:opacity .3s;z-index:5;min-width:190px';
   hud.innerHTML = '<div class="fh-row">NYAWA <span class="fh-bar"><i class="fh-hp"></i></span></div><div class="fh-row">NYALI <span class="fh-bar"><i class="fh-ny"></i></span></div><div class="fh-boss" style="display:none"></div><div class="fh-msg"></div>';
   document.body.appendChild(hud);
