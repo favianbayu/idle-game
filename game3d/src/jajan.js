@@ -17,12 +17,14 @@ const KINDS = [
   { id: 'cilok', title: 'Cilok Teh Euis', sign: ['CILOK', 'CIMOL'], body: '#f2c230', roof: '#d8302a', sid: 'mbak', name: 'Teh Euis', lines: ['Cilok, cilok! Lima ribuan!', 'Pedes apa sedeng?'] },
   { id: 'sate', title: 'Sate Pak Kumis', sign: ['SATE AYAM', 'Madura'], body: '#6a4428', roof: '#e8e4d0', sid: 'bapakPeci', name: 'Pak Kumis', lines: ['Sate, sateee!', 'Bumbunya kacang apa kecap?'] },
 ];
+// gerobak khusus di titik tertentu (bukan giliran KINDS): nasi goreng tempat kumpul balap liar Jl. Lingkar (guide 87)
+const SPECIAL = { nasgor: { id: 'nasgor', title: 'Nasi Goreng Bang Jali', sign: ['NASI GORENG', 'mi • kwetiau'], body: '#c83a2a', roof: '#2a2a2e', sid: 'bapakPeci', name: 'Bang Jali', lines: ['Nasi goreng, mi goreng, kwetiau!', 'Malam-malam rame anak motor di sini.', 'Pedesnya level berapa, Mas?'] } };
 // gerobak putaran kedua (jenis sama) dijaga pedagang lain, supaya tidak ada dua Kang Dadang
 const ALT = { bakso: { title: 'Bakso Cak Anwar', sign: ['BAKSO', 'Cak Anwar'], name: 'Cak Anwar' }, siomay: { title: 'Siomay Kang Ujang', name: 'Kang Ujang' },
   cendol: { title: 'Es Cendol Mang Oleh', name: 'Mang Oleh', sid: 'bapakPeci' }, gorengan: { title: 'Gorengan Bu Painem', name: 'Bu Painem', sid: 'ibuDaster' },
   martabak: { title: 'Martabak Bang Toyib', name: 'Bang Toyib' }, cilok: { title: 'Cilok Teh Neneng', name: 'Teh Neneng' }, sate: { title: 'Sate Cak Rokib', name: 'Cak Rokib' } };
 // tempat mangkal: dekat keramaian (pasar, gerbang SMA, stasiun, terminal, GOR, plaza, masjid, lapangan bola, taman)
-const ANCHORS = [[98, 92], [133, 62], [19, 58], [246, 98], [168, 44], [178, 98], [146, 64], [88, 104], [127, 46], [150, 82], [60, 86], [200, 120]];
+const ANCHORS = [[98, 92], [133, 62], [19, 58], [246, 98], [168, 44], [178, 98], [146, 64], [88, 104], [127, 46], [150, 82], [60, 86], [200, 120], [251, 165, 'nasgor']];
 
 function signTex(lines, bg, fg) {
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 96;
@@ -69,6 +71,7 @@ export function makeJajan({ scene, kota, collision, player, Character, npcs, sho
     else if (K.id === 'gorengan') { g(-0.4, 0.94, 0, 0.42, 0.14, 0.42, '#3a3a3a'); for (let i = 0; i < 14; i++) g(0.0 + (i % 5) * 0.11, 0.95 + Math.floor(i / 5) * 0.05, -0.12 + (i % 3) * 0.1, 0.1, 0.05, 0.08, pick(['#d8a040', '#c88a30', '#e8c070', '#b87a28'], hash(i, 5))); }
     else if (K.id === 'martabak') { g(-0.3, 0.94, 0, 0.5, 0.06, 0.5, '#2a2a2a'); g(-0.3, 1.0, 0, 0.42, 0.04, 0.42, '#e8b040'); for (let i = 0; i < 3; i++) g(0.4, 0.94 + i * 0.08, 0, 0.32, 0.07, 0.32, '#f4f0e8'); for (const c of ['#5a2a1a', '#f2e2b0', '#e8302a']) g(0.05 + Math.random() * 0, 0.94, -0.15 + ['#5a2a1a', '#f2e2b0', '#e8302a'].indexOf(c) * 0.12, 0.1, 0.12, 0.1, c); }
     else if (K.id === 'cilok') { g(-0.3, 0.94, 0, 0.38, 0.36, 0.38, '#c8ccd0'); for (let i = 0; i < 8; i++) g(0.1 + (i % 4) * 0.1, 0.95, -0.06 + Math.floor(i / 4) * 0.12, 0.08, 0.08, 0.08, '#f2f0e8'); }
+    else if (K.id === 'nasgor') { g(-0.3, 0.94, 0, 0.5, 0.1, 0.5, '#5a5a5a'); g(-0.3, 1.04, 0, 0.46, 0.08, 0.46, '#1e1e1e'); g(-0.3, 1.1, 0, 0.36, 0.04, 0.36, '#e8b860'); g(-0.3, 1.12, -0.05, 0.1, 0.03, 0.1, '#d84a2a'); for (let i = 0; i < 4; i++) g(0.32, 0.94 + i * 0.05, 0.08, 0.26, 0.04, 0.26, '#f4f4f0'); for (const [c, k] of [['#e8d8a0', 0], ['#3a8a3a', 1], ['#d8302a', 2]]) g(0.18 + k * 0.12, 0.94, -0.16, 0.1, 0.14, 0.1, c); }
     else if (K.id === 'sate') { g(-0.2, 0.94, 0.05, 0.8, 0.16, 0.24, '#5a5a5a'); g(-0.2, 1.1, 0.05, 0.74, 0.03, 0.2, '#f26a1a'); for (let i = 0; i < 10; i++) g(-0.55 + i * 0.075, 1.13, 0.05, 0.03, 0.03, 0.32, '#a8582a'); g(0.5, 0.94, 0, 0.2, 0.2, 0.2, '#8a4a2a'); }
     // bangku plastik & meja kecil untuk pembeli
     const side = hash(Math.round(s.x * 3), Math.round(s.z * 3)) < 0.5 ? -1 : 1;
@@ -80,8 +83,8 @@ export function makeJajan({ scene, kota, collision, player, Character, npcs, sho
     const sg2 = sg.clone(); const [qx, qz] = L(xf, 0, 0.445); sg2.position.set(qx, 1.86 + kota.heightAt(qx, qz), qz); sg2.scale.set(1.5, 0.33, 1); scene.add(sg2);
   }
   const used = [];
-  ANCHORS.forEach(([ax, az], i) => {
-    const K0 = KINDS[carts.length % KINDS.length], K = carts.length >= KINDS.length ? { ...K0, ...ALT[K0.id] } : K0, s = spotNear(ax, az); if (!s) return;
+  ANCHORS.forEach(([ax, az, sk], i) => {
+    const K0 = KINDS[carts.length % KINDS.length], K = sk ? SPECIAL[sk] : carts.length >= KINDS.length ? { ...K0, ...ALT[K0.id] } : K0, s = spotNear(ax, az); if (!s) return;
     carts.push({ ...s, K }); used.push(K.id); cart(K, s);
     const c = new Character(K.sid); scene.add(c.group);
     npcs.push({ sid: K.sid, name: K.name, filler: true, lines: K.lines, c, home: { x: s.bx, z: s.bz }, x: s.bx, z: s.bz, tx: s.bx, tz: s.bz, wait: 3, heading: s.fa, say: null, greetT: Math.random() * 10, roam: 0.2, key: 'jj' + i, vendor: true });

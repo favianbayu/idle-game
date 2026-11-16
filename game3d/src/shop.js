@@ -17,6 +17,7 @@ export const CATALOG = {
   cilok: [['Cilok bumbu kacang', 5000, { hp: 3 }, '#e8e0d0'], ['Cimol', 5000, { hp: 2 }, '#f2f2e8']],
   sate: [['Sate ayam 10 tusuk', 15000, { hp: 6 }, '#a8582a'], ['Lontong', 3000, { hp: 2 }, '#8ab85a']],
   bengkel: [['Servis sepeda onthel (+10% laju)', 30000, { up: 'sepeda' }, '#2f5a3e'], ['Ganti knalpot & karbu motor (+10% laju)', 75000, { up: 'motor' }, '#c83a3a'], ['Ganti oli motor', 35000, {}, '#c8a020'], ['Tambal ban', 10000, {}, '#1a1a1a']],
+  nasgor: [['Nasi goreng telor', 15000, { hp: 7 }, '#e8b860'], ['Mi goreng', 13000, { hp: 6 }, '#e8c050'], ['Kwetiau goreng', 15000, { hp: 7 }, '#d8a860'], ['Es teh manis', 3000, { hp: 2 }, '#c8782a']],
   kopi: [['Kopi tubruk Om Darto', 0, { ny: 10 }, '#3a2214'], ['Teh tubruk', 0, { hp: 2 }, '#a85a2a']],
 };
 

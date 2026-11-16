@@ -84,7 +84,14 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   stasiun, kos Bu Narti, Bengkel Wijaya Motor, rumah Bram (2 lantai), rumah Laras, Gilang, Uti, Bimo, Sekar, Nadia, kontainer
   proyek. Pintu ada di bangunan yang bertanda papan nama di kota; tangga = pindah lantai.
 - **Uang jajan & belanja** (`src/shop.js`, `src/jajan.js`): dompet, belanja di kasir/warung/gerobak (bakso, siomay, cendol,
-  gorengan, martabak, cilok, sate) yang memulihkan nyawa/nyali, jual ikan, bantu Om Darto jualan kopi.
+  gorengan, martabak, cilok, sate, nasi goreng) yang memulihkan nyawa/nyali, jual ikan, bantu Om Darto jualan kopi.
+- **Balap liar drag** (`src/race.js`, guide 87): titik kumpul di trotoar Jl. Lingkar Selatan (joki Bang Ocid, penonton,
+  gerobak Nasi Goreng Bang Jali). Datang naik motor, Aksi di dekat joki = pasang taruhan. Hitung mundur senter joki, Aksi pas
+  "GAS!" (kecepetan = mesin brebet), lalu Aksi untuk ganti gigi saat jarum rpm di bar hijau. Lurus 70 petak, 1 lawan 1.
+  Lawan naik level tiap menang: Doni Knalpot (Rp50.000), Kirana (Rp100.000), Kobar (Rp200.000), Joki Serigala Besi
+  (Rp500.000). Menang = uang + Nyali, kalah = taruhan hilang. Upgrade motor di bengkel bikin lebih kencang.
+  Habis balap ada peluang razia 25%: polisi bermotor mengejar, kabur lewat gang/jalan tikus atau masuk bangunan. Kena =
+  denda Rp100.000, motor ditahan di depan Polsek, Om Darto marah. Belum ada siang/malam, jadi balapan bisa kapan saja.
 - **Aktivitas** (`src/activities.js`): sepak bola (gawang berjaring, Dodi & Didi ikut main), basket 3x3, mancing (tarik-ulur),
   berenang di kolam umum & kali, rakit penyeberangan, api unggun. Sepeda & motor diparkir di dunia (awal di rumah Om Darto).
 - **Binatang & tanaman** (`src/animals.js`, `src/veg.js`): kucing, anjing, ayam & anak ayam, merpati, burung terbang, bebek,

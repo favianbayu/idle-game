@@ -158,12 +158,13 @@ export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
     if (cars.some(u => u !== v && !u.wait && (u.x - t.x) ** 2 + (u.z - t.z) ** 2 < 9)) { v.wait = 1; return; }   // gerbang masih terisi: tunggu
     v.wait = 0; v.init = false; v.v = v.vmax * 0.6;
   }
-  let T = 0;
+  let T = 0, block = null;   // block(x, z): zona yang dikosongkan (mis. jalur balap drag)
   function update(dt, player) {
     T += dt;
     for (const g of ['A', 'B']) { const st = light(g, T); for (const k of ['r', 'y', 'g']) sigMat[g + k].color.copy(st === k ? ON[k] : OFF[k]); }
     for (const v of cars) {
       if (v.wait) { v.wait = Math.max(0, v.wait - dt) || 1e-6; if (v.wait <= 1e-6) enter(v); if (v.wait) continue; }
+      if (block && v.init && block(v.x, v.z)) { respawn(v); continue; }
       const tg = target(v);
       let want = v.vmax;
       // lampu merah / kuning di depan
@@ -220,5 +221,5 @@ export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
     }
     return p;
   }
-  return { update, push, junctions: J, signals, cars };
+  return { update, push, junctions: J, signals, cars, setBlock(f) { block = f; } };
 }

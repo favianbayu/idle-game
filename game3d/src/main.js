@@ -15,6 +15,7 @@ import { makeShop } from './shop.js';
 import { makeInteriors } from './interior.js';
 import { makeJajan } from './jajan.js';
 import { makeAnimals } from './animals.js';
+import { makeRace } from './race.js';
 
 /* ------------------------------------------------------------------ pengaturan */
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -153,6 +154,7 @@ const animals = makeAnimals({ scene, kota, collision, player, toast });
 if (player.area === 'dalam' && !interiors.cur) Object.assign(player, { x: SPAWN.x, z: SPAWN.z, area: 'kota' });
 // reset posisi (tombol menu / R): kalau nyangkut di air, tembok, atau peta berubah, balik ke depan rumah Om Darto
 function resetPos(msg = 'Balik ke depan rumah Om Darto') {
+  if (race.active) return;
   if (ride) dismount(true);
   acts.cancel?.(); shop.close();
   Object.assign(player, { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, area: 'kota', swim: null, gy: 0 }); interiors.locate();
@@ -252,6 +254,18 @@ addEventListener('blur', () => keys.clear());
 
 const joy = { x: 0, y: 0, id: null, ox: 0, oy: 0 };
 const cam = { yaw: saved?.yaw ?? 0.6, yawT: saved?.yaw ?? 0.6, dist: ZOOMS[opt.zoom], distT: ZOOMS[opt.zoom], pitch: PITCHES[opt.pitch], pitchT: PITCHES[opt.pitch], x: player.x, z: player.z, manualT: 0 };
+// balap liar drag Jl. Lingkar Selatan (guide 87). Kena razia: denda, motor ditahan di halaman Polsek, pemain diantar ke sana.
+const race = makeRace({ scene, kota, collision, player, Character, makeRide, npcs, shop, fight, toast, cam, jajan, onCaught: fine => {
+  fading = 1; ui.fade.style.opacity = 1;
+  setTimeout(() => {
+    const pol = kota.houses.find(h => h.named === 'polsek'), at = (lx, lz) => { const [x, z] = pol ? L(pol.xf, lx, pol.d / 2 + lz) : [SPAWN.x, SPAWN.z]; return collision.resolve({ x, z }, 0.35); };
+    if (ride) dismount(true);
+    const m = at(1.2, 1.1); garage.spot[2] = { x: m.x, z: m.z, h: pol ? pol.xf.a + Math.PI / 2 : 0, area: 'kota' };
+    const p = at(-0.8, 1.6); Object.assign(player, { x: p.x, z: p.z, vx: 0, vz: 0, area: 'kota', swim: null });
+    cam.x = player.x; cam.z = player.z; placeParked(); ui.fade.style.opacity = 0; fading = 0; saveT = 99;
+    toast(`Kena razia! Denda ${shop.rp(fine)}, motor ditahan di Polsek. Om Darto pasti marah...`);
+  }, 600);
+} });
 function rotateCam(d) { cam.yawT = Math.round(cam.yawT / (Math.PI / 4)) * (Math.PI / 4) + d * Math.PI / 4; cam.manualT = 1.5; }
 function zoom(d) { opt.zoom = Math.max(0, Math.min(ZOOMS.length - 1, opt.zoom + d)); cam.distT = ZOOMS[opt.zoom]; }
 function toggleFollow() { opt.follow = !opt.follow; ui.follow.classList.toggle('on', opt.follow); toast(opt.follow ? 'Kamera: ikut karakter' : 'Kamera: bebas (Q/E putar)'); }
@@ -349,7 +363,8 @@ const EXIT_SCHOOL = { x: SCHOOL_OX + 39, z: 58.2 };   // trotoar depan gerbang (
 let target = null;
 function findTarget() {
   let best = null, bd = 1e9;
-  if (ride) {
+  if (ride || race.active) {
+    const rt = race.target(ride); if (rt) return rt;
     if (player.area === 'kota' && Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Parkir & masuk SMA Negeri 3' };
     return { kind: 'park', label: 'Turun & parkir' };
   }
@@ -378,6 +393,7 @@ function act() {
   if (target.kind === 'npc') {
     if (target.n.mood) return;
     const n = target.n, lines = n.lines || LINES[n.linesKey || (n.filler ? n.name : n.sid)] || ['Halo!'];
+    if (n.sid === 'omDarto' && player.flags?.omMarah) { player.flags.omMarah = false; n.say = { text: 'Raka! Balap liar lagi?! Om udah bilang, jalan lingkar itu bukan sirkuit. Om pernah lihat sendiri akibatnya...', t: 5 }; n.heading = Math.atan2(player.z - n.z, player.x - n.x); n.wait = 5; return; }
     n.say = { text: lines[n.line = ((n.line ?? -1) + 1) % lines.length], t: 3.5 };
     n.heading = Math.atan2(player.z - n.z, player.x - n.x); n.wait = 4; n.tx = n.x; n.tz = n.z;
   } else if (target.kind === 'go') {
@@ -424,6 +440,15 @@ function updatePlayer(dt) {
   { const l0 = Math.hypot(ix, iy), fx0 = -Math.sin(cam.yaw), fz0 = -Math.cos(cam.yaw), rx0 = Math.cos(cam.yaw), rz0 = -Math.sin(cam.yaw);
     player.inMove = l0 > 0.15; const wx0 = fx0 * -iy + rx0 * ix, wz0 = fz0 * -iy + rz0 * ix, wl = Math.hypot(wx0, wz0);
     player.inDir = player.inMove && wl > 1e-3 ? { x: wx0 / wl, z: wz0 / wl } : null; }
+  if (race.active) {   // balap drag: posisi & laju diatur race.js, input cuma tombol Aksi
+    const r = race.step(dt), RD = RIDES[ride];
+    if (r) {
+      player.vx = -r.v; player.vz = 0; raka.heading = player.heading;
+      if (RD) { raka.play(RD.r.anim); RD.r.spin(r.v * dt); }
+      player.gy = kota.groundY(player.x, player.z); raka.group.position.set(player.x, player.gy, player.z); raka.update(dt);
+      return r.v;
+    }
+  }
   const lock = player.area ? fight.updatePlayer(dt) : null;
   player.riding = !!ride;
   const inp = Math.hypot(ix, iy) > 0.15 && !bigmap.isOpen;
@@ -489,7 +514,7 @@ function pickIdle(n) {
   return set[Math.floor(Math.random() * set.length)];
 }
 function updateNPC(n, dt) {
-  const dx = n.x - player.x, dz = n.z - player.z, far = dx * dx + dz * dz > 70 * 70;
+  const dx = n.x - player.x, dz = n.z - player.z, far = n.away || dx * dx + dz * dz > 70 * 70;   // away: tokohnya sedang dipakai di tempat lain (mis. balapan)
   n.c.group.visible = !far;
   if (far) return;
   if (fight.updateNPC(n, dt)) return;
@@ -583,7 +608,7 @@ function loop(now) {
     const sx = Math.round(cam.x / step) * step, sz = Math.round(cam.z / step) * step;
     sun.target.position.set(sx, 0, sz); sun.position.set(sx + 22, 45, sz + 14);
   }
-  jajan.update(dt); animals.update(dt);
+  jajan.update(dt); animals.update(dt); race.update(dt);
   const inside = player.area === 'dalam';
   if (inside !== wasInside) { wasInside = inside; scene.background = inside ? DARKBG : SKY; scene.fog.color.copy(inside ? DARKBG : SKY); }
   if (inside) { scene.fog.near = 60; scene.fog.far = 140; interiors.update(camera); }
@@ -611,4 +636,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
