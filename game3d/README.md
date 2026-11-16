@@ -14,6 +14,7 @@ dibangun ulang di Three.js (GPU) supaya kamera berputar tidak lag lagi.
 | Hindar (tekan = guling/mundur, tahan = tangkis, tepat waktu = parry) | L | Hindar |
 | Pegang (banting / kunci lengan) · Provokasi | I · T | Pegang |
 | Status diri (Kekuatan, Kelincahan, Nyali, daftar lawan) | U | Menu → Status diri |
+| Reset posisi (kalau nyangkut) | R | Menu → Reset posisi |
 | Putar kamera | Q / E, seret mouse | tombol ⟲ ⟳, geser dua jari |
 | Zoom | roda mouse, + / − | cubit dua jari |
 | Kamera ikut karakter | C | Menu → Kamera ikut |

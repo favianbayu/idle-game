@@ -151,6 +151,19 @@ interiors.locate();
 const jajan = makeJajan({ scene, kota, collision, player, Character, npcs, shop, acts, toast });
 const animals = makeAnimals({ scene, kota, collision, player, toast });
 if (player.area === 'dalam' && !interiors.cur) Object.assign(player, { x: SPAWN.x, z: SPAWN.z, area: 'kota' });
+// reset posisi (tombol menu / R): kalau nyangkut di air, tembok, atau peta berubah, balik ke depan rumah Om Darto
+function resetPos(msg = 'Balik ke depan rumah Om Darto') {
+  if (ride) dismount(true);
+  acts.cancel?.(); shop.close();
+  Object.assign(player, { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, area: 'kota', swim: null, gy: 0 }); interiors.locate();
+  cam.x = player.x; cam.z = player.z; toast(msg); saveT = 99;
+}
+// lepas otomatis saat dimuat: posisi simpanan lama bisa jatuh di air (kolam diperbesar) atau di dalam tembok/bangunan baru
+if (player.area === 'kota') {
+  const p = collision.resolve({ x: player.x, z: player.z }, 0.3), moved = Math.hypot(p.x - player.x, p.z - player.z);
+  if (collision.blockedMask(player.x, player.z) && !player.swim) { if (kota.M.waterAt(player.x, player.z)) player.swim = 'air'; else { player.x = SPAWN.x; player.z = SPAWN.z; } }
+  else if (moved > 0.6) { player.x = SPAWN.x; player.z = SPAWN.z; } else { player.x = p.x; player.z = p.z; }
+}
 onCharsReady(() => {
   preload('raka', ['idle', 'walk', 'run'], 10);
   const byRegion = {};
@@ -217,6 +230,7 @@ addEventListener('keydown', e => {
   const sh = e.shiftKey;
   if (e.code === 'KeyF' || e.code === 'KeyJ') { if (!acts.action()) fight.attack('A', sh); }
   if (e.code === 'KeyK') fight.attack('B', sh);
+  if (e.code === 'KeyR') resetPos();
   if (e.code === 'KeyL') fight.dodge(true);
   if (e.code === 'KeyI') fight.grab();
   if (e.code === 'KeyT') fight.taunt();
@@ -299,7 +313,7 @@ document.body.classList.toggle('touch', isTouch);
 ui.follow.classList.toggle('on', opt.follow);
 ui.mapWrap.style.display = opt.minimap ? '' : 'none';
 const tap = (el, fn) => el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); fn(); });
-tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack('A', player.fx.nyali >= 100); }); tap($('btnKick'), () => fight.attack('B')); tap($('btnGrab'), () => fight.grab()); tap($('btnDodge'), () => fight.dodge(true)); for (const ev of ['pointerup', 'pointercancel']) $('btnDodge').addEventListener(ev, () => fight.dodge(false)); tap($('btnStatus'), () => toggleStatus()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
+tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack('A', player.fx.nyali >= 100); }); tap($('btnKick'), () => fight.attack('B')); tap($('btnGrab'), () => fight.grab()); tap($('btnDodge'), () => fight.dodge(true)); for (const ev of ['pointerup', 'pointercancel']) $('btnDodge').addEventListener(ev, () => fight.dodge(false)); tap($('btnStatus'), () => toggleStatus()); tap($('btnReset'), () => resetPos()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
 const menu = $('menu'); menu.classList.toggle('closed', isTouch);
 tap($('btnMenu'), () => menu.classList.toggle('closed'));
 tap(ui.run, () => { ui.run.classList.toggle('on'); player.run = ui.run.classList.contains('on'); });
