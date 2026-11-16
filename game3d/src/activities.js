@@ -4,10 +4,14 @@
 import * as THREE from 'three';
 import { Merger, col } from './geom.js';
 import { MAT, hash } from './common.js';
+import { SCHOOL_OX } from './world.js';
 
 const G = 9.5;
 const FB = { x: 88, z: 104, hl: 5.6, gw: 1.2, gh: 1.15, gd: 0.85, w: 6.4, l: 6.6 };   // lapangan bola: setengah panjang ke garis gawang, setengah lebar gawang, tinggi, dalam jaring
-const BK = { x: 127, z: 46, hw: 4, hd: 3, rimY: 2.0, rimR: 0.21, rims: [] };
+const BK = { x: 127, z: 46, hw: 4, hd: 3, rimY: 2.0, rimR: 0.21, rims: [], r: 8, area: 'kota', name: 'lapangan umum' };
+// lapangan basket & futsal SMA 3 (world.js, garis dicat di tekstur tanah sekolah): ring di ujung utara & selatan
+const BK2 = { x: SCHOOL_OX + 61.5, z: 23, rimY: 2.0, rimR: 0.21, rims: [], r: 9, area: 'sekolah', name: 'lapangan SMA' };
+const COURTS = [BK, BK2];
 const FISH = [['Nila', 0.25, 0.7, 30], ['Mujair', 0.2, 0.5, 26], ['Lele', 0.3, 1.2, 22], ['Ikan mas', 0.4, 1.6, 12], ['Gurame', 0.6, 2.2, 6], ['Patin', 0.8, 2.6, 4], ['Sandal jepit', 0, 0, 5], ['Kaleng bekas', 0, 0, 4]];
 
 export function makeActivities({ scene, kota, collision, player, Character, toast, npcs, say, gain = () => {} }) {
@@ -33,28 +37,45 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
     } }
 
   /* ---------------- lapangan basket umum: garis, ring berjaring, papan pantul */
-  { const { x: cx, z: cz, hw, hd, rimY, rimR } = BK, ln = 0.06;
-    box(mg, cx, 0.045, cz, ln, 0.005, hd * 2, white);
-    for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; box(mg, cx + Math.cos(a) * 0.85, 0.045, cz + Math.sin(a) * 0.85, 0.3, 0.005, ln, white, a + Math.PI / 2); }
-    for (const z of [cz - hd + 0.05, cz + hd - 0.05]) box(mg, cx, 0.045, z, hw * 2, 0.005, ln, white);
+  { const { x: cx, z: cz, hw, hd, rimY, rimR } = BK, ln = 0.07, Y = 0.04, LH = 0.024;
+    // garis cat: sedikit lebih tebal dari lantai semen (tidak berkedip/tenggelam), busur dari potongan pendek
+    const line = (x, z, sx, sz, a = 0) => box(mg, x, Y, z, sx, LH, sz, white, a);
+    const arc = (x, z, r, a0, a1, n) => { for (let i = 0; i < n; i++) { const a = a0 + (i + 0.5) / n * (a1 - a0), seg = r * Math.abs(a1 - a0) / n + 0.02; line(x + Math.cos(a) * r, z + Math.sin(a) * r, seg, ln, a + Math.PI / 2); } };
+    for (const z of [cz - hd + 0.05, cz + hd - 0.05]) line(cx, z, hw * 2, ln);            // garis samping
+    for (const sd of [-1, 1]) line(cx + sd * (hw - 0.05), cz, ln, hd * 2);               // garis akhir
+    line(cx, cz, ln, hd * 2);                                                                // garis tengah
+    arc(cx, cz, 0.9, 0, Math.PI * 2, 20);                                                    // lingkaran tengah
+    box(mg, cx, Y, cz, 0.5, LH * 0.5, 0.5, col('#b85a3a'));
     for (const sd of [-1, 1]) {
-      const bx = cx + sd * (hw - 0.05);
-      box(mg, cx + sd * (hw - 0.95), 0.044, cz, 1.8, 0.004, 1.8, col('#b85a3a'));   // daerah kunci
-      for (const z of [cz - 0.9, cz + 0.9]) box(mg, cx + sd * (hw - 0.95), 0.045, z, 1.8, 0.005, ln, white);
-      box(mg, cx + sd * (hw - 1.85), 0.045, cz, ln, 0.005, 1.8, white);
-      for (let i = 0; i <= 16; i++) { const a = -Math.PI / 2 + i / 16 * Math.PI, r = 2.9, x = bx - sd * 0.3 - sd * Math.cos(a) * r, z = cz + Math.sin(a) * r; if (Math.abs(z - cz) < hd - 0.1) box(mg, x, 0.045, z, 0.3, 0.005, ln, white, -sd * a); }   // garis 3 angka
-      // tiang + lengan + papan + ring + jaring
-      const px = cx + sd * (hw + 0.45), brd = cx + sd * (hw - 0.25), rx = cx + sd * (hw - 0.5);
-      box(mg, px, 0, cz, 0.16, 2.55, 0.16, col('#3a3a40')); box(mg, px, 0, cz, 0.4, 0.15, 0.4, col('#5a5a60')); collision.circle(px, cz, 0.16);
-      box(mg, (px + brd) / 2, 2.12, cz, Math.abs(px - brd), 0.09, 0.09, col('#3a3a40'));
-      box(mg, brd, 1.82, cz, 0.05, 0.68, 1.05, white); box(mg, brd - sd * 0.03, 1.98, cz, 0.01, 0.28, 0.4, col('#d83a2a')); box(mg, brd - sd * 0.035, 2.02, cz, 0.01, 0.2, 0.32, white);
-      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; box(mg, rx + Math.cos(a) * rimR, rimY, cz + Math.sin(a) * rimR, 0.12, 0.025, 0.025, col('#e8601a'), a + Math.PI / 2); }
-      box(mg, (rx + brd) / 2, rimY - 0.02, cz, Math.abs(rx - brd) - rimR, 0.03, 0.06, col('#e8601a'));
-      for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; box(thin, rx + Math.cos(a) * rimR * 0.85, rimY - 0.34, cz + Math.sin(a) * rimR * 0.85, 0.012, 0.34, 0.012, net); }
-      for (const [y, k] of [[rimY - 0.12, 0.9], [rimY - 0.26, 0.75]]) for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; box(thin, rx + Math.cos(a) * rimR * k, y, cz + Math.sin(a) * rimR * k, 0.1, 0.012, 0.012, net, a + Math.PI / 2); }
-      BK.rims.push({ x: rx, y: rimY, z: cz, sd, board: brd });
+      const bx = cx + sd * (hw - 0.05), ft = cx + sd * (hw - 1.85);
+      box(mg, cx + sd * (hw - 0.95), Y, cz, 1.8, LH * 0.5, 1.8, col('#b85a3a'));       // daerah kunci (cat merah bata)
+      for (const z of [cz - 0.9, cz + 0.9]) line(cx + sd * (hw - 0.95), z, 1.8, ln);
+      line(ft, cz, ln, 1.8);                                                             // garis lemparan bebas
+      arc(ft, cz, 0.9, sd > 0 ? Math.PI / 2 : -Math.PI / 2, sd > 0 ? Math.PI * 1.5 : Math.PI / 2, 10);   // setengah lingkaran lemparan bebas
+      for (const z of [cz - 0.9 - 0.25, cz + 0.9 + 0.25]) for (const k of [0.6, 1.2]) line(cx + sd * (hw - 0.05 - k), z, ln, 0.18);   // tanda posisi rebound
+      // garis 3 angka: dua garis lurus dari garis akhir lalu busur
+      const r3 = 2.9, rx0 = bx - sd * 0.3, zc = hd - 0.35, ang = Math.asin(Math.min(1, zc / r3)), xs = rx0 - sd * Math.cos(ang) * r3;
+      for (const s2 of [-1, 1]) line((bx + xs) / 2, cz + s2 * zc, Math.abs(bx - xs), ln);
+      arc(rx0, cz, r3, sd > 0 ? Math.PI - ang : -ang, sd > 0 ? Math.PI + ang : ang, 22);
+      buildHoop(BK, cx + sd * (hw + 0.45), cz, sd > 0 ? Math.PI : 0);
     } }
   { const me = new THREE.Mesh(mg.build(), MAT.world); kota.lift(me); scene.add(me); } { const t = new THREE.Mesh(thin.build(), MAT.world); kota.lift(t); scene.add(t); }
+  { const m2 = new Merger(), t2 = new Merger(); buildHoop(BK2, BK2.x, 16.3, Math.PI / 2, m2, t2); buildHoop(BK2, BK2.x, 29.7, -Math.PI / 2, m2, t2);
+    scene.add(new THREE.Mesh(m2.build(), MAT.world), new THREE.Mesh(t2.build(), MAT.world)); }
+  // ring basket: tiang di (px, pz), menghadap lapangan ke arah a (radian). Papan 0.7 di depan tiang, ring 0.25 di depan papan.
+  function buildHoop(K, px, pz, a, m = mg, th = thin) {
+    const ca = Math.cos(a), sa = Math.sin(a), W = (lx, lz) => [px + lx * ca - lz * sa, pz + lx * sa + lz * ca];
+    const B = (mm, lx, y, lz, sx, sy, sz, c, da = 0) => { const [x, z] = W(lx, lz); box(mm, x, y, z, sx, sy, sz, c, a + da); };
+    const { rimY, rimR } = K, orange = col('#e8601a'), [rx, rz] = W(0.95, 0), [bx, bz] = W(0.7, 0);
+    B(m, 0, 0, 0, 0.16, rimY + 0.55, 0.16, col('#3a3a40')); B(m, 0, 0, 0, 0.4, 0.15, 0.4, col('#5a5a60')); collision.circle(px, pz, 0.16);
+    B(m, 0.35, rimY + 0.12, 0, 0.7, 0.09, 0.09, col('#3a3a40'));
+    B(m, 0.7, rimY - 0.18, 0, 0.05, 0.68, 1.05, white); B(m, 0.73, rimY - 0.02, 0, 0.01, 0.28, 0.4, col('#d83a2a')); B(m, 0.735, rimY + 0.02, 0, 0.01, 0.2, 0.32, white);
+    for (let i = 0; i < 12; i++) { const g = i / 12 * Math.PI * 2; box(m, rx + Math.cos(g) * rimR, rimY, rz + Math.sin(g) * rimR, 0.12, 0.025, 0.025, orange, g + Math.PI / 2); }
+    B(m, 0.725 + (0.25 - rimR) / 2, rimY - 0.02, 0, 0.25 - rimR, 0.03, 0.06, orange);
+    for (let i = 0; i < 10; i++) { const g = i / 10 * Math.PI * 2; box(th, rx + Math.cos(g) * rimR * 0.85, rimY - 0.34, rz + Math.sin(g) * rimR * 0.85, 0.012, 0.34, 0.012, net); }
+    for (const [y, k] of [[rimY - 0.12, 0.9], [rimY - 0.26, 0.75]]) for (let i = 0; i < 10; i++) { const g = i / 10 * Math.PI * 2; box(th, rx + Math.cos(g) * rimR * k, y, rz + Math.sin(g) * rimR * k, 0.1, 0.012, 0.012, net, g + Math.PI / 2); }
+    K.rims.push({ x: rx, y: rimY, z: rz, bx, bz, nx: ca, nz: sa, rimR });   // n = arah dari papan ke lapangan
+  }
 
   /* ---------------- bola */
   const ballMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
@@ -70,8 +91,10 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
   }
   const mkBall = (kind, home) => ({ kind, home, r: kind === 'bola' ? 0.14 : 0.13, p: { x: home.x, y: 0.3, z: home.z }, v: { x: 0, y: 0, z: 0 }, mesh: ballMesh(kind, kind === 'bola' ? 0.14 : 0.13),
     bounce: kind === 'bola' ? 0.55 : 0.78, fric: kind === 'bola' ? 1.1 : 1.6, held: false, out: 0, cd: 0, shot: null });
-  const ball = mkBall('bola', { x: FB.x, z: FB.z }), bball = mkBall('basket', { x: BK.x, z: BK.z + 1 });
-  const balls = [ball, bball];
+  const ball = mkBall('bola', { x: FB.x, z: FB.z });
+  for (const K of COURTS) { K.ball = mkBall('basket', { x: K.x, z: K.z + 1 }); K.ball.court = K; }
+  const bballs = COURTS.map(K => K.ball), balls = [ball, ...bballs];
+  const heldB = () => bballs.find(b => b.held);
   const q = new THREE.Quaternion(), ax = new THREE.Vector3();
   function stepBall(b, dt) {
     b.cd = Math.max(0, b.cd - dt);
@@ -85,8 +108,8 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
       if (l > 1e-5) { const ux = nx / l, uz = nz / l, d = b.v.x * ux + b.v.z * uz; if (d < 0) { b.v.x -= 1.6 * d * ux; b.v.z -= 1.6 * d * uz; } b.p.x = r.x; b.p.z = r.z; } }
     if (b.kind === 'bola') goalNet(b, py); else hoop(b, py, dt);
     // keluar lapangan / masuk air: kembali ke tengah setelah sebentar
-    const home = b.home, far = Math.hypot(b.p.x - home.x, b.p.z - home.z) > (b.kind === 'bola' ? 9 : 7.5);
-    if (far || M.waterAt(b.p.x, b.p.z) || M.roadDist(b.p.x, b.p.z) < 0) b.out += dt; else b.out = 0;
+    const home = b.home, far = Math.hypot(b.p.x - home.x, b.p.z - home.z) > (b.kind === 'bola' ? 9 : b.court.r - 0.5);
+    if (far || (b.court?.area !== 'sekolah' && (M.waterAt(b.p.x, b.p.z) || M.roadDist(b.p.x, b.p.z) < 0))) b.out += dt; else b.out = 0;
     if (b.out > 1.5) reset(b);
     // putar bola sesuai arah gelinding
     const sp = Math.hypot(b.v.x, b.v.z); if (sp > 0.05) { ax.set(b.v.z, 0, -b.v.x).normalize(); q.setFromAxisAngle(ax, sp * dt / b.r); b.mesh.quaternion.premultiply(q); }
@@ -132,15 +155,16 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
   /* ---------------- basket: pantulan papan & ring, masuk keranjang */
   const bscore = { n: 0 };
   function hoop(b, py, dt) {
-    for (const R of BK.rims) {
-      // papan
-      if (Math.sign(b.p.x - R.board) === -R.sd && Math.abs(b.p.x - R.board) < b.r && Math.abs(b.p.z - R.z) < 0.55 && b.p.y > 1.8 && b.p.y < 2.52 && b.v.x * R.sd > 0) { b.v.x *= -0.55; b.p.x = R.board - R.sd * b.r; }
+    for (const R of b.court.rims) {
+      // papan: bidang tegak di (bx, bz), normal n ke arah lapangan
+      const dn = (b.p.x - R.bx) * R.nx + (b.p.z - R.bz) * R.nz, lat = -(b.p.x - R.bx) * R.nz + (b.p.z - R.bz) * R.nx, vn = b.v.x * R.nx + b.v.z * R.nz;
+      if (dn > -0.02 && dn < b.r && Math.abs(lat) < 0.55 && b.p.y > R.y - 0.2 && b.p.y < R.y + 0.52 && vn < 0) { b.v.x -= 1.55 * vn * R.nx; b.v.z -= 1.55 * vn * R.nz; b.p.x += (b.r - dn) * R.nx; b.p.z += (b.r - dn) * R.nz; }
       if (py >= R.y && b.p.y < R.y) {
         const r = Math.hypot(b.p.x - R.x, b.p.z - R.z);
-        if (r < R.rimR || r < BK.rimR - 0.03) {
+        if (r < R.rimR - 0.03) {
           if (b.shot && !b.shot.made) { b.shot.made = true; const pts = b.shot.d > 3.1 ? 3 : 2; bscore.n += pts; toast(`Masuk! +${pts} (total ${bscore.n})`); }
           b.v.x *= 0.25; b.v.z *= 0.25; b.v.y = Math.min(b.v.y, -1.0);
-        } else if (r < BK.rimR + 0.16) {   // kena ring: memantul keluar
+        } else if (r < R.rimR + 0.16) {   // kena ring: memantul keluar
           const ux = (b.p.x - R.x) / (r || 1), uz = (b.p.z - R.z) / (r || 1); b.v.x = ux * 1.4 + b.v.x * 0.3; b.v.z = uz * 1.4 + b.v.z * 0.3; b.v.y = Math.abs(b.v.y) * 0.5; b.p.y = R.y + 0.01;
           if (b.shot && !b.shot.made && !b.shot.rim) { b.shot.rim = true; toast('Klang! Kena ring'); }
         }
@@ -196,11 +220,11 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
     return true;
   }
   function shoot() {
-    if (!bball.held) return false;
+    const bball = heldB(); if (!bball) return false;
     actT = { anim: 'shoot', t: 0, dur: 10 / 12, at: 0.45, fn: () => {
       bball.held = false; const { x: hx, z: hz } = heading();
       bball.p.x = player.x + hx * 0.25; bball.p.z = player.z + hz * 0.25; bball.p.y = 1.45;
-      const R = BK.rims.slice().sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z))[0];
+      const R = bball.court.rims.slice().sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z))[0];
       const d = Math.hypot(R.x - bball.p.x, R.z - bball.p.z), skill = 1 + ((player.stats?.kelincahan || 1) - 1) * 0.04;
       const pIn = Math.max(0.12, Math.min(0.92, (1.02 - d * 0.1 - (Math.hypot(player.vx, player.vz) > 1 ? 0.15 : 0)) * skill));
       const ok = Math.random() < pIn, ea = Math.random() * Math.PI * 2, er = ok ? Math.random() * 0.06 : 0.24 + Math.random() * 0.22;
@@ -210,12 +234,14 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
     } };
     return true;
   }
-  function holdBall(dt) {
+  function holdBall(dt) { for (const b of bballs) holdOne(b, dt); }
+  function holdOne(bball, dt) {
+    const K = bball.court;
     if (!bball.held) {
-      if (!player.swim && !player.riding && bball.cd <= 0 && nearBall(bball, 0.5) && Math.hypot(bball.p.x - BK.x, bball.p.z - BK.z) < 8) { bball.held = true; bball.shot = null; }
+      if (!player.swim && !player.riding && bball.cd <= 0 && nearBall(bball, 0.5) && !heldB() && Math.hypot(bball.p.x - K.x, bball.p.z - K.z) < K.r) { bball.held = true; bball.shot = null; }
       return;
     }
-    if (Math.hypot(player.x - BK.x, player.z - BK.z) > 9 || player.riding || player.swim) { bball.held = false; bball.v.x = bball.v.z = 0; bball.cd = 1; return; }
+    if (Math.hypot(player.x - K.x, player.z - K.z) > K.r + 1 || player.riding || player.swim) { bball.held = false; bball.v.x = bball.v.z = 0; bball.cd = 1; return; }
     const { x: hx, z: hz } = heading(), t = performance.now() / 1000, mv = Math.hypot(player.vx, player.vz) > 0.3;
     bball.p.x = player.x + hx * 0.33 - hz * 0.1; bball.p.z = player.z + hz * 0.33 + hx * 0.1;
     bball.p.y = actT ? 1.0 : 0.13 + Math.abs(Math.sin(t * (mv ? 9 : 7))) * 0.42;
@@ -299,7 +325,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
     action() { if (actT) return true; return shoot() || kick(); },
     target() {
       if (player.riding) return null;
-      if (bball.held) return { kind: 'act', label: 'Tembak ke ring', fn: shoot };
+      if (heldB()) return { kind: 'act', label: 'Tembak ke ring', fn: shoot };
       if (nearBall(ball, 0.9)) return { kind: 'act', label: 'Tendang bola', fn: kick };
       if (fish) return fish.st === 'bite' ? { kind: 'act', label: 'Tarik!', fn: () => { fish.st = 'reel'; fish.t = 0; fish.tension = 0.45; fishUI.style.display = 'block'; } } : fish.st === 'wait' ? { kind: 'act', label: 'Sabar... (gerak = gulung pancing)', fn: () => {} } : null;
       for (const s of spots) if (Math.hypot(s.x - player.x, s.z - player.z) < 1.1) return { kind: 'act', label: 'Mancing (' + s.name + ')', fn: () => startFish(s) };
@@ -319,7 +345,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
       for (const b of bags) { b.sv += (-b.sw * 9 - b.sv * 1.2) * dt; b.sw += b.sv * dt; b.piv.rotation.set(0, -b.a, 0); b.piv.rotateX(b.sw * 0.12); }
       if (actT) { actT.t += dt; actT.tick?.(actT.t); if (!actT.done && actT.t >= actT.at) { actT.done = true; actT.fn(); } anim = actT.anim; lock = true; if (actT.t >= actT.dur) { actT.end?.(); actT = null; } }
       const fa = updateFish(dt, moving); if (fa) { anim = fa; lock = fish && fish.st !== 'wait' && fish.st !== 'bite' ? true : false; }
-      if (!anim && bball.held && !moving) anim = 'dribble';
+      if (!anim && heldB() && !moving) anim = 'dribble';
       return { anim, lock };
     },
   };

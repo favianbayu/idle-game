@@ -453,7 +453,7 @@ function updatePlayer(dt) {
   const lock = player.area ? fight.updatePlayer(dt) : null;
   player.riding = !!ride;
   const inp = Math.hypot(ix, iy) > 0.15 && !bigmap.isOpen;
-  const ac = player.area !== 'sekolah' ? acts.update(dt, inp) : { anim: null, lock: false };
+  const ac = acts.update(dt, inp);   // juga di sekolah: basket di lapangan SMA
   if (lock || bigmap.isOpen || ac.lock) { ix = 0; iy = 0; }
   let l = Math.hypot(ix, iy); if (l > 1) { ix /= l; iy /= l; l = 1; }
   const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || player.run;

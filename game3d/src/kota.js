@@ -340,11 +340,75 @@ function fixAccess(houses, specials, M, occ, reserve, W, H) {
 }
 
 /* ------------------------------------------------------------------ cat tanah */
+// variasi rumput skala besar: bercak kering kekuningan, hijau subur, rumput pendek, tanah gundul, semanggi & bunga kecil
+function grassVariety(g, W, H, s) {
+  const blot = (x, z, r, c, a) => { const gr = g.createRadialGradient(x * s, z * s, 0, x * s, z * s, r * s); gr.addColorStop(0, `rgba(${c},${a})`); gr.addColorStop(0.6, `rgba(${c},${a * 0.6})`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.beginPath(); g.ellipse(x * s, z * s, r * s, r * s * (0.6 + hash(x, z) * 0.5), hash(z, x) * 3, 0, 7); g.fill(); };
+  const TONES = [['196,200,120', 0.35], ['120,160,80', 0.3], ['150,186,104', 0.3], ['176,196,116', 0.28], ['110,150,76', 0.25], ['186,170,120', 0.2]];
+  const n = Math.round(W * H / 55);
+  for (let i = 0; i < n; i++) { const [c, a] = TONES[Math.floor(hash(i, 501) * TONES.length)]; blot(hash(i, 502) * W, hash(i, 503) * H, 2 + hash(i, 504) * 8, c, a); }
+  // tanah gundul kecil & jejak jalan setapak tak resmi
+  for (let i = 0; i < n / 8; i++) blot(hash(i, 511) * W, hash(i, 512) * H, 0.6 + hash(i, 513) * 1.4, '176,150,104', 0.45);
+  // butir detail: rumpun gelap, helai terang, semanggi, bunga liar kecil (1 piksel = 1/16 petak)
+  const dots = Math.round(W * H * 2.2), cols = ['#7a9e58', '#6e9450', '#b8d48a', '#c4dc94', '#86ac60', '#5e8a46'];
+  for (let i = 0; i < dots; i++) { g.fillStyle = cols[i % cols.length]; const x = hash(i, 521) * W * s | 0, y = hash(i, 522) * H * s | 0; g.fillRect(x, y, 1, 1 + (hash(i, 523) * 2 | 0)); }
+  for (let i = 0; i < W * H / 6; i++) {
+    const x = hash(i, 531) * W * s | 0, y = hash(i, 532) * H * s | 0, r = hash(i, 533);
+    if (r < 0.5) { g.fillStyle = '#6a9a4a'; g.fillRect(x, y, 2, 1); g.fillRect(x, y + 1, 1, 1); }   // semanggi
+    else { g.fillStyle = pick(['#f4f0e0', '#f2d24a', '#e88aa8', '#b8a0e8'], r); g.fillRect(x, y, 1, 1); }
+  }
+}
+// aus & tambalan jalan: jejak ban lebih terang, garis oli di tengah lajur, tambalan aspal, retak, tutup gorong-gorong,
+// pasir di pinggir; gang conblock: bata kusam & lumut; setapak: batu kerikil
+function roadWear(g, K, s) {
+  g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+  K.roads.forEach((r, ri) => {
+    if (r.kind === 'raya' || r.kind === 'jalan') {
+      const lanes = r.kind === 'raya' ? [-r.w / 4, r.w / 4] : [0];
+      for (const lo of lanes) { for (const t of [-0.45, 0.45]) { strokeOffset(g, r.pts, lo + t, s); g.strokeStyle = 'rgba(255,255,255,0.045)'; g.lineWidth = 0.35 * s; g.stroke(); }
+        strokeOffset(g, r.pts, lo, s); g.strokeStyle = 'rgba(20,20,24,0.07)'; g.lineWidth = 0.28 * s; g.stroke(); }
+      for (const sd of [-1, 1]) { strokeOffset(g, r.pts, sd * (r.w / 2 - 0.15), s); g.strokeStyle = 'rgba(150,130,100,0.18)'; g.lineWidth = 0.3 * s; g.stroke(); }
+    }
+    const P = resample(r.pts, 1);
+    P.forEach((p, i) => {
+      const h = k => hash(ri * 977 + i, k), nx = -p.tz, nz = p.tx, hw = r.w / 2;
+      if (r.kind === 'raya' || r.kind === 'jalan') {
+        if (h(1) < 0.07) {   // tambalan aspal
+          const w = 0.8 + h(2) * 2, l = 0.8 + h(3) * 2.4, off = (h(4) - 0.5) * Math.max(0, r.w - w - 0.4);
+          g.save(); g.translate((p.x + nx * off) * s, (p.z + nz * off) * s); g.rotate(Math.atan2(p.tz, p.tx) + (h(5) - 0.5) * 0.2);
+          g.fillStyle = h(6) < 0.6 ? 'rgba(40,42,48,0.55)' : 'rgba(130,130,132,0.4)'; g.fillRect(-l / 2 * s, -w / 2 * s, l * s, w * s);
+          g.strokeStyle = 'rgba(30,30,34,0.35)'; g.lineWidth = 1; g.strokeRect(-l / 2 * s, -w / 2 * s, l * s, w * s); g.restore();
+        }
+        if (h(7) < 0.12) {   // retak
+          let x = p.x + nx * (h(8) - 0.5) * (r.w - 0.6), z = p.z + nz * (h(8) - 0.5) * (r.w - 0.6);
+          g.beginPath(); g.moveTo(x * s, z * s); for (let k = 0; k < 4; k++) { const a = h(10 + k) * 6.28; x += Math.cos(a) * 0.35; z += Math.sin(a) * 0.35; g.lineTo(x * s, z * s); }
+          g.strokeStyle = 'rgba(28,28,32,0.5)'; g.lineWidth = 1; g.stroke();
+        }
+        if (h(15) < 0.03) {   // noda oli / genangan kering
+          g.fillStyle = 'rgba(20,20,26,0.18)'; g.beginPath(); g.ellipse((p.x + nx * (h(16) - 0.5) * hw) * s, (p.z + nz * (h(16) - 0.5) * hw) * s, (0.3 + h(17) * 0.6) * s, (0.2 + h(18) * 0.4) * s, h(19) * 3, 0, 7); g.fill();
+        }
+        if (r.kind === 'raya' && i % 23 === 7) {   // tutup gorong-gorong
+          const x = (p.x + nx * (hw - 1.1)) * s, z = (p.z + nz * (hw - 1.1)) * s;
+          g.fillStyle = '#4a4a4e'; g.beginPath(); g.arc(x, z, 0.32 * s, 0, 7); g.fill(); g.strokeStyle = '#6a6a6e'; g.lineWidth = 1; g.stroke();
+          g.fillStyle = '#3a3a3e'; for (let k = -2; k <= 2; k++) g.fillRect(x - 0.22 * s, z + k * 0.09 * s, 0.44 * s, 1);
+        }
+      } else if (r.kind === 'gang') {
+        for (let k = 0; k < 6; k++) { const off = (h(20 + k) - 0.5) * (r.w - 0.3), x = (p.x + nx * off + p.tx * (h(30 + k) - 0.5)) * s, z = (p.z + nz * off + p.tz * (h(30 + k) - 0.5)) * s;
+          g.fillStyle = h(40 + k) < 0.5 ? 'rgba(90,80,60,0.25)' : 'rgba(210,200,176,0.3)'; g.fillRect(x | 0, z | 0, 0.5 * s, 0.25 * s); }
+        for (const sd of [-1, 1]) if (h(50 + sd) < 0.5) { g.fillStyle = 'rgba(96,130,70,0.45)'; for (let k = 0; k < 5; k++) g.fillRect((p.x + nx * sd * (hw - 0.12) + p.tx * (h(60 + k) - 0.5)) * s | 0, (p.z + nz * sd * (hw - 0.12) + p.tz * (h(60 + k) - 0.5)) * s | 0, 2, 1); }   // lumut di tepi
+      } else if (r.kind === 'setapak') {
+        for (let k = 0; k < 5; k++) { const off = (h(70 + k) - 0.5) * r.w, x = (p.x + nx * off + p.tx * (h(80 + k) - 0.5)) * s, z = (p.z + nz * off + p.tz * (h(80 + k) - 0.5)) * s;
+          g.fillStyle = pick(['#a0907a', '#8a7a64', '#d4c098', '#b8a888'], h(90 + k)); g.fillRect(x | 0, z | 0, 2, 1 + (h(95 + k) * 2 | 0)); }
+      }
+    });
+  });
+  g.restore();
+}
 function paintGround(K, houses, M, specials) {
   const [W, H] = K.size, s = PX, cv = document.createElement('canvas'); cv.width = W * s; cv.height = H * s;
   const g = cv.getContext('2d'); makePatterns(g, s / 10);
   g.fillStyle = PAT.grass; g.fillRect(0, 0, cv.width, cv.height);
   g.lineCap = g.lineJoin = 'round';
+  const GV = document.createElement('canvas'); GV.width = cv.width; GV.height = cv.height; grassVariety(GV.getContext('2d'), W, H, s); g.drawImage(GV, 0, 0);
   // perbukitan (lebih gelap), danau, sawah, alun-alun, lapangan, lahan proyek
   const fillPoly = (pts, style) => { g.fillStyle = style; strokePath(g, pts, s); g.closePath(); g.fill(); };
   fillPoly(K.areas[0].pts, PAT.grassDark);
@@ -365,6 +429,10 @@ function paintGround(K, houses, M, specials) {
     if (AREA.tpu.includes(i)) { fillPoly(a.pts, PAT.grassDark); return; }
     fillPoly(a.pts, PAT.field);
   });
+  // bercak & butir rumput juga di lapangan, hutan & makam (bidang hijau di atas rumput dasar)
+  g.save(); g.beginPath();
+  K.areas.forEach((a, i) => { if (i < 7 || a.kind === 'sawah' || AREA.water.includes(i) || i === AREA.proyek || AREA.dirt.includes(i) || AREA.semen.includes(i)) return; a.pts.forEach(([x, y], k) => k ? g.lineTo(x * s, y * s) : g.moveTo(x * s, y * s)); g.closePath(); });
+  g.clip(); g.globalAlpha = 0.7; g.drawImage(GV, 0, 0); g.restore();
   // alun-alun: jalan melingkar conblock + lapangan; lapangan bola: garis putih
   g.strokeStyle = PAT.paving; g.lineWidth = 1.6 * s; g.beginPath(); g.ellipse(146 * s, 76 * s, 11 * s, 7 * s, 0, 0, Math.PI * 2); g.stroke();
   g.strokeStyle = 'rgba(255,255,255,0.8)'; g.lineWidth = 0.2 * s; g.strokeRect(82.5 * s, 100.5 * s, 11 * s, 7 * s); g.beginPath(); g.moveTo(88 * s, 100.5 * s); g.lineTo(88 * s, 107.5 * s); g.stroke(); g.beginPath(); g.arc(88 * s, 104 * s, 1.2 * s, 0, 7); g.stroke();
@@ -403,6 +471,7 @@ function paintGround(K, houses, M, specials) {
   for (const r of K.roads) if (r.kind === 'setapak') { g.strokeStyle = '#a89068'; strokeRoad(g, r, s, 0.3); }
   const surf = { raya: PAT.asphalt, jalan: PAT.asphaltLight, gang: PAT.conblock, setapak: PAT.dirt };
   for (const kind of ['setapak', 'gang', 'jalan', 'raya']) for (const r of K.roads) if (r.kind === kind) { g.strokeStyle = surf[kind]; strokeRoad(g, r, s, 0); }
+  roadWear(g, K, s);
   // marka di lapisan sendiri, lalu dihapus di setiap simpang/perpotongan supaya tidak menembus jalan lain
   const mk = document.createElement('canvas'); mk.width = cv.width; mk.height = cv.height;
   const gm = mk.getContext('2d'); gm.lineCap = 'butt'; gm.lineJoin = 'round';
@@ -883,6 +952,7 @@ function terrain(K, M, occ, specials) {
   for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
     const x = i / R, z = j / R;
     const flat = M.waterAt(x, z) || M.railAt(x, z) || occ.get(x, z) || x < 1 || z < 0.5 || x > W - 1 || z > H - 1
+      || (Math.abs(x - 127) < 6 && Math.abs(z - 46) < 4.8)   // lapangan basket umum (no. 18): lantai & garis harus rata
       || areaFlat(j * gw + i) || sp.some(b => { const dx = x - b.x, dz = z - b.z; return Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd; });
     if (flat) D[j * gw + i] = 0;
   }
@@ -1097,7 +1167,7 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = 
   // lapangan bola kampung & ring basket umum: dibangun di activities.js (gawang berjaring, ring, bola)
   // taman kota & lapangan basket umum (no. 18)
   { const m = ch.at(127, 46);
-    m.box({ x: 127, z: 46, a: 0 }, 0, 0, 0, 8, 0.04, 6, col('#c4784c')); for (const x of [123.3, 130.7]) m.box({ x, z: 46, a: 0 }, 0, 0.04, 0, 0.06, 0.01, 6, col('#f4f4f0'));
+    m.box({ x: 127, z: 46, a: 0 }, 0, 0, 0, 8, 0.04, 6, col('#c4784c'));   // garis lapangan: activities.js
     for (const [x, z] of [[125, 50.5], [129, 50.5]]) { m.box({ x, z, a: 0 }, 0, 0, 0, 1.6, 0.45, 0.45, col('#3a7ac0')); colLocal(C, { x, z, a: 0 }, 0, 0, 1.6, 0.45); } }
   // gapura Gang Kenanga: di mulut gang utama dari jalan raya
   { const g1 = K.roads.find(r => r.kind === 'gang' && Math.hypot(r.pts[0][0] - 34, r.pts[0][1] - 77) < 1.5);

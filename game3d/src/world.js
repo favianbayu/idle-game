@@ -408,11 +408,7 @@ export function buildSekolah(scene, C) {
     post(39, 17.0, 7.5, col('#e8e8e8'), 0.12, false);
     bx(39.06, 16.98, 40.2, 17.02, 6.95, 0.38, col('#d8282e')); bx(39.06, 16.98, 40.2, 17.02, 6.57, 0.38, col('#f8f8f8'));
     // basket: ring di kedua ujung, gawang futsal lipat di sisi, bangku kayu di selatan
-    for (const [z, s] of [[16.3, 1], [29.7, -1]]) {
-      post(61.5, z, 3.0, col('#3a3a40'), 0.16);
-      bx(60.7, z + 0.25 * s - 0.05, 62.3, z + 0.25 * s + 0.05, 2.4, 0.9, col('#f4f4f0'));
-      bx(61.3, z + 0.5 * s - 0.2, 61.7, z + 0.5 * s + 0.2, 2.5, 0.05, col('#e86a2a'));
-    }
+    // ring basket (tiang, papan, ring berjaring) + bola: activities.js, supaya bisa dimainkan
     for (const z of [19, 27]) { bx(54.2, z - 1.4, 54.4, z + 1.4, 0, 1.2, col('#f0f0f0')); bx(54.2, z - 1.4, 54.9, z - 1.3, 0, 1.2, col('#f0f0f0')); bx(54.2, z + 1.3, 54.9, z + 1.4, 0, 1.2, col('#f0f0f0')); solid(54.2, z - 1.4, 54.9, z + 1.4); }
     bx(54.3, 30.2, 68.7, 30.9, 0.4, 0.08, col('#9a6a40'));
     for (let x = 54.6; x < 68.7; x += 2.8) bx(x, 30.4, x + 0.12, 30.7, 0, 0.4, col('#6a4a30'));
