@@ -9,6 +9,8 @@ Segmen ini memuat **denah luar** (kota, wilayah, halaman sekolah). Isi bangunan 
 
 ## Peta kota (260 x 180 petak)
 
+Kota ini bagian tengah dari peta daerah yang lebih besar (gunung, pantai, desa, sirkuit): lihat [86. Peta daerah](#86-peta-dunia).
+
 ![Peta kota Wirabumi](../peta/peta_kota.png)
 
 Kota sengaja **tidak berbentuk kotak-kotak**. Jalan mengikuti sungai, bukit, dan rel; tiap wilayah punya pola rumah sendiri,
@@ -23,7 +25,7 @@ jadi pemain langsung tahu sedang di mana hanya dari bentuk jalannya. Gambar dibu
 | **Perumahan Bukit Asri** | Elite, sepi, dijaga satpam | Jalan lebar melengkung mengikuti lereng, cul-de-sac berbundaran, rumah besar berhalaman | lihat gambar di bawah |
 | **Pusat Kota & Jalan Raya** | Paling ramai, macet, lampu toko malam | Jalan raya melengkung, simpang lampu merah, ruko berderet, alun-alun bundar | lihat gambar di bawah |
 | **Bantaran Kali** | Padat, sederhana, rawan banjir, wilayah geng | Gang menyusuri kali, rumah panggung, satu jembatan utama + jembatan bambu | lihat gambar di bawah |
-| **Selatan** (seberang kali) | Terbuka, keras, wilayah rival | STM, lahan proyek berpagar seng, sirkuit Jalan Lingkar, sawah | lihat gambar di bawah |
+| **Selatan** (seberang kali) | Terbuka, keras, wilayah rival | STM, lahan proyek berpagar seng, Jl. Lingkar Selatan (balap liar), sawah | lihat gambar di bawah |
 | **Kawasan Sekolah** | Seragam di mana-mana pagi & siang | Satu kompleks besar di Jl. Merdeka, taman kota & lapangan basket di sampingnya | lihat gambar di bawah |
 | **Perbukitan Utara** | Sejuk, sepi, romantis | Jalan tanah & setapak di antara hutan, menara pemancar, kebun teh & danau | (cukup dari peta kota) |
 
@@ -54,7 +56,7 @@ jadi pemain langsung tahu sedang di mana hanya dari bentuk jalannya. Gambar dibu
 | 11 | Lapangan bola kampung | Perkampungan/Bantaran | Bab 4 |
 | 12 | STM Karya Bangsa | Selatan | Bab 3 |
 | 13 | Lahan proyek PT Graha Megantara | Selatan | Bab 10 |
-| 14 | Jalan Lingkar (sirkuit) | Selatan | Bab 9 (liar: Bab 3) |
+| 14 | Jl. Lingkar Selatan (balap liar); sirkuit resmi pindah ke timur (segmen 87) | Selatan | Liar: Bab 3, resmi: Bab 9 |
 | 15 | Menara pemancar | Perbukitan | Bab 3 |
 | 16 | Jalur sepeda turunan Bukit Cemara | Perbukitan | Kelas X sem. 2 |
 | 17 | Kebun teh & danau | Perbukitan | Kelas X sem. 2 |

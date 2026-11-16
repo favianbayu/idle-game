@@ -1,7 +1,7 @@
 # 85. Jalan Tembus & Area Baru
 
 Peta kota sekarang **hampir tanpa jalan buntu**. Hampir semua jalan nyambung ke jalan lain atau terus sampai ujung peta
-(ujung peta = jalan keluar kota, pemain bisa fast travel ke tempat di luar peta). Lahan kosong diisi hutan, tempat
+(ujung peta kota nyambung ke jalan daerah luar: gunung, pantai, desa; lihat segmen 86). Lahan kosong diisi hutan, tempat
 nongkrong, dan tempat yang menyimpan kait cerita. Nomor di bawah sama dengan nomor penanda di peta kota.
 
 ![Peta kota Wirabumi](../peta/peta_kota.png)
@@ -11,7 +11,7 @@ nongkrong, dan tempat yang menyimpan kait cerita. Nomor di bawah sama dengan nom
 | Aturan | Isi |
 |---|---|
 | Tidak ada jalan buntu | Setiap jalan berakhir di jalan lain, di tempat tujuan yang jelas (curug, gua, rumah pohon), atau di ujung peta |
-| Ujung peta = keluar kota | Jalan yang menyentuh tepi peta memunculkan pilihan "Keluar kota" (fast travel ke Desa Sukamekar, Asrama Batalyon, kota sebelah) |
+| Ujung peta kota = jalan daerah | Jalan yang menyentuh tepi peta kota langsung nyambung ke jalan daerah luar (segmen 86). Tepi peta daerah = keluar daerah (fast travel) |
 | Variasi lebar | Jalan raya 3 petak, jalan biasa 2, gang 1-1.2, setapak 0.6 (motor hanya bisa lewat setapak dengan pelan) |
 | Jalan pintas | Setiap wilayah punya minimal 2 jalan tikus ke wilayah tetangga. Jalan tikus dipakai saat dikejar polisi atau geng |
 | Buntu yang disengaja | Hanya cul-de-sac Perumahan Bukit Asri (memang desain kompleks elite) dan ujung setapak di depan tempat tujuan |

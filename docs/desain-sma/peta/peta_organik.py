@@ -68,22 +68,43 @@ def shade(c, f):
     return tuple(max(0, min(255, int(v * f))) for v in c)
 
 
+class _Shift:
+    """Pembungkus ImageDraw yang menggeser semua koordinat (untuk peta yang titik asalnya bukan 0,0)."""
+    def __init__(self, d, dx, dy):
+        self._d, self.dx, self.dy = d, dx, dy
+
+    def _t(self, xy):
+        if isinstance(xy, (list, tuple)) and xy and isinstance(xy[0], (list, tuple)):
+            return [(a + self.dx, b + self.dy) for a, b in xy]
+        if len(xy) == 4:
+            return (xy[0] + self.dx, xy[1] + self.dy, xy[2] + self.dx, xy[3] + self.dy)
+        return (xy[0] + self.dx, xy[1] + self.dy)
+
+    def __getattr__(self, k):
+        f = getattr(self._d, k)
+        if k in ("polygon", "line", "ellipse", "rectangle", "rounded_rectangle", "text", "point", "arc", "pieslice"):
+            return lambda xy, *a, **kw: f(self._t(xy), *a, **kw)
+        return f
+
+
 class Map:
-    def __init__(self, w, h, s, title, sub, legend_w=360, seed=1):
+    def __init__(self, w, h, s, title, sub, legend_w=360, seed=1, x0=0, y0=0):
         self.w, self.h, self.s = w, h, s
+        self.x0, self.y0 = x0, y0
         self.W, self.H = int(w * s) + legend_w, int(h * s) + 70
         self.im = Image.new("RGB", (self.W, self.H), C["grass"])
-        self.d = ImageDraw.Draw(self.im, "RGBA")
+        self.raw = ImageDraw.Draw(self.im, "RGBA")
+        self.d = _Shift(self.raw, -x0 * s, -y0 * s) if (x0 or y0) else self.raw
         self.blocked = []
         self.roads = []
         self.forests = []
         self.legend = []
         self.title, self.sub = title, sub
         self.rng = random.Random(seed)
-        self.mapbox = box(0, 0, w, h)
+        self.mapbox = box(x0, y0, x0 + w, y0 + h)
         # tekstur rumput halus
         for _ in range(int(w * h / 6)):
-            x, y = self.rng.uniform(0, w), self.rng.uniform(0, h)
+            x, y = self.rng.uniform(0, w) + x0, self.rng.uniform(0, h) + y0
             r = self.rng.uniform(0.3, 1.2) * s
             self.d.ellipse((x * s - r, y * s - r, x * s + r, y * s + r), fill=C["grass2"] + (90,))
 
@@ -299,7 +320,7 @@ class Map:
         self.legend.append((num, desc, color))
 
     def finish(self, path, notes=()):
-        d = self.d
+        d = self.raw
         x0 = int(self.w * self.s)
         d.rectangle((x0, 0, self.W, self.H), fill=(250, 248, 240))
         d.line((x0, 0, x0, self.H), fill=(60, 60, 60), width=3)
@@ -325,9 +346,10 @@ class Map:
         d.text((14, top + 10), self.title, font=font(17, True), fill=(30, 30, 30))
         d.text((14, top + 38), self.sub, font=font(13), fill=(70, 70, 70))
         # skala & arah utara
-        L = 10 * self.s
+        sk = 10 if self.w < 300 else 50
+        L = sk * self.s
         d.rectangle((x0 - 30 - L, top - 30, x0 - 30, top - 24), fill=(30, 30, 30))
-        d.text((x0 - 30 - L, top - 48), "10 petak", font=font(12, True), fill=(30, 30, 30))
+        d.text((x0 - 30 - L, top - 48), f"{sk} petak", font=font(12, True), fill=(30, 30, 30))
         d.polygon([(x0 - 40, 14), (x0 - 50, 44), (x0 - 30, 44)], fill=(30, 30, 30))
         d.text((x0 - 45, 46), "U", font=font(15, True), fill=(30, 30, 30))
         self.im.save(os.path.join(HERE, path))
@@ -352,6 +374,18 @@ def wrap(t, n):
 def peta_kota():
     m = Map(260, 180, 6, "PETA KOTA WIRABUMI (fiktif)  -  260 x 180 petak, 1 petak = 32 unit voxel",
             "Tujuh wilayah dengan suasana berbeda. Denah detail: wilayah_1 s/d wilayah_4. Angka merah = lokasi penting.", seed=7)
+    pts = isi_kota(m)
+    for i, (x, y, t) in enumerate(pts, 1):
+        m.mark(x, y, i, t)
+    m.finish("peta_kota.png", [
+        "Jalan abu tua bergaris = jalan raya (mobil, angkot, motor). Abu muda = jalan biasa. Krem = gang kampung (motor & sepeda). Cokelat = jalan tanah/setapak.",
+        "Tidak ada blok kotak: jalan mengikuti sungai, bukit, dan rel. Tiap wilayah punya pola rumah sendiri: kampung padat & miring-miring, perumahan berhalaman dan rapi, ruko berderet di jalan raya.",
+        "Hampir tidak ada jalan buntu: gang tembus ke gang lain, jalan utama terus sampai tepi peta (keluar kota). Peta seluruh daerah (gunung, pantai, sirkuit): peta_dunia.png.",
+    ])
+
+
+def isi_kota(m):
+    """Isi kota (koordinat 0..260 x 0..180). Dipakai peta_kota() dan peta_dunia()."""
     # wilayah (tint)
     bukit = m.area([(0, 0), (260, 0), (260, 22), (200, 30), (150, 34), (120, 36), (70, 40), (30, 38), (0, 32)], C["hill"], smooth=False)
     m.area([(22, 60), (60, 58), (84, 66), (92, 80), (86, 100), (66, 110), (34, 110), (22, 92)], DIST["kampung"], alpha=150)
@@ -394,8 +428,9 @@ def peta_kota():
     ban = m.road([(0, 104), (14, 108), (30, 112), (50, 114), (74, 118), (98, 126), (113, 124)], "gang")
     m.road([(14, 108), (20, 121), (26, 136), (30, 156), (34, 180)], "setapak", 1.4)       # pematang + rakit penyeberangan
     stm = m.road([(120, 142), (146, 150), (170, 154), (192, 152), (195, 162)], "jalan", 3)
-    m.road([(170, 166), (200, 163), (236, 166), (247, 172), (226, 177.5), (190, 177.5), (168, 173)], "raya", 3.5, closed=True)
-    m.road([(247, 172), (254, 170), (260, 169)], "jalan", 3)                              # sirkuit ke luar kota
+    m.road([(169, 170), (184, 170.5), (200, 170), (220, 169.6), (240, 169.6), (254, 169.4), (260, 169)], "raya", 3.5,
+           name="Jl. Lingkar Selatan")                                                     # lurus panjang: trek balap liar, terus ke sirkuit resmi
+    m.road([(195, 162), (197, 166), (200, 170), (203, 175), (205, 180)], "jalan", 3)     # STM/jembatan timur ke lingkar, terus ke selatan (pantai)
     m.road([(130, 160), (140, 168), (155, 170), (169, 170)], "jalan", 3)                  # jalan selatan ke sirkuit
     m.road([(15, 60), (24, 66), (34, 77)], "jalan", 3)  # stasiun ke kampung
     m.road([(96, 88), (98, 70), (104, 64)], "jalan", 3)   # pintu belakang sekolah
@@ -473,7 +508,7 @@ def peta_kota():
     m.district(156, 102, "PUSAT KOTA &\nJALAN RAYA (W3)")
     m.district(222, 40, "PERUMAHAN\nBUKIT ASRI (W2)")
     m.district(66, 126, "BANTARAN KALI (W4)")
-    m.district(214, 132, "SELATAN: STM, PROYEK,\nSIRKUIT (W4)")
+    m.district(214, 132, "SELATAN: STM, PROYEK,\nJL. LINGKAR (W4)")
     m.district(104, 44, "KAWASAN SEKOLAH")
     m.district(150, 10, "PERBUKITAN UTARA")
     m.district(232, 118, "HUTAN JATI\nTIMUR")
@@ -489,7 +524,7 @@ def peta_kota():
         (170, 84, "Ruko Pelita, bengkel Mas Fajar"), (178, 98, "Plaza Wirabumi (mal & bioskop)"),
         (224, 56, "Rumah Bram (Perumahan Bukit Asri)"), (50, 131, "Gudang markas Lampu Kota"),
         (88, 104, "Lapangan bola kampung"), (150, 158, "STM Karya Bangsa (rival)"),
-        (212, 153, "Lahan proyek PT Graha Megantara"), (207, 171, "Jalan Lingkar: sirkuit balap"),
+        (212, 153, "Lahan proyek PT Graha Megantara"), (214, 166, "Jl. Lingkar Selatan: trek balap liar malam"),
         (84, 22, "Menara pemancar (spot rahasia)"), (60, 14, "Jalur sepeda turunan Bukit Cemara"),
         (214, 12, "Kebun teh & danau (mancing, kencan)"), (126, 46, "Taman kota & lapangan basket umum"),
         (168, 40, "GOR Kota & kolam renang umum"), (193, 113, "TPU Bhakti (pemakaman)"),
@@ -499,14 +534,10 @@ def peta_kota():
         (162, 129, "Pabrik es tua (kosong)"), (246, 104, "Terminal bus antarkota"),
         (70, 49, "Kolam pemancingan Pak Haji"), (182, 136, "Jembatan Timur (Bab 7+)"),
         (21, 128, "Rakit penyeberangan & pematang"), (66, 158, "Kandang sapi & gubuk sawah"),
+        (203, 79, "Gerbang Perumahan Bukit Asri (gapura, pos satpam, portal)"), (35, 74, "Gapura Gang Kenanga"),
+        (30, 100, "Musala kampung"), (142, 89, "Ruko, Indomurah, bank, hotel melati, lahan parkir (sepanjang Jl. Raya & Merdeka)"),
     ]
-    for i, (x, y, t) in enumerate(pts, 1):
-        m.mark(x, y, i, t)
-    m.finish("peta_kota.png", [
-        "Jalan abu tua bergaris = jalan raya (mobil, angkot, motor). Abu muda = jalan biasa. Krem = gang kampung (motor & sepeda). Cokelat = jalan tanah/setapak.",
-        "Tidak ada blok kotak: jalan mengikuti sungai, bukit, dan rel. Tiap wilayah punya pola rumah sendiri: kampung padat & miring-miring, perumahan berhalaman dan rapi, ruko berderet di jalan raya.",
-        "Hampir tidak ada jalan buntu: gang tembus ke gang lain, jalan utama terus sampai tepi peta (keluar kota).",
-    ])
+    return pts
 
 
 # =====================================================================

@@ -29,6 +29,10 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 | 83 | Sekolah dari luar | Denah tapak baru, tampak tiap gedung, halaman, lapangan, parkiran |
 | 84 | Habit NPC sekolah | Jadwal per jam, kelompok, kebiasaan siswa & guru, reaksi kerumunan |
 | 85 | Jalan tembus & area baru | Aturan jalan tanpa buntu, hutan, 14 tempat baru dan kait ceritanya |
+| 86 | Peta daerah (besar) | Kota + gunung, pantai, waduk, desa, industri, batalyon; akses & transport |
+| 87 | Sirkuit & balap liar | Sirkuit resmi (tribun, pit, paddock), 4 rute balap liar, razia, akses |
+| 88 | STM Karya Bangsa | Denah tapak, tampak, bengkel otomotif, akses & jadwal |
+| 89 | GOR Kota | Arena event, kolam renang lomba, gym upgrade diri |
 
 Dokumen yang sudah ada sebelumnya (`01-cerita.md` sampai `06-event.md`, peta, bangunan, sprite) tetap berlaku. Guide ini
 memperdalam dan, kalau ada yang beda, **guide ini yang dipakai**.
@@ -61,8 +65,8 @@ warkop, masuk klub motor **Lampu Kota**, jatuh cinta, dan akhirnya ikut menyelam
 | Sasha Aurelia | 16 | SMA 3, X-1 | Anak elite geng Bram, ingin bebas | Perumahan Bukit Asri |
 | Kirana Wijaya | 16 | STM Karya Bangsa, Otomotif | Adik Kobar, pembalap jalanan | Selatan (rumah di belakang bengkel ayahnya) |
 | Mei Lestari | 15 | SMA Bina Bangsa (swasta) | Anak toko buku, ilustrator | Pusat Kota (lantai 2 Toko Buku Pena) |
-| Wulan Sari | 16 | SMK Pariwisata | Pesilat juara, pemandu wisata kebun teh | **Luar peta**: Desa Sukamekar (utara) |
-| Dimas Aditya | 16 | SMA 3, X-3 | Kapten basket, pemalu | **Luar peta**: Asrama Batalyon (timur kota) |
+| Wulan Sari | 16 | SMK Pariwisata | Pesilat juara, pemandu wisata kebun teh | **Peta daerah**: Desa Sukamekar (utara) |
+| Dimas Aditya | 16 | SMA 3, X-3 | Kapten basket, pemalu | **Peta daerah**: Asrama Batalyon (timur kota) |
 | Arga | 16 | SMA 3, X-1 | Anggota muda Lampu Kota, pendiam | Kawasan Sekolah (rumah Pak Ujang) |
 | Rizal Pratama | 15 | SMA 3, X-2 | Penulis cerpen, sekretaris OSIS | Pusat Kota (kontrakan belakang Ruko Pelita) |
 | Tegar Hutomo | 15 | SMA 3, X-2 | Ketua kelas, juara umum, tertekan | Perumahan Bukit Asri |

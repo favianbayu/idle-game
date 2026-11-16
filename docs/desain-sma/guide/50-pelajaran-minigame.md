@@ -74,7 +74,7 @@ Bocoran soal bisa dibeli dari Kevin (Rp 20.000): nilai +15, tapi risiko ketahuan
 | **Jaga warkop** | Warkop Simpang | Antrean pesanan bergelombang (gaya restoran sibuk); uang & reputasi Usaha |
 | **Servis bengkel** | Bengkel Mas Fajar | Urutan bongkar-pasang komponen; uang & Keterampilan |
 | **Ojek** | Pusat Kota | Antar penumpang tepat waktu tanpa melanggar lampu merah; uang |
-| **Balap motor** | Jalan Lingkar | Balap 3 lap melawan 3 pembalap, drift, nitro sederhana |
+| **Balap motor** | Jl. Lingkar (drag), rute balap liar, Sirkuit Tanjung Pradana | Drag, balap jalan, balap sirkuit 3-5 lap (detail segmen 87) |
 | **Balap sepeda** | Hari bebas kendaraan, jalan kampung | Stamina dan rute pintas |
 | **Futsal kampung** | Lapangan kampung | Liga Minggu |
 | **Ngamen** | Alun-alun, angkot | Rhythm game; uang receh |

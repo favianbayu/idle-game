@@ -15,8 +15,8 @@ layar transisi bus/motor) saat event hati.
 | Kawasan Sekolah | **Arga**, Pak Ujang, Pak Hendro, Mak Iyah | Rumah dinas penjaga di belakang Gedung Lama, mes guru, warung |
 | Kali Cendana (pinggir) | Bang Jaka | Gudang markas Lampu Kota |
 | Selatan (Jalan Lingkar & sawah) | **Kirana**, **Andra**, Kobar | Rumah di belakang bengkel Wijaya Motor, rumah nenek bata merah dekat sawah |
-| **Luar peta: Asrama Batalyon (timur)** | **Dimas** | Rumah dinas tentara, lapangan apel. Scene: lari subuh, event 8 hati |
-| **Luar peta: Desa Sukamekar (utara)** | **Wulan** | Rumah panggung kayu di kebun teh, pendopo perguruan. Scene: perjalanan bus 40 menit |
+| **Peta daerah: Asrama Batalyon 3 (timur, segmen 86)** | **Dimas** | Rumah dinas tentara, lapangan apel. Scene: lari subuh, event 8 hati |
+| **Peta daerah: Desa Sukamekar (timur laut, segmen 86)** | **Wulan** | Rumah panggung kayu di kebun teh, pendopo perguruan. Scene: perjalanan bus 40 menit |
 | **Luar peta: Desa Lereng Wangi** | Ibu pemain | Kampung halaman pemain. Scene: mudik Lebaran, ending |
 | **Luar peta: Medan** | Orang tua Jojo | Hanya lewat telepon |
 
