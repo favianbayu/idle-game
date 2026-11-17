@@ -6624,6 +6624,1517 @@ function build(opt = {}) {
 
 return { SKEL, FACES, EXPRS, OUTFITS, build };
 })();
+// ===== rio.js
+NS.rio = (() => {
+// Rio: tukang pukul geng Bram, kelas 12. Badan besar, potongan undercut (atas cokelat disisir ke belakang, samping
+// dicukur tipis), kalung rantai perak, bodoh tapi tidak jahat, mimpi jadi atlet tinju. Rangka keluarga Bram (skala 1.32
+// tapi badan lebar), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+
+const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 11, fore: 11.5, hipY: 5, flap: 6, ballR: 1.1 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  rioSkin: ['#ae7c58', '#c89470', '#e0b088', '#ecc29c'], rioSkinS: ['#c48c66'],
+  rioHair: ['#4a2a16', '#5a341c', '#6a4024', '#82522e'], rioHairT: ['#9a6a3e'], rioSide: ['#5a4434', '#665040', '#725c4a', '#7e6856'],
+  rioTank: ['#e8e4dc', '#f2eee6', '#faf8f2', '#ffffff'], rioShort: ['#8a1a1a', '#a42222', '#bc2c2c', '#d23c3c'], rioShortS: ['#f2d23a'],
+  gloveR: ['#8a1010', '#a81818', '#c82424', '#e04040'], gloveRS: ['#f2f2ee'], wrapR: ['#2a2a30'],
+  rioHood: ['#1a1a1e', '#222226', '#2c2c32', '#3a3a42'], rioHoodS: ['#c84030'], rioSneak: ['#141418', '#1c1c22', '#26262e', '#363642'],
+});
+
+/* ---------- wajah: alis tebal tegak (galak tapi polos), mata kecil bulat, mulut lebar seringai bodoh tepat di bawah hidung */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', s: 'rioSkinS' };
+const F0 = '..............';
+const F = (brow, eyes, mouth) => [F0, F0, F0, ...brow, ...eyes, F0, F0, F0, ...mouth, F0, F0];   // 15 baris: alis z 11..10, mata z 9..8, mulut z 4
+const BROW = ['.BBBB....BBBB.', F0];
+const EYE = ['...KK....KK...', '...KK....KK...'];
+const FACES = {
+  biasa: F(BROW, EYE, ['....mmmmmmm...', F0, F0]),
+  kedip: F(BROW, [F0, '..KKK....KKK..'], ['....mmmmmmm...', F0, F0]),
+  marah: F(['..BB......BB..', '....BB..BB....'], EYE, ['....mmmmmm....', '...m......m...', F0]),
+  teriak: F(['..BB......BB..', '....BB..BB....'], EYE, ['...mTTTTTTm...', '...mttttttm...', '....mmmmmm....']),
+  nyengir: F(BROW, EYE, ['..mTTTTTTTTm..', '...mmmmmmmm...', F0]),   // nyengir lebar, polos
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['..mTTTTTTTTm..', '..mtttttttm...', '...mmmmmmm....']),
+  sakit: F(['...BB....BB...', '.BB........BB.'], ['.KK........KK.', '...KK....KK...'], ['...mmmmmmmm...', '...TTTTTTTT...', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const topZ = (v, x, y) => { for (let z = 30; z >= -20; z--) if (v.has(x, y, z)) return z; return null; };
+const skull = z => z <= 0 ? [-3, -5, 5, 4, 2] : z === 1 ? [-6, -6, 6, 5, 2] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'rioSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'rioSkin'); v.box(8, -1, 5, 8, 0, 5, 'rioSkin'); v.set(7, -1, 4, 'rioSkinS');   // hidung lebar
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'rioSkin'); v.box(-1, y, 6, -1, y, 7, 'rioSkinS'); }
+  // samping & belakang dicukur tipis (lapis gelap), atas tebal disisir ke belakang dengan jambul
+  const side = new Vox();
+  for (let z = 5; z <= 15; z++) side.rrect(z, -8, -8, 7, 7, 'rioSide', z <= 11 ? 4 : 5);
+  side.rrect(16, -6, -6, 5, 5, 'rioSide', 4);
+  side.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= (x >= 5 ? 14 : Math.abs(y + 0.5) > 6.5 && x >= -1 ? 9 : 5)) v.set(x, y, z, c); });
+  const top = new Vox();
+  for (let z = 14; z <= 17; z++) top.rrect(z, -8, -8, 8, 7, 'rioHair', 5);
+  for (let z = 18; z <= 19; z++) top.rrect(z, -6, -6, 7, 5, 'rioHair', 4);
+  top.each((x, y, z, c) => { if (Math.abs(y + 0.5) <= 6.5 - (z <= 14 ? 1 : 0) && (!v.has(x, y, z) || v.get(x, y, z) === 'rioSide') && !(z === 14 && x >= 8)) v.set(x, y, z, c); });
+  for (const y of [-5, -2, 1, 4]) for (let x = -8; x <= 7; x++) { const z = topZ(v, x, y); if (z !== null && v.get(x, y, z) === 'rioHair' && (x + 40) % 3) v.set(x, y, z, 'rioHairT'); }   // alur sisir
+  return v;
+}
+
+/* ---------- badan besar (sisi +y; sisi -y = cermin) */
+const bodyC = o => ({ seragam: 'white', tinju: 'rioTank', jalan: 'rioHood' }[o.top]);
+function chain(v, z0) {   // kalung rantai perak di leher, menggantung di dada
+  for (let y = -5; y <= 4; y++) { const z = z0 - Math.round(Math.abs(y + 0.5) < 3 ? 2 - Math.abs(y + 0.5) * 0.4 : 0) + (Math.abs(y + 0.5) > 3 ? 1 : 0); const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, (y + 40) % 2 ? 'chain' : 'watch'); }
+}
+function chest(o) {
+  const v = new Vox(), T = o.top, body = bodyC(o);
+  for (let z = 37; z <= 58; z++) { const w = z <= 42 ? 1 : z <= 46 ? 0 : -1, t = z === 58 ? 1 : 0; v.rrect(z, -6, -9 + w + t, 5 - t, 8 - w - t, body, z >= 57 ? 4 : 3); }
+  v.rbox(-3, -3, 59, 2, 2, 62, 'rioSkin', 2);
+  if (T === 'seragam') {   // seragam dikeluarkan, dua kancing atas terbuka, lengan digulung, rantai kelihatan
+    for (let z = 51; z <= 58; z++) for (let y = -3; y <= 2; y++) if (Math.abs(y + 0.5) <= (z - 50) * 0.45) v.pf(y, z, 'rioSkin');
+    for (let z = 37; z <= 50; z++) v.pf(-1, z, 'whiteS');
+    for (let z = 59; z <= 60; z++) v.shell(z, -5, -6, 3, 5, 'white', 2);
+    for (let y = -2; y <= 1; y++) for (const z of [59, 60]) for (const x of [3, 4]) if (v.get(x, y, z) === 'white') v.set(x, y, z, null);
+    v.pfBox(3, 51, 5, 53, 'osis'); v.pf(-6, 52, 'tag'); v.pf(-5, 52, 'tag');
+    chain(v, 55);
+    return v;
+  }
+  if (T === 'tinju') {   // kaus kutang putih, bahu terbuka, handuk tidak ada
+    for (let z = 52; z <= 58; z++) for (let y = -9; y <= 8; y++) if (Math.abs(y + 0.5) > 5.5 || (Math.abs(y + 0.5) < 2.5 && z >= 55)) { const x = v.front(y, z); if (x !== null) v.set(x, y, z, 'rioSkin'); const xb = v.back(y, z); if (xb !== null && Math.abs(y + 0.5) > 5.5) v.set(xb, y, z, 'rioSkin'); }
+    v.each((x, y, z, c) => { if (c === 'rioTank' && z >= 53 && Math.abs(y + 0.5) > 6.5) v.set(x, y, z, 'rioSkin'); });
+    chain(v, 55);
+    return v;
+  }
+  // hoodie hitam, garis merah di dada, tali hoodie, tudung di punggung
+  for (let y = -9; y <= 8; y++) for (const z of [48, 49]) { v.pf(y, z, 'rioHoodS'); v.pb(y, z, 'rioHoodS'); }
+  for (const y of [-2, 1]) for (let z = 50; z <= 55; z++) v.pf(y, z, 'rioTank');
+  for (let z = 56; z <= 61; z++) { const k = z - 56; v.rbox(-9 + Math.floor(k / 2), -6 + Math.floor(k / 3), z, -6, 5 - Math.floor(k / 3), z, 'rioHood', 2); }
+  for (let z = 59; z <= 60; z++) v.shell(z, -4, -5, 3, 4, 'rioHood', 2);
+  return v;
+}
+function pelvis(o) {
+  const c = legC(o), v = new Vox();
+  v.rbox(-6, -8, 30, 5, 7, 36, c, 3); v.box(-4, -2, 28, 3, 1, 29, c);
+  if (o.top === 'seragam') { for (let z = 32; z <= 36; z++) v.shell(z, -7, -9, 6, 8, z === 32 ? 'whiteS' : 'white', 3); v.pf(-1, 34, 'whiteS'); v.pf(-1, 33, 'whiteS'); }   // baju dikeluarkan
+  else if (o.top === 'tinju') { for (let z = 34; z <= 36; z++) v.shell(z, -7, -9, 6, 8, z === 35 ? 'rioShortS' : 'rioShort', 3); }
+  else for (let z = 33; z <= 36; z++) v.shell(z, -7, -9, 6, 8, z === 33 ? 'rioHoodS' : 'rioHood', 3);
+  return v;
+}
+const legC = o => o.top === 'tinju' ? 'rioShort' : o.top === 'jalan' ? 'jeans' : 'pants';
+const sleeveC = o => bodyC(o);
+function arm(o) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-4, 8, 46, 3, 14, 58, o.top === 'jalan' ? c : 'rioSkin', 3); v.rrect(59, -3, 8, 3, 14, o.top === 'tinju' ? 'rioSkin' : c, 3);
+  if (o.top === 'seragam') { v.paint(-4, 8, 52, 3, 14, 59, c); v.shell(52, -5, 7, 4, 15, 'whiteS', 3); v.shell(53, -5, 7, 4, 15, c, 3); }   // lengan digulung tebal
+  return v;
+}
+function fore(o, side) {
+  const v = new Vox(), T = o.top;
+  v.rbox(-3, 8, 35, 3, 14, 46, T === 'jalan' ? 'rioHood' : 'rioSkin', 3);
+  v.rbox(-3, 8, 30, 4, 14, 34, 'rioSkin', 3); v.rrect(29, -2, 9, 3, 13, 'rioSkin', 2);
+  if (T === 'tinju') {   // sarung tinju merah besar, manset putih, perban hitam di pergelangan
+    v.rbox(-4, 7, 26, 6, 15, 33, 'gloveR', 3); v.paint(-4, 7, 32, 6, 15, 33, 'gloveRS'); v.paint(-3, 8, 34, 3, 14, 35, 'wrapR');
+    v.set(6, 11, 29, 'gloveRS');
+  }
+  if (T === 'seragam' && side < 0) v.paint(-3, 8, 35, 3, 14, 35, 'chain');   // gelang rantai
+  if (T === 'jalan') v.paint(-3, 8, 35, 3, 14, 36, 'rioHoodS');
+  return v;
+}
+function thigh(o) { const c = legC(o), v = new Vox(); v.rbox(-5, 1, 20, 4, 8, 34, c, 3); v.rrect(35, -4, 2, 3, 7, c, 3); if (o.top === 'tinju') { v.paint(-5, 1, 20, 4, 8, 25, 'rioSkin'); for (let z = 26; z <= 34; z++) v.set(0, 8, z, 'rioShortS'); } return v; }
+function shin(o) {
+  const c = o.top === 'tinju' ? 'rioSkin' : legC(o), v = new Vox();
+  v.rbox(-5, 1, 7, 4, 8, 20, c, 3); v.rrect(21, -4, 2, 3, 7, c, 3);
+  if (o.top === 'tinju') v.rbox(-4, 2, 6, 3, 7, 10, 'rioTank', 3);   // kaus kaki
+  return v;
+}
+function foot(o) {   // sneakers hitam besar sol putih (tinju: sepatu tinju merah tinggi)
+  const v = new Vox(), c = o.top === 'tinju' ? 'gloveR' : 'rioSneak';
+  v.rbox(-5, 1, 0, 8, 8, 1, 'sole', 3); v.rbox(-5, 1, 2, 8, 8, 4, c, 3); v.rbox(-5, 1, 5, 2, 8, 7, c, 3);
+  for (const x of [1, 3, 5]) v.paint(x, 3, 4, x, 6, 4, 'lace');
+  return v;
+}
+
+const OUTFITS = {
+  seragam: { name: 'Seragam dikeluarkan, kancing terbuka, lengan digulung + kalung rantai', top: 'seragam' },
+  tinju: { name: 'Sasana tinju: kutang putih + celana tinju merah + sarung tinju', top: 'tinju' },
+  jalan: { name: 'Nongkrong: hoodie hitam garis merah + jeans + sneakers', top: 'jalan' },
+};
+function build(opt = {}) {
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
+  const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
+  return assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['chest', chest(o), PV.chest], ['pelvis', pelvis(o), PV.pelvis],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'rioSkin', shoulder: o.top === 'tinju' ? 'rioSkin' : sl, elbow: o.top === 'jalan' ? 'rioHood' : 'rioSkin', hip: leg, knee: o.top === 'tinju' ? 'rioSkin' : leg }, SKEL, TAIL);
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== kevin.js
+NS.kevin = (() => {
+// Kevin: otak licik geng Bram, ahli fitnah lewat media sosial, kelas 12. Kurus jangkung, rambut hitam belah tengah
+// (poni tirai jatuh ke dua sisi dahi), kacamata bulat bingkai tipis, HP selalu di tangan kanan, senyum tipis meremehkan.
+// Rangka keluarga Rizal (ramping, skala 1.34), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+
+const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 0.9 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  kvSkin: ['#c89a78', '#e0b490', '#f0c4a0', '#f8d4b4'], kvSkinS: ['#dcae8a'],
+  kvHair: ['#060506', '#0e0b0c', '#181314', '#261e20'], kvHairT: ['#3a3034'], kvPart: ['#020202'],
+  kvFrame: ['#8a7a5a'], kvLens: ['#e4eef4'], kvPhone: ['#16161c', '#1e1e26', '#2a2a34', '#3a3a48'], kvScreen: ['#5ab4e8'],
+  kvHood: ['#6a6e78', '#7c808a', '#8e929c', '#a2a6b0'], kvHoodS: ['#4e525c'], kvKaus: ['#1e2a4a', '#263458', '#2e4068', '#3c507c'],
+  kvShort: ['#3a3a40', '#46464c', '#525258', '#626268'], kvSneak: ['#e8e8ea', '#f2f2f4', '#fafafa', '#ffffff'], kvSneakS: ['#2a2a30'],
+});
+
+/* ---------- wajah: alis tipis lurus (satu terangkat), mata sipit setengah tertutup, senyum tipis sebelah tepat di bawah hidung */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', s: 'kvSkinS' };
+const F0 = '..............';
+const F = (brow, eyes, mouth) => [F0, F0, F0, ...brow, ...eyes, F0, F0, F0, ...mouth, F0, F0];   // alis z 11..10, mata z 9..8, mulut z 4
+const BROW = ['.........BBB..', '..BBB.........'];
+const EYE = ['..KKK....KKK..', '..sWK....KWs..'];
+const FACES = {
+  biasa: F(BROW, EYE, ['.....mmmm.m...', '.........m....', F0]),
+  kedip: F(BROW, [F0, '..KKK....KKK..'], ['.....mmmm.m...', '.........m....', F0]),
+  marah: F(['..BBB....BBB..', F0], ['..KKK....KKK..', '...WK....KW...'], ['....mmmmmm....', F0, F0]),
+  teriak: F(['..BBB....BBB..', F0], ['..KKK....KKK..', '..WKK....KKW..'], ['....mTTTTm....', '....mttttm....', '.....mmmm.....']),
+  nyengir: F(BROW, EYE, ['....mTTTTmm...', '.........m....', F0]),   // licik
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['....mTTTTTm...', '.....mttm.....', F0]),
+  sakit: F(['...BB....BB...', '.BB........BB.'], ['.KK........KK.', '...KK....KK...'], ['....mmmmmm....', '....TTTTTT....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const topZ = (v, x, y) => { for (let z = 30; z >= -20; z--) if (v.has(x, y, z)) return z; return null; };
+const skull = z => z <= 0 ? [-3, -4, 4, 3, 2] : z === 1 ? [-6, -6, 6, 5, 2] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'kvSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'kvSkin'); v.set(7, -1, 5, 'kvSkinS');
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'kvSkin'); v.box(-1, y, 6, -1, y, 7, 'kvSkinS'); }
+  // rambut belah tengah: kubah bervolume, poni tirai melengkung dari belahan ke pelipis kiri & kanan
+  const hair = new Vox();
+  for (let z = 5; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'kvHair', z <= 11 ? 4 : 5);
+  for (let z = 16; z <= 17; z++) hair.rrect(z, -7, -7, 6, 6, 'kvHair', 4);
+  hair.rrect(18, -5, -4, 4, 3, 'kvHair', 3);
+  const zmin = (x, y) => x >= 5 ? 14 : x >= -2 ? (Math.abs(y + 0.5) > 6.5 ? 9 : 0) : 5;
+  hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= zmin(x, y)) v.set(x, y, z, c); });
+  for (let y = -8; y <= 7; y++) {   // poni tirai: dekat belahan pendek (z 14), makin ke pelipis makin turun (z 12)
+    const d = Math.abs(y + 0.5), low = d < 1 ? 15 : d < 3 ? 13 : d < 5.5 ? 12 : 11;
+    for (let z = low; z <= 14; z++) { const x = (v.front(y, z) ?? 6) + 1; if (x <= 8 && !(d < 1)) v.set(Math.min(x, 7), y, z, 'kvHair'); }
+  }
+  for (let x = -6; x <= 4; x++) for (const y of [-1, 0]) { const z = topZ(v, x, y); if (z !== null) v.set(x, y, z, 'kvPart'); }   // garis belahan tengah
+  for (const y of [-5, -3, 2, 4]) for (let x = -4; x <= 6; x++) { const z = topZ(v, x, y); if (z !== null && (x + y) % 3 === 0 && v.get(x, y, z) === 'kvHair') v.set(x, y, z, 'kvHairT'); }
+  // kacamata bulat bingkai tipis: lingkaran r 2.6 di depan tiap mata, jembatan, gagang ke telinga
+  const fx = v.front(-1, 8) + 1;
+  for (const cy of [-3.5, 2.5]) for (let y = -8; y <= 7; y++) for (let z = 6; z <= 11; z++) { const d = Math.hypot(y - cy, z - 8.5); if (d > 1.9 && d <= 2.9) v.set(fx, y, z, 'kvFrame'); }
+  v.set(fx, -3, 10, 'kvLens'); v.set(fx, 3, 10, 'kvLens');
+  for (const y of [-1, 0]) v.set(fx, y, 9, 'kvFrame');
+  for (const y of [-8, 7]) for (let x = fx - 1; x >= -1; x--) if (!v.has(x, y, 9)) v.set(x, y, 9, 'kvFrame');
+  return v;
+}
+
+/* ---------- badan ramping (sisi +y; sisi -y = cermin) */
+const bodyC = o => ({ seragam: 'white', jalan: 'kvHood', rumah: 'kvKaus' }[o.top]);
+function chest(o) {
+  const v = new Vox(), T = o.top, body = bodyC(o);
+  for (let z = 34; z <= 55; z++) { const w = z <= 47 ? 0 : -1, t = z === 55 ? 1 : 0; v.rrect(z, -5, -7 + w + t, 4 - t, 6 - w - t, body, z >= 54 ? 4 : 3); }
+  v.rbox(-3, -3, 56, 2, 2, 59, 'kvSkin', 2);
+  if (T === 'seragam') {   // seragam rapi dimasukkan, kancing atas tertutup, badge, pulpen mahal di saku
+    for (let z = 34; z <= 54; z++) v.pf(0, z, 'whiteS');
+    for (let z = 56; z <= 57; z++) { v.shell(z, -3, -4, 3, 3, 'white', 2); for (let y = -1; y <= 0; y++) if (v.get(3, y, z) === 'white') v.set(3, y, z, null); }
+    v.pfBox(3, 47, 4, 49, 'osis'); v.pfBox(-5, 50, -3, 50, 'tag');
+    for (let y = -5; y <= -3; y++) v.pf(y, 49, 'whiteS'); v.pf(-4, 51, 'kvPhone'); v.pf(-4, 52, 'kvPhone');
+    return v;
+  }
+  if (T === 'jalan') {   // hoodie abu kebesaran, kantong kanguru, tali, earphone kabel putih di leher
+    for (let y = -4; y <= 3; y++) v.pf(y, 42, 'kvHoodS'); for (let z = 36; z <= 41; z++) { v.pf(-5, z, 'kvHoodS'); v.pf(4, z, 'kvHoodS'); }   // kantong kanguru
+    for (const y of [-2, 1]) for (let z = 47; z <= 53; z++) v.pf(y, z, 'white');
+    for (let z = 55; z <= 59; z++) { const k = z - 55; v.rbox(-8 + Math.floor(k / 2), -5 + Math.floor(k / 3), z, -5, 4 - Math.floor(k / 3), z, 'kvHood', 2); }
+    for (let z = 56; z <= 57; z++) v.shell(z, -4, -5, 3, 4, 'kvHood', 2);
+    return v;
+  }
+  for (let y = -2; y <= 1; y++) v.pf(y, 55, 'kvSkin');
+  v.shell(56, -4, -4, 3, 3, 'kvKaus', 2);
+  ['X..', 'XX.', 'XXX', 'XX.', 'X..'].forEach((row, r) => [...row].forEach((ch, c) => { if (ch === 'X') v.pf(1 - c, 49 - r, 'white'); }));   // logo tombol play
+  return v;
+}
+function pelvis(o) {
+  const c = legC(o), v = new Vox();
+  v.rbox(-5, -6, 28, 4, 5, 33, c, 3); v.box(-4, -2, 26, 3, 1, 27, c);
+  if (o.top === 'seragam') { v.rbox(-5, -6, 32, 4, 5, 33, 'belt', 3); v.pfBox(-1, 32, 0, 33, 'buckle'); }
+  else if (o.top === 'jalan') for (let z = 29; z <= 33; z++) v.shell(z, -6, -8, 5, 7, z === 29 ? 'kvHoodS' : 'kvHood', 3);
+  else for (let z = 31; z <= 33; z++) v.shell(z, -6, -8, 5, 7, 'kvKaus', 3);
+  return v;
+}
+const legC = o => o.top === 'jalan' ? 'jeans' : o.top === 'rumah' ? 'kvShort' : 'pants';
+const sleeveC = o => bodyC(o);
+function arm(o) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-2, 7, 43, 2, 11, 54, o.top === 'rumah' ? 'kvSkin' : c, 2); v.rrect(55, -2, 7, 2, 11, c, 2);
+  if (o.top === 'rumah') v.rbox(-3, 6, 49, 3, 12, 55, c, 2);
+  return v;
+}
+function fore(o, side) {
+  const v = new Vox(), c = sleeveC(o), L = o.top !== 'rumah';
+  v.rbox(-2, 7, 31, 2, 11, 42, L ? c : 'kvSkin', 2);
+  if (o.top === 'seragam') v.paint(-2, 7, 31, 2, 11, 32, 'whiteS');
+  if (o.top === 'jalan') v.paint(-2, 7, 31, 2, 11, 32, 'kvHoodS');
+  v.rbox(-2, 7, 27, 3, 11, 30, 'kvSkin', 2); v.rrect(26, -1, 8, 2, 10, 'kvSkin', 1);
+  if (side > 0) {   // HP besar di tangan kanan, layar menyala menghadap ke dalam
+    v.rbox(1, 8, 22, 4, 10, 30, 'kvPhone', 0); v.paint(1, 8, 23, 3, 8, 29, 'kvScreen');
+  } else v.paint(-2, 7, 31, 2, 11, 31, 'watch');   // jam pintar
+  return v;
+}
+function thigh(o) { const c = legC(o), v = new Vox(); v.rbox(-4, 2, 18, 3, 6, 31, c, 3); v.rrect(32, -3, 2, 2, 6, c, 3); return v; }
+function shin(o) {
+  const c = o.top === 'rumah' ? 'kvSkin' : legC(o), v = new Vox(); v.rbox(-4, 2, 6, 3, 6, 18, c, 3); v.rrect(19, -3, 2, 2, 6, c, 3);
+  if (o.top === 'rumah') v.paint(-4, 2, 6, 3, 6, 7, 'white');
+  return v;
+}
+function foot(o) {
+  const v = new Vox();
+  if (o.top === 'seragam') { v.rbox(-4, 1, 0, 7, 7, 0, 'belt', 2); v.rbox(-4, 1, 1, 7, 7, 4, 'kvPhone', 2); v.rbox(-3, 2, 5, 2, 6, 6, 'kvPhone', 2); for (const x of [1, 3]) v.paint(x, 2, 4, x, 6, 4, 'lace'); return v; }   // sepatu hitam
+  v.rbox(-4, 1, 0, 7, 7, 1, 'sole', 2); v.rbox(-4, 1, 2, 7, 7, 4, 'kvSneak', 2); v.rbox(-3, 1, 5, 2, 7, 6, 'kvSneak', 2);   // sneakers putih bersih
+  for (const y of [1, 7]) v.paint(-2, y, 3, 4, y, 3, 'kvSneakS');
+  return v;
+}
+
+const OUTFITS = {
+  seragam: { name: 'Seragam rapi dimasukkan + HP di tangan', top: 'seragam' },
+  jalan: { name: 'Hoodie abu kebesaran + jeans + sneakers putih + earphone', top: 'jalan' },
+  rumah: { name: 'Kaus biru tua + celana pendek', top: 'rumah' },
+};
+function build(opt = {}) {
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
+  const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
+  return assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['chest', chest(o), PV.chest], ['pelvis', pelvis(o), PV.pelvis],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'kvSkin', shoulder: sl, elbow: o.top === 'rumah' ? 'kvSkin' : sl, hip: leg, knee: o.top === 'rumah' ? 'kvSkin' : leg }, SKEL, TAIL);
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== hartini.js
+NS.hartini = (() => {
+// Bu Hartini: guru senior PKn yang memegang jalur legal Bab 13, 50-an, tegas tapi keibuan. Rambut disanggul rendah
+// dengan tusuk konde, uban di pelipis, kebaya kerja krem-cokelat dengan bros, kain batik panjang, kacamata dengan rantai
+// emas, selop. Rangka keluarga Nadia (skala 1.26), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
+
+const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  htSkin: ['#ae7a54', '#c8906a', '#d9a07a', '#e6b28e'], htSkinS: ['#c08862'], htBlush: ['#d8907a'],
+  htHair: ['#140e0c', '#1c1410', '#261c16', '#34281e'], htUban: ['#a8a29a'], htTusuk: ['#c89a3a'],
+  kebaya: ['#b8925a', '#cca46a', '#dcb87c', '#e8cc94'], kebayaS: ['#9a7644'], bros: ['#e8c050'], kutubaru: ['#6a3a1a', '#7a4422', '#8c522c', '#a06438'],
+  kainH: ['#3a2210', '#4a2c16', '#5a361c', '#6e4424'], kainHS: ['#1e1208'], kainHK: ['#d8b060'],
+  korpri: ['#2a4a8a', '#32569c', '#3a64ae', '#4a76c0'], korpriS: ['#1a2e5a'], korpriK: ['#f0e0a0'], rokH: ['#16161a', '#1e1e24', '#28282e', '#36363e'], rokHS: ['#0c0c10'],
+  blazerH: ['#1a2440', '#222e50', '#2a3a62', '#384a78'], blazerHS: ['#121a30'], blusH: ['#e6e0d4', '#f0ece2', '#f8f6ee', '#ffffff'],
+  selopH: ['#1a1210', '#241814', '#30201a', '#422e24'], kacaHt: ['#4a3a2a'], rantaiHt: ['#d8b048'],
+});
+
+/* ---------- wajah: alis rapi melengkung, mata teduh berkerut di ujung, senyum tipis tepat di bawah hidung, garis senyum */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', s: 'htSkinS', r: 'htBlush' };
+const F0 = '..............';
+const F = (brow, eyes, mouth) => [F0, F0, F0, ...brow, ...eyes, F0, F0, '..s........s..', ...mouth, F0, F0];   // alis z 11..10, mata z 9..8, mulut z 4
+const BROW = ['..BBB....BBB..', '.B..........B.'];
+const EYE = ['s.KKK....KKK.s', '..WKK....KKW..'];
+const FACES = {
+  biasa: F(BROW, EYE, ['.....mmmm.....', F0, F0]),
+  kedip: F(BROW, [F0, '.sKKK....KKKs.'], ['.....mmmm.....', F0, F0]),
+  marah: F(['...BBB..BBB...', F0], ['..KKK....KKK..', '..WKK....KKW..'], ['....mmmmmm....', F0, F0]),   // "Nak, duduk."
+  teriak: F(['...BBB..BBB...', F0], ['..KKK....KKK..', '..WKK....KKW..'], ['....mTTTTm....', '....mttttm....', '.....mmmm.....']),
+  nyengir: F(BROW, EYE, ['....m....m....', '.....mmmm.....', F0]),
+  ketawa: F(BROW, ['s.KK......KK.s', '.K..K....K..K.'], ['....mTTTTm....', '.....mttm.....', F0]),
+  sakit: F(['...BB....BB...', '.BB........BB.'], ['.KK........KK.', '...KK....KK...'], ['....mmmmmm....', '....TTTTTT....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const skull = z => z <= 0 ? [-3, -4, 5, 3, 3] : z === 1 ? [-5, -5, 6, 4, 3] : z === 2 ? [-6, -6, 6, 5, 3] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'htSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'htSkin'); v.set(7, -1, 4, 'htSkinS');
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'htSkin'); v.box(-1, y, 6, -1, y, 7, 'htSkinS'); }
+  v.set(-1, 8, 5, 'bros'); v.set(-1, -9, 5, 'bros');   // anting emas kecil
+  // rambut disisir rapi ke belakang (belah tengah tipis), telinga separuh tertutup, uban di pelipis
+  const hair = new Vox();
+  for (let z = 5; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'htHair', z <= 11 ? 4 : 5);
+  hair.rrect(16, -6, -6, 5, 5, 'htHair', 4);
+  const zmin = (x, y) => x >= 5 ? (Math.abs(y + 0.5) > 4.5 ? 12 : 14) : Math.abs(y + 0.5) > 6.5 && x >= -1 ? 8 : 5;
+  hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= zmin(x, y)) v.set(x, y, z, c); });
+  v.each((x, y, z, c) => { if (c === 'htHair' && (z === 10 || z === 12) && Math.abs(y + 0.5) > 6.5 && x >= -2) v.set(x, y, z, 'htUban'); });   // dua garis uban di pelipis
+  // sanggul rendah bulat di belakang kepala + tusuk konde emas menyilang
+  for (let x = -14; x <= -7; x++) for (let y = -5; y <= 4; y++) for (let z = 2; z <= 10; z++) { const d = ((x + 10.5) / 3.6) ** 2 + ((y + 0.5) / 4.6) ** 2 + ((z - 6) / 4.2) ** 2; if (d <= 1 && !v.has(x, y, z)) v.set(x, y, z, 'htHair'); }
+  for (let k = -3; k <= 4; k++) v.set(-11, k, 8 - Math.round(k * 0.5), 'htTusuk');
+  // kacamata bingkai tipis cokelat + rantai emas dari gagang menjuntai ke belakang leher
+  const fx = v.front(-1, 8) + 1;
+  for (const y0 of [-6, 1]) for (let y = y0; y <= y0 + 4; y++) for (let z = 7; z <= 10; z++) if (y === y0 || y === y0 + 4 || z === 7 || z === 10) v.set(fx, y, z, 'kacaHt');
+  for (const y of [-1, 0]) v.set(fx, y, 9, 'kacaHt');
+  for (const y of [-7, 6]) v.set(fx, y, 10, 'kacaHt');
+  for (const y of [-8, 7]) for (let x = fx - 1; x >= 0; x--) if (!v.has(x, y, 10)) v.set(x, y, 10, 'kacaHt');
+  for (const s of [-1, 1]) for (let k = 0; k <= 9; k++) { const y = s > 0 ? 8 : -9, x = -Math.round(k * 0.7), z = 9 - k; if (!v.has(x, y, z)) v.set(x, y, z, 'rantaiHt'); }
+  return v;
+}
+
+/* ---------- badan (sisi +y; sisi -y = cermin) */
+const pat = (v, c, cS, cK) => {   // motif kain: kisi miring (parang) + titik
+  v.each((x, y, z, k) => {
+    if (k !== c) return;
+    const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x, a = ((u + z) % 6 + 6) % 6;
+    if (a === 0) v.set(x, y, z, cS); else if (a === 3 && ((u - z) % 2 + 2) % 2 === 0) v.set(x, y, z, cK);
+  });
+  return v;
+};
+const skirt = o => ({ kebaya: ['kainH', 'kainHS', 'kainHK'], korpri: ['rokH', 'rokHS', null], rapat: ['rokH', 'rokHS', null] }[o.top]);
+const sk = (o, v) => { const [c, cS, cK] = skirt(o); return cK ? pat(v, c, cS, cK) : v; };
+const topC = o => ({ kebaya: 'kebaya', korpri: 'korpri', rapat: 'blazerH' }[o.top]);
+function chest(o) {
+  const v = new Vox(), T = o.top, c = topC(o);
+  for (let z = 32; z <= 51; z++) { const t = z === 51 ? 1 : 0, w = z >= 37 && z <= 41 ? 1 : 0; v.rrect(z, -5, -7 + t + w, 4 + (z >= 40 && z <= 47 ? 1 : 0) - t, 6 - t - w, c, 3); }
+  v.rbox(-2, -2, 52, 2, 1, 55, 'htSkin', 1);
+  if (T === 'kebaya') {   // kebaya kutubaru: panel cokelat di tengah dada, tiga bros emas, leher V, garis renda di tepi
+    for (let z = 33; z <= 50; z++) for (let y = -2; y <= 1; y++) v.pf(y, z, 'kutubaru');
+    for (let z = 47; z <= 51; z++) for (let y = -3; y <= 2; y++) if (Math.abs(y + 0.5) <= (z - 46) * 0.6) v.pf(y, z, 'htSkin');
+    for (const z of [45, 41, 37]) { v.pf(-1, z, 'bros'); v.pf(0, z, 'bros'); }
+    for (let z = 33; z <= 50; z++) for (const y of [-3, 2]) v.pf(y, z, 'kebayaS');
+    return v;
+  }
+  if (T === 'korpri') {   // batik Korpri biru: motif pohon & gedung disederhanakan jadi kisi titik krem, kerah
+    v.each((x, y, z, k) => { if (k !== 'korpri') return; const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x; if ((u + 40) % 4 === 0 && z % 4 === 0) v.set(x, y, z, 'korpriK'); else if ((u + z + 40) % 8 === 0) v.set(x, y, z, 'korpriS'); });
+    for (let z = 33; z <= 50; z++) v.pf(0, z, 'korpriS');
+    for (let z = 52; z <= 53; z++) v.shell(z, -3, -4, 3, 3, 'korpri', 2);
+    v.pfBox(-5, 46, -4, 47, 'bros');   // pin Korpri
+    return v;
+  }
+  // rapat: blazer biru tua di atas blus putih, kerah blus, bros
+  for (let z = 40; z <= 51; z++) { const hw = Math.round((z - 40) * 0.3); for (let y = -1 - hw; y <= hw; y++) v.pf(y, z, 'blusH'); }
+  for (let z = 32; z <= 39; z++) v.pf(-1, z, 'blazerHS');
+  for (const z of [38, 35]) v.pf(0, z, 'bros');
+  v.pf(-5, 46, 'bros'); v.pf(-4, 47, 'bros');
+  for (let z = 52; z <= 53; z++) v.shell(z, -3, -4, 3, 3, 'blusH', 2);
+  return v;
+}
+function pelvis(o) {
+  const [c, cS] = skirt(o), v = sk(o, skirtPelvis(c, cS, 20));
+  if (o.top === 'kebaya') for (let z = 27; z <= 33; z++) v.shell(z, -6, -8, 5, 7, z === 27 ? 'kebayaS' : 'kebaya', 3);   // ujung kebaya menutup pinggul
+  if (o.top === 'rapat') for (let z = 29; z <= 33; z++) v.shell(z, -6, -8, 5, 7, z === 29 ? 'blazerHS' : 'blazerH', 3);
+  return v;
+}
+const sleeveC = o => topC(o);
+function arm(o) { const v = new Vox(), c = sleeveC(o); v.rbox(-2, 6, 40, 2, 10, 50, c, 2); v.rrect(51, -2, 6, 2, 10, c, 2); return v; }
+function fore(o, side) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-2, 6, 31, 2, 10, 39, c, 2);
+  if (o.top === 'kebaya') v.paint(-2, 6, 31, 2, 10, 31, 'kebayaS');
+  v.rbox(-2, 6, 27, 3, 10, 30, 'htSkin', 2); v.rrect(26, -1, 7, 2, 9, 'htSkin', 1);
+  if (side < 0) v.paint(-2, 6, 30, 2, 10, 30, 'rantaiHt');   // jam emas kecil
+  if (side > 0 && o.top === 'rapat') {   // map dokumen hijau dijepit di tangan kanan
+    v.rbox(-4, 5, 18, 4, 6, 30, 'korpriS', 0); v.paint(4, 5, 19, 4, 6, 29, 'blusH');
+  }
+  return v;
+}
+function foot() {   // selop hitam tertutup, tumit rendah
+  const v = new Vox();
+  v.rbox(-4, 1, 0, 6, 6, 0, 'sole', 2); v.rbox(-4, 1, 1, 6, 6, 3, 'selopH', 2); v.rbox(-3, 2, 4, 1, 5, 4, 'selopH', 2);
+  return v;
+}
+
+const OUTFITS = {
+  kebaya: { name: 'Mengajar: kebaya kutubaru krem + kain batik + kacamata rantai', top: 'kebaya' },
+  korpri: { name: 'Senin: batik Korpri biru + rok hitam panjang', top: 'korpri' },
+  rapat: { name: 'Rapat & sidang Bab 13: blazer biru tua + blus putih + map', top: 'rapat' },
+};
+function build(opt = {}) {
+  // game memanggil 'seragam': Bu Hartini memakai kebaya
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kebaya), expr: opt.expr || 'biasa', face: opt.face };
+  const [c, cS] = skirt(o), A = arm(o), Th = sk(o, skirtThigh(c)), Sn = sk(o, skirtShin(c, cS)), Ft = foot(o), sl = sleeveC(o);
+  const panel = s => sk(o, skirtPanel(c, cS, s, 5));
+  const P = assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['chest', chest(o), PV.chest],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['flapF', panel(1), PV.flapF], ['pelvis', pelvis(o), PV.pelvis], ['flapB', panel(-1), PV.flapB],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'htSkin', shoulder: sl, elbow: sl, hip: c, knee: c }, SKEL, TAIL);
+  P.skirt = skirtInfo(P, c, cS);
+  return P;
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== ratna.js
+NS.ratna = (() => {
+// Bu Ratna: guru Matematika yang galak, 40-an, pemegang remedial. Rambut hitam dikonde tinggi rapi, kacamata kotak
+// bingkai merah tua, bibir merah, blazer hitam di atas blus putih, rok pensil selutut, pantofel, penggaris kayu panjang
+// selalu di tangan kanan. Rangka keluarga Nadia (skala 1.26), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+const {  skirtPelvis, skirtInfo  } = NS.rok;
+
+const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  raSkin: ['#c48e68', '#dca882', '#e8b890', '#f4caa6'], raSkinS: ['#d8a27c'], raLip: ['#a8202c'],
+  raHair: ['#08060a', '#100c10', '#1a1418', '#282024'], raHairT: ['#3a3038'], raFrame: ['#6a1420'], raLens: ['#e4eef4'],
+  blazerR: ['#121216', '#1a1a20', '#24242a', '#323238'], blazerRS: ['#08080a'], blusR: ['#e6e2da', '#f0ece4', '#f8f6f0', '#ffffff'],
+  rokR: ['#1e1e24', '#28282e', '#323238', '#404048'], rokRS: ['#121216'], stocking: ['#b88c6c', '#c89a78', '#d8aa86', '#e2b694'],
+  penggaris: ['#a8743a', '#c08a48', '#d8a058', '#e8b670'], penggarisS: ['#5a3a1a'],
+  batikR2: ['#6a1a2a', '#7e2232', '#922a3c', '#a83a4c'], batikR2S: ['#3a0a14'], batikR2K: ['#e8c070'],
+  kardiR: ['#5a1e2a', '#6a2432', '#7a2c3a', '#8e3a48'], kulotR: ['#2a2a30', '#34343a', '#3e3e46', '#4c4c56'], pantoR: ['#06060a', '#0e0e14', '#1a1a22', '#3a3a48'],
+});
+
+/* ---------- wajah: alis tipis menukik tegas, mata tajam di balik kacamata kotak, bibir merah datar tepat di bawah hidung */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'raLip', T: 'teeth', t: 'tongue', s: 'raSkinS', M: 'mouth' };
+const F0 = '..............';
+const F = (brow, eyes, mouth) => [F0, F0, F0, brow, F0, ...eyes, F0, F0, F0, ...mouth, F0, F0];   // alis z 11, mata z 9..8, mulut z 4
+const BROW = '.BBB......BBB.';
+const EYE = ['..KKK....KKK..', '..WKK....KKW..'];
+const FACES = {
+  biasa: F(BROW, EYE, ['.....mmmm.....', F0, F0]),
+  kedip: F(BROW, [F0, '..KKK....KKK..'], ['.....mmmm.....', F0, F0]),
+  marah: F('...BBB..BBB...', ['..KKK....KKK..', '...WK....KW...'], ['....mmmmmm....', F0, F0]),   // "Remedial!"
+  teriak: F('...BBB..BBB...', EYE, ['....mTTTTm....', '....mttttm....', '.....mmmm.....']),
+  nyengir: F(BROW, EYE, ['....m....m....', '.....mmmm.....', F0]),   // jarang senyum
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['....mTTTTm....', '.....mttm.....', F0]),
+  sakit: F('.BB........BB.', ['.KK........KK.', '...KK....KK...'], ['....mmmmmm....', '....TTTTTT....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const topZ = (v, x, y) => { for (let z = 30; z >= -20; z--) if (v.has(x, y, z)) return z; return null; };
+const skull = z => z <= 0 ? [-3, -4, 5, 3, 3] : z === 1 ? [-5, -5, 6, 4, 3] : z === 2 ? [-6, -6, 6, 5, 3] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'raSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'raSkin'); v.set(7, -1, 4, 'raSkinS');
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'raSkin'); v.box(-1, y, 6, -1, y, 7, 'raSkinS'); }
+  v.set(-1, 8, 5, 'raFrame'); v.set(-1, -9, 5, 'raFrame');   // anting merah kecil
+  // rambut ditarik licin ke atas-belakang (belah samping kanan), telinga terbuka, konde bulat tinggi di ubun-ubun belakang
+  const hair = new Vox();
+  for (let z = 6; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'raHair', z <= 11 ? 4 : 5);
+  hair.rrect(16, -6, -6, 5, 5, 'raHair', 4);
+  const zmin = (x, y) => x >= 5 ? (Math.abs(y + 0.5) > 4.5 ? 12 : 14) : Math.abs(y + 0.5) > 6.5 && x >= -2 ? 10 : 5;
+  hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= zmin(x, y)) v.set(x, y, z, c); });
+  for (let x = -4; x <= 6; x++) { const z = topZ(v, x, 3); if (z !== null) v.set(x, 3, z, 'raHairT'); }   // belahan
+  for (const y of [-5, -2, 5]) for (let x = -6; x <= 5; x++) { const z = topZ(v, x, y); if (z !== null && (x + y) % 3 === 0) v.set(x, y, z, 'raHairT'); }
+  for (let x = -12; x <= -3; x++) for (let y = -5; y <= 4; y++) for (let z = 12; z <= 21; z++) { const d = ((x + 7.5) / 4.2) ** 2 + ((y + 0.5) / 4.6) ** 2 + ((z - 16.5) / 4) ** 2; if (d <= 1 && !v.has(x, y, z)) v.set(x, y, z, 'raHair'); }
+  for (let y = -4; y <= 3; y++) { const x = v.back(y, 16); if (x !== null) v.set(x, y, 16, 'raHairT'); }   // lilitan konde
+  for (let k = -5; k <= 4; k++) v.set(-7, k, 19, 'penggaris');   // tusuk konde kayu
+  // kacamata kotak bingkai merah tua: tepi tebal 1 voxel di sekeliling mata
+  const fx = v.front(-1, 8) + 1;
+  for (const y0 of [-6, 1]) for (let y = y0; y <= y0 + 4; y++) for (let z = 7; z <= 10; z++) if (y === y0 || y === y0 + 4 || z === 7 || z === 10) v.set(fx, y, z, 'raFrame');
+  for (const y0 of [-6, 1]) v.set(fx, y0 + 3, 9, 'raLens');
+  for (const y of [-1, 0]) v.set(fx, y, 9, 'raFrame');
+  for (const y of [-7, 6]) v.set(fx, y, 10, 'raFrame');
+  for (const y of [-8, 7]) for (let x = fx - 1; x >= -1; x--) if (!v.has(x, y, 10)) v.set(x, y, 10, 'raFrame');
+  return v;
+}
+
+/* ---------- badan (sisi +y; sisi -y = cermin) */
+const topC = o => ({ blazer: 'blazerR', batik: 'batikR2', santai: 'kardiR' }[o.top]);
+const skirtC = o => o.top === 'batik' ? ['batikR2', 'batikR2S'] : ['rokR', 'rokRS'];
+const batik = v => { v.each((x, y, z, k) => { if (k !== 'batikR2') return; const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x, a = ((u + 40) % 5), b = ((z + 40) % 5); if ((a === 2 && b === 2)) v.set(x, y, z, 'batikR2K'); else if (Math.abs(a - 2) + Math.abs(b - 2) === 2) v.set(x, y, z, 'batikR2S'); }); return v; };
+function chest(o) {
+  const v = new Vox(), T = o.top, c = topC(o);
+  for (let z = 32; z <= 51; z++) { const t = z === 51 ? 1 : 0, w = z >= 37 && z <= 41 ? 1 : 0; v.rrect(z, -4, -6 + t + w, 4 - t, 5 - t - w, c, 3); }
+  v.rbox(-2, -2, 52, 2, 1, 55, 'raSkin', 1);
+  if (T === 'blazer') {   // blazer hitam berkerah tajam, blus putih berkerah, satu kancing
+    for (let z = 40; z <= 51; z++) { const hw = Math.round((z - 40) * 0.32); for (let y = -1 - hw; y <= hw; y++) v.pf(y, z, 'blusR'); for (const y of [-2 - hw, hw + 1]) v.pf(y, z, 'blazerRS'); }
+    for (let z = 32; z <= 39; z++) v.pf(-1, z, 'blazerRS');
+    v.pf(0, 38, 'blusR');
+    for (let z = 52; z <= 53; z++) v.shell(z, -3, -4, 3, 3, 'blusR', 2);
+    for (let y = -6; y <= -3; y++) v.pf(y, 46, 'blazerRS');
+    return v;
+  }
+  if (T === 'batik') { batik(v); for (let z = 52; z <= 53; z++) v.shell(z, -3, -4, 3, 3, 'batikR2', 2); return v; }
+  // santai: kardigan marun terbuka di atas kaus putih
+  for (let z = 32; z <= 51; z++) for (let y = -2; y <= 1; y++) v.pf(y, z, 'blusR');
+  for (let z = 33; z <= 50; z += 4) { v.pf(-3, z, 'blazerRS'); }
+  return v;
+}
+function pelvis(o) {
+  if (o.top === 'santai') { const v = new Vox(); v.rbox(-4, -6, 26, 4, 5, 33, 'kulotR', 3); v.box(-3, -2, 24, 2, 1, 25, 'kulotR'); for (let z = 30; z <= 33; z++) v.shell(z, -5, -7, 5, 6, 'kardiR', 3); return v; }
+  const [c, cS] = skirtC(o), v = skirtPelvis(c, cS, 20);
+  if (o.top === 'blazer') for (let z = 30; z <= 33; z++) v.shell(z, -5, -7, 5, 6, z === 30 ? 'blazerRS' : 'blazerR', 3);
+  return o.top === 'batik' ? batik(v) : v;
+}
+const sleeveC = o => topC(o);
+function arm(o) { const v = new Vox(), c = sleeveC(o); v.rbox(-2, 6, 40, 2, 10, 50, c, 2); v.rrect(51, -2, 6, 2, 10, c, 2); return o.top === 'batik' ? batik(v) : v; }
+function fore(o, side) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-2, 6, 31, 2, 10, 39, c, 2);
+  if (o.top === 'blazer') v.paint(-2, 6, 31, 2, 10, 31, 'blusR');
+  if (o.top === 'batik') batik(v);
+  v.rbox(-2, 6, 27, 3, 10, 30, 'raSkin', 2); v.rrect(26, -1, 7, 2, 9, 'raSkin', 1);
+  if (side > 0 && o.top !== 'santai') {   // penggaris kayu 1 meter digenggam, ujung menunjuk ke bawah depan
+    for (let k = 0; k <= 26; k++) for (const y of [8, 9]) v.set(3 + Math.round(k * 0.15), y, 30 - k, k % 4 === 0 && y === 9 ? 'penggarisS' : 'penggaris');
+    for (let k = 0; k <= 5; k++) v.set(3, 8, 31 + k, 'penggaris');
+  }
+  if (side < 0) v.paint(-2, 6, 30, 2, 10, 30, 'blazerRS');   // jam tangan hitam
+  return v;
+}
+const legC = o => o.top === 'santai' ? 'kulotR' : 'stocking';
+function thigh(o) { const v = new Vox(), c = o.top === 'santai' ? 'kulotR' : skirtC(o)[0]; v.rbox(-3, 1, 17, 2, 6, 30, c, 2); v.rrect(31, -2, 2, 1, 5, c, 2); return o.top === 'batik' ? batik(v) : v; }
+function shin(o) { const c = legC(o), v = new Vox(); v.rbox(-3, 1, 6, 2, 6, 17, c, 2); v.rrect(18, -2, 2, 1, 5, c, 2); return v; }
+function foot() {   // pantofel hitam hak rendah
+  const v = new Vox();
+  v.rbox(-4, 1, 0, 6, 6, 0, 'pantoR', 2); v.rbox(-4, 1, 1, 6, 6, 3, 'pantoR', 2); v.rbox(-3, 2, 4, 1, 5, 4, 'stocking', 2); v.box(-4, 3, 0, -3, 4, 1, 'pantoR');
+  v.set(6, 3, 3, 'raLens');
+  return v;
+}
+
+function pencil(c, cS, s) {   // panel rok pensil: lebar tetap (tidak mengembang), keliman di bawah lutut, belahan belakang
+  const v = new Vox();
+  for (let z = 15; z <= 31; z++) s > 0 ? v.box(3, -6, z, 5, 5, z, c) : v.box(-6, -6, z, -4, 5, z, c);
+  if (s < 0) for (let z = 15; z <= 18; z++) for (const y of [-1, 0]) v.set(-6, y, z, null);
+  for (let y = -6; y <= 5; y++) { const x = s > 0 ? v.front(y, 15) : v.back(y, 15); if (x !== null) v.set(x, y, 15, cS); }
+  return v;
+}
+
+const OUTFITS = {
+  blazer: { name: 'Mengajar: blazer hitam + blus putih + rok pensil + penggaris kayu', top: 'blazer' },
+  batik: { name: 'Jumat: terusan batik marun motif kawung + penggaris', top: 'batik' },
+  santai: { name: 'Akhir pekan: kardigan marun + kaus putih + kulot hitam', top: 'santai' },
+};
+function build(opt = {}) {
+  // game memanggil 'seragam': Bu Ratna memakai blazer
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.blazer), expr: opt.expr || 'biasa', face: opt.face };
+  const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), K = o.top === 'santai', [c, cS] = skirtC(o);
+  const panel = s => K ? null : (o.top === 'batik' ? batik(pencil(c, cS, s)) : pencil(c, cS, s));
+  const P = assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['chest', chest(o), PV.chest],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['flapF', panel(1), PV.flapF], ['pelvis', pelvis(o), PV.pelvis], ['flapB', panel(-1), PV.flapB],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'raSkin', shoulder: sl, elbow: sl, hip: K ? 'kulotR' : c, knee: K ? 'kulotR' : 'stocking' }, SKEL, TAIL);
+  if (!K) P.skirt = skirtInfo(P, c, cS, false);
+  return P;
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== hendro.js
+NS.hendro = (() => {
+// Pak Hendro: guru olahraga, pelatih futsal, pengawas liga balap resmi, 40-an. Badan atletis, rambut cepak, kumis
+// tebal rapi, topi merah, peluit perak bertali di leher, kaus olahraga merah bergaris putih, celana training biru tua
+// bergaris putih, sepatu lari putih. Rangka keluarga Arga (skala 1.36), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+
+const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  heSkin: ['#86583a', '#9c6a46', '#b07a52', '#c08c64'], heSkinS: ['#9a6844'], heKumis: ['#120e0c'],
+  heHair: ['#1a1410', '#221a14', '#2c221a', '#3a2e24'],
+  topiH: ['#9a1e1e', '#b42626', '#cc3030', '#e04848'], topiHS: ['#f2f2f2'], peluit: ['#a8acb4', '#c4c8d0', '#dce0e8', '#f2f4f8'], taliH: ['#1a3a8a'],
+  kausH: ['#a82424', '#c22e2e', '#d23a3a', '#e05252'], kausHS: ['#f2f2f2'], trainH: ['#121c4a', '#18245c', '#1e2c6e', '#283a86'], trainHS: ['#f2f2f2'],
+  lariH: ['#e4e4e6', '#eeeef0', '#f8f8fa', '#ffffff'], lariHS: ['#d23a3a'],
+  wasitH: ['#121214', '#1a1a1e', '#242428', '#323238'], wasitHS: ['#f0d020'], kartuK: ['#f0d020'], kartuM: ['#d02020'],
+  batikHe: ['#1a3a3a', '#224848', '#2a5656', '#346868'], batikHeS: ['#0e2222'], batikHeK: ['#d8c080'], celHe: ['#202024', '#2a2a2e', '#343438', '#424248'],
+});
+
+/* ---------- wajah: alis tebal lurus, mata tegas, kumis tebal rapi tepat di bawah hidung (z 5 di kiri-kanan hidung), mulut z 4 */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', s: 'heSkinS', k: 'heKumis' };
+const F0 = '..............';
+const KUMIS = '..kkkk..kkkk..';
+const F = (brow, eyes, mouth) => [F0, F0, F0, F0, brow, ...eyes, F0, F0, KUMIS, ...mouth, F0, F0];   // alis z 10 (di bawah lidah topi), mata z 9..8, kumis z 5, mulut z 4
+const BROW = '.BBBBB..BBBBB.';
+const EYE = ['..KKK....KKK..', '..WKK....KKW..'];
+const FACES = {
+  biasa: F(BROW, EYE, ['...kmmmmmmk...', F0, F0]),
+  kedip: F(BROW, [F0, '..KKK....KKK..'], ['...kmmmmmmk...', F0, F0]),
+  marah: F('...BBB..BBB...', EYE, ['...kmmmmmmk...', '....m....m....', F0]),
+  teriak: F('...BBB..BBB...', EYE, ['...kmTTTTmk...', '....mttttm....', '.....mmmm.....']),   // "Lima putaran!"
+  nyengir: F(BROW, EYE, ['...kTTTTTTk...', '....mmmmmm....', F0]),
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['...kTTTTTTk...', '....mttttm....', '.....mmmm.....']),
+  sakit: F('.BB........BB.', ['.KK........KK.', '...KK....KK...'], ['...kmmmmmmk...', '....TTTTTT....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const skull = z => z <= 0 ? [-3, -5, 5, 4, 2] : z === 1 ? [-6, -6, 6, 5, 2] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'heSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'heSkin'); v.set(7, -1, 5, 'heSkinS');
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'heSkin'); v.box(-1, y, 6, -1, y, 7, 'heSkinS'); }
+  // cepak: lapis tipis rata
+  const hair = new Vox();
+  for (let z = 6; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'heHair', 4);
+  hair.rrect(16, -6, -6, 5, 5, 'heHair', 4);
+  hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= (x >= 5 ? 14 : Math.abs(y + 0.5) > 6.5 && x >= -1 ? 9 : 6)) v.set(x, y, z, c); });
+  if (o.cap) {   // topi baseball merah: kubah menutup rambut di atas z 12, lidah topi ke depan, lis putih, tombol di puncak
+    for (let z = 12; z <= 18; z++) { const r = z <= 15 ? 0 : z - 15; for (let x = -9 + r; x <= 8 - r; x++) for (let y = -9 + r; y <= 8 - r; y++) { const d = ((x + 0.5) / (8.8 - r)) ** 2 + ((y + 0.5) / (8.8 - r)) ** 2; if (d <= 1 && (d > 0.6 || z >= 17)) v.set(x, y, z, 'topiH'); } }
+    v.each((x, y, z, c) => { if (c === 'heHair' && z >= 12 && ((x + 0.5) / 8.8) ** 2 + ((y + 0.5) / 8.8) ** 2 > 0.95) v.set(x, y, z, null); });   // rambut tidak tembus topi
+    for (let x = 7; x <= 12; x++) for (let y = -6; y <= 5; y++) if (Math.abs(y + 0.5) <= 6 - Math.max(0, x - 10) * 2) v.set(x, y, 12, x === 12 || Math.abs(y + 0.5) > 5 - Math.max(0, x - 10) * 2 ? 'topiHS' : 'topiH');
+    v.set(-1, -1, 19, 'topiHS'); v.set(-1, 0, 19, 'topiHS');
+    for (let y = -2; y <= 1; y++) for (let z = 13; z <= 15; z++) { const x = v.front(y, z); if (x !== null && x <= 9) v.set(x, y, z, z === 14 ? 'topiHS' : 'topiH'); }   // logo garis putih
+  }
+  return v;
+}
+
+/* ---------- badan atletis (sisi +y; sisi -y = cermin) */
+const bodyC = o => ({ olahraga: 'kausH', wasit: 'wasitH', batik: 'batikHe' }[o.top]);
+function whistle(v) {   // tali biru melingkar leher + peluit perak tergantung di dada
+  for (let z = 49; z <= 57; z++) for (const y of [-4, 3]) { const yy = y + (z < 53 ? (y < 0 ? 1 : -1) * Math.round((53 - z) * 0.5) : 0); const x = v.front(yy, z); if (x !== null) v.set(x + 1, yy, z, 'taliH'); }
+  for (let y = -1; y <= 0; y++) { v.set((v.front(y, 48) ?? 5) + 1, y, 48, 'taliH'); }
+  v.box(5, -2, 45, 7, 1, 47, 'peluit'); v.set(8, -1, 46, 'peluit');
+}
+function chest(o) {
+  const v = new Vox(), T = o.top, body = bodyC(o);
+  for (let z = 34; z <= 56; z++) { const w = z <= 40 ? 1 : z <= 46 ? 0 : -1, t = z === 56 ? 1 : 0; v.rrect(z, -5, -8 + w + t, 4 - t, 7 - w - t, body, z >= 55 ? 4 : 3); }
+  v.rbox(-3, -3, 57, 2, 2, 60, 'heSkin', 2);
+  if (T === 'olahraga') {   // kaus olahraga merah: dua garis putih di bahu-samping, leher bulat putih, nomor 1 di punggung
+    for (let z = 34; z <= 56; z++) for (const s of [-1, 1]) { const y = s > 0 ? v.sideP(0, z) : v.sideN(0, z); if (y !== null) { v.set(0, y, z, 'kausHS'); v.set(-1, y, z, 'kausHS'); } }
+    for (let y = -2; y <= 1; y++) v.pf(y, 56, 'heSkin');
+    v.shell(57, -3, -4, 3, 3, 'kausHS', 2);
+    ['.X.', 'XX.', '.X.', '.X.', 'XXX'].forEach((row, r) => [...row].forEach((ch, c) => { if (ch === 'X') v.pb(1 - c, 52 - r, 'kausHS'); }));
+    whistle(v);
+    return v;
+  }
+  if (T === 'wasit') {   // kaus wasit hitam berkerah, lis kuning, kartu kuning & merah di saku dada
+    for (let z = 57; z <= 58; z++) v.shell(z, -4, -5, 3, 4, 'wasitH', 2);
+    for (let y = -5; y <= 4; y++) v.pb(y, 58, 'wasitHS');
+    for (let z = 51; z <= 56; z++) v.pf(0, z, 'wasitHS');
+    v.pfBox(2, 47, 5, 51, 'wasitH'); v.pf(3, 52, 'kartuK'); v.pf(4, 52, 'kartuM');
+    whistle(v);
+    return v;
+  }
+  v.each((x, y, z, k) => { if (k !== 'batikHe') return; const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x, a = ((u + z) % 5 + 5) % 5; if (a === 0) v.set(x, y, z, 'batikHeS'); else if (a === 2 && z % 3 === 0) v.set(x, y, z, 'batikHeK'); });
+  for (let z = 34; z <= 55; z++) v.pf(-1, z, 'batikHeS');
+  for (let z = 57; z <= 58; z++) v.shell(z, -4, -5, 3, 4, 'batikHe', 2);
+  return v;
+}
+function pelvis(o) {
+  const c = legC(o), v = new Vox();
+  v.rbox(-5, -7, 28, 4, 6, 33, c, 3); v.box(-4, -2, 26, 3, 1, 27, c);
+  if (o.top === 'batik') { v.rbox(-5, -7, 32, 4, 6, 33, 'belt', 3); v.pfBox(-1, 32, 0, 33, 'buckle'); }
+  else for (let z = 32; z <= 33; z++) v.shell(z, -5, -7, 4, 6, z === 33 ? 'trainHS' : c, 3);   // karet pinggang
+  return v;
+}
+const legC = o => o.top === 'batik' ? 'celHe' : o.top === 'wasit' ? 'wasitH' : 'trainH';
+const sleeveC = o => bodyC(o);
+function arm(o) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-3, 7, 43, 2, 12, 55, 'heSkin', 2); v.rrect(56, -3, 7, 2, 12, c, 3);
+  v.paint(-3, 7, 49, 2, 12, 56, c); v.shell(49, -4, 7, 3, 13, o.top === 'olahraga' ? 'kausHS' : o.top === 'wasit' ? 'wasitHS' : c, 2);
+  if (o.top === 'olahraga') for (let z = 49; z <= 56; z++) { v.set(0, 12, z, 'kausHS'); v.set(-1, 12, z, 'kausHS'); }
+  return v;
+}
+function fore(o, side) {
+  const v = new Vox();
+  v.rbox(-3, 7, 31, 2, 12, 42, 'heSkin', 2);
+  v.rbox(-3, 7, 27, 3, 12, 30, 'heSkin', 2); v.rrect(26, -2, 8, 2, 11, 'heSkin', 2);
+  if (side < 0) v.paint(-3, 7, 30, 2, 12, 31, 'wasitH');   // jam stopwatch digital hitam
+  if (side < 0) v.set(3, 9, 31, 'peluit');
+  if (side > 0 && o.top === 'olahraga') {   // papan jalan (clipboard) di tangan kanan
+    v.rbox(-4, 6, 18, 5, 7, 30, 'lariH', 0); v.paint(-4, 6, 29, 5, 7, 30, 'peluit'); for (let z = 20; z <= 27; z += 2) v.paint(-2, 6, z, 3, 6, z, 'trainH');
+  }
+  return v;
+}
+function thigh(o) {
+  const c = legC(o), v = new Vox(); v.rbox(-4, 2, 18, 3, 7, 31, c, 3); v.rrect(32, -3, 2, 2, 7, c, 3);
+  if (o.top !== 'batik') for (let z = 18; z <= 32; z++) v.set(0, 7, z, o.top === 'wasit' ? 'wasitHS' : 'trainHS');
+  if (o.top === 'wasit') v.paint(-4, 2, 18, 3, 7, 22, 'heSkin');   // celana pendek wasit
+  return v;
+}
+function shin(o) {
+  const c = o.top === 'wasit' ? 'heSkin' : legC(o), v = new Vox(); v.rbox(-4, 2, 6, 3, 7, 18, c, 3); v.rrect(19, -3, 2, 2, 7, c, 3);
+  if (o.top === 'olahraga') for (let z = 6; z <= 18; z++) v.set(0, 7, z, 'trainHS');
+  if (o.top === 'wasit') v.paint(-4, 2, 6, 3, 7, 15, 'wasitH');   // kaus kaki panjang hitam
+  return v;
+}
+function foot(o) {
+  const v = new Vox();
+  if (o.top === 'batik') { v.rbox(-4, 1, 0, 7, 8, 0, 'belt', 3); v.rbox(-4, 1, 1, 7, 8, 3, 'wasitH', 3); v.rbox(-4, 2, 4, 2, 7, 5, 'wasitH', 2); return v; }
+  v.rbox(-4, 1, 0, 7, 8, 1, 'sole', 3); v.rbox(-4, 1, 2, 7, 8, 4, 'lariH', 3); v.rbox(-4, 1, 5, 2, 8, 6, 'lariH', 3);   // sepatu lari putih
+  for (const y of [1, 8]) v.paint(-2, y, 3, 5, y, 3, 'lariHS');
+  for (const x of [2, 4]) v.paint(x, 3, 4, x, 6, 4, 'lace');
+  return v;
+}
+
+const OUTFITS = {
+  olahraga: { name: 'Mengajar: kaus olahraga merah + training + topi + peluit + papan jalan', top: 'olahraga', cap: true },
+  wasit: { name: 'Wasit futsal / liga resmi: kaus wasit hitam + kartu + peluit', top: 'wasit' },
+  batik: { name: 'Jumat: batik hijau toska lengan pendek + celana bahan', top: 'batik' },
+};
+function build(opt = {}) {
+  // game memanggil 'seragam': Pak Hendro memakai baju olahraga
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.olahraga), expr: opt.expr || 'biasa', face: opt.face };
+  const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
+  return assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['chest', chest(o), PV.chest], ['pelvis', pelvis(o), PV.pelvis],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'heSkin', shoulder: sl, elbow: 'heSkin', hip: leg, knee: o.top === 'wasit' ? 'heSkin' : leg }, SKEL, TAIL);
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== wawan.js
+NS.wawan = (() => {
+// Pak Wawan: guru BK / tata tertib yang patroli mencari murid bolos, 50-an. Seragam PNS khaki dengan tali bahu, papan
+// nama, pin Korpri, perut agak buncit, rambut belah samping berminyak, kumis lebat melengkung, buku pelanggaran merah di
+// tangan kiri, pulpen di saku. Rangka keluarga Arga (skala 1.3) dengan perut, voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+
+const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  waSkin: ['#9e6a46', '#b88058', '#c98e66', '#d6a07a'], waSkinS: ['#b07a54'], waKumis: ['#0e0a08'],
+  waHair: ['#120e0c', '#1a1410', '#241c16', '#32281e'], waHairT: ['#4a3e34'],
+  khaki: ['#9a8a5e', '#ae9e70', '#c0b082', '#d0c094'], khakiS: ['#7a6c46'], celKhaki: ['#4a3c2c', '#584836', '#665440', '#76624e'],
+  bukuW: ['#8a1a1a', '#a42222', '#bc2a2a', '#d23a3a'], bukuWK: ['#f2ecd8'], papanW: ['#16161c'], papanWT: ['#f2f2f2'], korpriW: ['#e0b840'],
+  senamW: ['#1c3a7a', '#22468e', '#2a54a2', '#3666b8'], senamWS: ['#e0b840'], batikW: ['#5a3a1a', '#6c4622', '#7e542c', '#926436'], batikWS: ['#2e1c0c'], batikWK: ['#e8d0a0'],
+  pantoW: ['#08080c', '#101014', '#1a1a20', '#2c2c36'],
+});
+
+/* ---------- wajah: alis tebal menukik curiga, mata menyipit, kumis lebat melengkung ke bawah tepat di bawah hidung */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', s: 'waSkinS', k: 'waKumis' };
+const F0 = '..............';
+const KUMIS = '..kkkk..kkkk..';
+const F = (brow, eyes, mouth) => [F0, F0, F0, ...brow, ...eyes, F0, F0, KUMIS, ...mouth, F0, F0];   // alis z 11..10, mata z 9..8, kumis z 5, mulut z 4
+const BROW = ['.BBB......BBB.', '...BBB..BBB...'];
+const EYE = ['..KKK....KKK..', '..sWK....KWs..'];
+const FACES = {
+  biasa: F(BROW, EYE, ['..kk.mmmm.kk..', F0, F0]),
+  kedip: F(BROW, [F0, '..KKK....KKK..'], ['..kk.mmmm.kk..', F0, F0]),
+  marah: F(['..BB......BB..', '....BBBBBB....'], EYE, ['..kkmmmmmmkk..', '....m....m....', F0]),
+  teriak: F(['..BB......BB..', '....BBBBBB....'], EYE, ['..kkmTTTTmkk..', '....mttttm....', '.....mmmm.....']),   // "Bolos lagi?!"
+  nyengir: F(BROW, EYE, ['..kkTTTTTTkk..', '....mmmmmm....', F0]),
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['..kkTTTTTTkk..', '....mttttm....', F0]),
+  sakit: F(['...BB....BB...', '.BB........BB.'], ['.KK........KK.', '...KK....KK...'], ['..kkmmmmmmkk..', '....TTTTTT....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const topZ = (v, x, y) => { for (let z = 30; z >= -20; z--) if (v.has(x, y, z)) return z; return null; };
+const skull = z => z <= 0 ? [-4, -6, 5, 5, 3] : z === 1 ? [-6, -7, 6, 6, 3] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'waSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'waSkin'); v.box(8, -1, 5, 8, 0, 5, 'waSkin'); v.set(7, -1, 4, 'waSkinS');
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'waSkin'); v.box(-1, y, 6, -1, y, 7, 'waSkinS'); }
+  // rambut belah samping kiri berminyak, rapat, dahi agak lebar
+  const hair = new Vox();
+  for (let z = 6; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'waHair', z <= 11 ? 4 : 5);
+  for (let z = 16; z <= 17; z++) hair.rrect(z, -6, -7 + (z - 16), 5, 6, 'waHair', 4);
+  hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= (x >= 5 ? 14 : Math.abs(y + 0.5) > 6.5 && x >= -1 ? 9 : 6)) v.set(x, y, z, c); });
+  for (let x = -6; x <= 5; x++) { const z = topZ(v, x, -4); if (z !== null) v.set(x, -4, z, 'waHairT'); }
+  for (const y of [-1, 2, 5]) for (let x = -5; x <= 5; x++) { const z = topZ(v, x, y); if (z !== null && (x + y) % 4 === 0) v.set(x, y, z, 'waHairT'); }
+  return v;
+}
+
+/* ---------- badan + perut (sisi +y; sisi -y = cermin) */
+const bodyC = o => ({ pns: 'khaki', senam: 'senamW', batik: 'batikW' }[o.top]);
+function chest(o) {
+  const v = new Vox(), T = o.top, body = bodyC(o);
+  for (let z = 34; z <= 56; z++) { const bel = z > 50 ? 0 : Math.round(3.5 * Math.sin((z - 31) / 20 * Math.PI)), t = z === 56 ? 1 : 0; v.rrect(z, -6, -9 + t, 4 + bel - t, 8 - t, body, 4); }
+  v.rbox(-3, -3, 57, 2, 2, 60, 'waSkin', 2);
+  if (T === 'pns') {   // seragam PNS khaki: kerah, kancing, 2 saku bertutup, papan nama hitam, pin Korpri, tali bahu
+    for (let z = 34; z <= 55; z++) v.pf(-1, z, 'khakiS');
+    for (const z of [52, 47, 42, 37]) v.pf(-1, z, 'korpriW');
+    for (const [y0, y1] of [[-7, -3], [2, 6]]) { for (let z = 44; z <= 50; z++) for (let y = y0; y <= y1; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z >= 49 ? 'khakiS' : 'khaki'); } }
+    v.pfBox(3, 52, 6, 52, 'papanW'); v.pf(4, 52, 'papanWT'); v.pf(5, 52, 'papanWT');   // papan nama di atas saku kanan
+    v.pf(-5, 52, 'korpriW'); v.pf(-6, 51, 'korpriW');   // pin Korpri
+    v.pf(-6, 51, 'korpriW'); v.pf(-4, 51, 'bukuWK');   // pulpen
+    for (let z = 57; z <= 58; z++) v.shell(z, -5, -6, 3, 5, 'khaki', 3);
+    for (let y = -2; y <= 1; y++) for (let x = 2; x <= 5; x++) for (const z of [57, 58]) if (v.get(x, y, z) === 'khaki') v.set(x, y, z, null);
+    return v;
+  }
+  if (T === 'senam') {   // jaket training biru Korpri Jumat: ritsleting kuning, garis kuning di bahu
+    for (let z = 34; z <= 56; z++) v.pf(-1, z, 'senamWS');
+    for (let z = 57; z <= 59; z++) v.shell(z, -5, -6, 3, 5, 'senamW', 3);
+    v.pfBox(3, 50, 4, 51, 'senamWS');
+    return v;
+  }
+  v.each((x, y, z, k) => { if (k !== 'batikW') return; const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x, a = ((u + 40) % 6), b = ((z + 40) % 6); if (a === 3 && b === 3) v.set(x, y, z, 'batikWK'); else if (a === 0 || b === 0) v.set(x, y, z, 'batikWS'); });
+  for (let z = 34; z <= 55; z++) v.pf(-1, z, 'batikW');
+  for (let z = 57; z <= 58; z++) v.shell(z, -4, -5, 3, 4, 'batikW', 2);
+  return v;
+}
+function pelvis(o) {
+  const c = legC(o), v = new Vox();
+  v.rbox(-6, -8, 28, 5, 7, 33, c, 3); v.box(-4, -2, 26, 3, 1, 27, c);
+  if (o.top === 'senam') { for (let z = 30; z <= 33; z++) v.shell(z, -7, -10, 6 + (z - 30), 9, 'senamW', 4); return v; }
+  for (let z = 31; z <= 32; z++) v.shell(z, -6, -9, 7, 8, 'belt', 4); v.pf(-1, 32, 'buckle'); v.pf(0, 32, 'buckle');   // baju dimasukkan, ikat pinggang di bawah perut
+  for (let z = 33; z <= 34; z++) v.shell(z, -7, -10, 6 + (z - 32), 9, bodyC(o), 4);
+  return v;
+}
+const legC = o => o.top === 'senam' ? 'senamW' : o.top === 'batik' ? 'pantoW' : 'celKhaki';
+const sleeveC = o => bodyC(o);
+function arm(o) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-3, 8, 43, 3, 14, 55, c, 3); v.rrect(56, -3, 8, 3, 14, c, 3);
+  if (o.top === 'pns') { for (let x = -3; x <= 3; x++) v.set(x, 14, 56, 'khakiS'); v.set(2, 14, 56, 'korpriW'); }   // tali bahu
+  if (o.top === 'senam') for (let z = 43; z <= 56; z++) v.set(0, 14, z, 'senamWS');
+  if (o.top === 'batik') v.each((x, y, z, k) => { if (k === 'batikW' && ((y + 40) % 6 === 0 || (z + 40) % 6 === 0)) v.set(x, y, z, 'batikWS'); });
+  return v;
+}
+function fore(o, side) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-3, 8, 31, 3, 14, 42, c, 3);
+  v.paint(-3, 8, 31, 3, 14, 32, o.top === 'pns' ? 'khakiS' : o.top === 'senam' ? 'senamWS' : 'batikWS');
+  v.rbox(-3, 8, 27, 4, 14, 30, 'waSkin', 3); v.rrect(26, -2, 9, 3, 13, 'waSkin', 2);
+  if (side < 0 && o.top !== 'senam') {   // buku pelanggaran merah tebal di tangan kiri
+    v.rbox(-4, 7, 19, 4, 9, 30, 'bukuW', 0); v.paint(4, 7, 20, 4, 9, 29, 'bukuWK'); v.paint(-4, 9, 19, 4, 9, 30, 'bukuW');
+    for (let z = 21; z <= 28; z += 2) v.set(4, 8, z, 'bukuW');
+  }
+  if (side > 0) v.paint(-3, 8, 30, 3, 14, 30, 'korpriW');   // jam emas
+  return v;
+}
+function thigh(o) { const c = legC(o), v = new Vox(); v.rbox(-5, 2, 18, 4, 8, 31, c, 3); v.rrect(32, -4, 2, 3, 8, c, 3); if (o.top === 'senam') for (let z = 18; z <= 31; z++) v.set(0, 8, z, 'senamWS'); return v; }
+function shin(o) { const c = legC(o), v = new Vox(); v.rbox(-4, 2, 6, 3, 7, 18, c, 3); v.rrect(19, -3, 2, 2, 7, c, 3); if (o.top === 'senam') for (let z = 6; z <= 18; z++) v.set(0, 7, z, 'senamWS'); else for (let z = 7; z <= 17; z++) v.pf(4, z, c === 'pantoW' ? 'pantoW' : 'celKhaki'); return v; }
+function foot(o) {
+  const v = new Vox();
+  if (o.top === 'senam') { v.rbox(-4, 1, 0, 7, 8, 1, 'sole', 3); v.rbox(-4, 1, 2, 7, 8, 4, 'pantoW', 3); v.rbox(-4, 1, 5, 2, 8, 6, 'pantoW', 3); for (const x of [2, 4]) v.paint(x, 3, 4, x, 6, 4, 'lace'); return v; }
+  v.rbox(-4, 1, 0, 7, 8, 0, 'belt', 3); v.rbox(-4, 1, 1, 7, 8, 3, 'pantoW', 3); v.rbox(-4, 2, 4, 2, 7, 5, 'pantoW', 2); v.set(7, 4, 3, 'papanWT');   // pantofel PNS mengilap
+  return v;
+}
+
+const OUTFITS = {
+  pns: { name: 'Patroli: seragam PNS khaki + papan nama + buku pelanggaran', top: 'pns' },
+  senam: { name: 'Jumat pagi: setelan training biru Korpri + sneakers', top: 'senam' },
+  batik: { name: 'Batik cokelat lengan panjang + celana hitam + buku pelanggaran', top: 'batik' },
+};
+function build(opt = {}) {
+  // game memanggil 'seragam': Pak Wawan memakai seragam PNS
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.pns), expr: opt.expr || 'biasa', face: opt.face };
+  const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
+  return assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['chest', chest(o), PV.chest], ['pelvis', pelvis(o), PV.pelvis],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'waSkin', shoulder: sl, elbow: sl, hip: leg, knee: leg }, SKEL, TAIL);
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== sinta.js
+NS.sinta = (() => {
+// Bu Sinta: guru Bahasa Indonesia pembina mading & lomba menulis, 30-an, lembut dan puitis. Hijab segi empat pastel
+// persik dengan bros bunga, kardigan rajut krem di atas blus, rok panjang cokelat susu, flat shoes, buku novel dijepit
+// di tangan kiri. Rangka keluarga Nadia (skala 1.24), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
+
+const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  siSkin: ['#c8946c', '#e0ac86', '#e8b48c', '#f4c8a4'], siSkinS: ['#d8a27c'], siBlush: ['#f0a090'],
+  hijabSi: ['#c87a62', '#dc9078', '#eca890', '#f8c4ae'], hijabSiS: ['#c07058'], brosSi: ['#f4f0e8'], brosSiC: ['#e8b840'],
+  hijabSiL: ['#7a6a9a', '#8e7eae', '#a494c2', '#bcaed6'], hijabSiLS: ['#6a5a8a'], hijabSiM: ['#4a7a6a', '#5a8c7a', '#6c9e8c', '#84b4a2'], hijabSiMS: ['#3a6a5a'],
+  kardiS: ['#c4b494', '#d4c4a4', '#e2d4b6', '#eee2c8'], kardiSS: ['#b0a080'], blusSi: ['#e8a890', '#f0b8a0', '#f6c8b2', '#fcdac8'],
+  rokSi: ['#7a5a40', '#8c6a4c', '#a07c5a', '#b48e6a'], rokSiS: ['#5e4430'], gamisSi: ['#8e7eae', '#a090c0', '#b2a4d0', '#c6badf'], gamisSiS: ['#76669a'],
+  batikSi: ['#2a4a6a', '#32587c', '#3c668e', '#4a78a2'], batikSiS: ['#1a2e44'], batikSiK: ['#f0d8a0'],
+  flatSi: ['#6a4430', '#7e5238', '#925e42', '#a6704e'], novel: ['#2a6a5a', '#327a68', '#3a8c78', '#4aa08a'], novelK: ['#f4ecd8'],
+});
+
+/* ---------- wajah: alis tipis melengkung lembut, mata besar teduh berbulu mata, senyum kecil manis tepat di bawah hidung */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', r: 'siBlush', s: 'siSkinS' };
+const F0 = '..............';
+const F = (brow, eyes, mouth) => [F0, F0, F0, brow, F0, ...eyes, F0, F0, F0, ...mouth, F0, F0];   // alis z 11, mata z 9..8, mulut z 4
+const BROW = '..BBB....BBB..';
+const EYE = ['.KKKK....KKKK.', '..WKK....KKW..'];
+const BL = '.rr........rr.';
+const FACES = {
+  biasa: F(BROW, EYE, ['....m....m....', '.....mmmm.....', BL]),
+  kedip: F(BROW, [F0, '.KKKK....KKKK.'], ['....m....m....', '.....mmmm.....', BL]),
+  marah: F('...BB....BB...', ['..KKK....KKK..', '..WKK....KKW..'], ['.....mmmm.....', F0, F0]),
+  teriak: F('.BB........BB.', ['..KKK....KKK..', '..KWK....KWK..'], ['.....mmmm.....', '.....mttm.....', '......mm......']),
+  nyengir: F(BROW, EYE, ['....mTTTTm....', '.....mmmm.....', BL]),
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['....mTTTTm....', '.....mttm.....', BL]),
+  sakit: F('.BB........BB.', ['.KK........KK.', '...KK....KK...'], ['.....mmmm.....', '.....TTTT.....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const skull = z => z <= 0 ? [-3, -4, 5, 3, 3] : z === 1 ? [-5, -5, 6, 4, 3] : z === 2 ? [-6, -6, 6, 5, 3] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+const open = (y, z) => { const dy = (y + 0.5) / 6.4, dz = (z - 5.5) / 6.9; return dy * dy + dz * dz <= 1; };   // bukaan wajah sampai baris alis
+const hijabC = o => ({ kardigan: 'hijabSi', gamis: 'hijabSiL', batik: 'hijabSiM' }[o.top]);
+function head(o) {
+  const v = new Vox(), c = hijabC(o), cS = c + 'S';
+  for (let z = 0; z <= 14; z++) { const [a, b, cc, d, r] = skull(z); v.rrect(z, a, b, cc, d, 'siSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'siSkin'); v.set(7, -1, 4, 'siSkinS');
+  // hijab segi empat: lapisan kain di luar kepala, kubah sedikit tinggi, membungkus leher di bawah dagu
+  const h = new Vox();
+  for (let z = 2; z <= 14; z++) h.rrect(z, -8, -8, 7, 7, c, z <= 11 ? 4 : 5);
+  h.rrect(15, -7, -7, 6, 6, c, 4); h.rrect(16, -4, -4, 3, 3, c, 2);
+  for (let z = -4; z <= 1; z++) h.rrect(z, -6, -7, 6, 6, c, 4);
+  h.each((x, y, z, k) => { if (v.has(x, y, z)) return; if (x >= 3 && z >= 0 && open(y, z)) return; v.set(x, y, z, k); });
+  for (let y = -5; y <= 4; y++) { const x = v.front(y, 13); if (x !== null && v.get(x, y, 13) === c) v.set(x, y, 13, cS); }   // lipatan dahi
+  // bros bunga putih di sisi kiri dagu
+  const bx = (v.front(-5, 0) ?? 6);
+  for (const [y, z] of [[-5, 0], [-6, 0], [-4, 0], [-5, 1], [-5, -1]]) v.set(bx + 1, y, z, y === -5 && z === 0 ? 'brosSiC' : 'brosSi');
+  return v;
+}
+
+/* ---------- badan (sisi +y; sisi -y = cermin) */
+function drape(v, c, cS) {   // kain hijab jatuh menutup bahu & dada, ujung depan meruncing
+  for (let z = 44; z <= 55; z++) {
+    const k = Math.min(3, Math.floor((56 - z) / 2.2)), x0 = -5 - (k > 1 ? 1 : 0), x1 = 4 + k, y0 = -6 - k, y1 = 5 + k;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const inner = x > x0 && x < x1 && y > y0 && y < y1;
+      if (inner && v.has(x, y, z)) continue;
+      if (z <= 47 && x < 2 && Math.abs(y + 0.5) < 6) continue;
+      if (z <= 46 && Math.abs(y + 0.5) > 4.5 - (46 - z)) continue;
+      if (!inner || !v.has(x, y, z)) v.set(x, y, z, c);
+    }
+  }
+  for (let z = 44; z <= 52; z++) { const x = v.front(-1, z); if (x !== null && v.get(x, -1, z) === c) v.set(x, -1, z, cS); }
+}
+const skirtC = o => ({ kardigan: ['rokSi', 'rokSiS'], gamis: ['gamisSi', 'gamisSiS'], batik: ['rokSi', 'rokSiS'] }[o.top]);
+const topC = o => ({ kardigan: 'kardiS', gamis: 'gamisSi', batik: 'batikSi' }[o.top]);
+const batik = v => { v.each((x, y, z, k) => { if (k !== 'batikSi') return; const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x, a = ((u + 40) % 5), b = ((z + 40) % 5); if (a === 2 && b === 2) v.set(x, y, z, 'batikSiK'); else if (Math.abs(a - 2) + Math.abs(b - 2) === 2 && (a + b) % 2 === 0) v.set(x, y, z, 'batikSiS'); }); return v; };
+function chest(o) {
+  const v = new Vox(), T = o.top, c = topC(o);
+  for (let z = 32; z <= 51; z++) { const t = z === 51 ? 1 : 0, w = z >= 37 && z <= 41 ? 1 : 0; v.rrect(z, -4, -6 + t + w, 4 - t, 5 - t - w, c, 3); }
+  v.rbox(-2, -2, 52, 2, 1, 55, hijabC(o), 1);
+  if (T === 'kardigan') {   // kardigan rajut terbuka di depan, blus persik di tengah, rusuk rajut
+    for (let z = 32; z <= 50; z++) for (let y = -2; y <= 1; y++) v.pf(y, z, 'blusSi');
+    for (let z = 32; z <= 50; z++) for (const y of [-3, 2]) v.pf(y, z, 'kardiSS');
+    v.each((x, y, z, k) => { if (k === 'kardiS' && (y + 40) % 3 === 0 && z % 2) v.set(x, y, z, 'kardiSS'); });
+    for (let y = -6; y <= 5; y++) { v.pf(y, 32, 'kardiSS'); v.pb(y, 32, 'kardiSS'); }
+  } else if (T === 'gamis') for (let z = 34; z <= 43; z++) v.pf(0, z, 'gamisSiS');
+  else { batik(v); for (let z = 32; z <= 43; z++) v.pf(0, z, 'batikSiS'); }
+  drape(v, hijabC(o), hijabC(o) + 'S');
+  return v;
+}
+function pelvis(o) {
+  const [c, cS] = skirtC(o), v = skirtPelvis(c, cS, 20);
+  if (o.top === 'kardigan') for (let z = 27; z <= 33; z++) v.shell(z, -6, -8, 5, 7, z === 27 ? 'kardiSS' : 'kardiS', 3);   // kardigan panjang menutup pinggul
+  if (o.top === 'batik') for (let z = 28; z <= 33; z++) v.shell(z, -6, -8, 5, 7, 'batikSi', 3);
+  return o.top === 'batik' ? batik(v) : v;
+}
+const sleeveC = o => topC(o);
+function arm(o) { const v = new Vox(), c = sleeveC(o); v.rbox(-2, 6, 40, 2, 10, 50, c, 2); v.rrect(51, -2, 6, 2, 10, c, 2); return o.top === 'batik' ? batik(v) : v; }
+function fore(o, side) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-2, 6, 31, 2, 10, 39, c, 2);
+  v.paint(-2, 6, 31, 2, 10, 32, o.top === 'kardigan' ? 'kardiSS' : o.top === 'gamis' ? 'gamisSiS' : 'batikSiS');
+  if (o.top === 'batik') batik(v);
+  v.rbox(-2, 6, 27, 3, 10, 30, 'siSkin', 2); v.rrect(26, -1, 7, 2, 9, 'siSkin', 1);
+  if (side < 0) {   // novel hijau dipeluk/dijepit di tangan kiri, halaman krem kelihatan di sisi
+    v.rbox(-4, 4, 21, 4, 6, 31, 'novel', 0); v.paint(-4, 5, 22, 3, 5, 30, 'novelK'); v.paint(-4, 4, 21, 4, 4, 31, 'novel');
+  }
+  return v;
+}
+function foot() {   // flat shoes cokelat dengan pita kecil
+  const v = new Vox();
+  v.rbox(-4, 1, 0, 6, 6, 0, 'sole', 2); v.rbox(-4, 1, 1, 6, 6, 2, 'flatSi', 2); v.rbox(-3, 2, 3, 1, 5, 3, 'flatSi', 2);
+  v.set(5, 3, 3, 'brosSi'); v.set(5, 4, 3, 'brosSi');
+  return v;
+}
+
+const OUTFITS = {
+  kardigan: { name: 'Mengajar: hijab persik + kardigan rajut krem + rok cokelat + novel', top: 'kardigan' },
+  gamis: { name: 'Gamis ungu lembut + hijab ungu', top: 'gamis' },
+  batik: { name: 'Jumat: batik biru motif kawung + hijab hijau mint', top: 'batik' },
+};
+function build(opt = {}) {
+  // game memanggil 'seragam': Bu Sinta memakai kardigan
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kardigan), expr: opt.expr || 'biasa', face: opt.face };
+  const [c, cS] = skirtC(o), A = arm(o), Th = skirtThigh(c), Sn = skirtShin(c, cS), Ft = foot(o), sl = sleeveC(o);
+  const panel = s => skirtPanel(c, cS, s, 5);
+  const P = assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['chest', chest(o), PV.chest],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['flapF', panel(1), PV.flapF], ['pelvis', pelvis(o), PV.pelvis], ['flapB', panel(-1), PV.flapB],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: hijabC(o), shoulder: sl, elbow: sl, hip: c, knee: c }, SKEL, TAIL);
+  P.skirt = skirtInfo(P, c, cS);
+  return P;
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== anton.js
+NS.anton = (() => {
+// Mr. Anton: guru Bahasa Inggris muda pembina klub debat, 28 tahun, gaul dan ramah. Rambut quiff modern bertekstur dengan
+// samping tipis, kemeja slim biru muda lengan digulung, chino abu, sneakers putih, jam pintar, senyum lebar.
+// Rangka keluarga Arga (skala 1.34), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+
+const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  anSkin2: ['#b88460', '#cc9670', '#d9a27a', '#e6b28a'], anSkin2S: ['#c48e68'],
+  anHair2: ['#140c08', '#1c120c', '#241810', '#322216'], anHair2T: ['#4a3626'], anFade: ['#4a3a30', '#544238', '#5e4a40', '#6a564a'],
+  kemA: ['#6c96c4', '#82aad4', '#98bee2', '#b0d0ee'], kemAS: ['#5480b0'], chinoA: ['#5a5c62', '#686a72', '#787a82', '#8a8c94'],
+  sneakA: ['#e8e8ea', '#f2f2f4', '#fafafa', '#ffffff'], sneakAS: ['#1a2a4a'], watchA: ['#1a1a20'], watchAS: ['#5ad0f0'],
+  blazerA: ['#1a2440', '#222e52', '#2a3a64', '#38497a'], blazerAS: ['#121a30'], teeA: ['#e8e8e4', '#f2f2ee', '#fafaf6', '#ffffff'],
+  denimA: ['#3a5a8a', '#46689c', '#5276ae', '#6488c0'], denimAS: ['#2a4470'], teeAH: ['#141418', '#1c1c20', '#26262a', '#343438'],
+});
+
+/* ---------- wajah: alis tebal rapi, mata cerah, senyum lebar ramah tepat di bawah hidung, lesung pipi */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', s: 'anSkin2S' };
+const F0 = '..............';
+const F = (brow, eyes, mouth) => [F0, F0, F0, brow, F0, ...eyes, F0, F0, F0, ...mouth, F0, F0];   // alis z 11, mata z 9..8, mulut z 4
+const BROW = '.BBBB....BBBB.';
+const EYE = ['..KKK....KKK..', '..WKK....KKW..'];
+const FACES = {
+  biasa: F(BROW, EYE, ['...m......m...', '....mmmmmm....', F0]),
+  kedip: F(BROW, ['..KKK.........', '..WKK....KKK..'], ['...m......m...', '....mmmmmm....', F0]),   // mengedip sebelah
+  marah: F('...BBB..BBB...', EYE, ['....mmmmmm....', F0, F0]),
+  teriak: F('...BBB..BBB...', EYE, ['....mTTTTm....', '....mttttm....', '.....mmmm.....']),
+  nyengir: F(BROW, EYE, ['s..mTTTTTTm..s', '....mmmmmm....', F0]),   // "Good morning!"
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['s..mTTTTTTm..s', '....mttttm....', '.....mmmm.....']),
+  sakit: F('.BB........BB.', ['.KK........KK.', '...KK....KK...'], ['....mmmmmm....', '....TTTTTT....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const topZ = (v, x, y) => { for (let z = 30; z >= -20; z--) if (v.has(x, y, z)) return z; return null; };
+const skull = z => z <= 0 ? [-3, -5, 5, 4, 2] : z === 1 ? [-5, -6, 6, 5, 2] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'anSkin2', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'anSkin2'); v.set(7, -1, 5, 'anSkin2S');
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'anSkin2'); v.box(-1, y, 6, -1, y, 7, 'anSkin2S'); }
+  // samping tipis (fade gelap), atas quiff: tinggi di depan, menurun ke belakang, ujung depan sedikit terangkat
+  const side = new Vox();
+  for (let z = 5; z <= 14; z++) side.rrect(z, -8, -8, 7, 7, 'anFade', 4);
+  side.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= (x >= 5 ? 14 : Math.abs(y + 0.5) > 6.5 && x >= -1 ? 9 : 5)) v.set(x, y, z, c); });
+  for (let x = -8; x <= 8; x++) {
+    const hTop = x >= 4 ? 21 : x >= 0 ? 20 : x >= -4 ? 18 : 16;
+    for (let y = -6; y <= 5; y++) { const ey = Math.abs(y + 0.5) > 4.5 ? 1 : 0; for (let z = 13; z <= hTop - ey; z++) if (!v.has(x, y, z) || v.get(x, y, z) === 'anFade') v.set(x, y, z, 'anHair2'); }
+  }
+  for (const y of [-4, -1, 2, 4]) for (let x = -7; x <= 8; x++) { const z = topZ(v, x, y); if (z !== null && (x + y + 40) % 3 === 0) v.set(x, y, z, 'anHair2T'); }   // tekstur
+  for (let y = -5; y <= 4; y++) v.set(9, y, 20, 'anHair2');   // ujung quiff maju
+  return v;
+}
+
+/* ---------- badan (sisi +y; sisi -y = cermin) */
+const bodyC = o => ({ kemeja: 'kemA', debat: 'blazerA', denim: 'denimA' }[o.top]);
+function chest(o) {
+  const v = new Vox(), T = o.top, body = bodyC(o);
+  for (let z = 34; z <= 56; z++) { const w = z <= 40 ? 1 : z <= 46 ? 0 : -1, t = z === 56 ? 1 : 0; v.rrect(z, -5, -8 + w + t, 4 - t, 7 - w - t, body, z >= 55 ? 4 : 3); }
+  v.rbox(-3, -3, 57, 2, 2, 60, 'anSkin2', 2);
+  if (T === 'kemeja') {   // kemeja slim dimasukkan, kancing atas terbuka, kerah tajam
+    for (let z = 34; z <= 53; z++) v.pf(0, z, 'kemAS');
+    for (const [y, z] of [[-1, 56], [0, 56], [-1, 55], [0, 55], [-1, 54], [0, 54], [-2, 56], [1, 56]]) v.pf(y, z, 'anSkin2');
+    for (let z = 57; z <= 58; z++) { v.shell(z, -4, -5, 3, 4, 'kemA', 2); for (let y = -2; y <= 1; y++) for (const x of [3, 4]) if (v.get(x, y, z) === 'kemA') v.set(x, y, z, null); }
+    for (let y = 2; y <= 5; y++) v.pf(y, 50, 'kemAS');
+    return v;
+  }
+  // blazer biru tua / jaket denim terbuka di atas kaus (putih / hitam)
+  const inner = T === 'debat' ? 'teeA' : 'teeAH', edge = T === 'debat' ? 'blazerAS' : 'denimAS';
+  for (let z = 34; z <= 56; z++) for (let y = -3; y <= 2; y++) { const x = v.front(y, z); if (x !== null) { v.set(x, y, z, null); v.set(x - 1, y, z, inner); } }
+  for (let z = 34; z <= 55; z++) { v.pf(-4, z, edge); v.pf(3, z, edge); }
+  for (let z = 57; z <= 58; z++) v.shell(z, -4, -5, 3, 4, body, 2);
+  for (let y = -2; y <= 1; y++) for (const x of [3, 4]) for (const z of [57, 58]) if (v.get(x, y, z) === body) v.set(x, y, z, null);
+  if (T === 'denim') { for (const y of [-7, -5, 4, 6]) for (let z = 46; z <= 50; z++) v.pf(y, z, 'denimAS'); for (let y = -8; y <= 7; y++) v.pb(y, 48, 'denimAS'); v.pf(-6, 51, 'buckle'); v.pf(5, 51, 'buckle'); }
+  else { for (let y = -7; y <= -4; y++) v.pf(y, 49, 'blazerAS'); v.pf(-6, 50, 'teeA'); }   // saku dada + saputangan
+  return v;
+}
+function pelvis(o) {
+  const c = legC(o), v = new Vox();
+  v.rbox(-5, -7, 28, 4, 6, 33, c, 3); v.box(-4, -2, 26, 3, 1, 27, c);
+  if (o.top === 'kemeja') { v.rbox(-5, -7, 32, 4, 6, 33, 'leather', 3); v.pfBox(-1, 32, 0, 33, 'buckle'); }
+  else if (o.top === 'debat') for (let z = 30; z <= 33; z++) v.shell(z, -6, -8, 5, 7, 'blazerA', 3);
+  else for (let z = 31; z <= 33; z++) v.shell(z, -6, -8, 5, 7, z === 31 ? 'denimAS' : 'denimA', 3);
+  return v;
+}
+const legC = o => o.top === 'denim' ? 'jeans' : 'chinoA';
+const sleeveC = o => bodyC(o);
+function arm(o) { const v = new Vox(), c = sleeveC(o); v.rbox(-3, 7, 43, 2, 12, 55, c, 2); v.rrect(56, -3, 7, 2, 12, c, 3); return v; }
+function fore(o, side) {
+  const v = new Vox(), c = sleeveC(o), K = o.top === 'kemeja';
+  v.rbox(-3, 7, 31, 2, 12, 42, K ? 'anSkin2' : c, 2);
+  if (K) { v.rbox(-4, 6, 37, 3, 13, 42, 'kemA', 2); v.paint(-4, 6, 37, 3, 13, 37, 'kemAS'); }   // lengan digulung sampai bawah siku
+  else v.paint(-3, 7, 31, 2, 12, 32, o.top === 'debat' ? 'blazerAS' : 'denimAS');
+  v.rbox(-3, 7, 27, 3, 12, 30, 'anSkin2', 2); v.rrect(26, -2, 8, 2, 11, 'anSkin2', 2);
+  if (side < 0) { v.paint(-3, 7, 31, 2, 12, 32, 'watchA'); v.set(3, 9, 32, 'watchAS'); v.set(3, 10, 32, 'watchAS'); }   // jam pintar
+  return v;
+}
+function thigh(o) { const c = legC(o), v = new Vox(); v.rbox(-4, 2, 18, 3, 7, 31, c, 3); v.rrect(32, -3, 2, 2, 7, c, 3); return v; }
+function shin(o) {   // celana slim, ujung digulung di atas mata kaki
+  const c = legC(o), v = new Vox(); v.rbox(-4, 2, 8, 3, 7, 18, c, 3); v.rrect(19, -3, 2, 2, 7, c, 3);
+  v.shell(8, -5, 1, 4, 8, c, 3); v.rbox(-3, 3, 6, 2, 6, 7, 'anSkin2', 2);
+  return v;
+}
+function foot() {   // sneakers putih minimalis, aksen biru tua di tumit
+  const v = new Vox();
+  v.rbox(-4, 1, 0, 7, 8, 1, 'sole', 3); v.rbox(-4, 1, 2, 7, 8, 4, 'sneakA', 3); v.rbox(-4, 1, 5, 2, 8, 5, 'sneakA', 3);
+  v.paint(-4, 1, 2, -4, 8, 5, 'sneakAS');
+  for (const x of [2, 4]) v.paint(x, 3, 4, x, 6, 4, 'lace');
+  return v;
+}
+
+const OUTFITS = {
+  kemeja: { name: 'Mengajar: kemeja slim biru muda digulung + chino abu + sneakers putih', top: 'kemeja' },
+  debat: { name: 'Klub debat: blazer biru tua + kaus putih + chino', top: 'debat' },
+  denim: { name: 'Akhir pekan: jaket denim + kaus hitam + jeans', top: 'denim' },
+};
+function build(opt = {}) {
+  // game memanggil 'seragam': Mr. Anton memakai kemeja
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kemeja), expr: opt.expr || 'biasa', face: opt.face };
+  const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
+  return assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['chest', chest(o), PV.chest], ['pelvis', pelvis(o), PV.pelvis],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'anSkin2', shoulder: sl, elbow: o.top === 'kemeja' ? 'kemA' : sl, hip: leg, knee: leg }, SKEL, TAIL);
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== gunadi.js
+NS.gunadi = (() => {
+// Pak Gunadi: guru Kimia-Fisika eksentrik penjaga lab, 60-an, pemberi resep racikan. Rambut putih berdiri ke segala
+// arah, janggut putih pendek, kacamata bulat tebal, jas lab putih bernoda (bekas reaksi warna-warni), kemeja krem, dasi
+// kupu-kupu, celana abu, gelas kimia berasap di tangan. Rangka keluarga Arga (skala 1.28, sedikit membungkuk), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+
+const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 23, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  guSkin: ['#bc8c68', '#d4a07c', '#e0b088', '#ecc09a'], guSkinS: ['#c89672'], guKerut: ['#b8845e'],
+  guHair: ['#a8a49c', '#c0bcb4', '#d6d2ca', '#ecebe6'], guHairS: ['#8e8a82'], guFrame: ['#2a2a30'], guLens: ['#dcecf4'],
+  labC: ['#cfd2d6', '#e2e4e8', '#f0f2f4', '#fafbfc'], labS: ['#b0b4ba'], nodaH: ['#5aa04a'], nodaU: ['#8a4ab0'], nodaK: ['#d8a020'], nodaG: ['#4a3a2a'],
+  kemG: ['#c8b890', '#d8c8a2', '#e6d8b4', '#f0e6c8'], dasiG: ['#8a1a2a', '#a42234', '#bc2c40', '#d23c52'], celG2: ['#4a4c52', '#585a60', '#686a72', '#7a7c84'],
+  gelas: ['#b8e0ec', '#cceaf2', '#ddf2f8', '#eef8fc'], cairan: ['#5ad06a', '#6ae07a', '#7ef08e', '#a0ffb0'], asap: ['#e0e8e4'],
+  rompiG: ['#5a4a3a', '#6a5844', '#7a6650', '#8c785e'], rompiGS: ['#3e3226'], kardiG: ['#6a3a2a', '#7a4432', '#8c503c', '#a06048'], pantoG: ['#2a1c14', '#36241a', '#443022', '#56402e'],
+});
+
+/* ---------- wajah: alis putih tebal awut-awutan, mata kecil di balik kacamata bulat, janggut putih pendek di dagu, kerut */
+const FCH = { B: 'guHair', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', s: 'guKerut', j: 'guHair' };
+const F0 = '..............';
+const BEARD = ['..jjjjjjjjjj..', '...jjjjjjjj...', '....jjjjjj....'];
+const F = (brow, eyes, mouth) => [F0, F0, ...brow, ...eyes, '.s..........s.', F0, F0, F0, mouth, ...BEARD, F0];   // alis z 12..11, mata z 10..9, mulut z 4, janggut z 3..1
+const BROW = ['.BBBB....BBBB.', '..B.B....B.B..'];
+const EYE = ['...KK....KK...', '...KK....KK...'];
+const FACES = {
+  biasa: F(BROW, EYE, '....jmmmmj....'),
+  kedip: F(BROW, [F0, '..KKK....KKK..'], '....jmmmmj....'),
+  marah: F(['...BBB..BBB...', '.....B..B.....'], EYE, '...jmmmmmmj...'),
+  teriak: F(['...BBB..BBB...', '.....B..B.....'], EYE, '...jmTTTTmj...'),   // "Jangan sentuh itu!"
+  nyengir: F(BROW, EYE, '...jTTTTTTj...'),   // eureka!
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], '...jTttttTj...'),
+  sakit: F(['...BB....BB...', '.BB........BB.'], ['.KK........KK.', '...KK....KK...'], '...jTTTTTTj...'),
+};
+const EXPRS = Object.keys(FACES);
+
+const skull = z => z <= 0 ? [-3, -5, 5, 4, 2] : z === 1 ? [-5, -6, 6, 5, 2] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'guSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 7, 'guSkin'); v.box(8, -1, 5, 8, 0, 6, 'guSkin'); v.set(8, -1, 5, 'guSkinS');   // hidung besar
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'guSkin'); v.box(-1, y, 6, -1, y, 7, 'guSkinS'); }
+  // janggut menebal 1 voxel di depan dagu & rahang
+  for (let z = -1; z <= 3; z++) for (let y = -6; y <= 5; y++) { const x = v.front(y, Math.max(z, 0)); if (x !== null && (z < 0 || v.get(x, y, z) === 'guHair')) v.set(x + 1, y, z, z <= 0 && Math.abs(y + 0.5) > 3.5 ? null : 'guHair'); }
+  // rambut putih: dahi botak lebar, sisi & belakang tebal, gumpalan mencuat ke atas & samping secara acak (n ganjil)
+  const hair = new Vox();
+  for (let z = 4; z <= 15; z++) hair.rrect(z, -9, -10, 6, 9, 'guHair', z <= 11 ? 4 : 5);
+  for (let z = 16; z <= 18; z++) hair.rrect(z, -8, -8, 3, 7, 'guHair', 4);
+  const zmin = (x, y) => x >= 4 ? 99 : x >= 1 ? (Math.abs(y + 0.5) > 5.5 ? 9 : 15) : Math.abs(y + 0.5) > 6.5 ? 6 : 4;
+  hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= zmin(x, y)) v.set(x, y, z, c); });
+  for (const [x, y, z, h] of [[-3, -9, 13, 4], [-2, 8, 12, 5], [-6, -6, 18, 4], [-4, 5, 18, 5], [0, -2, 18, 3], [-8, 0, 15, 4], [-1, 3, 17, 4]]) {   // jambul mencuat
+    for (let k = 0; k <= h; k++) { const dx = x < -4 ? -1 : 0, dy = y < -6 ? -1 : y > 6 ? 1 : 0, dz = Math.abs(y) > 6 ? 0 : 1; v.set(x + dx * k, y + dy * k, z + dz * k, k === h ? 'guHairS' : 'guHair'); v.set(x + dx * k, y + dy * k + (k % 2 ? 1 : 0), z + dz * k, 'guHair'); }
+  }
+  // kacamata bulat tebal bingkai hitam, lensa tebal
+  const fx = v.front(-1, 10) + 1;
+  for (const cy of [-3.5, 2.5]) for (let y = -8; y <= 7; y++) for (let z = 6; z <= 13; z++) { const d = Math.hypot(y - cy, z - 9.5); if (d > 2 && d <= 3.1) v.set(fx, y, z, 'guFrame'); }
+  v.set(fx, -2, 11, 'guLens'); v.set(fx, 4, 11, 'guLens');
+  for (const y of [-1, 0]) v.set(fx, y, 10, 'guFrame');
+  for (const y of [-8, 7]) for (let x = fx - 1; x >= -1; x--) if (!v.has(x, y, 10)) v.set(x, y, 10, 'guFrame');
+  return v;
+}
+
+/* ---------- badan (sisi +y; sisi -y = cermin) */
+function stains(v, c) {   // noda reaksi warna-warni di jas lab (hijau, ungu, kuning, gosong)
+  for (const [y, z, k] of [[-6, 40, 'nodaH'], [-5, 40, 'nodaH'], [-6, 39, 'nodaH'], [4, 37, 'nodaU'], [5, 37, 'nodaU'], [4, 36, 'nodaU'], [2, 50, 'nodaK'], [-7, 47, 'nodaG'], [-6, 47, 'nodaG']]) v.pf(y, z, k);
+  for (const [y, z, k] of [[3, 44, 'nodaH'], [2, 44, 'nodaH'], [-4, 38, 'nodaG']]) v.pb(y, z, k);
+}
+function chest(o) {
+  const v = new Vox(), T = o.top;
+  const body = T === 'lab' ? 'labC' : T === 'rompi' ? 'rompiG' : 'kardiG';
+  for (let z = 34; z <= 56; z++) { const w = z <= 40 ? 1 : z <= 46 ? 0 : -1, t = z === 56 ? 1 : 0; v.rrect(z, -5, -8 + w + t, 4 - t + (z <= 44 ? 1 : 0), 7 - w - t, body, z >= 55 ? 4 : 3); }
+  v.rbox(-3, -3, 57, 2, 2, 60, 'guSkin', 2);
+  // bagian depan terbuka: kemeja krem + dasi kupu-kupu merah
+  for (let z = 34; z <= 56; z++) for (let y = -3; y <= 2; y++) { const x = v.front(y, z); if (x !== null) { v.set(x, y, z, null); v.set(x - 1, y, z, 'kemG'); } }
+  for (const [y, z] of [[-3, 55], [-2, 55], [-2, 56], [-3, 56], [1, 55], [2, 55], [1, 56], [2, 56], [-1, 55], [0, 55]]) v.pf(y, z, 'dasiG');   // dasi kupu-kupu
+  for (let z = 57; z <= 58; z++) v.shell(z, -4, -5, 3, 4, T === 'lab' ? 'labC' : 'kemG', 2);
+  for (let y = -2; y <= 1; y++) for (const x of [3, 4]) for (const z of [57, 58]) { const k = v.get(x, y, z); if (k === 'labC' || k === 'kemG') v.set(x, y, z, null); }
+  if (T === 'lab') {   // kerah lebar jas lab + saku dada berisi pulpen & termometer
+    for (let z = 48; z <= 56; z++) for (const y of [-4, 3]) v.pf(y, z, 'labS');
+    for (let y = -7; y <= -5; y++) v.pf(y, 48, 'labS');
+    v.pf(-6, 49, 'dasiG'); v.pf(-5, 50, 'guFrame'); v.pf(-5, 49, 'guFrame');
+    stains(v, body);
+  } else if (T === 'rompi') { for (let z = 34; z <= 50; z += 4) v.pf(-4, z, 'rompiGS'); }
+  return v;
+}
+function pelvis(o) {
+  const v = new Vox();
+  v.rbox(-5, -7, 28, 4, 6, 33, 'celG2', 3); v.box(-4, -2, 26, 3, 1, 27, 'celG2');
+  v.rbox(-5, -7, 32, 4, 6, 33, 'leather', 3);
+  if (o.top === 'lab') {   // jas lab panjang sampai paha, terbuka di depan
+    for (let z = 22; z <= 33; z++) { v.shell(z, -6, -8, 6, 7, 'labC', 3); for (let y = -3; y <= 2; y++) for (let x = 3; x <= 7; x++) if (v.get(x, y, z) === 'labC') v.set(x, y, z, null); }
+    for (const y of [-7, 6]) for (let z = 26; z <= 29; z++) v.pf(y, z, 'labS');
+    v.pf(-6, 24, 'nodaU'); v.pf(5, 30, 'nodaH'); v.pb(-3, 25, 'nodaK');
+  }
+  return v;
+}
+const sleeveC = o => o.top === 'lab' ? 'labC' : o.top === 'rompi' ? 'kemG' : 'kardiG';
+function arm(o) { const v = new Vox(), c = sleeveC(o); v.rbox(-3, 7, 43, 2, 12, 55, c, 2); v.rrect(56, -3, 7, 2, 12, c, 3); if (o.top === 'lab') v.set(2, 12, 50, 'nodaK'); return v; }
+function fore(o, side) {
+  const v = new Vox(), c = sleeveC(o);
+  v.rbox(-3, 7, 31, 2, 12, 42, c, 2);
+  if (o.top === 'lab') { v.rbox(-4, 6, 31, 3, 13, 34, 'labC', 2); v.set(3, 9, 38, 'nodaH'); }   // manset lebar
+  v.rbox(-3, 7, 27, 3, 12, 30, 'guSkin', 2); v.rrect(26, -2, 8, 2, 11, 'guSkin', 2);
+  if (side > 0 && o.top === 'lab') {   // gelas kimia berisi cairan hijau berasap
+    for (let z = 20; z <= 28; z++) for (let x = 2; x <= 7; x++) for (let y = 7; y <= 12; y++) { const d = Math.hypot(x - 4.5, y - 9.5); if (d <= 2.8 && (d > 1.8 || z === 20 || z <= 24)) v.set(x, y, z, z <= 24 && d <= 1.8 ? 'cairan' : 'gelas'); }
+    for (const [x, y, z] of [[4, 9, 29], [5, 10, 30], [4, 10, 31], [5, 9, 32], [4, 10, 34]]) v.set(x, y, z, 'asap');
+  }
+  if (side < 0) v.paint(-3, 7, 30, 2, 12, 30, 'pantoG');   // jam kulit tua
+  return v;
+}
+function thigh() { const v = new Vox(); v.rbox(-4, 2, 18, 3, 7, 31, 'celG2', 3); v.rrect(32, -3, 2, 2, 7, 'celG2', 3); return v; }
+function shin() { const v = new Vox(); v.rbox(-4, 2, 6, 3, 7, 18, 'celG2', 3); v.rrect(19, -3, 2, 2, 7, 'celG2', 3); return v; }
+function foot() {   // sepatu kulit cokelat tua, sedikit usang
+  const v = new Vox();
+  v.rbox(-4, 1, 0, 7, 8, 0, 'belt', 3); v.rbox(-4, 1, 1, 7, 8, 3, 'pantoG', 3); v.rbox(-4, 2, 4, 2, 7, 5, 'pantoG', 2);
+  for (const x of [1, 3]) v.paint(x, 3, 4, x, 6, 4, 'lace');
+  return v;
+}
+
+const OUTFITS = {
+  lab: { name: 'Lab: jas lab bernoda + kemeja krem + dasi kupu-kupu + gelas kimia berasap', top: 'lab' },
+  rompi: { name: 'Mengajar teori: rompi wol cokelat + kemeja krem + dasi kupu-kupu', top: 'rompi' },
+  kardigan: { name: 'Rumah: kardigan rajut bata + kemeja krem', top: 'kardigan' },
+};
+function build(opt = {}) {
+  // game memanggil 'seragam': Pak Gunadi memakai jas lab
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.lab), expr: opt.expr || 'biasa', face: opt.face };
+  const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o);
+  return assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['chest', chest(o), PV.chest], ['pelvis', pelvis(o), PV.pelvis],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'guSkin', shoulder: sl, elbow: sl, hip: 'celG2', knee: 'celG2' }, SKEL, TAIL);
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
+// ===== melati.js
+NS.melati = (() => {
+// Bu Melati: guru Seni Musik pembina band & pensi, 30-an, nyentrik dan hangat. Rambut hitam panjang bergelombang
+// tergerai sampai punggung dengan jepit bunga kamboja, gaun tenun ikat etnik merah muda-ungu, selendang, gelang kayu
+// bertumpuk, kalung manik, sandal kulit. Rangka keluarga Nadia (skala 1.25), voxel 1/64 petak.
+const {  Vox  } = NS.vox;
+const {  pivots  } = NS.rig;
+const {  addRamps, assemble, paintFace  } = NS.model;
+const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
+
+const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
+const PV = pivots(SKEL);
+const TAIL = [-5, 0, 1];
+
+addRamps({
+  meSkin: ['#ae7a54', '#c8906a', '#d9a07a', '#e6b28e'], meSkinS: ['#c08862'], meBlush: ['#d8806a'],
+  meHair: ['#0e0806', '#160e0a', '#20140e', '#2e1e16'], meHairT: ['#40281c'], kamboja: ['#f8f4ea'], kambojaC: ['#f0c040'],
+  tenun: ['#9a3a6a', '#b04a7c', '#c25a8a', '#d2709c'], tenunS: ['#4a1a3a'], tenunK: ['#f2d27a'], tenunU: ['#5a2a7a'],
+  selendang: ['#d88a2a', '#e89a3a', '#f2ac4e', '#fac068'], kayu: ['#6a3e1e', '#7e4c26', '#925a2e', '#a66a3a'], manik: ['#2aa0a0'], manikM: ['#e04a3a'],
+  hitamM: ['#141216', '#1c1a1e', '#262428', '#343236'], linen: ['#d8ccb0', '#e4dac0', '#eee6d0', '#f6f0e0'], linenS: ['#c0b494'],
+  sandalM: ['#6a4024', '#7e4c2c', '#925a34', '#a86a40'],
+});
+
+/* ---------- wajah: alis tebal melengkung ekspresif, mata besar bercelak, senyum lebar hangat tepat di bawah hidung, tahi lalat */
+const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', r: 'meBlush', s: 'meSkinS' };
+const F0 = '..............';
+const F = (brow, eyes, mouth) => [F0, F0, F0, brow, F0, ...eyes, F0, F0, F0, ...mouth, F0, F0];   // alis z 11, mata z 9..8, mulut z 4
+const BROW = '.BBBB....BBBB.';
+const EYE = ['.KKKK....KKKK.', '..WKK....KKW..'];
+const FACES = {
+  biasa: F(BROW, EYE, ['...m......m...', '....mmmmmm....', '.r..........r.']),
+  kedip: F(BROW, [F0, '.KKKK....KKKK.'], ['...m......m...', '....mmmmmm....', '.r..........r.']),
+  marah: F('..BBB....BBB..', ['.KKKK....KKKK.', '..WKK....KKW..'], ['....mmmmmm....', F0, F0]),
+  teriak: F('.BBB......BBB.', ['.KKKK....KKKK.', '..KWK....KWK..'], ['....mTTTTm....', '....mttttm....', '.....mmmm.....']),
+  nyengir: F(BROW, EYE, ['...mTTTTTTm...', '....mmmmmm....', '.r..........r.']),
+  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['...mTTTTTTm...', '....mttttm....', '.r...mmmm...r.']),
+  sakit: F('.BB........BB.', ['.KK........KK.', '...KK....KK...'], ['....mmmmmm....', '....TTTTTT....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+const topZ = (v, x, y) => { for (let z = 30; z >= -20; z--) if (v.has(x, y, z)) return z; return null; };
+const skull = z => z <= 0 ? [-3, -4, 5, 3, 3] : z === 1 ? [-5, -5, 6, 4, 3] : z === 2 ? [-6, -6, 6, 5, 3] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'meSkin', r); }
+  paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
+  v.box(7, -1, 5, 7, 0, 6, 'meSkin'); v.set(7, -1, 4, 'meSkinS');
+  v.set(6, 4, 5, 'meHair');   // tahi lalat
+  // rambut panjang bergelombang belah samping: membingkai wajah sampai bahu, belakang tergerai menempel punggung
+  const hair = new Vox();
+  for (let z = -2; z <= 15; z++) hair.rrect(z, -9, -9, 7, 8, 'meHair', z <= 11 ? 4 : 5);
+  for (let z = 16; z <= 17; z++) hair.rrect(z, -7, -7, 5, 6, 'meHair', 4);
+  const zmin = (x, y) => x >= 5 ? (Math.abs(y + 0.5) > 6.5 ? 0 : y > 2 ? 13 : 14) : x >= 0 ? (Math.abs(y + 0.5) > 6.5 ? -2 : 99) : -2;
+  hair.each((x, y, z, c) => { if (!v.has(x, y, z) && (z >= zmin(x, y) || z >= 13)) v.set(x, y, z, c); });
+  for (let y = -6; y <= 2; y++) { const x = (v.front(y, 13) ?? 6) + 1; if (x <= 8) { v.set(x, y, 13, 'meHair'); if (y <= -3) v.set(x, y, 12, 'meHair'); } }   // poni sapuan miring
+  for (let z = -3; z >= -22; z--) {   // tergerai di punggung, makin bawah makin sempit, ujung bergelombang
+    const w = z >= -10 ? 7 : z >= -17 ? 6 : 4, x0 = z > -4 ? -9 : -7;
+    for (let y = -w - 1; y <= w; y++) { if (z <= -19 && (y + 40) % 3 === 0) continue; for (let x = x0 - 1; x <= x0; x++) if (!v.has(x, y, z)) v.set(x, y, z, 'meHair'); }
+  }
+  v.each((x, y, z, c) => { if (c === 'meHair' && z <= 8 && v.back(y, z) === x && (Math.floor((z + 40) / 3) + y + 40) % 5 === 0) v.set(x, y, z, 'meHairT'); });   // alur gelombang di punggung
+  // jepit bunga kamboja di atas telinga kanan
+  for (const [dy, dz] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) v.set(2, 9 + dy, 11 + dz, dy === 0 && dz === 0 ? 'kambojaC' : 'kamboja');
+  return v;
+}
+
+/* ---------- badan (sisi +y; sisi -y = cermin) */
+const ikat = v => {   // tenun ikat: pita mendatar berulang (zigzag kuning, belah ketupat ungu)
+  v.each((x, y, z, k) => {
+    if (k !== 'tenun') return;
+    const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x, b = ((z + 40) % 8);
+    if (b === 0) v.set(x, y, z, 'tenunS');
+    else if (b === 2 && ((u + 40) % 4 === 0 || (u + 42) % 4 === 0)) v.set(x, y, z, 'tenunK');
+    else if (b === 3 && (u + 41) % 4 === 0) v.set(x, y, z, 'tenunK');
+    else if (b >= 5 && b <= 7 && Math.abs(((u + 40) % 6) - 3) + Math.abs(b - 6) <= 1) v.set(x, y, z, 'tenunU');
+  });
+  return v;
+};
+const dressC = o => ({ etnik: 'tenun', pensi: 'tenun', santai: 'linen' }[o.top]);
+const skirtC = o => o.top === 'santai' ? ['linen', 'linenS'] : ['tenun', 'tenunS'];
+function chest(o) {
+  const v = new Vox(), T = o.top, c = T === 'pensi' ? 'hitamM' : dressC(o);
+  for (let z = 32; z <= 51; z++) { const t = z === 51 ? 1 : 0, w = z >= 37 && z <= 41 ? 1 : 0; v.rrect(z, -4, -6 + t + w, 4 - t, 5 - t - w, c, 3); }
+  v.rbox(-2, -2, 52, 2, 1, 55, 'meSkin', 1);
+  for (let z = 48; z <= 51; z++) for (let y = -3; y <= 2; y++) if (Math.abs(y + 0.5) <= (z - 47) * 0.8) v.pf(y, z, 'meSkin');   // leher V/sabrina
+  if (T === 'etnik') ikat(v);
+  // kalung manik-manik panjang
+  for (let y = -3; y <= 2; y++) { const z = 46 + Math.round(Math.abs(y + 0.5) * 1.2); const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, (y + 40) % 2 ? 'manik' : 'manikM'); }
+  if (T === 'pensi' || T === 'etnik') {   // selendang oranye disampirkan dari bahu kiri ke pinggang kanan
+    for (let z = 32; z <= 52; z++) { const y = Math.round(-6 + (52 - z) * 0.55); for (let dy = -1; dy <= 1; dy++) { const yy = y + dy, x = v.front(yy, z); if (x !== null && yy <= 6) v.set(x + 1, yy, z, (z + dy) % 4 === 0 ? 'tenunK' : 'selendang'); } }
+    for (let z = 44; z <= 53; z++) for (let y = -8; y <= -5; y++) { const x = v.back(y, z); if (x !== null) v.set(x - 1, y, z, 'selendang'); }
+  }
+  if (T === 'santai') for (let z = 32; z <= 47; z++) v.pf(-1, z, 'linenS');
+  return v;
+}
+function pelvis(o) {
+  const [c, cS] = skirtC(o), v = skirtPelvis(c, cS, 20);
+  if (o.top === 'pensi') for (let z = 31; z <= 33; z++) v.shell(z, -5, -7, 4, 6, 'hitamM', 3);
+  return c === 'tenun' ? ikat(v) : v;
+}
+const sleeveC = o => o.top === 'pensi' ? 'hitamM' : dressC(o);
+function arm(o) { const v = new Vox(), c = sleeveC(o); v.rbox(-2, 6, 40, 2, 10, 50, c, 2); v.rrect(51, -2, 6, 2, 10, c, 2); return c === 'tenun' ? ikat(v) : v; }
+function fore(o, side) {
+  const v = new Vox();
+  v.rbox(-2, 6, 31, 2, 10, 39, 'meSkin', 2);   // lengan bajunya sampai siku
+  v.rbox(-2, 6, 27, 3, 10, 30, 'meSkin', 2); v.rrect(26, -1, 7, 2, 9, 'meSkin', 1);
+  for (const [z, k] of side > 0 ? [[31, 'kayu'], [33, 'kayu'], [32, 'tenunK']] : [[31, 'kayu'], [32, 'kayu'], [34, 'kayu'], [33, 'manik']]) v.shell(z, -3, 5, 3, 11, k, 2);   // gelang kayu bertumpuk
+  if (side < 0) for (const [x, y, z] of [[3, 8, 27], [3, 9, 27]]) v.set(x, y, z, 'kayu');   // cincin kayu
+  return v;
+}
+function foot() {   // sandal kulit tali silang
+  const v = new Vox();
+  v.rbox(-4, 1, 0, 6, 6, 0, 'sandalM', 2); v.rbox(-3, 2, 1, 5, 5, 2, 'meSkin', 2); v.rbox(-3, 2, 3, 1, 5, 4, 'meSkin', 2);
+  for (const [x, y] of [[4, 2], [3, 3], [2, 4], [1, 5], [4, 5], [3, 4], [2, 3], [1, 2]]) v.set(x, y, 2, 'sandalM');
+  v.paint(-3, 2, 3, -3, 5, 3, 'sandalM');
+  return v;
+}
+
+const OUTFITS = {
+  etnik: { name: 'Mengajar: gaun tenun ikat merah muda + selendang + gelang kayu + kalung manik', top: 'etnik' },
+  pensi: { name: 'Pensi: atasan hitam + rok tenun + selendang oranye', top: 'pensi' },
+  santai: { name: 'Santai: terusan linen krem + gelang kayu', top: 'santai' },
+};
+function build(opt = {}) {
+  // game memanggil 'seragam': Bu Melati memakai gaun etnik
+  const o = { ...(OUTFITS[opt.outfit] || OUTFITS.etnik), expr: opt.expr || 'biasa', face: opt.face };
+  const [c, cS] = skirtC(o), A = arm(o), Ft = foot(o), sl = sleeveC(o);
+  const p = v => c === 'tenun' ? ikat(v) : v;
+  const Th = p(skirtThigh(c)), Sn = p(skirtShin(c, cS)), panel = s => p(skirtPanel(c, cS, s, 5));
+  const P = assemble([
+    ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
+    ['head', head(o), [0, 0, 0]],
+    ['chest', chest(o), PV.chest],
+    ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
+    ['flapF', panel(1), PV.flapF], ['pelvis', pelvis(o), PV.pelvis], ['flapB', panel(-1), PV.flapB],
+    ['footR', Ft, PV.footR], ['footL', Ft.mirrorY(), PV.footL],
+    ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
+    ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
+  ], { neck: 'meSkin', shoulder: sl, elbow: 'meSkin', hip: c, knee: c }, SKEL, TAIL);
+  P.skirt = skirtInfo(P, c, cS);
+  return P;
+}
+
+return { SKEL, FACES, EXPRS, OUTFITS, build };
+})();
 // ===== chars.js
 NS.chars = (() => {
 // Daftar tokoh voxel halus (1/64 petak). Tiap tokoh: build({ outfit, expr, helm }) -> data untuk voxelFrame.
@@ -6654,6 +8165,16 @@ const {  build: nartiBuild, OUTFITS: NARTI_OUT, EXPRS: NARTI_EX  } = NS.narti;
 const {  build: rtslametBuild, OUTFITS: RTSLAMET_OUT, EXPRS: RTSLAMET_EX  } = NS.rtslamet;
 const {  build: harisBuild, OUTFITS: HARIS_OUT, EXPRS: HARIS_EX  } = NS.haris;
 const {  build: gitoBuild, OUTFITS: GITO_OUT, EXPRS: GITO_EX  } = NS.gito;
+const {  build: rioBuild, OUTFITS: RIO_OUT, EXPRS: RIO_EX  } = NS.rio;
+const {  build: kevinBuild, OUTFITS: KEVIN_OUT, EXPRS: KEVIN_EX  } = NS.kevin;
+const {  build: hartiniBuild, OUTFITS: HARTINI_OUT, EXPRS: HARTINI_EX  } = NS.hartini;
+const {  build: ratnaBuild, OUTFITS: RATNA_OUT, EXPRS: RATNA_EX  } = NS.ratna;
+const {  build: hendroBuild, OUTFITS: HENDRO_OUT, EXPRS: HENDRO_EX  } = NS.hendro;
+const {  build: wawanBuild, OUTFITS: WAWAN_OUT, EXPRS: WAWAN_EX  } = NS.wawan;
+const {  build: sintaBuild, OUTFITS: SINTA_OUT, EXPRS: SINTA_EX  } = NS.sinta;
+const {  build: antonBuild, OUTFITS: ANTON_OUT, EXPRS: ANTON_EX  } = NS.anton;
+const {  build: gunadiBuild, OUTFITS: GUNADI_OUT, EXPRS: GUNADI_EX  } = NS.gunadi;
+const {  build: melatiBuild, OUTFITS: MELATI_OUT, EXPRS: MELATI_EX  } = NS.melati;
 const {  build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX  } = NS.bram;
 const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -6683,6 +8204,16 @@ const CHARS = {
   rtSlamet: { name: 'Pak RT Slamet', build: rtslametBuild, OUTFITS: RTSLAMET_OUT, EXPRS: RTSLAMET_EX },
   pakHaris: { name: 'Pak Haris', build: harisBuild, OUTFITS: HARIS_OUT, EXPRS: HARIS_EX },
   pakGito: { name: 'Pak Gito', build: gitoBuild, OUTFITS: GITO_OUT, EXPRS: GITO_EX },
+  rio: { name: 'Rio', build: rioBuild, OUTFITS: RIO_OUT, EXPRS: RIO_EX },
+  kevin: { name: 'Kevin', build: kevinBuild, OUTFITS: KEVIN_OUT, EXPRS: KEVIN_EX },
+  buHartini: { name: 'Bu Hartini', build: hartiniBuild, OUTFITS: HARTINI_OUT, EXPRS: HARTINI_EX },
+  buRatna: { name: 'Bu Ratna', build: ratnaBuild, OUTFITS: RATNA_OUT, EXPRS: RATNA_EX },
+  pakHendro: { name: 'Pak Hendro', build: hendroBuild, OUTFITS: HENDRO_OUT, EXPRS: HENDRO_EX },
+  pakWawan: { name: 'Pak Wawan', build: wawanBuild, OUTFITS: WAWAN_OUT, EXPRS: WAWAN_EX },
+  buSinta: { name: 'Bu Sinta', build: sintaBuild, OUTFITS: SINTA_OUT, EXPRS: SINTA_EX },
+  mrAnton: { name: 'Mr. Anton', build: antonBuild, OUTFITS: ANTON_OUT, EXPRS: ANTON_EX },
+  pakGunadi: { name: 'Pak Gunadi', build: gunadiBuild, OUTFITS: GUNADI_OUT, EXPRS: GUNADI_EX },
+  buMelati: { name: 'Bu Melati', build: melatiBuild, OUTFITS: MELATI_OUT, EXPRS: MELATI_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };
 

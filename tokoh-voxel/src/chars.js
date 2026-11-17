@@ -26,6 +26,16 @@ import { build as nartiBuild, OUTFITS as NARTI_OUT, EXPRS as NARTI_EX } from './
 import { build as rtslametBuild, OUTFITS as RTSLAMET_OUT, EXPRS as RTSLAMET_EX } from './rtslamet.js';
 import { build as harisBuild, OUTFITS as HARIS_OUT, EXPRS as HARIS_EX } from './haris.js';
 import { build as gitoBuild, OUTFITS as GITO_OUT, EXPRS as GITO_EX } from './gito.js';
+import { build as rioBuild, OUTFITS as RIO_OUT, EXPRS as RIO_EX } from './rio.js';
+import { build as kevinBuild, OUTFITS as KEVIN_OUT, EXPRS as KEVIN_EX } from './kevin.js';
+import { build as hartiniBuild, OUTFITS as HARTINI_OUT, EXPRS as HARTINI_EX } from './hartini.js';
+import { build as ratnaBuild, OUTFITS as RATNA_OUT, EXPRS as RATNA_EX } from './ratna.js';
+import { build as hendroBuild, OUTFITS as HENDRO_OUT, EXPRS as HENDRO_EX } from './hendro.js';
+import { build as wawanBuild, OUTFITS as WAWAN_OUT, EXPRS as WAWAN_EX } from './wawan.js';
+import { build as sintaBuild, OUTFITS as SINTA_OUT, EXPRS as SINTA_EX } from './sinta.js';
+import { build as antonBuild, OUTFITS as ANTON_OUT, EXPRS as ANTON_EX } from './anton.js';
+import { build as gunadiBuild, OUTFITS as GUNADI_OUT, EXPRS as GUNADI_EX } from './gunadi.js';
+import { build as melatiBuild, OUTFITS as MELATI_OUT, EXPRS as MELATI_EX } from './melati.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -55,5 +65,15 @@ export const CHARS = {
   rtSlamet: { name: 'Pak RT Slamet', build: rtslametBuild, OUTFITS: RTSLAMET_OUT, EXPRS: RTSLAMET_EX },
   pakHaris: { name: 'Pak Haris', build: harisBuild, OUTFITS: HARIS_OUT, EXPRS: HARIS_EX },
   pakGito: { name: 'Pak Gito', build: gitoBuild, OUTFITS: GITO_OUT, EXPRS: GITO_EX },
+  rio: { name: 'Rio', build: rioBuild, OUTFITS: RIO_OUT, EXPRS: RIO_EX },
+  kevin: { name: 'Kevin', build: kevinBuild, OUTFITS: KEVIN_OUT, EXPRS: KEVIN_EX },
+  buHartini: { name: 'Bu Hartini', build: hartiniBuild, OUTFITS: HARTINI_OUT, EXPRS: HARTINI_EX },
+  buRatna: { name: 'Bu Ratna', build: ratnaBuild, OUTFITS: RATNA_OUT, EXPRS: RATNA_EX },
+  pakHendro: { name: 'Pak Hendro', build: hendroBuild, OUTFITS: HENDRO_OUT, EXPRS: HENDRO_EX },
+  pakWawan: { name: 'Pak Wawan', build: wawanBuild, OUTFITS: WAWAN_OUT, EXPRS: WAWAN_EX },
+  buSinta: { name: 'Bu Sinta', build: sintaBuild, OUTFITS: SINTA_OUT, EXPRS: SINTA_EX },
+  mrAnton: { name: 'Mr. Anton', build: antonBuild, OUTFITS: ANTON_OUT, EXPRS: ANTON_EX },
+  pakGunadi: { name: 'Pak Gunadi', build: gunadiBuild, OUTFITS: GUNADI_OUT, EXPRS: GUNADI_EX },
+  buMelati: { name: 'Bu Melati', build: melatiBuild, OUTFITS: MELATI_OUT, EXPRS: MELATI_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };

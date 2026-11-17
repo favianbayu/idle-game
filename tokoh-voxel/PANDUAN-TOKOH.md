@@ -1,7 +1,7 @@
 # Panduan membuat tokoh voxel halus (gaya Raka v3)
 
 Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus. Contoh kodenya ada di `src/`
-(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito). Ikuti urutan bagian di bawah saat membuat tokoh baru.
+(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 
 ## 1. Ukuran dan kisi
 
@@ -119,6 +119,15 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
   samping pakai x (`u = v.front(y, z) === x || v.back(y, z) === x ? y : x`), supaya motif tidak memanjang di sisi.
 - Kuncir rendah pria (Bang Jaka): ikat di tengkuk z 4..5, ekor pendek sampai z -7 dan menempel ke punggung (x -9 → -7).
 - Benda kecil di telinga (rokok Pak Gito, pulpen Rizal) harus menempel di y 8 (tepat di luar rambut), bukan y 9 yang melayang.
+- Topi berlidah (Pak Hendro): hapus rambut yang menembus topi (rambut di luar elips topi pada z ≥ 12), dan turunkan alis
+  ke z 10 supaya tidak tertutup lidah topi.
+- Rok pensil (Bu Ratna): panel lurus tanpa melebar ke bawah, hem tinggi (z 15); jangan pakai panel rok A-line.
+- Pola gelombang rambut panjang (Bu Melati) hanya di voxel permukaan belakang; di samping jadi garis mendatar yang aneh.
+  Rambut yang menjuntai di samping wajah harus di luar |y| > 6.5 supaya mata tidak tertutup.
+- Rambut putih/beruban (Pak Gunadi) jangan diberi bintik acak; bentuk acak-acakan cukup dari jambul runcing.
+- Kacamata bulat tebal harus berpusat di baris mata; jangan sampai menutupi alis. Kalau alis tetap tertutup (hijab +
+  kacamata, Bu Sinta), buang kacamatanya.
+- Benda di tangan (HP Kevin, penggaris Bu Ratna, buku Pak Wawan) dibuat kecil dan menempel ke kepalan, bukan melayang.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file
   tokoh lain (misalnya `denim`, `kick` dari `rani.js`) hanya boleh dipakai kalau file itu dimuat lebih dulu di `build.mjs`.
 - Kulit dan rambut mengikuti warna `NPC_STYLES` lama, atau warna kunci di guide desain tokoh (`docs/desain-sma/guide`).
