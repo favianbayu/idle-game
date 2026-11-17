@@ -31,6 +31,9 @@ Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus
 - **Hidung** menonjol 1 voxel di x 7, y -1..0, setinggi 2-3 baris. **Mulut harus tepat di bawah hidung.** Jangan ada
   baris kosong di antara hidung dan baris mulut paling atas. Kalau ada, mulut terlihat terlalu turun ke dagu
   (kasus Nadia, sudah diperbaiki).
+- **Alis dan mata harus berjarak 1 baris kosong** (wajah biasa/kedip/nyengir/ketawa). Alis yang menempel langsung di
+  atas mata terbaca sebagai alis super tebal (kasus Laras, sudah diperbaiki). Poni harus cukup tinggi supaya baris alis
+  tidak tertutup.
 - Mata 2-3 baris. Baris putih (`W`) di sisi luar membuat mata terbaca dari jauh. Pipi merah memakai bahan satu warna.
 - Semua tokoh wajib punya 7 ekspresi: `biasa, kedip, marah, teriak, nyengir, ketawa, sakit`. `expr.js` memilihnya otomatis dari gerakan.
 - Ciri khusus dilukis di peta wajah, misalnya bekas luka memotong alis (Arga), plester (Rani), atau lesung pipit.

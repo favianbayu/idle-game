@@ -28,8 +28,8 @@ const F0 = '..............';
 const F = (brow, eyes, mid, mouth) => [F0, F0, F0, ...brow, ...eyes, mid, ...mouth, F0, F0];
 const CH = '.rr........rr.';
 export const FACES = {
-  biasa: F(['..............', '..BBB....BBB..'], ['.KKKK....KKKK.', '.WKKK....KKKW.', '..KK......KK..'], CH, ['....m....m....', '.....mmmm.....', '..............']),
-  kedip: F(['..............', '..BBB....BBB..'], ['..............', '..............', '.KKKK....KKKK.'], CH, ['....m....m....', '.....mmmm.....', '..............']),
+  biasa: F(['..BBB....BBB..', '..............'], ['.KKKK....KKKK.', '.WKKK....KKKW.', '..KK......KK..'], CH, ['....m....m....', '.....mmmm.....', '..............']),
+  kedip: F(['..BBB....BBB..', '..............'], ['..............', '..............', '.KKKK....KKKK.'], CH, ['....m....m....', '.....mmmm.....', '..............']),
   marah: F(['..BB......BB..', '....B....B....'], ['.KKKK....KKKK.', '.WKKK....KKKW.', '..KK......KK..'], CH, ['..............', '....mmmmmm....', '....m....m....']),
   teriak: F(['..BB......BB..', '....B....B....'], ['.KKKK....KKKK.', '.WKKK....KKKW.', '..KK......KK..'], CH, ['....mmmmmm....', '....mTTgTm....', '.....mttm.....']),
   nyengir: F(['..BBB....BBB..', '..............'], ['.KKKK....KKKK.', '.WKKK....KKKW.', '..KK......KK..'], CH, ['...m......m...', '....TTgTTT....', '.....mmmm.....']),
@@ -38,7 +38,7 @@ export const FACES = {
 };
 export const EXPRS = Object.keys(FACES);
 
-const FR = [6, 9, 11, 12, 11, 12, 12, 11, 12, 12, 11, 12, 9, 6];   // poni pendek berantakan
+const FR = [6, 9, 12, 13, 12, 13, 13, 12, 13, 13, 12, 13, 9, 6];   // poni pendek berantakan, cukup tinggi supaya alis + jarak ke mata kelihatan
 const topZ = (v, x, y) => { for (let z = 24; z >= -20; z--) if (v.has(x, y, z)) return z; return null; };
 function head(o) {
   const v = new Vox();
