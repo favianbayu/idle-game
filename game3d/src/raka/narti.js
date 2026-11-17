@@ -12,12 +12,12 @@ const TAIL = [-5, 0, 1];
 
 addRamps({
   nrSkin: ['#a8724c', '#c48a62', '#d9a07a', '#e8b490'], nrSkinS: ['#c08660'], nrBlush: ['#d88a76'],
-  bergo: ['#5e2448', '#74305a', '#8a3a6a', '#a24e80'], bergoS: ['#4a1c38'], bunga: ['#e87aa8'], bungaC: ['#f6d27a'],
+  bergo: ['#5e2448', '#74305a', '#8a3a6a', '#a24e80'], bergoS: ['#4a1c38'], nrBunga: ['#e87aa8'], bungaC: ['#f6d27a'],
   bergoP: ['#5a1e2a', '#6e2634', '#82303e', '#9a4050'], bergoPS: ['#46161e'], bergoK: ['#b8a888', '#ccbc9c', '#e0d2b4', '#ece2ca'], bergoKS: ['#a89878'],
-  daster: ['#b04a38', '#c85c44', '#e0705a', '#ec8a72'], dasterS: ['#8a3424'], dasterK: ['#f6d27a'],
+  nrDaster: ['#b04a38', '#c85c44', '#e0705a', '#ec8a72'], nrDasterS: ['#8a3424'], dasterK: ['#f6d27a'],
   brokat: ['#c8b48a', '#dac8a0', '#ecdcb8', '#f6ecd0'], brokatS: ['#b8a47a'], rokB: ['#4a2a18', '#5a3420', '#6e4228', '#865436'], rokBS: ['#2e1a0e'], rokBK: ['#c89a4a'],
   gamis: ['#1e4a3a', '#265a46', '#2e6a52', '#3a8064'], gamisS: ['#163a2c'],
-  jepitN: ['#2a5a3a', '#326a44', '#3a7a4a', '#4a8c5a'], selop: ['#3a2418', '#4a2e1e', '#5a3a26', '#6e4a32'],
+  jepitN: ['#2a5a3a', '#326a44', '#3a7a4a', '#4a8c5a'], nrSelop: ['#3a2418', '#4a2e1e', '#5a3a26', '#6e4a32'],
   kipas: ['#b89a5a', '#ccae6a', '#dcc07c', '#ead292'], kipasS: ['#8a6a3a'], kacaN: ['#a88a4a'], lensN: ['#d8e8ee'],
   tasN: ['#6a1a1a', '#7e2222', '#942a2a', '#aa3a3a'], tasNG: ['#d8b860'],
 });
@@ -67,7 +67,7 @@ function head(o) {
   for (let z = -6; z <= 0; z++) h.rrect(z, -7, -8, 7, 7, c, 4);   // bawah dagu & leher (bergo tanpa peniti)
   h.each((x, y, z, k) => { if (v.has(x, y, z)) return; if (x >= 3 && z >= 0 && open(y, z)) return; v.set(x, y, z, k); });
   for (let y = -6; y <= 5; y++) for (const z of [13, 14]) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === 13 ? cS : c); }   // pet di dahi
-  if (o.flower) flowers(v, c, 'bunga', 'bungaC');
+  if (o.flower) flowers(v, c, 'nrBunga', 'bungaC');
   for (let z = 0; z <= 12; z++) for (let y = -9; y <= 8; y++) { const x = v.front(y, z); if (x !== null && x >= 6 && v.get(x, y, z) !== 'nrSkin' && !open(y, z) && open(y + (y < 0 ? 1 : -1), z) && !FCH_SKIN(v.get(x, y, z))) v.set(x, y, z, cS); }
   // kacamata baca kecil di ujung hidung: bingkai cokelat tipis setengah lingkar, gagang ke telinga (masuk ke bergo)
   const fx = 8;
@@ -77,7 +77,7 @@ function head(o) {
   for (const y of [-7, 6]) v.set(fx, y, 7, 'kacaN');
   return v;
 }
-const FCH_SKIN = k => k === 'bunga' || k === 'bungaC';
+const FCH_SKIN = k => k === 'nrBunga' || k === 'bungaC';
 
 /* ---------- badan gempal (sisi +y; sisi -y = cermin) */
 function drape(v, c, cS) {   // kain bergo jatuh membulat menutup bahu, dada, punggung atas
@@ -101,7 +101,7 @@ const batik = (v, c, cS, cK) => {   // daster batik: kisi belah ketupat + titik 
   });
   return v;
 };
-const dress = o => ({ daster: ['daster', 'dasterS', 'dasterK'], arisan: ['rokB', 'rokBS', 'rokBK'], pengajian: ['gamis', 'gamisS', null] }[o.top]);
+const dress = o => ({ daster: ['nrDaster', 'nrDasterS', 'dasterK'], arisan: ['rokB', 'rokBS', 'rokBK'], pengajian: ['gamis', 'gamisS', null] }[o.top]);
 const pat = (o, v) => { const [c, cS, cK] = dress(o); return cK ? batik(v, c, cS, cK) : v; };
 const topC = o => o.top === 'arisan' ? 'brokat' : dress(o)[0];
 function chest(o) {
@@ -111,12 +111,12 @@ function chest(o) {
     v.rrect(z, -5, -8 + t, 5 + bel - t, 7 - t, c, 4);
   }
   v.rbox(-2, -2, 52, 2, 1, 55, o.hijab, 1);
-  if (o.top === 'daster') { for (let z = 40; z <= 50; z++) v.pf(0, z, 'dasterS'); v.pf(-1, 50, 'dasterK'); v.pf(-1, 46, 'dasterK'); }   // kancing daster
+  if (o.top === 'daster') { for (let z = 40; z <= 50; z++) v.pf(0, z, 'nrDasterS'); v.pf(-1, 50, 'dasterK'); v.pf(-1, 46, 'dasterK'); }   // kancing daster
   if (o.top === 'arisan') { v.each((x, y, z, k) => { if (k === 'brokat' && ((x * 3 + y * 5 + z * 7) % 9 === 0 || (x + y + z) % 7 === 0)) v.set(x, y, z, 'brokatS'); }); }   // renda brokat
   if (o.top === 'pengajian') for (let z = 34; z <= 50; z++) v.pf(0, z, 'gamisS');
   pat(o, v);
   drape(v, o.hijab, o.hijab + 'S');
-  if (o.flower) flowers(v, o.hijab, 'bunga', 'bungaC');
+  if (o.flower) flowers(v, o.hijab, 'nrBunga', 'bungaC');
   return v;
 }
 function pelvis(o) {
@@ -129,7 +129,7 @@ const sleeveC = o => o.top === 'arisan' ? 'brokat' : dress(o)[0];
 function arm(o) {
   const v = new Vox(), c = sleeveC(o);
   v.rbox(-3, 5, 40, 3, 11, 50, c, 3); v.rrect(51, -3, 5, 3, 11, c, 3);
-  if (o.top === 'daster') v.shell(40, -4, 4, 4, 12, 'dasterS', 3);
+  if (o.top === 'daster') v.shell(40, -4, 4, 4, 12, 'nrDasterS', 3);
   return pat(o, v);
 }
 function fore(o, side) {
@@ -158,8 +158,8 @@ function foot(o) {
     for (const [x, y] of [[4, 4], [3, 3], [3, 5], [2, 2], [2, 6]]) v.set(x, y, 2, 'jepitN');
     return v;
   }
-  v.rbox(-4, 1, 0, 6, 7, 0, 'sole', 2); v.rbox(-4, 1, 1, 6, 7, 2, 'selop', 2); v.rbox(-3, 2, 3, 2, 6, 4, 'nrSkin', 2);   // selop
-  for (let y = 2; y <= 6; y++) v.set(5, y, 3, 'selop');
+  v.rbox(-4, 1, 0, 6, 7, 0, 'sole', 2); v.rbox(-4, 1, 1, 6, 7, 2, 'nrSelop', 2); v.rbox(-3, 2, 3, 2, 6, 4, 'nrSkin', 2);   // selop
+  for (let y = 2; y <= 6; y++) v.set(5, y, 3, 'nrSelop');
   return v;
 }
 

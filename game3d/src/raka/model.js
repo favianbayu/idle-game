@@ -31,7 +31,7 @@ export const RAMPS = {
 // daftar bahan bersama untuk semua tokoh (indeks 1..n, maks 65535; kisi memakai Uint16Array); tokoh lain menambah lewat addRamps()
 const MAT = [], MI = {}, RAMP_RGB = [];
 const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
-export function addRamps(o) { for (const k in o) { RAMPS[k] = o[k]; if (!MI[k]) { MAT.push(k); MI[k] = MAT.length; RAMP_RGB.push(null); } RAMP_RGB[MI[k] - 1] = o[k].map(hex); } }
+export function addRamps(o) { for (const k in o) { if (RAMPS[k] && RAMPS[k].join() !== o[k].join()) console.warn('bahan dobel dengan warna beda: ' + k); RAMPS[k] = o[k]; if (!MI[k]) { MAT.push(k); MI[k] = MAT.length; RAMP_RGB.push(null); } RAMP_RGB[MI[k] - 1] = o[k].map(hex); } }
 addRamps(RAMPS);
 export const mi = c => { const i = MI[c]; if (!i) throw new Error('bahan tidak dikenal: ' + c); return i; };
 

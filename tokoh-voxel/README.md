@@ -1,12 +1,13 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
 Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya yang sama dengan Raka v3
-(yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sudah dipasang di game (`game3d/src/raka/`,
+(yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sampai Bu Melati sudah dipasang di game (`game3d/src/raka/`,
 peta `FINE` di `voxworker.js`) dengan baju `seragam` (tokoh bukan siswa memakai baju hariannya). Wulan dan Pak RT Slamet
 memakai sid baru `wulan` dan `rtSlamet`. Gilang memikul galon (gerakan `galon`/`galonWalk`) saat sedang mengantar,
-dan galonnya ditaruh saat berantem.
+dan galonnya ditaruh saat berantem. Pak Ujang, Mak Iyah, Ama, dan warga Kenanga (Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini,
+Pak Joko, Teh Euis, Koh Ahong) masih pratinjau, menunggu persetujuan.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
@@ -47,6 +48,16 @@ dan galonnya ditaruh saat berantem.
 | Mr. Anton | guru Bahasa Inggris, pembina debat | 1.34 | 89 | jambul + fade, jam pintar, kemeja lengan digulung |
 | Pak Gunadi | guru Fisika & Kimia | 1.34 | 90 | rambut putih acak-acakan, janggut putih, kacamata bulat hitam tebal, jas lab bernoda + gelas kimia berasap |
 | Bu Melati | guru Seni Budaya, pembina band | 1.24 | 80 | rambut panjang bergelombang + jepit kamboja, gelang kayu, kalung manik, sandal |
+| Pak Ujang | penjaga sekolah, kakek Arga | 1.24 | 86 | kurus agak bungkuk, rambut & kumis putih, topi pet abu, kaus abu, sapu lidi, serenceng kunci |
+| Mak Iyah | warung belakang sekolah | 1.2 | 79 | pendek gempal, kain batik diikat di kepala, daster bunga, celemek bernoda minyak, sutil |
+| Ama | nenek Mei, penjaga Toko Buku Pena | 1.2 | 80 (termasuk sanggul) | rambut putih disanggul + tusuk giok, kacamata tebal, samfu bunga, kipas lipat merah, gelang giok |
+| Mbah Karto | warga Kenanga (pengisi) | 1.22 | 84 | botak, rambut putih tapal kuda, kacamata bulat, kaus oblong + sarung kotak, tongkat |
+| Bu Sum | penjual sayur gerobak (pengisi) | 1.22 | 85 (termasuk caping) | bergo hijau, caping, kaus oranye, kain batik, tas pinggang uang, seikat kangkung |
+| Pak Darmin | tukang ojek pangkalan (pengisi) | 1.32 | 84 | kulit gelap, cepak, kumis, rompi oranye nomor 07 + jaket jeans, handuk leher, helm di tangan |
+| Mbak Rini | ibu muda menggendong bayi (pengisi) | 1.24 | 83 (termasuk cepol) | cepol asal, kantung mata, kaus pink, kulot, gendongan jarik + bayi bertopi kuning |
+| Pak Joko | tukang las (pengisi) | 1.36 | 97 (termasuk topeng las) | badan besar, cambang, topeng las diangkat, wearpack biru bolong, sarung tangan kulit |
+| Teh Euis | penjual pecel (pengisi) | 1.22 | 79 | kerudung pink, blus toska, celemek batik merah, kain batik, pincuk pecel |
+| Koh Ahong | pemilik toko kelontong (pengisi) | 1.32 | 84 | perut buncit, rambut sisir samping menutupi botak, mata sipit, singlet + kolor kotak, kalkulator |
 | Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
@@ -90,6 +101,16 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Mr. Anton**: kemeja digulung, debat (blazer + kaus putih), denim.
 - **Pak Gunadi**: jas lab bernoda + gelas kimia berasap, rompi, kardigan.
 - **Bu Melati**: etnik (tenun ikat + selendang), pensi, santai (linen).
+- **Pak Ujang**: kerja (topi pet + kaus abu + sapu lidi + kunci), dinas (seragam penjaga hijau zaitun + papan nama), rumah (peci + kaus oblong + sarung + gembor).
+- **Mak Iyah**: warung (ikat kepala batik + daster bunga + celemek + sutil), ke pasar (kerudung putih + kebaya encim + selendang + sarung batik + tas anyaman), pengajian (kerudung putih + gamis ungu + tasbih).
+- **Ama**: jaga toko (samfu biru bunga + celana hitam + kipas lipat), bikin bakpao (celemek + kukusan bambu), Imlek (blus merah bersulam emas + angpao).
+- **Mbah Karto**: teras (kaus oblong + sarung + tongkat), pos ronda (peci + jaket lusuh + sarung di leher + kopi).
+- **Bu Sum**: keliling jualan (caping + kaus oranye + kain batik + tas pinggang + kangkung), di rumah (daster batik).
+- **Pak Darmin**: mangkal (rompi ojek + jaket jeans + helm), sepi orderan (kaus kuning + celana pendek + rokok di telinga).
+- **Mbak Rini**: sehari-hari (cepol + kaus pink + gendongan), ke posyandu (kerudung biru + tunik + buku KIA).
+- **Pak Joko**: ngelas (topeng las + wearpack + sarung tangan kulit), sore (kaus kutang + celana kerja + palu).
+- **Teh Euis**: jualan pecel (kerudung pink + blus toska + celemek batik + pincuk), hari Minggu (kerudung krem + gamis kuning).
+- **Koh Ahong**: jaga toko (singlet + kolor kotak + kalkulator + pensil di telinga), Imlek (kemeja merah motif koin + jeruk).
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai

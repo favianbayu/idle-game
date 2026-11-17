@@ -19,7 +19,7 @@ addRamps({
   jaketR: ['#2a3a2a', '#324632', '#3a523a', '#4a6448'], sarungR: ['#2a3a6a', '#32447c', '#3c5090', '#4a60a4'], sarungRS: ['#1a2448'], sarungRK: ['#d8d0b0'],
   senter: ['#b8b8c0', '#cacad2', '#dadae2', '#ececf2'], senterL: ['#fff4b0'],
   merah: ['#a81c1c', '#c02424', '#d43030', '#e44848'], putihR: ['#d8d8d4', '#e6e6e2', '#f2f2ee', '#fafaf6'],
-  trainR: ['#1a2a4a', '#22345a', '#2a406c', '#3a5282'], handuk: ['#d8d0c0', '#e6dece', '#f2eadc', '#faf4ea'], handukS: ['#c86a4a'],
+  trainR: ['#1a2a4a', '#22345a', '#2a406c', '#3a5282'], rtHanduk: ['#d8d0c0', '#e6dece', '#f2eadc', '#faf4ea'], handukS: ['#c86a4a'],
 });
 
 /* ---------- wajah: alis tebal agak beruban, mata ramah, senyum lebar sopan tepat di bawah hidung, tahi lalat di pipi kanan */
@@ -107,10 +107,10 @@ function chest(o) {
     const near = Math.abs(y + 0.5) <= 7.5 && Math.abs(y + 0.5) >= 2.5;
     if (!near) continue;
     const xf = v.front(y, Math.min(z, 56)), xb = v.back(y, Math.min(z, 56));
-    if (z <= 56 && Math.abs(y + 0.5) <= 4.5 && xf !== null) { v.set(xf + 1, y, z, 'handuk'); }
-    if (z >= 57 && xf !== null) for (let x = xb - 1; x <= xf + 1; x++) v.set(x, y, z, 'handuk');
+    if (z <= 56 && Math.abs(y + 0.5) <= 4.5 && xf !== null) { v.set(xf + 1, y, z, 'rtHanduk'); }
+    if (z >= 57 && xf !== null) for (let x = xb - 1; x <= xf + 1; x++) v.set(x, y, z, 'rtHanduk');
   }
-  v.each((x, y, z, c) => { if (c === 'handuk' && (y + 40) % 5 === 0) v.set(x, y, z, 'handukS'); });
+  v.each((x, y, z, c) => { if (c === 'rtHanduk' && (y + 40) % 5 === 0) v.set(x, y, z, 'handukS'); });
   return v;
 }
 function pelvis(o) {

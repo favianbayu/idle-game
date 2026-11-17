@@ -18,7 +18,7 @@ addRamps({
   uJersey: ['#1c3358', '#22406e', '#2a4a7a', '#3c6296'], uNum: ['#e8e8e8'], decker: ['#151417', '#1f1e22', '#2b2a30', '#3e3d45'],
   futsal: ['#8a1c1c', '#a82424', '#c83030', '#e04848'], kaosK: ['#e2e2dc'],
   wear: ['#141c2c', '#1a2438', '#223048', '#2e405e'], kausH: ['#141316', '#1c1b1f', '#26252a', '#38363d'], sarungT: ['#b8b2a4', '#cfc9bb', '#e2dccf', '#f0ebe0'],
-  bandP: ['#e0b030'], jeansR: ['#22324e', '#2c3e60', '#3a5078', '#4e6894'], benang: ['#d8dce4'],
+  utBandP: ['#e0b030'], jeansR: ['#22324e', '#2c3e60', '#3a5078', '#4e6894'], benang: ['#d8dce4'],
   bootsK: ['#3e2a1a', '#523822', '#6a4a2e', '#86603e'], topiU: ['#561a22', '#6e222c', '#8c2f39', '#a8434e'],
   uShoe: ['#141318', '#1e1d24', '#2b2a32', '#3f3e49'],
 });
@@ -98,7 +98,7 @@ function chest(o) {
   }
   if (W || B) {   // kaus hitam (bengkel) / kaus band motor bersablon roda bersayap (jalan)
     for (let y = -2; y <= 1; y++) v.pf(y, 51, 'uSkin'); v.shell(52, -3, -3, 3, 2, 'kausH', 1);
-    if (B) ['.X.....X.', 'XXX.Y.XXX', '.XXYYYXX.', '...YYY...', '....Y....'].forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.') v.pf(c - 4, 47 - r, ch === 'X' ? 'bandP' : 'benang'); }));
+    if (B) ['.X.....X.', 'XXX.Y.XXX', '.XXYYYXX.', '...YYY...', '....Y....'].forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.') v.pf(c - 4, 47 - r, ch === 'X' ? 'utBandP' : 'benang'); }));
     if (W) for (const [y, z] of [[-3, 40], [-2, 39], [2, 44], [3, 43]]) v.pf(y, z, 'oli');
     return v;
   }

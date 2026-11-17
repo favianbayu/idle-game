@@ -13,7 +13,7 @@ addRamps({
   heSkin: ['#86583a', '#9c6a46', '#b07a52', '#c08c64'], heSkinS: ['#9a6844'], heKumis: ['#120e0c'],
   heHair: ['#1a1410', '#221a14', '#2c221a', '#3a2e24'],
   topiH: ['#9a1e1e', '#b42626', '#cc3030', '#e04848'], topiHS: ['#f2f2f2'], peluit: ['#a8acb4', '#c4c8d0', '#dce0e8', '#f2f4f8'], taliH: ['#1a3a8a'],
-  kausH: ['#a82424', '#c22e2e', '#d23a3a', '#e05252'], kausHS: ['#f2f2f2'], trainH: ['#121c4a', '#18245c', '#1e2c6e', '#283a86'], trainHS: ['#f2f2f2'],
+  heKaus: ['#a82424', '#c22e2e', '#d23a3a', '#e05252'], kausHS: ['#f2f2f2'], trainH: ['#121c4a', '#18245c', '#1e2c6e', '#283a86'], trainHS: ['#f2f2f2'],
   lariH: ['#e4e4e6', '#eeeef0', '#f8f8fa', '#ffffff'], lariHS: ['#d23a3a'],
   wasitH: ['#121214', '#1a1a1e', '#242428', '#323238'], wasitHS: ['#f0d020'], kartuK: ['#f0d020'], kartuM: ['#d02020'],
   batikHe: ['#1a3a3a', '#224848', '#2a5656', '#346868'], batikHeS: ['#0e2222'], batikHeK: ['#d8c080'], celHe: ['#202024', '#2a2a2e', '#343438', '#424248'],
@@ -60,7 +60,7 @@ function head(o) {
 }
 
 /* ---------- badan atletis (sisi +y; sisi -y = cermin) */
-const bodyC = o => ({ olahraga: 'kausH', wasit: 'wasitH', batik: 'batikHe' }[o.top]);
+const bodyC = o => ({ olahraga: 'heKaus', wasit: 'wasitH', batik: 'batikHe' }[o.top]);
 function whistle(v) {   // tali biru melingkar leher + peluit perak tergantung di dada
   for (let z = 49; z <= 57; z++) for (const y of [-4, 3]) { const yy = y + (z < 53 ? (y < 0 ? 1 : -1) * Math.round((53 - z) * 0.5) : 0); const x = v.front(yy, z); if (x !== null) v.set(x + 1, yy, z, 'taliH'); }
   for (let y = -1; y <= 0; y++) { v.set((v.front(y, 48) ?? 5) + 1, y, 48, 'taliH'); }

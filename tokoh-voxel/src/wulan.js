@@ -16,9 +16,9 @@ addRamps({
   wuHair: ['#0a0808', '#121012', '#1a1718', '#28231f'], wuHairT: ['#38302a'], hijauW: ['#4e7a38', '#5e8c44', '#7aa35a', '#94bc74'],
   blazer: ['#1a2440', '#222e50', '#2c3a62', '#3e4e7c'], blazerS: ['#141c34'], spanW: ['#1a2440', '#222e50', '#2c3a62', '#3e4e7c'], spanWS: ['#141c34'],
   hak: ['#121214', '#1a1a1e', '#26262c', '#36363e'], pangsi: ['#0c0c0e', '#141416', '#1c1c20', '#2a2a30'], pangsiS: ['#34343c'],
-  batikW: ['#5a3a20', '#6a4628', '#7a5233', '#94683e'], batikWS: ['#e0c888'],
-  hijauK: ['#3e6a2e', '#4c7c38', '#5e8e44', '#78a85c'], hijauKS: ['#2e5022'], caping: ['#a8884a', '#c09c58', '#d6b46c', '#e8cc88'], capingS: ['#8e7038'],
-  bootsK: ['#18241a', '#203022', '#2a3c2c', '#3a503c'], celanaW: ['#2a2a2e', '#343438', '#404046', '#54545c'],
+  wlBatik: ['#5a3a20', '#6a4628', '#7a5233', '#94683e'], wlBatikS: ['#e0c888'],
+  wlHijau: ['#3e6a2e', '#4c7c38', '#5e8e44', '#78a85c'], wlHijauS: ['#2e5022'], caping: ['#a8884a', '#c09c58', '#d6b46c', '#e8cc88'], capingS: ['#8e7038'],
+  wlBoots: ['#18241a', '#203022', '#2a3c2c', '#3a503c'], celanaW: ['#2a2a2e', '#343438', '#404046', '#54545c'],
   kausW: ['#b8b0a0', '#c8c0b0', '#d8d0c0', '#e8e2d4'], sarungW: ['#5a3a20', '#6a4628', '#7a5233', '#94683e'], sarungWS: ['#d8b870'],
   kotakW: ['#4e7a38', '#5e8c44', '#7aa35a', '#94bc74'], kotakWS: ['#2e4a22'], kanvas: ['#c8c0ac', '#d8d0bc', '#e8e0cc', '#f3f1ea'],
   anyam: ['#8a6234', '#a07442', '#b88a54', '#cca06a'], anyamS: ['#6e4c26'],
@@ -65,8 +65,8 @@ function head(o) {
   for (let y = -2; y <= 1; y++) for (let x = -8; x <= -5; x++) for (const z of [-23, -24]) v.set(x, y, z, 'hijauW');
   for (let z = -25; z >= -28; z--) for (let y = -1; y <= 0; y++) v.set(-6, y, z, 'wuHair');   // ujung kepang
   if (o.ikat) {   // ikat kepala batik melingkar di dahi atas, simpul + ekor di belakang
-    for (let z = 13; z <= 14; z++) { const ring = []; v.each((x, y, zz) => { if (zz === z) ring.push([x, y]); }); for (const [x, y] of ring) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!v.has(x + dx, y + dy, z)) v.set(x + dx, y + dy, z, (x + y + z) % 3 ? 'batikW' : 'batikWS'); }
-    for (const [y, z] of [[-1, 12], [0, 12], [-2, 11], [1, 11], [-2, 10], [1, 10]]) v.set(v.back(y, 13) - 1, y, z, 'batikW');
+    for (let z = 13; z <= 14; z++) { const ring = []; v.each((x, y, zz) => { if (zz === z) ring.push([x, y]); }); for (const [x, y] of ring) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!v.has(x + dx, y + dy, z)) v.set(x + dx, y + dy, z, (x + y + z) % 3 ? 'wlBatik' : 'wlBatikS'); }
+    for (const [y, z] of [[-1, 12], [0, 12], [-2, 11], [1, 11], [-2, 10], [1, 10]]) v.set(v.back(y, 13) - 1, y, z, 'wlBatik');
   }
   if (o.caping) {   // caping bambu kerucut lebar, anyaman garis melingkar
     for (let k = 0; k <= 8; k++) { const z = 14 + k, r = 13.5 - k * 1.6; for (let x = -15; x <= 15; x++) for (let y = -15; y <= 15; y++) { const d = Math.hypot(x + 1, y + 0.5); if (d <= r && d > r - 2.2) v.set(x, y, z, k % 2 ? 'capingS' : 'caping'); } }
@@ -79,7 +79,7 @@ function head(o) {
 /* ---------- badan (sisi +y; sisi -y = cermin) */
 function chest(o) {
   const T = o.top, v = new Vox();
-  const body = { blazer: 'blazer', pangsi: 'pangsi', pemandu: 'hijauK', desa: 'kausW', kota: 'kotakW' }[T];
+  const body = { blazer: 'blazer', pangsi: 'pangsi', pemandu: 'wlHijau', desa: 'kausW', kota: 'kotakW' }[T];
   for (let z = 32; z <= 51; z++) { const t = z === 51 ? 1 : 0, w = z >= 37 && z <= 41 ? 1 : 0; v.rrect(z, -4, -6 + t + w, 4 - t, 5 - t - w, body, 3); }
   v.rbox(-2, -2, 52, 2, 1, 55, 'wuSkin', 1);
   if (T === 'blazer') {   // blazer biru tua terbuka di atas kemeja putih, pin jurusan pariwisata
@@ -98,11 +98,11 @@ function chest(o) {
     return v;
   }
   if (T === 'pemandu') {   // kemeja hijau seragam kebun teh: kerah, saku dada dengan logo daun teh, kancing
-    for (let z = 32; z <= 50; z++) v.pf(0, z, 'hijauKS');
+    for (let z = 32; z <= 50; z++) v.pf(0, z, 'wlHijauS');
     for (let z = 34; z <= 48; z += 4) v.pf(-1, z, 'white');
-    for (let z = 52; z <= 53; z++) v.shell(z, -3, -4, 3, 3, 'hijauK', 2);
+    for (let z = 52; z <= 53; z++) v.shell(z, -3, -4, 3, 3, 'wlHijau', 2);
     for (const [y, z] of [[-1, 50], [0, 50]]) v.pf(y, z, 'wuSkin');
-    for (let z = 43; z <= 46; z++) for (let y = 2; y <= 4; y++) v.pf(y, z, z === 46 ? 'hijauKS' : 'hijauK');
+    for (let z = 43; z <= 46; z++) for (let y = 2; y <= 4; y++) v.pf(y, z, z === 46 ? 'wlHijauS' : 'wlHijau');
     v.pf(3, 44, 'white'); v.pf(3, 45, 'hijauW');
     return v;
   }
@@ -134,18 +134,18 @@ function pelvis(o) {
   if (o.top === 'pangsi') {   // sabuk hijau tingkat tinggi, simpul + ujung menjuntai di kiri
     for (let z = 31; z <= 33; z++) v.shell(z, -5, -7, 5, 6, 'hijauW', 3);
     v.rbox(4, -6, 28, 6, -4, 33, 'hijauW', 1); for (let z = 22; z <= 28; z++) { v.set(5, -6, z, 'hijauW'); v.set(5, -4, z, 'hijauW'); }
-  } else if (o.top === 'pemandu') { v.rbox(-4, -6, 32, 4, 5, 33, 'belt', 3); v.pfBox(-1, 32, 0, 33, 'buckle'); for (let z = 30; z <= 31; z++) v.shell(z, -5, -7, 5, 6, 'hijauK', 3); }
+  } else if (o.top === 'pemandu') { v.rbox(-4, -6, 32, 4, 5, 33, 'belt', 3); v.pfBox(-1, 32, 0, 33, 'buckle'); for (let z = 30; z <= 31; z++) v.shell(z, -5, -7, 5, 6, 'wlHijau', 3); }
   else if (o.top === 'kota') { v.rbox(-4, -6, 32, 4, 5, 33, 'belt', 3); for (let z = 29; z <= 31; z++) v.shell(z, -5, -7, 5, 6, z === 29 ? 'kotakWS' : 'kotakW', 3); }
   return v;
 }
 const batik = v => { v.each((x, y, z, c) => { if (c === 'sarungW' && ((x * 3 + y * 5 + z * 7) % 11 === 0 || ((y + 40) % 6 === 0 && z % 3 === 0))) v.set(x, y, z, 'sarungWS'); }); return v; };   // motif batik titik & garis
 const legC = o => ({ pangsi: 'pangsi', pemandu: 'celanaW', kota: 'jeans', desa: 'sarungW' }[o.top] || 'wuSkin');
-const sleeveC = o => ({ blazer: 'blazer', pangsi: 'pangsi', pemandu: 'hijauK', desa: 'kausW', kota: 'kotakW' }[o.top]);
+const sleeveC = o => ({ blazer: 'blazer', pangsi: 'pangsi', pemandu: 'wlHijau', desa: 'kausW', kota: 'kotakW' }[o.top]);
 function arm(o) {
   const v = new Vox(), c = sleeveC(o), wide = o.top === 'pangsi' ? 1 : 0;
   v.rbox(-2 - wide, 6 - wide, 40, 2 + wide, 10 + wide, 50, c, 2); v.rrect(51, -2, 6, 2, 10, c, 2);
   if (o.top === 'kota') v.each((x, y, z, cc) => { if (cc === 'kotakW' && ((x + 40) % 4 === 0 || z % 4 === 0)) v.set(x, y, z, 'kotakWS'); });
-  if (o.top === 'pemandu') { v.paint(-2, 6, 40, 2, 10, 44, 'wuSkin'); v.shell(45, -3, 6, 3, 11, 'hijauK', 2); }   // lengan digulung
+  if (o.top === 'pemandu') { v.paint(-2, 6, 40, 2, 10, 44, 'wuSkin'); v.shell(45, -3, 6, 3, 11, 'wlHijau', 2); }   // lengan digulung
   return v;
 }
 function fore(o, side) {
@@ -169,15 +169,15 @@ function shin(o) {
   const c = legC(o), v = new Vox();
   if (o.top === 'pangsi') { v.rbox(-4, 0, 9, 3, 7, 17, c, 3); v.rbox(-3, 1, 6, 2, 6, 8, 'pangsi', 2); v.paint(-3, 1, 6, 2, 6, 6, 'pangsiS'); return v; }   // pangsi lebar, ujung diikat
   v.rbox(-3, 1, 6, 2, 6, 17, c, 2); v.rrect(18, -2, 2, 1, 5, c, 2);
-  if (o.top === 'pemandu') v.rbox(-4, 0, 6, 3, 7, 13, 'bootsK', 3);   // boots karet sampai betis
+  if (o.top === 'pemandu') v.rbox(-4, 0, 6, 3, 7, 13, 'wlBoots', 3);   // boots karet sampai betis
   return v;
 }
 function foot(o) {
   const v = new Vox(), T = o.top;
   if (T === 'pangsi') { v.rbox(-3, 1, 0, 6, 6, 2, 'wuSkin', 2); v.rbox(-3, 2, 3, 2, 5, 5, 'wuSkin', 2); return v; }   // bertelanjang kaki
-  if (T === 'pemandu') { v.rbox(-4, 0, 0, 6, 7, 0, 'bootsK', 3); v.rbox(-4, 0, 1, 6, 7, 3, 'bootsK', 3); v.rbox(-4, 0, 4, 2, 7, 5, 'bootsK', 3); return v; }
+  if (T === 'pemandu') { v.rbox(-4, 0, 0, 6, 7, 0, 'wlBoots', 3); v.rbox(-4, 0, 1, 6, 7, 3, 'wlBoots', 3); v.rbox(-4, 0, 4, 2, 7, 5, 'wlBoots', 3); return v; }
   if (T === 'blazer') { v.rbox(-4, 1, 1, 6, 6, 3, 'hak', 2); v.rbox(-3, 2, 4, 1, 5, 4, 'hak', 2); v.box(-4, 3, 0, -3, 4, 0, 'hak'); return v; }   // sepatu hak rendah
-  if (T === 'desa') { v.rbox(-4, 1, 0, 6, 6, 0, 'batikW', 2); v.rbox(-3, 2, 1, 5, 5, 2, 'wuSkin', 2); v.rbox(-3, 2, 3, 2, 5, 5, 'wuSkin', 2); v.paint(2, 1, 1, 2, 6, 2, 'batikW'); return v; }   // sandal
+  if (T === 'desa') { v.rbox(-4, 1, 0, 6, 6, 0, 'wlBatik', 2); v.rbox(-3, 2, 1, 5, 5, 2, 'wuSkin', 2); v.rbox(-3, 2, 3, 2, 5, 5, 'wuSkin', 2); v.paint(2, 1, 1, 2, 6, 2, 'wlBatik'); return v; }   // sandal
   v.rbox(-4, 1, 0, 6, 6, 1, 'white', 2); v.rbox(-4, 1, 2, 6, 6, 3, 'kanvas', 2); v.rbox(-3, 1, 4, 2, 6, 5, 'kanvas', 2); for (const x of [1, 3]) v.paint(x, 2, 4, x, 5, 4, 'lace');   // sepatu kanvas
   return v;
 }

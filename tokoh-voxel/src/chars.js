@@ -36,6 +36,16 @@ import { build as sintaBuild, OUTFITS as SINTA_OUT, EXPRS as SINTA_EX } from './
 import { build as antonBuild, OUTFITS as ANTON_OUT, EXPRS as ANTON_EX } from './anton.js';
 import { build as gunadiBuild, OUTFITS as GUNADI_OUT, EXPRS as GUNADI_EX } from './gunadi.js';
 import { build as melatiBuild, OUTFITS as MELATI_OUT, EXPRS as MELATI_EX } from './melati.js';
+import { build as ujangBuild, OUTFITS as UJANG_OUT, EXPRS as UJANG_EX } from './ujang.js';
+import { build as iyahBuild, OUTFITS as IYAH_OUT, EXPRS as IYAH_EX } from './iyah.js';
+import { build as amaBuild, OUTFITS as AMA_OUT, EXPRS as AMA_EX } from './ama.js';
+import { build as kartoBuild, OUTFITS as KARTO_OUT, EXPRS as KARTO_EX } from './karto.js';
+import { build as sumBuild, OUTFITS as SUM_OUT, EXPRS as SUM_EX } from './sum.js';
+import { build as darminBuild, OUTFITS as DARMIN_OUT, EXPRS as DARMIN_EX } from './darmin.js';
+import { build as riniBuild, OUTFITS as RINI_OUT, EXPRS as RINI_EX } from './rini.js';
+import { build as jokoBuild, OUTFITS as JOKO_OUT, EXPRS as JOKO_EX } from './joko.js';
+import { build as euisBuild, OUTFITS as EUIS_OUT, EXPRS as EUIS_EX } from './euis.js';
+import { build as ahongBuild, OUTFITS as AHONG_OUT, EXPRS as AHONG_EX } from './ahong.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -75,5 +85,15 @@ export const CHARS = {
   mrAnton: { name: 'Mr. Anton', build: antonBuild, OUTFITS: ANTON_OUT, EXPRS: ANTON_EX },
   pakGunadi: { name: 'Pak Gunadi', build: gunadiBuild, OUTFITS: GUNADI_OUT, EXPRS: GUNADI_EX },
   buMelati: { name: 'Bu Melati', build: melatiBuild, OUTFITS: MELATI_OUT, EXPRS: MELATI_EX },
+  pakUjang: { name: 'Pak Ujang', build: ujangBuild, OUTFITS: UJANG_OUT, EXPRS: UJANG_EX },
+  makIyah: { name: 'Mak Iyah', build: iyahBuild, OUTFITS: IYAH_OUT, EXPRS: IYAH_EX },
+  ama: { name: 'Ama', build: amaBuild, OUTFITS: AMA_OUT, EXPRS: AMA_EX },
+  mbahKarto: { name: 'Mbah Karto', build: kartoBuild, OUTFITS: KARTO_OUT, EXPRS: KARTO_EX },
+  buSum: { name: 'Bu Sum', build: sumBuild, OUTFITS: SUM_OUT, EXPRS: SUM_EX },
+  pakDarmin: { name: 'Pak Darmin', build: darminBuild, OUTFITS: DARMIN_OUT, EXPRS: DARMIN_EX },
+  mbakRini: { name: 'Mbak Rini', build: riniBuild, OUTFITS: RINI_OUT, EXPRS: RINI_EX },
+  pakJoko: { name: 'Pak Joko', build: jokoBuild, OUTFITS: JOKO_OUT, EXPRS: JOKO_EX },
+  tehEuis: { name: 'Teh Euis', build: euisBuild, OUTFITS: EUIS_OUT, EXPRS: EUIS_EX },
+  kohAhong: { name: 'Koh Ahong', build: ahongBuild, OUTFITS: AHONG_OUT, EXPRS: AHONG_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };

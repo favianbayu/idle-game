@@ -14,7 +14,7 @@ addRamps({
   hijab: ['#71849c', '#90a3ba', '#b0c1d4', '#cbd8e6'], hijabS: ['#8396ad'], pearl: ['#fbf7ee'],
   cream: ['#b1a891', '#d3c9b1', '#efe3c8', '#fbf3e0'], creamS: ['#d3c9b1'],
   nSkirt: ['#4c505c', '#626773', '#7b808c', '#959aa6'], nSkirtS: ['#555a66'],
-  pantofel: ['#09080b', '#121116', '#1f1e25', '#4a4a56'], strap: ['#5a3420'], pen: ['#2a4fa0'],
+  pantofel: ['#09080b', '#121116', '#1f1e25', '#4a4a56'], nStrap: ['#5a3420'], pen: ['#2a4fa0'],
   almamater: ['#14203f', '#1c2b52', '#263a6a', '#36508a'], almaS: ['#c7a24a'], map: ['#d9ecf2'],
   mint: ['#5f9c80', '#7ab89a', '#9fd3b5', '#bfe6cf'], mintS: ['#7ab89a'],
   kulot: ['#8a6d50', '#a88865', '#c4a47f', '#dbbf9b'], bag: ['#6f5a3f', '#8a7354', '#a68f6c', '#c2ad8a'],
@@ -124,7 +124,7 @@ function fore(o, side) {   // lengan panjang sampai pergelangan; jam kecil tali 
   v.rbox(-2, 6, 31, 2, 10, 39, c, 2);
   v.rbox(-2, 6, 27, 3, 10, 30, 'nSkin', 2); v.rrect(26, -1, 7, 2, 9, 'nSkin', 1);
   v.paint(-2, 6, 31, 2, 10, 31, o.top === 'alma' ? 'cream' : c === 'cream' ? 'creamS' : 'mintS');
-  if (side < 0) { v.paint(-2, 6, 30, 2, 10, 30, 'strap'); v.pf(8, 30, 'pearl'); }
+  if (side < 0) { v.paint(-2, 6, 30, 2, 10, 30, 'nStrap'); v.pf(8, 30, 'pearl'); }
   return v;
 }
 function thigh(o) {   // kaki dibungkus kain rok (tabung lebar), atau kulot

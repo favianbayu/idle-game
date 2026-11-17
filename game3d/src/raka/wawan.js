@@ -14,7 +14,7 @@ addRamps({
   waHair: ['#120e0c', '#1a1410', '#241c16', '#32281e'], waHairT: ['#4a3e34'],
   khaki: ['#9a8a5e', '#ae9e70', '#c0b082', '#d0c094'], khakiS: ['#7a6c46'], celKhaki: ['#4a3c2c', '#584836', '#665440', '#76624e'],
   bukuW: ['#8a1a1a', '#a42222', '#bc2a2a', '#d23a3a'], bukuWK: ['#f2ecd8'], papanW: ['#16161c'], papanWT: ['#f2f2f2'], korpriW: ['#e0b840'],
-  senamW: ['#1c3a7a', '#22468e', '#2a54a2', '#3666b8'], senamWS: ['#e0b840'], batikW: ['#5a3a1a', '#6c4622', '#7e542c', '#926436'], batikWS: ['#2e1c0c'], batikWK: ['#e8d0a0'],
+  senamW: ['#1c3a7a', '#22468e', '#2a54a2', '#3666b8'], senamWS: ['#e0b840'], wwBatik: ['#5a3a1a', '#6c4622', '#7e542c', '#926436'], wwBatikS: ['#2e1c0c'], batikWK: ['#e8d0a0'],
   pantoW: ['#08080c', '#101014', '#1a1a20', '#2c2c36'],
 });
 
@@ -55,7 +55,7 @@ function head(o) {
 }
 
 /* ---------- badan + perut (sisi +y; sisi -y = cermin) */
-const bodyC = o => ({ pns: 'khaki', senam: 'senamW', batik: 'batikW' }[o.top]);
+const bodyC = o => ({ pns: 'khaki', senam: 'senamW', batik: 'wwBatik' }[o.top]);
 function chest(o) {
   const v = new Vox(), T = o.top, body = bodyC(o);
   for (let z = 34; z <= 56; z++) { const bel = z > 50 ? 0 : Math.round(3.5 * Math.sin((z - 31) / 20 * Math.PI)), t = z === 56 ? 1 : 0; v.rrect(z, -6, -9 + t, 4 + bel - t, 8 - t, body, 4); }
@@ -77,9 +77,9 @@ function chest(o) {
     v.pfBox(3, 50, 4, 51, 'senamWS');
     return v;
   }
-  v.each((x, y, z, k) => { if (k !== 'batikW') return; const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x, a = ((u + 40) % 6), b = ((z + 40) % 6); if (a === 3 && b === 3) v.set(x, y, z, 'batikWK'); else if (a === 0 || b === 0) v.set(x, y, z, 'batikWS'); });
-  for (let z = 34; z <= 55; z++) v.pf(-1, z, 'batikW');
-  for (let z = 57; z <= 58; z++) v.shell(z, -4, -5, 3, 4, 'batikW', 2);
+  v.each((x, y, z, k) => { if (k !== 'wwBatik') return; const u = (v.front(y, z) === x || v.back(y, z) === x) ? y : x, a = ((u + 40) % 6), b = ((z + 40) % 6); if (a === 3 && b === 3) v.set(x, y, z, 'batikWK'); else if (a === 0 || b === 0) v.set(x, y, z, 'wwBatikS'); });
+  for (let z = 34; z <= 55; z++) v.pf(-1, z, 'wwBatik');
+  for (let z = 57; z <= 58; z++) v.shell(z, -4, -5, 3, 4, 'wwBatik', 2);
   return v;
 }
 function pelvis(o) {
@@ -97,13 +97,13 @@ function arm(o) {
   v.rbox(-3, 8, 43, 3, 14, 55, c, 3); v.rrect(56, -3, 8, 3, 14, c, 3);
   if (o.top === 'pns') { for (let x = -3; x <= 3; x++) v.set(x, 14, 56, 'khakiS'); v.set(2, 14, 56, 'korpriW'); }   // tali bahu
   if (o.top === 'senam') for (let z = 43; z <= 56; z++) v.set(0, 14, z, 'senamWS');
-  if (o.top === 'batik') v.each((x, y, z, k) => { if (k === 'batikW' && ((y + 40) % 6 === 0 || (z + 40) % 6 === 0)) v.set(x, y, z, 'batikWS'); });
+  if (o.top === 'batik') v.each((x, y, z, k) => { if (k === 'wwBatik' && ((y + 40) % 6 === 0 || (z + 40) % 6 === 0)) v.set(x, y, z, 'wwBatikS'); });
   return v;
 }
 function fore(o, side) {
   const v = new Vox(), c = sleeveC(o);
   v.rbox(-3, 8, 31, 3, 14, 42, c, 3);
-  v.paint(-3, 8, 31, 3, 14, 32, o.top === 'pns' ? 'khakiS' : o.top === 'senam' ? 'senamWS' : 'batikWS');
+  v.paint(-3, 8, 31, 3, 14, 32, o.top === 'pns' ? 'khakiS' : o.top === 'senam' ? 'senamWS' : 'wwBatikS');
   v.rbox(-3, 8, 27, 4, 14, 30, 'waSkin', 3); v.rrect(26, -2, 9, 3, 13, 'waSkin', 2);
   if (side < 0 && o.top !== 'senam') {   // buku pelanggaran merah tebal di tangan kiri
     v.rbox(-4, 7, 19, 4, 9, 30, 'bukuW', 0); v.paint(4, 7, 20, 4, 9, 29, 'bukuWK'); v.paint(-4, 9, 19, 4, 9, 30, 'bukuW');

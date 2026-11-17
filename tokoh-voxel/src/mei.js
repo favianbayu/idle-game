@@ -15,7 +15,7 @@ addRamps({
   meHair: ['#08080a', '#101014', '#18181e', '#28282f'], meHairT: ['#363642'],
   pensil: ['#e3b23c'], pensilT: ['#f4ead2'], bulat: ['#3a2a1e', '#4a3626', '#5c4430', '#74583e'], bulatL: ['#e0eef4'],
   hijauT: ['#2a4a36', '#345a42', '#3f6b4f', '#548460'], hijauTS: ['#24402e'], kotakM: ['#4c7a5c'], pita: ['#8a2a2a'],
-  mustard: ['#b8882a', '#cc9c32', '#e3b23c', '#eec65e'], apron: ['#2e5a40', '#386a4c', '#3f6b4f', '#558462'], kertas: ['#d8ccb0', '#e8dec4', '#f4ead2', '#fcf6e6'],
+  mustard: ['#b8882a', '#cc9c32', '#e3b23c', '#eec65e'], meApron: ['#2e5a40', '#386a4c', '#3f6b4f', '#558462'], kertas: ['#d8ccb0', '#e8dec4', '#f4ead2', '#fcf6e6'],
   piamaM: ['#d0c8b8', '#e0d8c8', '#eee6d6', '#faf4e8'], kucing: ['#e8943a'], kucingK: ['#2a2a2a'], kaosM: ['#f0f0ec'], kaosB: ['#e05a7a'],
   overallM: ['#2c4468', '#36527c', '#426292', '#5878aa'], garis: ['#d8d8d4'], garisM: ['#c84848'], baret: ['#2a4a36', '#345a42', '#3f6b4f', '#548460'],
   tote: ['#c8bc9c', '#dcd0b0', '#ece2c4', '#f8f0d8'], pinA: ['#e05a5a'], pinB: ['#4a8ad8'], mLoafer: ['#24160e', '#341f14', '#4a2c1c', '#6a4430'],
@@ -94,8 +94,8 @@ function chest(o) {
   }
   if (K) {   // kaus mustard + apron hijau bertuliskan PENA
     for (let y = -2; y <= 1; y++) v.pf(y, 51, 'meSkin'); v.shell(52, -3, -3, 3, 2, 'mustard', 1);
-    for (let z = 32; z <= 47; z++) for (let y = -4; y <= 3; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'apron'); }
-    for (const s of [-1, 1]) for (let z = 47; z <= 51; z++) { const y = s > 0 ? 3 : -4; const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'apron'); }
+    for (let z = 32; z <= 47; z++) for (let y = -4; y <= 3; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'meApron'); }
+    for (const s of [-1, 1]) for (let z = 47; z <= 51; z++) { const y = s > 0 ? 3 : -4; const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'meApron'); }
     const G = { P: ['XX', 'XX', 'X.'], E: ['XX', 'X.', 'XX'], N: ['X.X', 'XXX', 'X.X'], A: ['.X.', 'XXX', 'X.X'] };
     [['PE', 45, -3], ['NA', 41, -4]].forEach(([w, z0, y0]) => { let y = y0; for (const ch of w) { G[ch].forEach((row, r) => [...row].forEach((k, c) => { if (k === 'X') v.pf(y + c, z0 - r, 'kertas'); })); y += G[ch][0].length + 1; } });
     return v;
@@ -120,7 +120,7 @@ function pelvis(o) {
   if (o.top === 'seragam') return skirtPelvis('hijauT', 'kotakM', 20);
   const c = legC(o), v = new Vox();
   v.rbox(-4, -6, 26, 4, 5, 33, c, 3); v.box(-3, -2, 24, 2, 1, 25, c);
-  if (o.top === 'toko') for (let z = 26; z <= 33; z++) for (let y = -4; y <= 3; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'apron'); }
+  if (o.top === 'toko') for (let z = 26; z <= 33; z++) for (let y = -4; y <= 3; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'meApron'); }
   if (o.top === 'jalan') {   // tas tote penuh pin di pinggul kiri belakang
     v.rbox(-9, -8, 20, -6, -1, 30, 'tote', 1);
     for (const [y, z, m] of [[-6, 27, 'pinA'], [-3, 25, 'pinB'], [-5, 22, 'pensil'], [-2, 28, 'pinB']]) v.set(-10, y, z, m);

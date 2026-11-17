@@ -18,7 +18,7 @@ addRamps({
   overall: ['#24385c', '#2e4670', '#3a5888', '#4e6ea2'], overallS: ['#c8a84a'], maskerA: ['#c8ccd0', '#d8dce0', '#e8ecf0', '#f6f8fa'],
   rompiJ: ['#2a3e62', '#344c74', '#40608e', '#5676a8'], rompiJS: ['#22324e'], patch: ['#c8c4b8'], patchK: ['#2a2a2e'],
   kausA: ['#121214', '#1a1a1d', '#242428', '#34343a'], bungaA: ['#2a5a8a', '#336aa0', '#3f7cb8', '#5a94cc'], bungaK: ['#f2c12e'], bungaP: ['#f0f0ea'],
-  kulot: ['#141416', '#1c1c20', '#26262b', '#36363d'], bootsA: ['#3a2a1c', '#4a3624', '#5e4630', '#78583c'], topiA: ['#2d6cdf', '#3a7ce8', '#5090f0', '#70a8f6'],
+  anKulot: ['#141416', '#1c1c20', '#26262b', '#36363d'], bootsA: ['#3a2a1c', '#4a3624', '#5e4630', '#78583c'], topiA: ['#2d6cdf', '#3a7ce8', '#5090f0', '#70a8f6'],
   sarungA: ['#2a5a3a', '#346c46', '#3e7e52', '#529866'], sarungAS: ['#d8c87a'], partai: ['#d8d0b8', '#ece4cc', '#f8f2e0', '#ffffff'], partaiP: ['#c42a2a'],
 });
 
@@ -126,7 +126,7 @@ function pelvis(o) {
   if (c === 'sarungA') v.each((x, y, z, cc) => { if (cc === 'sarungA' && (z % 5 === 0 || (y + 40) % 4 === 0)) v.set(x, y, z, 'sarungAS'); });
   return v;
 }
-const legC = o => ({ mural: 'overall', geng: 'jeans', bunga: 'kulot', rumah: 'sarungA' }[o.top] || 'pants');
+const legC = o => ({ mural: 'overall', geng: 'jeans', bunga: 'anKulot', rumah: 'sarungA' }[o.top] || 'pants');
 const sleeveC = o => ({ geng: 'kausA', bunga: 'bungaA', rumah: 'partai', mural: 'white' }[o.top] || 'white');
 function arm(o) {
   const v = new Vox(), c = sleeveC(o), B = o.top === 'bunga';
@@ -147,7 +147,7 @@ function fore(o, side) {
 }
 function thigh(o) {
   if (o.top === 'rumah') return plaid(skirtThigh('sarungA'));
-  const c = legC(o), v = new Vox(), W = c === 'kulot' || c === 'sarungA';
+  const c = legC(o), v = new Vox(), W = c === 'anKulot' || c === 'sarungA';
   v.rbox(-4, 2, 18, 3, 7, 31, c, 3); v.rrect(32, -3, 2, 2, 7, c, 3);
   if (W) v.rbox(-5, 1, 18, 4, 8, 28, c, 3);
   if (c === 'sarungA') v.each((x, y, z, cc) => { if (cc === 'sarungA' && (z % 5 === 0 || (y + 40) % 4 === 0)) v.set(x, y, z, 'sarungAS'); });
@@ -156,10 +156,10 @@ function thigh(o) {
 }
 function shin(o) {
   if (o.top === 'rumah') return plaid(skirtShin('sarungA', 'sarungAS'));
-  const c = legC(o), v = new Vox(), W = c === 'kulot' || c === 'sarungA';
+  const c = legC(o), v = new Vox(), W = c === 'anKulot' || c === 'sarungA';
   v.rbox(-4, 2, 6, 3, 7, 18, c, 3); v.rrect(19, -3, 2, 2, 7, c, 3);
   if (W) v.rbox(-5, 1, 6, 4, 8, 18, c, 3);
-  if (c === 'kulot') v.paint(-5, 1, 6, 4, 8, 7, 'kausA');
+  if (c === 'anKulot') v.paint(-5, 1, 6, 4, 8, 7, 'kausA');
   if (c === 'sarungA') v.each((x, y, z, cc) => { if (cc === 'sarungA' && (z % 5 === 0 || (y + 40) % 4 === 0)) v.set(x, y, z, 'sarungAS'); });
   if (o.top === 'kemeja' || o.top === 'geng') v.rbox(-4, 2, 5, 3, 7, 9, 'bootsA', 3);   // leher boots
   if (c === 'overall') v.each((x, y, z, cc) => { if (cc === c && rnd(x, y, z) % 19 === 0) v.set(x, y, z, ['catK', 'catB', 'catM'][rnd(z, x, y) % 3]); });

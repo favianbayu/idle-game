@@ -1,7 +1,7 @@
 # Panduan membuat tokoh voxel halus (gaya Raka v3)
 
 Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus. Contoh kodenya ada di `src/`
-(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati). Ikuti urutan bagian di bawah saat membuat tokoh baru.
+(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 
 ## 1. Ukuran dan kisi
 
@@ -128,6 +128,16 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
 - Kacamata bulat tebal harus berpusat di baris mata; jangan sampai menutupi alis. Kalau alis tetap tertutup (hijab +
   kacamata, Bu Sinta), buang kacamatanya.
 - Benda di tangan (HP Kevin, penggaris Bu Ratna, buku Pak Wawan) dibuat kecil dan menempel ke kepalan, bukan melayang.
+- **Nama bahan harus unik di semua tokoh.** Daftar bahan bersifat global, jadi nama yang sama di file lain (mis. `rSkin`
+  di Rani dan Rizal) menimpa warna tokoh yang dimuat lebih dulu. `addRamps` sekarang memberi peringatan
+  "bahan dobel dengan warna beda" di konsol; pastikan peringatan itu tidak muncul saat `node build.mjs` / tes.
+- Hidung yang turun sampai baris mulut (z 4) menutupi mulut. Hidung cukup z 5..6 kalau mulut dimulai di z 4 (Mak Iyah).
+- Kain ikat kepala jangan diberi warna cokelat seperti rambut: dari jauh terbaca rambut keriting. Pakai warna kain yang
+  jelas berbeda (Mak Iyah: biru batik).
+- Kacamata tebal (Ama): gambar bingkainya saja, mata di dalamnya `W K W` supaya tidak terbaca kacamata hitam.
+- Topeng las yang diangkat (Pak Joko) dibuat sebagai pelat miring berdiri di atas dahi dengan kaca hijau; pelat datar
+  di atas kepala terbaca topi.
+- Barang panjang di tangan (tongkat, sapu lidi) cukup sampai z 1 (tanah saat diam). `lift` dihitung dari pose, bukan dari voxel.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file
   tokoh lain (misalnya `denim`, `kick` dari `rani.js`) hanya boleh dipakai kalau file itu dimuat lebih dulu di `build.mjs`.
 - Kulit dan rambut mengikuti warna `NPC_STYLES` lama, atau warna kunci di guide desain tokoh (`docs/desain-sma/guide`).

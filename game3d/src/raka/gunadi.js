@@ -14,7 +14,7 @@ addRamps({
   guHair: ['#a8a49c', '#c0bcb4', '#d6d2ca', '#ecebe6'], guHairS: ['#8e8a82'], guFrame: ['#2a2a30'], guLens: ['#dcecf4'],
   labC: ['#cfd2d6', '#e2e4e8', '#f0f2f4', '#fafbfc'], labS: ['#b0b4ba'], nodaH: ['#5aa04a'], nodaU: ['#8a4ab0'], nodaK: ['#d8a020'], nodaG: ['#4a3a2a'],
   kemG: ['#c8b890', '#d8c8a2', '#e6d8b4', '#f0e6c8'], dasiG: ['#8a1a2a', '#a42234', '#bc2c40', '#d23c52'], celG2: ['#4a4c52', '#585a60', '#686a72', '#7a7c84'],
-  gelas: ['#b8e0ec', '#cceaf2', '#ddf2f8', '#eef8fc'], cairan: ['#5ad06a', '#6ae07a', '#7ef08e', '#a0ffb0'], asap: ['#e0e8e4'],
+  gelas: ['#b8e0ec', '#cceaf2', '#ddf2f8', '#eef8fc'], cairan: ['#5ad06a', '#6ae07a', '#7ef08e', '#a0ffb0'], gnAsap: ['#e0e8e4'],
   rompiG: ['#5a4a3a', '#6a5844', '#7a6650', '#8c785e'], rompiGS: ['#3e3226'], kardiG: ['#6a3a2a', '#7a4432', '#8c503c', '#a06048'], pantoG: ['#2a1c14', '#36241a', '#443022', '#56402e'],
 });
 
@@ -106,7 +106,7 @@ function fore(o, side) {
   v.rbox(-3, 7, 27, 3, 12, 30, 'guSkin', 2); v.rrect(26, -2, 8, 2, 11, 'guSkin', 2);
   if (side > 0 && o.top === 'lab') {   // gelas kimia berisi cairan hijau berasap
     for (let z = 20; z <= 28; z++) for (let x = 2; x <= 7; x++) for (let y = 7; y <= 12; y++) { const d = Math.hypot(x - 4.5, y - 9.5); if (d <= 2.8 && (d > 1.8 || z === 20 || z <= 24)) v.set(x, y, z, z <= 24 && d <= 1.8 ? 'cairan' : 'gelas'); }
-    for (const [x, y, z] of [[4, 9, 29], [5, 10, 30], [4, 10, 31], [5, 9, 32], [4, 10, 34]]) v.set(x, y, z, 'asap');
+    for (const [x, y, z] of [[4, 9, 29], [5, 10, 30], [4, 10, 31], [5, 9, 32], [4, 10, 34]]) v.set(x, y, z, 'gnAsap');
   }
   if (side < 0) v.paint(-3, 7, 30, 2, 12, 30, 'pantoG');   // jam kulit tua
   return v;
