@@ -1,7 +1,8 @@
 # Panduan membuat tokoh voxel halus (gaya Raka v3)
 
 Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus. Contoh kodenya ada di `src/`
-(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong). Ikuti urutan bagian di bawah saat membuat tokoh baru.
+(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong, Dodi, Didi, Uda Rizki, Ustaz Hasan, Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi,
+Opa Willem, Nyonya Lita). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 
 ## 1. Ukuran dan kisi
 
@@ -140,6 +141,11 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
 - Barang panjang di tangan (tongkat, sapu lidi) cukup sampai z 1 (tanah saat diam). `lift` dihitung dari pose, bukan dari voxel.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file
   tokoh lain (misalnya `denim`, `kick` dari `rani.js`) hanya boleh dipakai kalau file itu dimuat lebih dulu di `build.mjs`.
+- Kacamata tipis (Kak Raffi): gambar bingkainya sebagai peta piksel 4 baris di lapisan depan (`x = front + 1`), lubang lensa
+  dibiarkan kosong supaya mata kelihatan. Bingkai elips dengan pita jarak tebal selalu terbaca sebagai kacamata hitam.
+- Highlight rambut panjang: hanya di permukaan belakang dan bawah (z <= 8). Pola di seluruh rambut terbaca sebagai garis-garis.
+- Gamis atau sarung di rangka cowok (Ustaz Hasan): `rok.js` diukur untuk rangka cewek, jadi buat tabung kain sendiri di pelvis,
+  paha, dan betis, lalu isi `P.skirt = { mats, fill, parts: ['pelvis', 'thighL', 'thighR', 'shinL', 'shinR'] }` tanpa panel.
 - Kulit dan rambut mengikuti warna `NPC_STYLES` lama, atau warna kunci di guide desain tokoh (`docs/desain-sma/guide`).
 
 ## 7. Mendaftarkan tokoh
@@ -149,6 +155,11 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
 3. Tambahkan nama modul ke daftar di `build.mjs`, **sebelum** `chars` dan sesudah modul yang bahannya dipakai.
 4. Tambahkan lembar di `sheets.json`: `<tokoh>`, `Kepala`, `Wajah`, `Baju`, `Pose`, `Game`, plus `barisan`.
 5. `node build.mjs && node shot.mjs shots`.
+6. `build.mjs` hanya mengenali satu nama per baris `export const`. Tulis `export const A = ...;` dan `export const B = ...;`
+   di baris terpisah, jangan `export const A = ..., B = ...` (nama kedua hilang dan halaman error). Dua tokoh bisa berbagi
+   satu file (Dodi & Didi: `didi.js` hanya memanggil `kembar('didi')` dari `dodi.js`).
+7. Tokoh anak (rangka Cici): lembar `Kepala`/`Wajah` perlu `cy` lebih kecil (520 dan 395), kalau tidak kepalanya terpotong.
+
 
 ## 8. Daftar periksa sebelum dikirim
 

@@ -1,4 +1,4 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong, Dodi, Didi, Uda Rizki, Ustaz Hasan, Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
@@ -7,7 +7,8 @@ Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya ya
 peta `FINE` di `voxworker.js`) dengan baju `seragam` (tokoh bukan siswa memakai baju hariannya). Wulan dan Pak RT Slamet
 memakai sid baru `wulan` dan `rtSlamet`. Gilang memikul galon (gerakan `galon`/`galonWalk`) saat sedang mengantar,
 dan galonnya ditaruh saat berantem. Pak Ujang, Mak Iyah, Ama, dan warga Kenanga (Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini,
-Pak Joko, Teh Euis, Koh Ahong) masih pratinjau, menunggu persetujuan.
+Pak Joko, Teh Euis, Koh Ahong) juga sudah di game (PR #8). Dodi & Didi, Uda Rizki, Ustaz Hasan, dan warga Bukit Asri
+(Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita) masih pratinjau, menunggu persetujuan.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
@@ -58,6 +59,16 @@ Pak Joko, Teh Euis, Koh Ahong) masih pratinjau, menunggu persetujuan.
 | Pak Joko | tukang las (pengisi) | 1.36 | 97 (termasuk topeng las) | badan besar, cambang, topeng las diangkat, wearpack biru bolong, sarung tangan kulit |
 | Teh Euis | penjual pecel (pengisi) | 1.22 | 79 | kerudung pink, blus toska, celemek batik merah, kain batik, pincuk pecel |
 | Koh Ahong | pemilik toko kelontong (pengisi) | 1.32 | 84 | perut buncit, rambut sisir samping menutupi botak, mata sipit, singlet + kolor kotak, kalkulator |
+| Dodi | anak SD kembar (pengisi) | 0.98 | 67 | rangka anak, poni rata, topi merah dibalik, kaus merah nomor 13, layangan |
+| Didi | kembaran Dodi (pengisi) | 0.98 | 67 | rambut jabrik, gigi depan ompong, plester di pipi, kaus biru garis kuning, kaleng benang |
+| Uda Rizki | penjual nasi Padang (pengisi) | 1.3 | 85 | rambut rapi belah samping, kumis tipis, kemeja putih digulung, celemek marun, tumpukan piring lauk |
+| Ustaz Hasan | imam musala (pengisi) | 1.3 | 88 (termasuk peci) | janggut tipis beruban, peci haji rajut, gamis putih sampai mata kaki, sorban kotak merah-putih, tasbih |
+| Pak Satpam Bambang | satpam kompleks (pengisi) | 1.32 | 87 (termasuk topi) | gempal, kumis tebal, topi pet dongker, kemeja putih berpangkat, kopel + pentungan + HT, sepatu PDL |
+| Bu Veronika | ibu senam pagi (pengisi) | 1.22 | 81 | rambut pendek keriting cokelat kemerahan, bando ungu, lipstik merah, kaus senam + legging, botol minum |
+| Mbak Yuni | ART (pengisi) | 1.2 | 79 | kuncir kuda rendah, poni samping, jepit kupu-kupu, celemek kotak biru, rok batik panjang, sapu lidi |
+| Kak Raffi | mahasiswa pulang kampung (pengisi) | 1.3 | 85 | rambut agak gondrong belah tengah, kacamata bulat tipis, janggut tipis, hoodie navy, tote bag, es kopi |
+| Opa Willem | pensiunan pecinta anggrek (pengisi) | 1.3 | 88 (termasuk topi) | jangkung agak bungkuk, rambut & kumis putih, hidung mancung, topi rimba, kemeja kotak, pot anggrek bulan |
+| Nyonya Lita | sosialita (pengisi) | 1.24 | 82 | rambut blow-dry cokelat madu, kacamata hitam lebar, lipstik merah tua, terusan zamrud, tas monogram |
 | Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
@@ -111,6 +122,15 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Pak Joko**: ngelas (topeng las + wearpack + sarung tangan kulit), sore (kaus kutang + celana kerja + palu).
 - **Teh Euis**: jualan pecel (kerudung pink + blus toska + celemek batik + pincuk), hari Minggu (kerudung krem + gamis kuning).
 - **Koh Ahong**: jaga toko (singlet + kolor kotak + kalkulator + pensil di telinga), Imlek (kemeja merah motif koin + jeruk).
+- **Dodi / Didi**: seragam SD merah putih, main (Dodi: kaus merah + topi dibalik + layangan; Didi: kaus biru + kaleng benang), ngaji (koko + sarung + peci).
+- **Uda Rizki**: rumah makan (kemeja putih + celemek marun + handuk di bahu + piring lauk), Jumatan (koko hijau + kopiah).
+- **Ustaz Hasan**: imam (gamis putih + peci haji + sorban + tasbih), harian (koko krem + sarung kotak cokelat + peci hitam + Al-Qur'an).
+- **Pak Satpam Bambang**: jaga gerbang (topi pet + kemeja putih berpangkat + pentungan & HT), patroli malam (jaket SECURITY + senter).
+- **Bu Veronika**: senam pagi (bando + kaus senam + jaket di pinggang + legging + botol minum), arisan (blus bunga + rok span + mutiara + tas emas).
+- **Mbak Yuni**: nyapu (kaus abu + celemek kotak + rok batik + sapu lidi), ke pasar (kardigan + keranjang belanja).
+- **Kak Raffi**: nugas di kafe (hoodie navy + chino + tote bag + es kopi), jogging (kaus lari oranye + headphone + jam pintar).
+- **Opa Willem**: taman (topi rimba + kemeja kotak + celana pendek khaki + kaus kaki tinggi + pot anggrek), ke gereja (fedora + jas abu + dasi kupu-kupu + tongkat).
+- **Nyonya Lita**: ngopi cantik (kacamata hitam + terusan zamrud + tas monogram), kondangan (sanggul + kebaya brokat marun + kain batik + clutch).
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai

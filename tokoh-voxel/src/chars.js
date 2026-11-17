@@ -46,6 +46,16 @@ import { build as riniBuild, OUTFITS as RINI_OUT, EXPRS as RINI_EX } from './rin
 import { build as jokoBuild, OUTFITS as JOKO_OUT, EXPRS as JOKO_EX } from './joko.js';
 import { build as euisBuild, OUTFITS as EUIS_OUT, EXPRS as EUIS_EX } from './euis.js';
 import { build as ahongBuild, OUTFITS as AHONG_OUT, EXPRS as AHONG_EX } from './ahong.js';
+import { build as dodiBuild, OUTFITS as DODI_OUT, EXPRS as DODI_EX } from './dodi.js';
+import { build as didiBuild, OUTFITS as DIDI_OUT, EXPRS as DIDI_EX } from './didi.js';
+import { build as rizkiBuild, OUTFITS as RIZKI_OUT, EXPRS as RIZKI_EX } from './rizki.js';
+import { build as hasanBuild, OUTFITS as HASAN_OUT, EXPRS as HASAN_EX } from './hasan.js';
+import { build as bambangBuild, OUTFITS as BAMBANG_OUT, EXPRS as BAMBANG_EX } from './bambang.js';
+import { build as veronikaBuild, OUTFITS as VERONIKA_OUT, EXPRS as VERONIKA_EX } from './veronika.js';
+import { build as yuniBuild, OUTFITS as YUNI_OUT, EXPRS as YUNI_EX } from './yuni.js';
+import { build as raffiBuild, OUTFITS as RAFFI_OUT, EXPRS as RAFFI_EX } from './raffi.js';
+import { build as willemBuild, OUTFITS as WILLEM_OUT, EXPRS as WILLEM_EX } from './willem.js';
+import { build as litaBuild, OUTFITS as LITA_OUT, EXPRS as LITA_EX } from './lita.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -95,5 +105,15 @@ export const CHARS = {
   pakJoko: { name: 'Pak Joko', build: jokoBuild, OUTFITS: JOKO_OUT, EXPRS: JOKO_EX },
   tehEuis: { name: 'Teh Euis', build: euisBuild, OUTFITS: EUIS_OUT, EXPRS: EUIS_EX },
   kohAhong: { name: 'Koh Ahong', build: ahongBuild, OUTFITS: AHONG_OUT, EXPRS: AHONG_EX },
+  dodi: { name: 'Dodi', build: dodiBuild, OUTFITS: DODI_OUT, EXPRS: DODI_EX },
+  didi: { name: 'Didi', build: didiBuild, OUTFITS: DIDI_OUT, EXPRS: DIDI_EX },
+  udaRizki: { name: 'Uda Rizki', build: rizkiBuild, OUTFITS: RIZKI_OUT, EXPRS: RIZKI_EX },
+  ustazHasan: { name: 'Ustaz Hasan', build: hasanBuild, OUTFITS: HASAN_OUT, EXPRS: HASAN_EX },
+  satpamBambang: { name: 'Pak Satpam Bambang', build: bambangBuild, OUTFITS: BAMBANG_OUT, EXPRS: BAMBANG_EX },
+  buVeronika: { name: 'Bu Veronika', build: veronikaBuild, OUTFITS: VERONIKA_OUT, EXPRS: VERONIKA_EX },
+  mbakYuni: { name: 'Mbak Yuni', build: yuniBuild, OUTFITS: YUNI_OUT, EXPRS: YUNI_EX },
+  kakRaffi: { name: 'Kak Raffi', build: raffiBuild, OUTFITS: RAFFI_OUT, EXPRS: RAFFI_EX },
+  opaWillem: { name: 'Opa Willem', build: willemBuild, OUTFITS: WILLEM_OUT, EXPRS: WILLEM_EX },
+  nyonyaLita: { name: 'Nyonya Lita', build: litaBuild, OUTFITS: LITA_OUT, EXPRS: LITA_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };
