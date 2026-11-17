@@ -50,7 +50,7 @@ function head(o) {
   v.set(-1, 7, 4, 'gold'); v.set(-2, 7, 6, 'gold'); v.set(-1, -8, 4, 'gold');   // anting: dua di kanan, satu di kiri
   if (o.helm) return helmet(v);
   // rambut: menutup kepala, disisir ke belakang ke ikatan kuncir; poni tipis jatuh menyamping; helai samping membingkai pipi
-  const zmin = (x, y, z) => x >= 5 ? FR[Math.max(0, Math.min(13, y + 7))] : x >= 1 ? (Math.abs(y + 0.5) > 5.5 ? 4 : 99) : x >= -2 ? (z >= 9 ? 9 : Math.abs(y + 0.5) > 6.5 && z >= 6 ? 6 : 99) : 3;
+  const zmin = (x, y, z) => x >= 5 ? FR[Math.max(0, Math.min(13, y + 7))] : x >= 1 ? (Math.abs(y + 0.5) > 5.5 ? 4 : 0) : x >= -2 ? (z >= 9 ? 9 : Math.abs(y + 0.5) > 6.5 && z >= 6 ? 6 : 99) : 3;
   const hair = new Vox();
   for (let z = 3; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'rHair', z <= 11 ? 4 : 5);
   hair.rrect(16, -8, -7, 7, 6, 'rHair', 5); hair.rrect(17, -7, -6, 6, 5, 'rHair', 5); hair.rrect(18, -5, -4, 4, 3, 'rHair', 3);

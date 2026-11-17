@@ -11,7 +11,7 @@ const TAIL = [-5, 0, 1];
 addRamps({
   bSkin: ['#94603d', '#b07650', '#c98e66', '#dca57c'], bSkinS: ['#b07650'], blush: ['#d9826e'],
   bHair: ['#0d0a09', '#17120f', '#221a16', '#33281f'], bHairT: ['#1a1411', '#28201a', '#382b22', '#46372b'],
-  btn: ['#d8d8d2'], phoneB: ['#2a2e3a'],
+  btn: ['#d8d8d2'], glass: ['#141218', '#1c1a21', '#26232c', '#3a3642'], lensG: ['#cfe3f0'], phoneB: ['#2a2e3a'],
   bTee: ['#b9b6ad', '#dedbd2', '#f6f4ee', '#ffffff'], bowl: ['#d23a3a'], bowlY: ['#f2c94c'],
   apron: ['#1f5a3a', '#2a7049', '#36885a', '#4ea372'], apronS: ['#e8e2c8'],
   bShort: ['#1f3a6e', '#2a4a8a', '#3a5ca6', '#5478c0'], bShoe: ['#0e0d11', '#17161b', '#22212a', '#34333d'],
@@ -41,6 +41,16 @@ function head(o) {
   paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
   v.box(7, -1, 5, 7, 0, 6, 'bSkin'); v.box(8, -1, 5, 8, 0, 5, 'bSkin');          // hidung bulat
   for (const y of [-9, 8]) { v.box(-2, y, 5, 0, y, 8, 'bSkin'); v.box(-1, y, 6, -1, y, 7, 'bSkinS'); }
+  // kacamata frame hitam tebal, kotak membulat: berdiri 1 voxel di depan wajah, lensa kosong (mata tetap kelihatan)
+  const fx = v.front(-1, 7) + 1;
+  for (const y0 of [-7, 1]) for (let y = y0; y <= y0 + 5; y++) for (let z = 5; z <= 9; z++) {
+    const edgeY = y === y0 || y === y0 + 5, edgeZ = z === 5 || z === 9;
+    if ((edgeY && edgeZ) || !(edgeY || edgeZ)) continue;   // sudut dibuang supaya membulat
+    v.set(fx, y, z, 'glass');
+  }
+  for (const y0 of [-7, 1]) v.set(fx, y0 + 4, 8, 'lensG');   // kilau lensa
+  v.set(fx, -1, 8, 'glass'); v.set(fx, 0, 8, 'glass');
+  for (const y of [-8, 7]) { const sy = y < 0 ? -1 : 1; for (let x = fx; x >= -1; x--) { const yy = v.has(x, y, 8) ? y + sy : y; v.set(x, yy, 8, 'glass'); } }
   // rambut keriting tebal: cangkang mengembang + gumpalan bulat acak
   const hair = new Vox(), rnd = (x, y, z) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
   for (let z = 6; z <= 16; z++) hair.rrect(z, -10, -10, 8, 9, 'bHair', 6);
