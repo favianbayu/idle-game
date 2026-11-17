@@ -151,3 +151,7 @@ Raka (pemain) memakai model sendiri di `src/raka/` (desain dari `raka-voxel-v3/`
 voxel 2x lebih rapat (1/64 petak) dan proporsi tokoh lama, di-voxel ulang ke satu kisi lurus tiap frame (`frame.js`).
 Pose = `ANIMS` game yang sama; ekspresi wajah & helm motor otomatis dari nama gerakan (`expr.js`); properti tangan
 (HP, kardus, buku, sapu, pancing, pedang, orb) dibuat di `rig.js`.
+Tokoh utama lain juga memakai model halus ini: Rani (pilihan tokoh pemain lewat tombol **Tokoh** di menu), Bimo, Bram,
+Nadia, Dimas, Sekar, dan Arga (`src/raka/<nama>.js`, desain dari `tokoh-voxel/`). Worker memilih model halus untuk sid
+yang ada di `FINE` (`voxworker.js`). Tiap tokoh membawa kerangkanya sendiri (`SKEL`), dan rok dibuat tidak terbelah oleh
+`rok.js` + `P.skirt` di `frame.js`. Cara membuat tokoh baru ada di `tokoh-voxel/PANDUAN-TOKOH.md`.

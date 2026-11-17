@@ -2,7 +2,7 @@
 // dengan PROPORSI tokoh lama (tinggi ±78 voxel halus = ±39 voxel lama, skala 1.3).
 // Koordinat: x maju, y samping (negatif = sisi 'L' pose), z naik. Kepala & ekor rambut digambar di koordinat lokal kepala.
 import { Vox, dense } from './vox.js';
-import { PIV, TAIL_PIV } from './rig.js';
+import { PIV, TAIL_PIV, SKEL_RAKA } from './rig.js';
 
 // 4 tingkat warna per bahan (gelap -> terang), atau 1 warna tetap (detail wajah, logo)
 export const RAMPS = {
@@ -27,10 +27,12 @@ export const RAMPS = {
   box: ['#7a5c34', '#98744a', '#b8905a', '#d2ac78'], seam: ['#d9c49a'], book: ['#22406e', '#2e5590', '#3a6ab0', '#5a88cc'], page: ['#f4f0e2'],
   plaster: ['#f4e2bf'], plasterS: ['#dcc396'], osis: ['#c7922b'], tag: ['#2a3350'], gold: ['#f0cb52'],
 };
-const MAT = Object.keys(RAMPS), MI = Object.fromEntries(MAT.map((k, i) => [k, i + 1]));
+// daftar bahan bersama untuk semua tokoh (indeks 1..n, maks 255); tokoh lain menambah lewat addRamps()
+const MAT = [], MI = {}, RAMP_RGB = [];
 const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
-const RAMP_RGB = MAT.map(k => RAMPS[k].map(hex));
-const mi = c => { const i = MI[c]; if (!i) throw new Error('bahan tidak dikenal: ' + c); return i; };
+export function addRamps(o) { for (const k in o) { RAMPS[k] = o[k]; if (!MI[k]) { MAT.push(k); MI[k] = MAT.length; RAMP_RGB.push(null); } RAMP_RGB[MI[k] - 1] = o[k].map(hex); } }
+addRamps(RAMPS);
+export const mi = c => { const i = MI[c]; if (!i) throw new Error('bahan tidak dikenal: ' + c); return i; };
 
 /* ---------- Wajah: peta 14 kolom x 15 baris (kolom 0 = kiri layar dilihat dari depan, baris 0 = puncak tengkorak).
    . kulit  B alis  c bekas luka di alis  K mata  W putih mata  m mulut  T gigi  t lidah  P plester  p tepi plester */
@@ -139,7 +141,7 @@ const TUFT = [
   [0, 2, 4, 3, 4, 2, 3, 0],
   [0, 1, 2, 4, 3, 4, 1, 0]];
 const SIDE = [13, 12, 13, 13, 14, 13, 12, 13, 14];   // garis bawah rambut atas di samping (tak rata)
-const skullLayer = z => z <= 0 ? [-3, -4, 5, 3, 3] : z === 1 ? [-5, -5, 6, 4, 3] : z === 2 ? [-6, -6, 6, 5, 3] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+export const skullLayer = z => z <= 0 ? [-3, -4, 5, 3, 3] : z === 1 ? [-5, -5, 6, 4, 3] : z === 2 ? [-6, -6, 6, 5, 3] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
 
 function head(o) {
   const v = new Vox();
@@ -175,7 +177,7 @@ function head(o) {
   for (const [y, z0, z1] of [[-4, 9, 13], [-1, 5, 9], [2, 10, 14], [3, 4, 7]]) for (let z = z0; z <= z1; z++) { const x = v.back(y, z); if (x !== null && v.get(x, y, z) === 'hair') v.set(x, y, z, 'hairT'); }
   return v;
 }
-function helmet(v) {   // helm half-face hitam, garis kuning, goggle di dahi; wajah tetap terlihat, ekor mullet keluar di belakang
+export function helmet(v) {   // helm half-face hitam, garis kuning, goggle di dahi; wajah tetap terlihat, ekor mullet keluar di belakang
   const h = new Vox();
   for (let z = 6; z <= 19; z++) {
     const k = z <= 15 ? 0 : z === 16 ? 1 : z === 17 ? 2 : z === 18 ? 3 : 5;
@@ -380,9 +382,17 @@ export const OUTFITS = {
   rumah: { name: 'Kaus rumah', kind: 'kaus', waist: false },
 };
 
+// rakit bagian-bagian jadi data tokoh untuk voxelFrame. list = [[nama, Vox, pivot], ...] urut prioritas
+export function assemble(list, ballMat, skel, tailPiv) {
+  const parts = list.filter(e => e[1]).map(([name, v, piv]) => { const g = dense(v, mi); return { name, g, piv, box: [g.o[0] - piv[0], g.o[1] - piv[1], g.o[2] - piv[2], g.o[0] + g.n[0] - piv[0], g.o[1] + g.n[1] - piv[1], g.o[2] + g.n[2] - piv[2]] }; });
+  return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat: Object.fromEntries(Object.entries(ballMat).map(([k, c]) => [k, mi(c)])), ramps: RAMP_RGB, mat: mi, skel, tailPiv };
+}
+// cat peta wajah ke voxel terdepan: map = baris (atas -> bawah), top = z baris pertama, c0 = y kolom pertama
+export function paintFace(v, map, chars, top, c0) { map.forEach((row, r) => [...row].forEach((ch, c) => { const k = chars[ch]; if (k) v.pf(c + c0, top - r, k); })); }
+
 /* buildParts({ outfit, expr, helm }) -> { parts: [{ name, g, piv, box }], boxes, ballMat, ramps }
    Urutan parts = prioritas saat dua bagian menempati sel yang sama. */
-export function buildParts(opt = {}) {
+export function buildParts(opt = {}) {   // Raka
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', helm: !!opt.helm, face: opt.face };
   const parts = [], J = o.kind === 'jaket', K = o.kind === 'kaus';
   const put = (name, v, piv) => { const g = dense(v, mi); parts.push({ name, g, piv, box: [g.o[0] - piv[0], g.o[1] - piv[1], g.o[2] - piv[2], g.o[0] + g.n[0] - piv[0], g.o[1] + g.n[1] - piv[1], g.o[2] + g.n[2] - piv[2]] }); };
@@ -400,5 +410,5 @@ export function buildParts(opt = {}) {
   put('thighR', T, PIV.thighR); put('thighL', T.mirrorY(), PIV.thighL);
   const pants = K ? 'shorts' : J ? 'jeans' : 'pants';
   const ballMat = { neck: mi('skin'), shoulder: mi(K ? 'kaus' : J ? 'jk' : 'white'), elbow: mi(J ? 'jk' : 'skin'), hip: mi(pants), knee: mi(K ? 'skin' : pants) };
-  return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat, ramps: RAMP_RGB, mat: mi };
+  return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat, ramps: RAMP_RGB, mat: mi, skel: SKEL_RAKA, tailPiv: TAIL_PIV };
 }

@@ -4,6 +4,13 @@ import { STYLES, ANIMS, humanShape, buildVox, organicColor, makeRamps, faceCfg }
 import { NPC_STYLES } from './npc_styles.js';
 import { EXTRA_STYLES } from './npc_extra.js';
 import { buildParts } from './raka/model.js';
+import { build as raniBuild } from './raka/rani.js';
+import { build as bimoBuild } from './raka/bimo.js';
+import { build as bramBuild } from './raka/bram.js';
+import { build as nadiaBuild } from './raka/nadia.js';
+import { build as dimasBuild } from './raka/dimas.js';
+import { build as sekarBuild } from './raka/sekar.js';
+import { build as argaBuild } from './raka/arga.js';
 import { voxelFrame } from './raka/frame.js';
 import { exprFor, helmFor } from './raka/expr.js';
 
@@ -55,15 +62,21 @@ function mesh(m, S = 1 / 32, cx = m.L / 2, cy = m.W / 2, cz = 0) {
   return { pos, nor, col, idx };
 }
 
-const RAKA = new Map();
-const rakaParts = (expr, helm) => { const k = expr + (helm ? '+h' : ''); if (!RAKA.has(k)) RAKA.set(k, buildParts({ outfit: 'seragam', expr, helm })); return RAKA.get(k); };
+// tokoh utama bermodel voxel halus (1/64 petak, digambar tangan, lihat src/raka/ dan tokoh-voxel/PANDUAN-TOKOH.md)
+const FINE = { raka: buildParts, rani: raniBuild, bimo: bimoBuild, bram: bramBuild, nadia: nadiaBuild, dimas: dimasBuild, sekar: sekarBuild, arga: argaBuild };
+const PARTS = new Map();
+const fineParts = (sid, outfit, expr, helm) => {
+  const k = sid + '|' + outfit + '|' + expr + (helm ? '+h' : '');
+  if (!PARTS.has(k)) PARTS.set(k, FINE[sid]({ outfit, expr, helm }));
+  return PARTS.get(k);
+};
 
 self.onmessage = e => {
   const { key, sid, anim, i } = e.data;
   const A = ANIMS[anim], st = STYLES[sid];
   const t = A.loop ? i / A.n : i / Math.max(1, A.n - 1);
-  if (sid === 'raka') {   // Raka: model voxel 2x rapat (1/64 petak), digambar tangan, lihat src/raka/
-    const f = voxelFrame(rakaParts(exprFor(anim, i, A.n), helmFor(anim)), A.pose(t)), H = 1 / 64;
+  if (FINE[sid]) {
+    const f = voxelFrame(fineParts(sid, 'seragam', exprFor(anim, i, A.n), helmFor(anim)), A.pose(t)), H = 1 / 64;
     const g = mesh(f, H, -f.org[0], -f.org[1], f.org[2]);
     g.lift = f.lift * H; g.butt = f.buttZ * H; g.buttX = f.buttX * H;
     self.postMessage({ key, ...g }, [g.pos.buffer, g.nor.buffer, g.col.buffer, g.idx.buffer]);

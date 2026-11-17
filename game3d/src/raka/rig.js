@@ -27,13 +27,20 @@ export const rotZ = g => { const c = Math.cos(g), s = Math.sin(g); return [c, -s
 export const apply = (M, p) => [M[0] * p[0] + M[1] * p[1] + M[2] * p[2] + M[9], M[3] * p[0] + M[4] * p[1] + M[5] * p[2] + M[10], M[6] * p[0] + M[7] * p[1] + M[8] * p[2] + M[11]];
 const chain = (...ms) => ms.reduce(mul);
 
-// titik sendi di pose diam (koordinat model, voxel halus). Tinggi & panjang ruas mengikuti rangka tokoh lama skala 1.3, dikali 2.
-export const PIV = {
-  pelvis: [0, 0, 32], chest: [0, 0, 36], head: [0, 0, 59],
-  armL: [0, -9, 52], armR: [0, 9, 52], foreL: [0, -9, 41.5], foreR: [0, 9, 41.5],
-  thighL: [0, -4.5, 32], thighR: [0, 4.5, 32], shinL: [0, -4.5, 18], shinR: [0, 4.5, 18], footL: [0, -4.5, 4.5], footR: [0, 4.5, 4.5],
-  flapB: [-6, 0, 33], flapF: [6, 0, 33],
-};
+// Rangka per tokoh (voxel halus). Raka = rangka tokoh lama skala 1.3, dikali 2.
+//   ank: tinggi pergelangan kaki, shin/thigh: panjang ruas kaki, up: pinggul->dada, neck: dada->dasar kepala,
+//   shY/shZ: bahu (samping, tinggi dari dada), upper: bahu->siku, hipY: lebar pinggul, ballR: skala bola sendi
+export const SKEL_RAKA = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 23, shY: 9, shZ: 16, upper: 10.5, fore: 11, hipY: 4.5, flap: 6, ballR: 1 };
+export function pivots(K) {
+  const pz = K.ank + K.shin + K.thigh, cz = pz + K.up, az = cz + K.shZ;
+  return {
+    pelvis: [0, 0, pz], chest: [0, 0, cz], head: [0, 0, cz + K.neck],
+    armL: [0, -K.shY, az], armR: [0, K.shY, az], foreL: [0, -K.shY, az - K.upper], foreR: [0, K.shY, az - K.upper],
+    thighL: [0, -K.hipY, pz], thighR: [0, K.hipY, pz], shinL: [0, -K.hipY, pz - K.thigh], shinR: [0, K.hipY, pz - K.thigh],
+    footL: [0, -K.hipY, K.ank], footR: [0, K.hipY, K.ank], flapB: [-K.flap, 0, pz + 1], flapF: [K.flap, 0, pz + 1],
+  };
+}
+export const PIV = pivots(SKEL_RAKA);
 export const TAIL_PIV = [-5, 0, 1];   // di koordinat lokal kepala
 const S = 2.6;   // satuan pose lama (px, sy, jump) -> voxel halus
 const GROUND = ['footL', 'footR', 'shinL', 'shinR', 'thighL', 'thighR', 'pelvis', 'chest', 'head', 'armL', 'armR', 'foreL', 'foreR'];
@@ -41,41 +48,41 @@ const GROUND = ['footL', 'footR', 'shinL', 'shinR', 'thighL', 'thighR', 'pelvis'
 /* rigPose(P, boxes) -> { mats, balls, lift, buttZ, buttX }
    boxes: kotak batas tiap bagian (relatif pivot) untuk menapakkan titik terendah ke tanah.
    balls: bola pengisi sendi [{ c, r, k }] (k = 'elbow' | 'knee' | 'shoulder' | 'hip' | 'neck'). */
-export function rigPose(P0, boxes) {
-  const P = Object.assign({}, POSE0, P0), m = {}, balls = [];
+export function rigPose(P0, boxes, K = SKEL_RAKA, tailPiv = TAIL_PIV) {
+  const P = Object.assign({}, POSE0, P0), m = {}, balls = [], br = K.ballR || 1;
   const T = chain(tr(P.px * S, P.sy * S, 0), rotY(-P.lean));
   m.pelvis = T;
-  const C = chain(T, tr(0, 0, 4), rotZ(P.tw));
+  const C = chain(T, tr(0, 0, K.up), rotZ(P.tw));
   m.chest = C;
-  const ha = P.lean + P.hp, neck = apply(C, [0, 0, 23]);
+  const ha = P.lean + P.hp, neck = apply(C, [0, 0, K.neck]);
   const still = Math.abs(ha) < 0.1 && Math.abs(P.hy) < 0.1 && Math.abs(P.hr) < 0.1;   // kepala hampir tegak: jangan diputar, supaya piksel wajah tetap utuh
   const H = still ? tr(...neck) : chain(tr(...neck), rotY(-ha), rotZ(P.hy), rotX(P.hr));
   m.head = H;
-  balls.push({ c: apply(C, [0, 0, 21.5]), r: 3.2, k: 'neck' });
+  balls.push({ c: apply(C, [0, 0, K.neck - 1.5]), r: 3.2 * br, k: 'neck' });
   for (const [k, s] of [['L', -1], ['R', 1]]) {
-    const sh = apply(C, [0, s * 9, 16]);
+    const sh = apply(C, [0, s * K.shY, K.shZ]);
     const U = chain(tr(...sh), rotY(P['ar' + k]), rotX(s * P['sp' + k]));
     m['arm' + k] = U;
-    const el = apply(U, [0, 0, -10.5]);
+    const el = apply(U, [0, 0, -K.upper]);
     m['fore' + k] = chain(tr(...el), rotY(P['ar' + k] + P['el' + k]), rotX(s * P['sp' + k] * 0.5));
-    balls.push({ c: apply(C, [0, s * 8.6, 15.6]), r: 3.0, k: 'shoulder' }, { c: el, r: 2.9, k: 'elbow' });
-    const hip = apply(T, [0, s * 4.5, 0]);
+    balls.push({ c: apply(C, [0, s * (K.shY - 0.4), K.shZ - 0.4]), r: 3.0 * br, k: 'shoulder' }, { c: el, r: 2.9 * br, k: 'elbow' });
+    const hip = apply(T, [0, s * K.hipY, 0]);
     const th = P['th' + k], kn = P['kn' + k], lg = s * P['lg' + k];
     const Th = chain(tr(...hip), rotX(lg), rotY(th));
     m['thigh' + k] = Th;
-    const kp = apply(Th, [0, 0, -14]);
+    const kp = apply(Th, [0, 0, -K.thigh]);
     const Sh = chain(tr(...kp), rotX(lg), rotY(th - kn));
     m['shin' + k] = Sh;
-    const an = apply(Sh, [0, 0, -13.5]);
+    const an = apply(Sh, [0, 0, -K.shin]);
     m['foot' + k] = chain(tr(...an), rotX(lg * 0.4), rotY(th - kn + P['ft' + k]));
-    balls.push({ c: apply(T, [0, s * 4.5, -1]), r: 3.9, k: 'hip' }, { c: kp, r: 3.5, k: 'knee' });
+    balls.push({ c: apply(T, [0, s * K.hipY, -1]), r: 3.9 * br, k: 'hip' }, { c: kp, r: 3.5 * br, k: 'knee' });
   }
   // kain di pinggang (jaket diikat) tetap menggantung tegak walau badan condong; terdorong kalau paha berayun
   const back = Math.max(0, -P.thL, -P.thR), front = Math.max(0, P.thL, P.thR);
-  m.flapB = chain(T, tr(-6, 0, 1), rotY(Math.max(-1.6, Math.min(0.5, P.lean * (P.lean < 0 ? 0.45 : 1) - back * 0.9))));
-  m.flapF = chain(T, tr(6, 0, 1), rotY(Math.max(-0.4, Math.min(1.7, P.lean + front * 0.95))));
+  m.flapB = chain(T, tr(-K.flap, 0, 1), rotY(Math.max(-1.6, Math.min(0.5, P.lean * (P.lean < 0 ? 0.45 : 1) - back * 0.9))));
+  m.flapF = chain(T, tr(K.flap, 0, 1), rotY(Math.max(-0.4, Math.min(1.7, P.lean + front * 0.95))));
   // properti di tangan (format pose sama dengan humanShape: sword/swa, broom/bsw, rod/rpa, phone, box, book, orb)
-  const prims = props(P, m, C);
+  const prims = props(P, m, C, K);
   const all = M => { for (const k in m) m[k] = mul(M, m[k]); for (const b of balls) b.c = apply(M, b.c); for (const q of prims) q.p = q.p.map(v => apply(M, v)); };
   if (P.roll) all(chain(tr(0, 0, 14), rotY(-P.roll), tr(0, 0, -14)));
   // menapak: titik terendah badan menyentuh tanah
@@ -88,10 +95,10 @@ export function rigPose(P0, boxes) {
   if (still) for (let i = 9; i < 12; i++) m.head[i] = Math.round(m.head[i]);
   // ekor mullet: ikut kepala, cenderung menggantung tegak, terbang ke belakang saat bergerak
   const ta = Math.max(-0.15, Math.min(1.2, ha * 0.8)) - P.tail;
-  m.tail = chain(m.head, tr(...TAIL_PIV), rotY(Math.abs(ta) < 0.05 ? 0 : ta));
+  m.tail = chain(m.head, tr(...tailPiv), rotY(Math.abs(ta) < 0.05 ? 0 : ta));
   const butt = apply(m.pelvis, [-2, 0, -4]);
   return { mats: m, balls, prims, bob: P.bob * 2, lift: P.jump * S, buttZ: butt[2], buttX: butt[0],
-    hands: ['foreL', 'foreR'].map(k => apply(m[k], [0, 0, -11])), feet: ['footL', 'footR'].map(k => apply(m[k], [2, 0, -4.5])) };
+    hands: ['foreL', 'foreR'].map(k => apply(m[k], [0, 0, -K.fore])), feet: ['footL', 'footR'].map(k => apply(m[k], [2, 0, -4.5])) };
 }
 
 // ---- properti: primitif di koordinat model (p = titik yang ikut diputar/digeser bersama badan)
@@ -100,10 +107,10 @@ const U = S;   // 1 satuan pose lama = 2.6 voxel halus
 const nrm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
 const addv = (a, d, k) => [a[0] + d[0] * k, a[1] + d[1] * k, a[2] + d[2] * k];
 const rotYo = (v, t) => [v[0] * Math.cos(t) - v[2] * Math.sin(t), v[1], v[2] * Math.cos(t) + v[0] * Math.sin(t)];   // sama dengan voxlib
-function props(P, m, C) {
+function props(P, m, C, K) {
   const out = [];
   if (!(P.sword > 0.5 || P.broom > 0.5 || P.rod > 0.5 || P.phone > 0.5 || P.box > 0.5 || P.book > 0.5 || P.orb > 0)) return out;
-  const hand = k => apply(m['fore' + k], [0.5, 0, -12.5]), elbow = k => apply(m['fore' + k], [0, 0, 0]);
+  const hand = k => apply(m['fore' + k], [0.5, 0, -K.fore - 1.5]), elbow = k => apply(m['fore' + k], [0, 0, 0]);
   const hR = hand('R'), hL = hand('L'), fw = [Math.cos(P.lean), 0, -Math.sin(P.lean)], up = [Math.sin(P.lean), 0, Math.cos(P.lean)];
   const cap = (a, b, r0, r1, mat) => out.push({ t: 'cap', p: [a, b], r: [r0, r1], mat });
   if (P.orb > 0) out.push({ t: 'sph', p: [addv([(hR[0] + hL[0]) / 2, (hR[1] + hL[1]) / 2, (hR[2] + hL[2]) / 2], fw, 2.2 * U)], r: P.orb * U, mat: 'orb' });

@@ -11,7 +11,7 @@ const PAD = 3;
 /* voxelFrame(P, pose) -> { L, W, H, vox, org, lift, buttX, buttZ, hands, feet }
    P = hasil buildParts (model.js). vox = [x, y, z, r, g, b, mask] per voxel permukaan; org = posisi sel (0,0,0) di koordinat tokoh. */
 export function voxelFrame(P, pose) {
-  const r = rigPose(pose, P.boxes), items = [];
+  const r = rigPose(pose, P.boxes, P.skel, P.tailPiv), items = [];
   const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
   for (const p of P.parts) {
     const M = r.mats[p.name]; if (!M) continue;
@@ -54,7 +54,11 @@ export function voxelFrame(P, pose) {
     }
   }
   // bagian badan: tiap sel kisi dipetakan balik ke kisi lokal bagian itu (urutan = prioritas, yang pertama menang)
+  // rok: voxel kain rok dari pinggul, panel, dan kaki ditandai, lalu tiap lapis z diisi selimut cembungnya (lihat bawah)
+  const SK = P.skirt ? new Uint8Array(L * W * H) : null, SKM = P.skirt ? new Set(P.skirt.mats) : null;
+  let skP = false;
   for (const { p, M, bb } of items) {
+    skP = !!SK && P.skirt.parts.includes(p.name);
     const g = p.g, nx = g.n[0], ny = g.n[1], nz = g.n[2], d = g.d;
     const ox = p.piv[0] - g.o[0], oy = p.piv[1] - g.o[1], oz = p.piv[2] - g.o[2];
     const a0 = Math.max(0, Math.floor(bb[0]) - x0), a1 = Math.min(L - 1, Math.ceil(bb[3]) - x0);
@@ -67,7 +71,7 @@ export function voxelFrame(P, pose) {
       for (let a = a0; a <= a1; a++, idx++, lx += M[0], ly += M[1], lz += M[2]) {
         if (G[idx] || lx < 0 || ly < 0 || lz < 0 || lx >= nx || ly >= ny || lz >= nz) continue;
         const m = d[((lz | 0) * ny + (ly | 0)) * nx + (lx | 0)];
-        if (m) G[idx] = m;
+        if (m) { G[idx] = m; if (SK && skP && SKM.has(m)) SK[idx] = 1; }
       }
     }
   }
@@ -78,9 +82,11 @@ export function voxelFrame(P, pose) {
       const dx = x + 0.5 - c[0], dy = y + 0.5 - c[1], dz = z + 0.5 - c[2];
       if (dx * dx + dy * dy + dz * dz > rr) continue;
       const idx = (z - z0) * LW + (y - y0) * L + (x - x0);
-      if (!G[idx]) G[idx] = m;
+      if (!G[idx]) { G[idx] = m; if (SK && SKM.has(m) && (bl.k === 'hip' || bl.k === 'knee')) SK[idx] = 1; }
     }
   }
+  // rok tidak boleh terbelah saat kaki melangkah: per lapis z, isi lambung cembung (convex hull) semua voxel kain rok
+  if (SK) fillSkirt(G, SK, L, W, H, P.skirt.fill);
   // menapak per voxel: voxel badan terendah (bukan properti) tepat di tanah (+ goyang 'bob')
   let zl = -1;
   for (let z = 0; z < H && zl < 0; z++) { const o = z * LW; for (let i = 0; i < LW; i++) if (G[o + i] && !(PR && PR[o + i])) { zl = z; break; } }
@@ -122,6 +128,30 @@ export function voxelFrame(P, pose) {
     vox.push(surf[s + 1], surf[s + 2], surf[s + 3], c[0], c[1], c[2], surf[s + 4]);
   }
   return { L, W, H, vox, org: [x0, y0, z0 - dz], lift: r.lift, buttX: r.buttX, buttZ: r.buttZ - dz, hands: r.hands.map(h => [h[0], h[1], h[2] - dz]), feet: r.feet.map(h => [h[0], h[1], h[2] - dz]) };
+}
+
+function fillSkirt(G, SK, L, W, H, fill) {
+  const LW = L * W;
+  for (let z = 0; z < H; z++) {
+    const pts = [], o = z * LW;
+    for (let y = 0; y < W; y++) for (let x = 0; x < L; x++) if (SK[o + y * L + x]) pts.push([x, y]);
+    if (pts.length < 3) continue;
+    pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cr = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const lo = [], up = [];
+    for (const p of pts) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+    for (let i = pts.length - 1; i >= 0; i--) { const p = pts[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+    const hull = lo.slice(0, -1).concat(up.slice(0, -1));
+    if (hull.length < 3) continue;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const [x, y] of hull) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const idx = o + y * L + x; if (G[idx]) continue;
+      let inside = true;
+      for (let i = 0; i < hull.length && inside; i++) { const a = hull[i], b = hull[(i + 1) % hull.length], e = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; if (cr(a, b, [x, y]) / e < -0.5) inside = false; }
+      if (inside) G[idx] = fill;
+    }
+  }
 }
 
 // segitiga untuk pratinjau: satu warna rata per voxel (seperti MeshBasicMaterial + warna vertex di game)
