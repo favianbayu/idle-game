@@ -1,10 +1,10 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
 Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya yang sama dengan Raka v3
 (yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sampai Andra sudah dipasang di game (`game3d/src/raka/`,
-peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei dan Gilang masih pratinjau, menunggu persetujuan.
+peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, dan Bu Melati masih pratinjau, menunggu persetujuan.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
@@ -25,6 +25,26 @@ peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei dan Gilang masih prati
 | Andra | NPC romance cowok, pelukis mural STM | 1.32 | 85 | kulit cokelat, rambut ikal sebahu setengah diikat, alis tebal, senyum malas, tindik kiri, tangan & celana kena cat, tato spidol di lengan, boots |
 | Mei | NPC romance cewek, anak Toko Buku Pena, ilustrator | 1.18 | 80 | bob sebahu lurus + jepit pensil, kacamata bulat besar, pipi tembam merah, mata sipit, noda tinta di jari |
 | Gilang | NPC romance cowok, pengantar galon & skater, paket C | 1.34 | 86 | kulit cokelat gelap, rambut berantakan, topi terbalik biru-kuning, gigi depan renggang, alis jahil tak sejajar, plester di lutut & siku |
+| Wulan | NPC romance cewek, pesilat SMK Pariwisata dari desa | 1.26 | 80 | kepang satu tebal sampai pinggang, alis lurus, mata besar teduh, memar di lengan |
+| Om Darto | paman pemain, pemilik Warkop Simpang | 1.32 | 84 | gempal perut buncit, cepak beruban di samping, kumis tebal, tato bunga pudar |
+| Cici | sepupu 8 tahun, anak Om Darto | 0.98 | 64 | rangka anak, kuncir dua ikat stroberi, gigi depan ompong, pipi merah |
+| Mas Fajar | montir, anggota senior Lampu Kota | 1.34 | 89 | rambut jabrik, kaus kerja penuh oli, jeans robek, handuk, gelang karet |
+| Kobar | ketua Serigala Besi, kakak Kirana | 1.36 | 95 | kekar, mohawk hitam-merah sisi dicukur, jahitan di dagu, rompi patch serigala, rantai dompet |
+| Bang Jaka | ketua Lampu Kota, pemberi misi geng | 1.38 | 89 | tinggi besar, gondrong diikat rendah di tengkuk, jenggot tipis, jaket hitam lis kuning + lambang lampu di punggung, boots |
+| Bu Narti | ibu kos Kenanga, tukang gosip | 1.24 | 78 | bergo bunga dengan pet, daster batik, kacamata baca di ujung hidung, kipas anyaman, sandal jepit |
+| Pak RT Slamet | ketua RT Kenanga | 1.32 | 88 | kopiah hitam, batik parang lengan pendek, perut buncit, uban di pelipis, tahi lalat, buku catatan warga |
+| Pak Haris | Pak Haris Megantara, pengembang properti, musuh utama | 1.34 | 85 | jas abu + dasi merah anggur, rambut semir hitam klimis, kacamata tanpa bingkai, cincin akik merah, senyum dingin |
+| Pak Gito | rentenir yang menagih tiap Jumat | 1.3 | 84 | safari cokelat empat saku, tas pinggang kulit, gigi emas, rokok di telinga, kumis tipis, dahi lebar |
+| Rio | geng Bram, tukang pukul | 1.36 | 91 | undercut, kalung rantai, jam tangan, seragam dikeluarkan lengan digulung |
+| Kevin | geng Bram, otak licik | 1.32 | 86 | rambut belah tengah poni tirai, kacamata bulat tipis, HP selalu di tangan kanan |
+| Bu Hartini | kepala sekolah | 1.24 | 79 | sanggul rendah + tusuk konde emas, uban, kacamata cokelat bertali emas |
+| Bu Ratna | guru Matematika, wali kelas X | 1.24 | 83 | konde tinggi, kacamata kotak merah, lipstik merah, penggaris kayu |
+| Pak Hendro | guru Penjaskes, pelatih futsal | 1.34 | 87 | topi merah, peluit, kumis, papan jepit |
+| Pak Wawan | guru BK & kesiswaan | 1.32 | 85 | perut buncit, seragam PNS khaki + pin Korpri, buku pelanggaran merah, kumis melintir |
+| Bu Sinta | guru Bahasa Indonesia, pembina mading | 1.24 | 79 | hijab peach + bros bunga, novel di tangan kiri |
+| Mr. Anton | guru Bahasa Inggris, pembina debat | 1.34 | 89 | jambul + fade, jam pintar, kemeja lengan digulung |
+| Pak Gunadi | guru Fisika & Kimia | 1.34 | 90 | rambut putih acak-acakan, janggut putih, kacamata bulat hitam tebal, jas lab bernoda + gelas kimia berasap |
+| Bu Melati | guru Seni Budaya, pembina band | 1.24 | 80 | rambut panjang bergelombang + jepit kamboja, gelang kayu, kalung manik, sandal |
 | Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
@@ -47,7 +67,27 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Jojo**: seragam + rompi army + kamera, liputan (kupluk oranye + ransel kamera), kaus "HORAS!" + celana pendek, kemeja hawaii + kargo + sandal gunung.
 - **Andra**: seragam STM kena cat + boots, melukis mural (kaus penuh cat + overall + masker + topi terbalik), Serigala Besi (rompi jeans patch serigala), kemeja bunga + kulot, sarung (rok.js) + kaus partai.
 - **Mei**: seragam Bina Bangsa (rompi & rok kotak hijau + dasi pita, rok.js), jaga toko (kaus mustard + apron PENA + pensil di telinga), piama kucing + kaus kaki tidak sepasang, overall + kaus garis + baret + tas tote berpin.
-- **Gilang**: antar galon (kaus Depot Air Segar + handuk + galon di pundak + sandal jepit), skate (kaus kartun kebesaran + kargo sobek + papan di punggung + sepatu diikat karet), paket C (kemeja kotak dikancing sampai atas), di rumah (telanjang dada + sarung rok.js), windbreaker kuning-biru. Di game (`seragam`) ia memakai baju antar galon tanpa galon.
+- **Gilang**: antar galon (kaus Depot Air Segar + handuk + sandal jepit; galonnya properti gerakan `galon`/`galonWalk`, bukan bagian baju), skate (kaus kartun kebesaran + kargo sobek + papan di punggung + sepatu diikat karet), paket C (kemeja kotak dikancing sampai atas), di rumah (telanjang dada + sarung rok.js), windbreaker kuning-biru. Di game (`seragam`) ia memakai baju antar galon.
+- **Wulan**: SMK Pariwisata (blazer biru tua + rok span + hak rendah), silat (pangsi hitam + sabuk hijau + ikat kepala batik, tanpa alas kaki), pemandu kebun teh (kemeja hijau + caping + boots karet), di desa (kaus lengan panjang + sarung batik rok.js), ke kota (kemeja kotak hijau + jeans + tas anyaman).
+- **Om Darto**: jaga warkop (kaus oblong belel + celemek hijau KOPI), santai (sarung di pundak + celana pendek), di rumah (kaus kutang + sarung rok.js).
+- **Cici**: seragam SD merah putih, kaus kucing + rok tutu, piama bintang.
+- **Mas Fajar**: bengkel (kaus kerja penuh oli + jeans robek + handuk), jaket Lampu Kota, santai (kaus putih + sandal jepit).
+- **Kobar**: Serigala Besi (rompi jeans patch serigala + kutang hitam + rantai dompet + boots), Wijaya Motor (coverall diikat di pinggang), jaket balap nomor 1.
+- **Bang Jaka**: jaket Lampu Kota (hitam lis kuning, kaus abu, jeans dilipat, boots), latihan ujian masuk (kutang hitam + celana training + perban tangan), santai (flanel merah digulung + kargo).
+- **Bu Narti**: daster batik + bergo bunga + kipas + sandal jepit, arisan (bergo marun + tunik brokat + rok batik + tas tangan + selop), pengajian (gamis hijau tua + bergo krem). Semua rok panjang memakai rok.js.
+- **Pak RT Slamet**: batik parang + buku catatan warga, ronda (jaket parasut + sarung diselempang + senter), kerja bakti (kaus merah + celana training + handuk + bot karet).
+- **Pak Haris**: jas abu tiga potong, golf (polo putih + rompi rajut + chino + sarung tangan), batik sutra hitam-emas.
+- **Pak Gito**: safari cokelat + buku utang, kemeja bunga tropis + kalung emas + kacamata hitam, jaket kulit + kaus merah.
+- **Rio**: seragam (kemeja keluar, lengan digulung), tinju (kaus kutang + sarung tinju merah + celana pendek), jalan (hoodie hitam + jeans).
+- **Kevin**: seragam + HP, jalan (hoodie abu berkantong kanguru), rumah (kaus biru tua logo play + celana pendek).
+- **Bu Hartini**: kebaya kutubaru + kain batik (rok.js), Korpri, rapat (blazer + map).
+- **Bu Ratna**: blazer + rok pensil, batik kawung, santai (kardigan + kulot).
+- **Pak Hendro**: olahraga (training + papan jepit), wasit, batik.
+- **Pak Wawan**: PNS khaki (saku, papan nama, pin Korpri, epolet), senam, batik.
+- **Bu Sinta**: kardigan + rok panjang, gamis lilac, batik biru + hijab mint.
+- **Mr. Anton**: kemeja digulung, debat (blazer + kaus putih), denim.
+- **Pak Gunadi**: jas lab bernoda + gelas kimia berasap, rompi, kardigan.
+- **Bu Melati**: etnik (tenun ikat + selendang), pensi, santai (linen).
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai

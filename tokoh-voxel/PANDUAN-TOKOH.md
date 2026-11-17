@@ -1,7 +1,7 @@
 # Panduan membuat tokoh voxel halus (gaya Raka v3)
 
 Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus. Contoh kodenya ada di `src/`
-(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang). Ikuti urutan bagian di bawah saat membuat tokoh baru.
+(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 
 ## 1. Ukuran dan kisi
 
@@ -95,12 +95,39 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
 - Topi di atas rambut: warnai ulang voxel rambut di atas garis topi (Uti: z >= 13) jadi bahan topi + lis 1 voxel,
   jangan buat kubah kecil terpisah; ukurannya otomatis pas dengan rambut.
 - Helm full-face / tudung hoodie: bentuk elips (cek jarak tiap sel ke pusat), bukan `rrect` besar, kalau tidak jadi kubus.
-- Tokoh yang tidak ada di `NPC_STYLES` lama (Kirana, Andra, Mei, Gilang): lembar `Game` tanpa kolom "Lama".
+- Tokoh yang tidak ada di `NPC_STYLES` lama (Kirana, Andra, Mei, Gilang, Pak RT Slamet): lembar `Game` tanpa kolom "Lama".
 - Tokoh yang tidak bersekolah tetap harus bisa dibangun dengan outfit `seragam`, karena game selalu memanggil `seragam`:
   `build()` jatuh ke baju harian (Gilang: baju antar galon tanpa galon).
 - Topi terbalik memakai lis di z 12..14, jadi alis tokoh bertopi turun ke z 11..10 (baris peta 3..4) supaya tidak tertutup lis.
+- Barang yang dibawa sesekali (galon Gilang) jangan ditempel di baju: buat properti di `rig.js` `props()` yang
+  dinyalakan oleh nilai pose (`galon: 1`) dan gerakan sendiri (`galon`, `galonWalk`). Gerakan lain (berantem) otomatis
+  tanpa barang itu.
+- Tokoh anak (Cici): rangka anak sendiri (pinggul z 20, dada z 23..35, bahu z 34, kepala z 39), kepala tetap ukuran
+  normal (chibi). Rok anak cukup dibuat di pelvis saja karena pendek.
+- Kepang/rambut panjang di punggung harus menempel ke punggung (x kepala sekitar -6), bukan melayang di x -9.
 - Pola acak `rnd(x, y, z) % n` dengan n pangkat dua (8, 16) membuat garis miring; pakai n ganjil (7, 9, 13).
 - Garis belahan rambut diwarnai lebih gelap dari rambut, bukan warna kulit: dari atas, garis kulit terbaca botak.
+- Kamera sedikit dari atas, jadi apa pun yang menonjol di depan dahi (rambut di x 7, pet bergo, kopiah) menutupi satu
+  baris di bawahnya. Sisakan satu baris kosong antara alis dan rambut/topi (Pak Haris: rambut depan mulai z 14, alis z 11;
+  Pak RT: kopiah mulai z 13, alis z 11; Bu Narti: pet z 13..14, alis z 11).
+- Kacamata yang duduk rendah (kacamata baca Bu Narti) tidak boleh menutupi baris mulut (z 4): taruh lensa di z 7 dan tepi
+  bawah di z 6, di antara mata dan mulut.
+- Kacamata tanpa bingkai (Pak Haris): cukup tepi atas + sisi luar warna abu kebiruan dan satu titik kilau; kotak penuh
+  berwarna terang terbaca seperti kacamata renang dan menutupi mata.
+- Bukaan wajah hijab/bergo: elips harus sampai ke baris alis (z 11), kalau tidak alisnya hilang dan wajah terlihat kosong.
+- Motif kain berulang (bunga bergo, batik daster, parang, kotak flanel) dihitung di permukaan: depan/belakang pakai y,
+  samping pakai x (`u = v.front(y, z) === x || v.back(y, z) === x ? y : x`), supaya motif tidak memanjang di sisi.
+- Kuncir rendah pria (Bang Jaka): ikat di tengkuk z 4..5, ekor pendek sampai z -7 dan menempel ke punggung (x -9 → -7).
+- Benda kecil di telinga (rokok Pak Gito, pulpen Rizal) harus menempel di y 8 (tepat di luar rambut), bukan y 9 yang melayang.
+- Topi berlidah (Pak Hendro): hapus rambut yang menembus topi (rambut di luar elips topi pada z ≥ 12), dan turunkan alis
+  ke z 10 supaya tidak tertutup lidah topi.
+- Rok pensil (Bu Ratna): panel lurus tanpa melebar ke bawah, hem tinggi (z 15); jangan pakai panel rok A-line.
+- Pola gelombang rambut panjang (Bu Melati) hanya di voxel permukaan belakang; di samping jadi garis mendatar yang aneh.
+  Rambut yang menjuntai di samping wajah harus di luar |y| > 6.5 supaya mata tidak tertutup.
+- Rambut putih/beruban (Pak Gunadi) jangan diberi bintik acak; bentuk acak-acakan cukup dari jambul runcing.
+- Kacamata bulat tebal harus berpusat di baris mata; jangan sampai menutupi alis. Kalau alis tetap tertutup (hijab +
+  kacamata, Bu Sinta), buang kacamatanya.
+- Benda di tangan (HP Kevin, penggaris Bu Ratna, buku Pak Wawan) dibuat kecil dan menempel ke kepalan, bukan melayang.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file
   tokoh lain (misalnya `denim`, `kick` dari `rani.js`) hanya boleh dipakai kalau file itu dimuat lebih dulu di `build.mjs`.
 - Kulit dan rambut mengikuti warna `NPC_STYLES` lama, atau warna kunci di guide desain tokoh (`docs/desain-sma/guide`).
