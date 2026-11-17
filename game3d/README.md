@@ -147,3 +147,13 @@ npm run peta         # ekspor ulang peta kota kalau peta_organik.py berubah (but
 
 Kode: `src/main.js` (loop, kamera, input, UI), `src/kota.js` (kota, jalan, tanah), `src/buildings.js` (tipe rumah), `src/world.js` (sekolah), `src/common.js` (tabrakan, bahan, pola tanah), `src/veg.js` (tanaman), `src/geom.js` (penggabung mesh),
 `src/chars.js` + `src/voxworker.js` (tokoh), `src/voxlib.js` (diekstrak dari `sprite-stacking/index.html`), `src/npcs.js`.
+Raka (pemain) memakai model sendiri di `src/raka/` (desain dari `raka-voxel-v3/`): bagian badan digambar tangan dengan
+voxel 2x lebih rapat (1/64 petak) dan proporsi tokoh lama, di-voxel ulang ke satu kisi lurus tiap frame (`frame.js`).
+Pose = `ANIMS` game yang sama; ekspresi wajah & helm motor otomatis dari nama gerakan (`expr.js`); properti tangan
+(HP, kardus, buku, sapu, pancing, pedang, orb) dibuat di `rig.js`.
+Tokoh utama lain juga memakai model halus ini: Rani (pilihan tokoh pemain lewat tombol **Tokoh** di menu), Bimo, Bram,
+Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, dan Andra (`src/raka/<nama>.js`, desain dari `tokoh-voxel/`). Worker memilih model halus untuk sid
+yang ada di `FINE` (`voxworker.js`). Tiap tokoh membawa kerangkanya sendiri (`SKEL`), dan rok dibuat tidak terbelah oleh
+`rok.js` + `P.skirt` di `frame.js`. Cara membuat tokoh baru ada di `tokoh-voxel/PANDUAN-TOKOH.md`.
+Kisi `vox.js`/`frame.js` memakai `Uint16Array` karena jumlah bahan sudah lewat 255. Urutan import di worker
+mengikuti urutan `tokoh-voxel/build.mjs`, karena beberapa tokoh memakai bahan milik tokoh sebelumnya.

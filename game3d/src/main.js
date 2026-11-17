@@ -75,7 +75,9 @@ const player = { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, heading: Math.PI / 2, run
 if (saved?.p) Object.assign(player, saved.p);
 if (saved?.stats) player.stats = saved.stats;
 if (saved) { if (saved.uang != null) player.uang = saved.uang; if (saved.inv) player.inv = saved.inv; if (saved.flags) player.flags = saved.flags; if (saved.upg) player.upg = saved.upg; }
-const raka = new Character('raka', { xray: true, prio: 10 });
+function tick0save() { localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area, zone: player.zone }, yaw: cam.yawT, opt, garage, stats: player.stats, uang: player.uang, inv: player.inv, flags: player.flags, upg: player.upg })); }
+const HERO = opt.hero === 'rani' ? 'rani' : 'raka';   // tokoh pemain: Raka (cowok) atau Rani (cewek), dipilih di menu
+const raka = new Character(HERO, { xray: true, prio: 10 });
 scene.add(raka.group);
 // kendaraan pemain: tidak muncul dari udara. Tiap kendaraan diparkir di dunia (awal: lorong samping rumah Om Darto),
 // Aksi di dekatnya = naik, Aksi saat berkendara = turun & parkir di tempat. Mode cerita: awal cuma punya onthel Om.
@@ -181,7 +183,7 @@ if (player.area === 'kota') {
   else if (moved > 0.6) { player.x = SPAWN.x; player.z = SPAWN.z; } else { player.x = p.x; player.z = p.z; }
 }
 onCharsReady(() => {
-  preload('raka', ['idle', 'walk', 'run'], 10);
+  preload(HERO, ['idle', 'walk', 'run'], 10);
   const byRegion = {};
   for (const h of kota.houses) if (!h.special && !h.noHome) (byRegion[h.region] || (byRegion[h.region] = [])).push(h);
   NPCS.forEach((n, idx) => {
@@ -349,6 +351,10 @@ tap($('btnL'), () => rotateCam(-1)); tap($('btnR'), () => rotateCam(1));
 tap(ui.follow, toggleFollow); tap($('btnPitch'), cyclePitch); $('btnPitch').textContent = 'Sudut: ' + PITCH_NAMES[opt.pitch]; tap($('btnMap'), toggleMinimap);
 tap($('btnZoomIn'), () => zoom(-1)); tap($('btnZoomOut'), () => zoom(1));
 tap(ui.quality, () => { opt.quality = (opt.quality + 1) % 3; applyQuality(); ui.quality.textContent = 'Grafik: ' + QUALITY[opt.quality].name; });
+tap($('btnHero'), () => {   // ganti tokoh pemain: simpan pilihan lalu muat ulang
+  opt.hero = HERO === 'rani' ? 'raka' : 'rani'; saveT = 99; tick0save(); location.reload();
+});
+$('btnHero').textContent = 'Tokoh: ' + (HERO === 'rani' ? 'Rani' : 'Raka');
 tap($('btnPx'), () => { opt.px = opt.px >= 5 ? 0 : (opt.px || pxSize) + 1; resize(); $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto'); });
 ui.quality.textContent = 'Grafik: ' + QUALITY[opt.quality].name; $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto');
 const bigmap = makeBigMap({ kota, player, isTouch, parked: () => RIDES.flatMap((R, i) => R && R.holder.visible && player.area === 'kota' ? [{ x: garage.spot[i].x, z: garage.spot[i].z, icon: i === 1 ? 'S' : 'M' }] : []) });
@@ -697,7 +703,7 @@ function loop(now) {
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { ui.fps.textContent = `${Math.round(fpsN / fpsAcc)} fps · ${renderer.info.render.calls} draw · ${renderer.domElement.width}x${renderer.domElement.height}`; fpsAcc = 0; fpsN = 0; }
   saveT += dt;
-  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area, zone: player.zone }, yaw: cam.yawT, opt, garage, stats: player.stats, uang: player.uang, inv: player.inv, flags: player.flags, upg: player.upg })); }
+  if (saveT > 4) { saveT = 0; tick0save(); }
 }
 
 // kendaraan parkir kota & sekolah: jumlahnya ganti tiap hari (hari berganti saat Raka tidur)
