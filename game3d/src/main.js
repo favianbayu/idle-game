@@ -97,10 +97,17 @@ for (const [i, R] of RIDES.entries()) if (R) {
   R.r.group.rotation.y = Math.PI / 2; R.holder = new THREE.Group(); R.holder.add(R.r.group); scene.add(R.holder);
 }
 let ride = 0;
+const groundAt = (area, x, z) => area === 'kota' ? kota.groundY(x, z) : area === 'luar' ? luar.groundY(x, z) : 0;
+// kendaraan di tanjakan: tinggi & kemiringan dari tanah di bawah roda depan & belakang (tidak menembus jalan)
+function slopeAt(area, x, z, h, hl) {
+  const cx = Math.cos(h), cz = Math.sin(h), f = groundAt(area, x + cx * hl, z + cz * hl), b = groundAt(area, x - cx * hl, z - cz * hl);
+  return { y: Math.max(groundAt(area, x, z), (f + b) / 2), pitch: Math.atan2(f - b, 2 * hl) };
+}
 function placeParked() {
   for (const [i, R] of RIDES.entries()) if (R && i !== ride) {
     const sp = garage.spot[i]; R.holder.add(R.r.group);
-    R.holder.position.set(sp.x, sp.area === 'kota' ? kota.groundY(sp.x, sp.z) : sp.area === 'luar' ? luar.groundY(sp.x, sp.z) : 0, sp.z); R.holder.rotation.y = -sp.h;
+    const t = slopeAt(sp.area, sp.x, sp.z, sp.h, R.r.half || 0.45);
+    R.holder.position.set(sp.x, t.y, sp.z); R.holder.rotation.set(0, -sp.h, t.pitch, 'YXZ');
     R.holder.visible = !!garage.owned[i] && sp.area === player.area && (sp.area !== 'luar' || sp.zone === luar.cur?.id);
   }
 }
@@ -551,8 +558,11 @@ function updatePlayer(dt) {
   if (RD) { raka.play(RD.r.anim); RD.r.spin(v * dt); }
   else if (sw) raka.play(moveA ? 'swim' : 'tread');
   else raka.play(lock || ac.anim || player.emote || (v > 3.2 ? 'run' : v > 0.35 ? 'walk' : 'idle'));
-  { const gy = player.area === 'kota' && !player.swim ? kota.groundY(player.x, player.z) : player.area === 'luar' ? luar.groundY(player.x, player.z) : 0; player.gy = (player.gy ?? gy) + (gy - (player.gy ?? gy)) * Math.min(1, dt * 18); }
-  raka.group.position.set(player.x, player.gy, player.z);
+  { let gy = player.area === 'kota' && !player.swim ? kota.groundY(player.x, player.z) : player.area === 'luar' ? luar.groundY(player.x, player.z) : 0, pt = 0;
+    if (RD) { const t = slopeAt(player.area, player.x, player.z, player.heading, RD.r.half || 0.45); gy = t.y; pt = t.pitch; }   // motor/sepeda ikut miring di tanjakan
+    player.gy = (player.gy ?? gy) + (gy - (player.gy ?? gy)) * Math.min(1, dt * 18);
+    player.pitch = (player.pitch || 0) + (pt - (player.pitch || 0)) * Math.min(1, dt * 14); }
+  raka.group.position.set(player.x, player.gy, player.z); raka.group.rotation.order = 'YXZ'; raka.group.rotation.z = player.pitch;
   raka.update(RD ? (RD.r.type === 'sepeda' ? dt * Math.min(1.6, v / 2.5) : dt) : dt);
   if (RD) RD.r.syncCrank(raka);
   return v;

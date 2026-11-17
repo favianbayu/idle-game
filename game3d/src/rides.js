@@ -31,6 +31,7 @@ export function makeRide(type, kind, color, o = {}) {
   if (type === 'sepeda') { crank = new THREE.Mesh(CRANK || (CRANK = V.crankGeo(Merger, K)), MAT.world); crank.position.set(0, fit.crank[0] * K, fit.crank[1] * K); group.add(crank); }
   return {
     type, kind, group, fit, seat, back, anim: fit && fit.anim, crank,
+    half: entry.wheels.length ? Math.max(...entry.wheels.map(w => Math.abs(w.z))) : 0.45,   // jarak as roda dari tengah (untuk kemiringan di tanjakan)
     spin(d) { for (const w of wm) w.me.rotation.x += d / w.r; },
     // tokoh duduk di jok: model tokoh menghadap +x, kendaraan menghadap +z
     mount(ch, rear = false) { ch.heading = Math.PI / 2; ch.seat = { ...(rear ? back : seat) }; ch.blob.visible = false; ch.play(rear ? 'passenger' : fit.anim); group.add(ch.group); },
