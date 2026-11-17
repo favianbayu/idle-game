@@ -185,6 +185,13 @@ T.potGantung = m => { for (let i = 0; i < 3; i++) { const a = i * 2.094; trunk(m
 T.rumput = m => {   // rumpun helai tipis melengkung (dua sisi)
   for (let i = 0; i < 7; i++) frond(m, [(R(51, i) - 0.5) * 0.08, 0, (R(52, i) - 0.5) * 0.08], i * 0.9, 0.16 + R(53, i) * 0.12, 0.022, 0.12, i % 2 ? col('#6a9a4a') : col('#86b65a'), 2, { rise: 1.6, taper: true, fold: 0 });
 };
+// rumpun rumput pendek rapat (0.2-0.35 petak), 3 nada hijau
+T.rumputPendek = m => { const C3 = [col('#5a8a3a'), col('#78a84a'), col('#94c060')];
+  for (let i = 0; i < 9; i++) { const r = 0.05 + R(61, i) * 0.1, an = i * 2.39; frond(m, [Math.cos(an) * r, 0, Math.sin(an) * r], an + (R(62, i) - 0.5), 0.12 + R(63, i) * 0.12, 0.02, 0.1, C3[i % 3], 2, { rise: 1.5, taper: true, fold: 0 }); } };
+// ilalang: helai tinggi (0.6-0.9 petak) + malai putih kecoklatan, bergoyang tertiup angin
+T.ilalang = m => { const C3 = [col('#8aa850'), col('#a8b860'), col('#7a9a48')];
+  for (let i = 0; i < 9; i++) { const r = 0.04 + R(71, i) * 0.12, an = i * 2.39; frond(m, [Math.cos(an) * r, 0, Math.sin(an) * r], an + (R(72, i) - 0.5), 0.4 + R(73, i) * 0.2, 0.017, 0.25, C3[i % 3], 3, { rise: 1.7, taper: true, fold: 0 }); }
+  for (let i = 0; i < 3; i++) { const an = i * 2.1 + 0.4, r = 0.06; frond(m, [Math.cos(an) * r, 0.42 + R(74, i) * 0.12, Math.sin(an) * r], an, 0.2, 0.035, 0.02, col('#e6dcc0'), 2, { rise: 2.6, taper: true, fold: 0 }); } };
 T.padi = m => {
   for (let i = 0; i < 6; i++) frond(m, [0, 0, 0], i * 1.05, 0.3, 0.025, 0.12, i % 2 ? col('#7ab83a') : col('#8ac84a'), 2, { rise: 1.5, taper: true, fold: 0 });
   frond(m, [0, 0.35, 0], 0.5, 0.18, 0.03, 0.15, col('#d8c860'), 2, { rise: 0.3, taper: true });
@@ -229,8 +236,8 @@ export function plant(scene, list) {
       M.compose(V.set(p.x, p.y || 0, p.z), q, S); im.setMatrixAt(i, M);
       im.setColorAt(i, p.c ? C.set(p.c) : C.setRGB(1, 1, 1));
     });
-    const base = kind.split(':')[0], small = ['rumput', 'padi', 'bunga', 'batu', 'pot'].includes(base) || base.startsWith('pot') || base === 'melati' || base === 'rakPot';
-    im.userData.small = ['rumput', 'padi', 'bunga'].includes(base);   // disembunyikan pada kualitas Rendah
+    const base = kind.split(':')[0], small = ['rumput', 'rumputPendek', 'ilalang', 'padi', 'bunga', 'batu', 'pot'].includes(base) || base.startsWith('pot') || base === 'melati' || base === 'rakPot';
+    im.userData.small = ['rumput', 'rumputPendek', 'ilalang', 'padi', 'bunga'].includes(base);   // disembunyikan pada kualitas Rendah
     im.castShadow = !small; im.receiveShadow = true;
     im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
     im.computeBoundingSphere();

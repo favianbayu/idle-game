@@ -90,7 +90,9 @@ def poly_draw(m, g, fill, outline=None, hole=None, width=2):
 M.area, M.sawah, M.forest, M.river, M.rail, M.road, M.bldg, M.mark, M.text, M.trees = area, sawah, forest, river, rail, road, bldg, mark, text, trees
 M.finish = lambda self, path, notes=(): None
 po.isi_kota, pd.rows, pd.poly_draw = isi_kota, rows, poly_draw
-pd.peta_dunia()
+m = pd.peta_dunia()
+# jembatan luar kota (Map.jembatan): x, y, a (radian), len, w, name
+R["bridges"] = [b for b in getattr(m, "bridges", []) if not (0 <= b["x"] <= 260 and 0 <= b["y"] <= 180)]
 R["track"] = pts_(po.catmull(pd.TRACK, 14, closed=True)); R["pit"] = pts_(po.catmull(pd.PIT, 8))
 R["bounds"] = [pd.X0, pd.Y0, pd.W, pd.H]
 json.dump(R, open(sys.argv[2], "w"), separators=(",", ":"))
