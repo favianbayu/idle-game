@@ -19,6 +19,28 @@ import { build as sashaBuild } from './raka/sasha.js';
 import { build as kiranaBuild } from './raka/kirana.js';
 import { build as jojoBuild } from './raka/jojo.js';
 import { build as andraBuild } from './raka/andra.js';
+import { build as meiBuild } from './raka/mei.js';
+import { build as gilangBuild } from './raka/gilang.js';
+import { build as wulanBuild } from './raka/wulan.js';
+import { build as dartoBuild } from './raka/darto.js';
+import { build as ciciBuild } from './raka/cici.js';
+import { build as fajarBuild } from './raka/fajar.js';
+import { build as kobarBuild } from './raka/kobar.js';
+import { build as jakaBuild } from './raka/jaka.js';
+import { build as nartiBuild } from './raka/narti.js';
+import { build as rtSlametBuild } from './raka/rtslamet.js';
+import { build as harisBuild } from './raka/haris.js';
+import { build as gitoBuild } from './raka/gito.js';
+import { build as rioBuild } from './raka/rio.js';
+import { build as kevinBuild } from './raka/kevin.js';
+import { build as hartiniBuild } from './raka/hartini.js';
+import { build as ratnaBuild } from './raka/ratna.js';
+import { build as hendroBuild } from './raka/hendro.js';
+import { build as wawanBuild } from './raka/wawan.js';
+import { build as sintaBuild } from './raka/sinta.js';
+import { build as antonBuild } from './raka/anton.js';
+import { build as gunadiBuild } from './raka/gunadi.js';
+import { build as melatiBuild } from './raka/melati.js';
 import { voxelFrame } from './raka/frame.js';
 import { exprFor, helmFor } from './raka/expr.js';
 
@@ -72,7 +94,11 @@ function mesh(m, S = 1 / 32, cx = m.L / 2, cy = m.W / 2, cz = 0) {
 
 // tokoh utama bermodel voxel halus (1/64 petak, digambar tangan, lihat src/raka/ dan tokoh-voxel/PANDUAN-TOKOH.md)
 const FINE = { raka: buildParts, rani: raniBuild, bimo: bimoBuild, bram: bramBuild, nadia: nadiaBuild, dimas: dimasBuild, sekar: sekarBuild, arga: argaBuild,
-  laras: larasBuild, rizal: rizalBuild, uti: utiBuild, tegar: tegarBuild, sasha: sashaBuild, kirana: kiranaBuild, jojo: jojoBuild, andra: andraBuild };
+  laras: larasBuild, rizal: rizalBuild, uti: utiBuild, tegar: tegarBuild, sasha: sashaBuild, kirana: kiranaBuild, jojo: jojoBuild, andra: andraBuild,
+  mei: meiBuild, gilang: gilangBuild, wulan: wulanBuild, omDarto: dartoBuild, cici: ciciBuild, fajar: fajarBuild, kobar: kobarBuild,
+  bangJaka: jakaBuild, buNarti: nartiBuild, rtSlamet: rtSlametBuild, pakHaris: harisBuild, pakGito: gitoBuild, rio: rioBuild, kevin: kevinBuild,
+  buHartini: hartiniBuild, buRatna: ratnaBuild, pakHendro: hendroBuild, pakWawan: wawanBuild, buSinta: sintaBuild, mrAnton: antonBuild,
+  pakGunadi: gunadiBuild, buMelati: melatiBuild };
 const PARTS = new Map();
 const fineParts = (sid, outfit, expr, helm) => {
   const k = sid + '|' + outfit + '|' + expr + (helm ? '+h' : '');

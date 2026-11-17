@@ -24,7 +24,8 @@ export const RAMPS = {
   eyeW: ['#fdfaf3'], eyeK: ['#1c1519'], brow: ['#2c2023'], mouth: ['#7c3b34'], teeth: ['#fdfaf3'], tongue: ['#d0635d'],
   blade: ['#7d8794', '#9da7b4', '#c4ced8', '#e4ecf2'], hilt: ['#6e4a14', '#8d5f1e', '#b07a26', '#cf9a48'], orb: ['#4fa6c8', '#6fc4e4', '#8fe0ff', '#c4f0ff'],
   stick: ['#5e4524', '#7a5c32', '#9a7440', '#b8925e'], bristle: ['#8f7740', '#b09552', '#d4b36a', '#e8cc8a'], phone: ['#1e2230'], line: ['#e8ecf2'],
-  box: ['#7a5c34', '#98744a', '#b8905a', '#d2ac78'], seam: ['#d9c49a'], book: ['#22406e', '#2e5590', '#3a6ab0', '#5a88cc'], page: ['#f4f0e2'],
+  box: ['#7a5c34', '#98744a', '#b8905a', '#d2ac78'], seam: ['#d9c49a'],
+  galon: ['#4a90c4', '#62a6d4', '#82bce2', '#aad4f0'], galonS: ['#3a78a8'], galonT: ['#2470b0'], book: ['#22406e', '#2e5590', '#3a6ab0', '#5a88cc'], page: ['#f4f0e2'],
   plaster: ['#f4e2bf'], plasterS: ['#dcc396'], osis: ['#c7922b'], tag: ['#2a3350'], gold: ['#f0cb52'],
 };
 // daftar bahan bersama untuk semua tokoh (indeks 1..n, maks 65535; kisi memakai Uint16Array); tokoh lain menambah lewat addRamps()
