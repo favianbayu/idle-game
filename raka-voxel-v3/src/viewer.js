@@ -1,30 +1,39 @@
 // Pratinjau WebGL kecil (tanpa library): kamera ortografis, warna vertex sudah membawa cahaya (sama seperti di game).
-import { buildParts, partBoxes, OUTFITS, EXPRS, buildBike, BIKE_SEAT } from './model.js';
-import { rigPose, bake, mul } from './rig.js';
-let BIKE = null;
+import { buildParts, OUTFITS, EXPRS, bikeVox, BIKE_PAL, BIKE_SEAT } from './model.js';
+import { voxelFrame, voxMesh } from './frame.js';
+import { propMesh } from './vox.js';
 import { ANIMS, ANIM_LIST, exprFor } from './anims.js';
-import { STYLES, humanShape, buildVox, makeRamps, organicColor, faceCfg, ANIMS as OLDANIMS } from './voxlib.js';
+import { humanShape, buildVox, makeRamps, organicColor, faceCfg, ANIMS as OLDANIMS } from './voxlib.js';
 
 const PARTS = new Map();
-function partsFor(outfit, expr, helm, face, fr) {
-  const k = outfit + '|' + expr + '|' + (helm ? 1 : 0) + (face ? face.join('') : '') + (fr || '');
-  if (!PARTS.has(k)) { const p = buildParts({ outfit, expr, helm, face, fr }); PARTS.set(k, { parts: p, boxes: partBoxes(p) }); }
+function partsFor(outfit, expr, helm, face) {
+  const k = outfit + '|' + expr + '|' + (helm ? 1 : 0) + (face ? face.join('') : '');
+  if (!PARTS.has(k)) PARTS.set(k, buildParts({ outfit, expr, helm, face }));
   return PARTS.get(k);
 }
-// satu frame tokoh baru -> segitiga
+const cat = (a, b) => { const pos = new Float32Array(a.pos.length + b.pos.length), col = new Float32Array(pos.length); pos.set(a.pos); pos.set(b.pos, a.pos.length); col.set(a.col); col.set(b.col, a.col.length); return { pos, col, n: pos.length / 3 }; };
+let BIKE = null;
+// satu frame Raka -> segitiga. Ukuran dalam satuan voxel lama (1/32 petak): voxel Raka = 0.5 satuan.
+const GEO = new Map();
 export function rakaFrame(o) {
+  if (o.pose || o.face) return makeFrame(o);
+  const key = [o.outfit, o.anim, o.i, o.expr, o.helm ? 1 : 0, o.bike === false ? 0 : 1].join('|');
+  let g = GEO.get(key);
+  if (!g) { if (GEO.size > 400) GEO.clear(); GEO.set(key, g = makeFrame(o)); }
+  return g;
+}
+function makeFrame(o) {
   const A = ANIMS[o.anim] || ANIMS.idle, i = o.i || 0;
   const t = A.loop ? i / A.n : i / Math.max(1, A.n - 1);
   const expr = o.expr && o.expr !== 'auto' ? o.expr : exprFor(o.anim, i, A.n);
-  const { parts, boxes } = partsFor(o.outfit || 'seragam', EXPRS.includes(expr) ? expr : 'biasa', o.helm, o.face, o.fr);
-  const pose = o.pose || A.pose(t);
-  const r = rigPose(pose, boxes);
-  if (o.anim !== 'rideSport' || o.bike === false) return bake(parts, r.mats);
-  // naik motor: pantat tokoh ditaruh tepat di jok, motor digabung ke geometri yang sama
-  const dx = BIKE_SEAT[0] - r.buttX, dz = BIKE_SEAT[1] - r.buttZ, T = [1, 0, 0, 0, 1, 0, 0, 0, 1, dx, 0, dz];
-  const mats = { bike: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0] };
-  for (const k in r.mats) mats[k] = mul(T, r.mats[k]);
-  return bake([...parts, ...(BIKE || (BIKE = buildBike()))], mats);
+  const P = partsFor(o.outfit || 'seragam', EXPRS.includes(expr) ? expr : 'biasa', o.helm, o.face);
+  const f = voxelFrame(P, o.pose || A.pose(t));
+  if (o.anim !== 'rideSport' || o.bike === false) return voxMesh(f, 0.5);
+  // naik motor: pantat tokoh ditaruh tepat di jok; setang & pijakan motor dipasang di posisi tangan & kaki
+  const dx = BIKE_SEAT[0] - f.buttX * 0.5, dz = BIKE_SEAT[1] - f.buttZ * 0.5;
+  if (!BIKE) { const h = f.hands[1], p = f.feet[1]; BIKE = propMesh(bikeVox([h[0] * 0.5 + dx, h[1] * 0.5, h[2] * 0.5 + dz], [p[0] * 0.5 + dx, p[1] * 0.5, p[2] * 0.5 + dz]), BIKE_PAL); }
+  f.lift = 0;
+  return cat(voxMesh(f, 0.5, [dx, 0, dz]), BIKE);
 }
 // Raka lama (humanShape) untuk perbandingan
 const OLD = { name: 'Raka', scale: 1.3, skin: '#d9a27a', hair: '#24160e', hairStyle: 'short', top: '#f4f4f0', sleeves: 'short', bottom: '#7d828c', shoe: '#1c1c20', shoeStyle: 'shoe', bottomStyle: 'pants', uniform: 'sma', belt: true };
@@ -71,15 +80,15 @@ export function makeGL(canvas) {
       const a = (it.yaw || 0) - cam.yaw - Math.PI / 2, ca = Math.cos(a), sa = Math.sin(a), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
       // putar terhadap z: X = x*ca - y*sa (kanan layar), D = x*sa + y*ca (menjauh dari kamera)
       const sx = 2 * cam.scale / w, sy = 2 * cam.scale / h, ox = (it.ox || 0), tx = (cam.cx + ox * cam.scale) / w * 2 - 1, ty = 1 - cam.cy / h * 2;
-      // layarY = z*cp - D*sp ; kedalaman = D*cp + z*sp
+      // kamera di depan-atas: layarY = z*cp + D*sp ; kedalaman = D*cp - z*sp
       const M = new Float32Array([
-        ca * sx, -sa * sp * sy, sa * cp * 0.004, 0,
-        -sa * sx, -ca * sp * sy, ca * cp * 0.004, 0,
+        ca * sx, sa * sp * sy, sa * cp * 0.004, 0,
+        -sa * sx, ca * sp * sy, ca * cp * 0.004, 0,
         0, cp * sy, -sp * 0.004, 0,
         tx, ty, 0, 1]);
       if (pass === 0) {
         gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
-        const r = it.geo.n > 60000 ? 17 : 11, D = new Float32Array(M); for (let k = 0; k < 8; k++) D[k] *= r;
+        const r = it.big ? 17 : 11, D = new Float32Array(M); for (let k = 0; k < 8; k++) D[k] *= r;
         drawGeo(disc, D, 0.2); gl.depthMask(true); gl.disable(gl.BLEND);
       } else drawGeo(it.geo, M, 1);
     }
@@ -113,7 +122,7 @@ export function initUI() {
     const A = ANIMS[st.anim];
     let i = Math.floor((now - st.t0) / 1000 * A.fps);
     i = A.loop ? i % A.n : Math.min(A.n - 1, i % (A.n + Math.ceil(A.fps * 0.7)));
-    const items = [{ geo: rakaFrame({ outfit: st.outfit, anim: st.anim, i, expr: st.expr, helm: st.helm }), ox: st.compare ? 13 : 0 }];
+    const items = [{ geo: rakaFrame({ outfit: st.outfit, anim: st.anim, i, expr: st.expr, helm: st.helm }), ox: st.compare ? 13 : 0, big: st.anim === 'rideSport' }];
     if (st.compare) items.push({ geo: oldFrame(st.anim, i), ox: -13 });
     render(items, { yaw: st.yaw, pitch: st.pitch, scale: st.zoom / pix, cx: w / 2, cy: h * 0.86 });
     $('info').textContent = `${A.name || st.anim} · frame ${i + 1}/${A.n} · ekspresi: ${st.expr === 'auto' ? exprFor(st.anim, i, A.n) : st.expr}`;
@@ -126,7 +135,7 @@ export function cell(o) {
   c.width = Math.round(o.w / pix); c.height = Math.round(o.h / pix);
   const render = cell.r || (cell.r = makeGL(c));
   const geo = o.old ? oldFrame(o.anim || 'idle', o.i || 0) : rakaFrame(o);
-  render([{ geo }], { yaw: o.yaw || 0, pitch: o.pitch ?? 0.4, scale: o.scale / pix, cx: c.width / 2 + (o.dx || 0) / pix, cy: (o.cy ?? o.h * 0.88) / pix, bg: o.bg });
+  render([{ geo, big: !o.old && o.anim === 'rideSport' }], { yaw: o.yaw || 0, pitch: o.pitch ?? 0.4, scale: o.scale / pix, cx: c.width / 2 + (o.dx || 0) / pix, cy: (o.cy ?? o.h * 0.88) / pix, bg: o.bg });
   return c;
 }
 window.RK = { cell, rakaFrame, oldFrame, ANIMS, EXPRS, OUTFITS };

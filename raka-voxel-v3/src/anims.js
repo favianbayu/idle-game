@@ -22,7 +22,7 @@ const MINE = {
   stand: { name: 'Berdiri (netral)', n: 1, fps: 1, loop: true, pose: t => ({ lean: 0, arL: 0.03, arR: 0.03, elL: 0.12, elR: 0.12, spL: 0.1, spR: 0.1, knL: 0, knR: 0 }) },
   idle: { name: 'Diam (santai, berat di satu kaki)', n: 8, fps: 4, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
     return { lean: -0.02 + 0.012 * s, sy: 0.55, thL: -0.02, thR: 0.1, knL: 0.04, knR: 0.22, lgL: 0.02, lgR: 0.12, arL: 0.04, arR: 0.1, elL: 0.3 + 0.04 * s, elR: 0.4 + 0.04 * s, spL: 0.16 + 0.02 * s, spR: 0.2 + 0.02 * s,
-             hp: -0.05 + 0.02 * s, hy: 0.12 * c, hr: 0.07, tw: 0.06, bob: 0.25 * s }; } },
+             hp: -0.05 + 0.02 * s, hy: 0.08 * c, hr: 0.07, tw: 0.06, bob: 0.25 * s }; } },
   walk: { name: 'Jalan (gaya petantang-petenteng)', n: 8, fps: 9, stride: 34, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
     return { lean: 0.04, hp: -0.06, sy: 0.45 * c, tw: 0.2 * s, hr: 0.05 * c,
              thL: 0.46 * s, thR: -0.46 * s, knL: 0.12 + 0.8 * Math.max(0, c) ** 1.5, knR: 0.12 + 0.8 * Math.max(0, -c) ** 1.5,
@@ -49,7 +49,7 @@ const MINE = {
     [0.5, { thR: 2.35, knR: 0.08, ftR: -0.4, lean: -0.55, hp: 0.4, arL: 0.4, elL: 1.1, arR: -0.6, elR: 0.5, spR: 0.5, spL: 0.5 }], [0.7, { thR: 1.6, knR: 2.2, lean: -0.2 }], [1, GUARD]]) },
   taunt: { name: 'Provokasi "Sini lu!"', n: 10, fps: 10, loop: true, pose: t => { const s = sinT(t * 2);
     return { lean: -0.1, hp: -0.2, hr: -0.12, hy: 0.1, sy: -0.3, thL: 0.22, thR: -0.15, knL: 0.12, knR: 0.12, lgL: 0.12, lgR: 0.12, arR: 1.35, spR: 0.25, elR: 0.75 + 0.8 * Math.max(0, s), arL: -0.1, elL: 0.5, spL: 0.45 }; } },
-  hairFix: { name: 'Sisir rambut pakai jari', n: 10, fps: 8, pose: keyed([[0, {}], [0.3, { arR: 2.5, elR: 1.7, spR: 0.8, hp: -0.1, hy: -0.2, hr: 0.1 }], [0.65, { arR: 2.75, elR: 2.2, spR: 0.6, hp: -0.16 }], [1, {}]]) },
+  hairFix: { name: 'Sisir rambut pakai jari', n: 10, fps: 8, pose: keyed([[0, {}], [0.3, { arR: 2.5, elR: 0.8, spR: -0.25, hp: -0.12, hr: 0.08 }], [0.65, { arR: 2.95, elR: 0.5, spR: -0.3, hp: -0.2, tail: 0.15 }], [1, {}]]) },
   squat: { name: 'Nongkrong jongkok', n: 4, fps: 3, loop: true, pose: t => ({ lean: 0.35 + 0.02 * sinT(t), hp: -0.3, thL: 1.9, thR: 1.9, knL: 2.6, knR: 2.6, lgL: 0.35, lgR: 0.35, ftL: 0.1, ftR: 0.1, arL: 1.1, arR: 1.1, elL: 0.35, elR: 0.35, spL: 0.3, spR: 0.3, hy: 0.2 * sinT(t) }) },
   hurt: { name: 'Kena pukul', n: 6, fps: 12, pose: keyed([[0, GUARD], [0.35, { lean: -0.4, hp: -0.35, hy: 0.5, tw: -0.4, arL: 0.2, elL: 1.0, arR: -0.3, elR: 0.8, spL: 0.6, spR: 0.6, thL: 0.5, thR: -0.1, knL: 0.3, px: -1.5, tail: -0.2 }], [0.7, {}], [1, GUARD]]) },
   rideSport: { name: 'Naik motor (balap)', n: 4, fps: 6, loop: true, pose: t => ({ lean: 0.62, hp: -0.5 + 0.02 * sinT(t), thL: 1.25, thR: 1.25, knL: 2.05, knR: 2.05, lgL: 0.2, lgR: 0.2, ftL: 0.45, ftR: 0.45, arL: 1.0, arR: 1.0, elL: 0.35, elR: 0.35, spL: 0.08, spR: 0.08, tail: 0.75 + 0.1 * sinT(t), bob: 0.15 * sinT(t) }) },

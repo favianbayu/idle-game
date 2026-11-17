@@ -73,9 +73,9 @@
    300
   ],
   "base": {
-   "scale": 9,
-   "pitch": 0.8,
-   "cy": 280
+   "scale": 8,
+   "pitch": 0.75,
+   "cy": 255
   },
   "items": [
    {
@@ -109,7 +109,7 @@
   "base": {
    "scale": 14,
    "pitch": 0.1,
-   "cy": 600,
+   "cy": 580,
    "anim": "stand"
   },
   "items": [

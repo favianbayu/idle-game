@@ -5,7 +5,7 @@ import path from 'path';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const out = process.argv[2] || 'shots', only = process.argv.slice(3);
 fs.mkdirSync(out, { recursive: true });
-const SHEETS = JSON.parse(fs.readFileSync('sheets.json', 'utf8'));
+const SHEETS = JSON.parse(fs.readFileSync(process.env.SHEETS || 'sheets.json', 'utf8'));
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
 page.on('pageerror', e => console.error('PAGE ERROR', e.message));
