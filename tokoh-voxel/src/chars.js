@@ -21,6 +21,11 @@ import { build as dartoBuild, OUTFITS as DARTO_OUT, EXPRS as DARTO_EX } from './
 import { build as ciciBuild, OUTFITS as CICI_OUT, EXPRS as CICI_EX } from './cici.js';
 import { build as fajarBuild, OUTFITS as FAJAR_OUT, EXPRS as FAJAR_EX } from './fajar.js';
 import { build as kobarBuild, OUTFITS as KOBAR_OUT, EXPRS as KOBAR_EX } from './kobar.js';
+import { build as jakaBuild, OUTFITS as JAKA_OUT, EXPRS as JAKA_EX } from './jaka.js';
+import { build as nartiBuild, OUTFITS as NARTI_OUT, EXPRS as NARTI_EX } from './narti.js';
+import { build as rtslametBuild, OUTFITS as RTSLAMET_OUT, EXPRS as RTSLAMET_EX } from './rtslamet.js';
+import { build as harisBuild, OUTFITS as HARIS_OUT, EXPRS as HARIS_EX } from './haris.js';
+import { build as gitoBuild, OUTFITS as GITO_OUT, EXPRS as GITO_EX } from './gito.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -45,5 +50,10 @@ export const CHARS = {
   cici: { name: 'Cici', build: ciciBuild, OUTFITS: CICI_OUT, EXPRS: CICI_EX },
   fajar: { name: 'Mas Fajar', build: fajarBuild, OUTFITS: FAJAR_OUT, EXPRS: FAJAR_EX },
   kobar: { name: 'Kobar', build: kobarBuild, OUTFITS: KOBAR_OUT, EXPRS: KOBAR_EX },
+  bangJaka: { name: 'Bang Jaka', build: jakaBuild, OUTFITS: JAKA_OUT, EXPRS: JAKA_EX },
+  buNarti: { name: 'Bu Narti', build: nartiBuild, OUTFITS: NARTI_OUT, EXPRS: NARTI_EX },
+  rtSlamet: { name: 'Pak RT Slamet', build: rtslametBuild, OUTFITS: RTSLAMET_OUT, EXPRS: RTSLAMET_EX },
+  pakHaris: { name: 'Pak Haris', build: harisBuild, OUTFITS: HARIS_OUT, EXPRS: HARIS_EX },
+  pakGito: { name: 'Pak Gito', build: gitoBuild, OUTFITS: GITO_OUT, EXPRS: GITO_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };

@@ -1,10 +1,10 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
 Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya yang sama dengan Raka v3
 (yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sampai Andra sudah dipasang di game (`game3d/src/raka/`,
-peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, dan Kobar masih pratinjau, menunggu persetujuan.
+peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, dan Pak Gito masih pratinjau, menunggu persetujuan.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
@@ -30,6 +30,11 @@ peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei, Gilang, Wulan, Om Dar
 | Cici | sepupu 8 tahun, anak Om Darto | 0.98 | 64 | rangka anak, kuncir dua ikat stroberi, gigi depan ompong, pipi merah |
 | Mas Fajar | montir, anggota senior Lampu Kota | 1.34 | 89 | rambut jabrik, kaus kerja penuh oli, jeans robek, handuk, gelang karet |
 | Kobar | ketua Serigala Besi, kakak Kirana | 1.36 | 95 | kekar, mohawk hitam-merah sisi dicukur, jahitan di dagu, rompi patch serigala, rantai dompet |
+| Bang Jaka | ketua Lampu Kota, pemberi misi geng | 1.38 | 89 | tinggi besar, gondrong diikat rendah di tengkuk, jenggot tipis, jaket hitam lis kuning + lambang lampu di punggung, boots |
+| Bu Narti | ibu kos Kenanga, tukang gosip | 1.24 | 78 | bergo bunga dengan pet, daster batik, kacamata baca di ujung hidung, kipas anyaman, sandal jepit |
+| Pak RT Slamet | ketua RT Kenanga | 1.32 | 88 | kopiah hitam, batik parang lengan pendek, perut buncit, uban di pelipis, tahi lalat, buku catatan warga |
+| Pak Haris | Pak Haris Megantara, pengembang properti, musuh utama | 1.34 | 85 | jas abu + dasi merah anggur, rambut semir hitam klimis, kacamata tanpa bingkai, cincin akik merah, senyum dingin |
+| Pak Gito | rentenir yang menagih tiap Jumat | 1.3 | 84 | safari cokelat empat saku, tas pinggang kulit, gigi emas, rokok di telinga, kumis tipis, dahi lebar |
 | Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
@@ -58,6 +63,11 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Cici**: seragam SD merah putih, kaus kucing + rok tutu, piama bintang.
 - **Mas Fajar**: bengkel (kaus kerja penuh oli + jeans robek + handuk), jaket Lampu Kota, santai (kaus putih + sandal jepit).
 - **Kobar**: Serigala Besi (rompi jeans patch serigala + kutang hitam + rantai dompet + boots), Wijaya Motor (coverall diikat di pinggang), jaket balap nomor 1.
+- **Bang Jaka**: jaket Lampu Kota (hitam lis kuning, kaus abu, jeans dilipat, boots), latihan ujian masuk (kutang hitam + celana training + perban tangan), santai (flanel merah digulung + kargo).
+- **Bu Narti**: daster batik + bergo bunga + kipas + sandal jepit, arisan (bergo marun + tunik brokat + rok batik + tas tangan + selop), pengajian (gamis hijau tua + bergo krem). Semua rok panjang memakai rok.js.
+- **Pak RT Slamet**: batik parang + buku catatan warga, ronda (jaket parasut + sarung diselempang + senter), kerja bakti (kaus merah + celana training + handuk + bot karet).
+- **Pak Haris**: jas abu tiga potong, golf (polo putih + rompi rajut + chino + sarung tangan), batik sutra hitam-emas.
+- **Pak Gito**: safari cokelat + buku utang, kemeja bunga tropis + kalung emas + kacamata hitam, jaket kulit + kaus merah.
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai
