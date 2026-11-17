@@ -1,7 +1,7 @@
 # Panduan membuat tokoh voxel halus (gaya Raka v3)
 
 Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus. Contoh kodenya ada di `src/`
-(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar). Ikuti urutan bagian di bawah saat membuat tokoh baru.
+(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 
 ## 1. Ukuran dan kisi
 
@@ -94,6 +94,8 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
   tidak angkanya terbalik dari belakang (kasus nomor 7 Uti). Di dada (`pf`) pakai `y = c - tengah`.
 - Topi di atas rambut: warnai ulang voxel rambut di atas garis topi (Uti: z >= 13) jadi bahan topi + lis 1 voxel,
   jangan buat kubah kecil terpisah; ukurannya otomatis pas dengan rambut.
+- Helm full-face / tudung hoodie: bentuk elips (cek jarak tiap sel ke pusat), bukan `rrect` besar, kalau tidak jadi kubus.
+- Tokoh yang tidak ada di `NPC_STYLES` lama (Kirana, Andra): lembar `Game` tanpa kolom "Lama".
 - Garis belahan rambut diwarnai lebih gelap dari rambut, bukan warna kulit: dari atas, garis kulit terbaca botak.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file
   tokoh lain (misalnya `denim`, `kick` dari `rani.js`) hanya boleh dipakai kalau file itu dimuat lebih dulu di `build.mjs`.

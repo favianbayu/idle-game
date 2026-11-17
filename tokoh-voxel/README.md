@@ -1,4 +1,4 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
@@ -18,6 +18,10 @@ Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya ya
 | Rizal | NPC romance cowok, sekretaris OSIS | 1.32 | 86 | kurus, rambut belah samping poni jatuh, kacamata frame tipis kotak, bulu mata panjang, mata sayu, jari bernoda tinta, rompi rajut cokelat, tas selempang kanvas |
 | Uti | NPC romance cewek, tomboi montir + kapten futsal | 1.24 | 82 | atletis, kulit sawo matang, bob pendek berantakan potong sendiri, alis tebal, coretan oli di pipi, bekas luka di dagu, seringai, jaket marun kebesaran milik almarhum kakak + kunci pas di saku, celana panjang abu |
 | Tegar | NPC romance cowok, ketua kelas & juara umum | 1.32 | 86 | kulit pucat, rambut klimis belah samping mengilap, kacamata bingkai hitam tebal, kantong mata gelap, seragam disetrika tajam + dasi abu + badge ketua kelas, pantofel |
+| Sasha | NPC romance cewek, anak elite geng Bram | 1.24 | 80 | kulit putih, rambut cokelat kemerahan panjang bergelombang tanpa poni, muka tirus, bulu mata lentik, lip tint pink, seragam dipermak + rok pendek + cardigan pink, jam emas, loafers |
+| Kirana | NPC romance cewek, pembalap STM | 1.26 | 81 | kulit langsat gelap, rambut hitam lurus diikat rendah ujung toska, poni samping, mata tajam, satu tindik, plester di siku, seragam STM + sepatu safety |
+| Jojo | NPC romance cowok, fotografer mading | 1.3 | 90 (termasuk mohawk) | kurus jangkung, mohawk kecil bergel, mata besar, senyum lebar, tahi lalat di bawah mata kanan, rompi fotografer army + kamera DSLR di leher |
+| Andra | NPC romance cowok, pelukis mural STM | 1.32 | 85 | kulit cokelat, rambut ikal sebahu setengah diikat, alis tebal, senyum malas, tindik kiri, tangan & celana kena cat, tato spidol di lengan, boots |
 | Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
@@ -35,6 +39,10 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Rizal**: seragam + rompi rajut + tas selempang, jas almamater + pulpen di telinga, kaus festival literasi + sarung (rok.js), kemeja kotak cokelat + slacks + sepatu kanvas.
 - **Uti**: seragam + jaket marun, jersey futsal #7 + decker + sepatu futsal merah, bengkel (kaus hitam + wearpack diikat di pinggang + sarung tangan kain), kaus band motor + jeans robek + boots + topi terbalik, malam (jaket marun tertutup + helm half-face kuning bergambar petir; juga dipakai saat naik motor).
 - **Tegar**: seragam + dasi, les (kemeja biru langit + celana bahan + ransel penuh buku), piama biru tua + selop, polo abu + chino + kets putih bersih.
+- **Sasha**: seragam + cardigan pink, bareng geng (kacamata hitam di kepala + tas tangan putih), dress bunga + jaket denim putih + tas mini, penyamaran malam (hoodie hitam + masker + training + kets lusuh).
+- **Kirana**: seragam STM, wearpack hitam lis oranye + handuk, jaket balap toska-hitam #21 + helm full-face (juga dipakai saat naik motor), crop hoodie + kargo + sneakers tinggi.
+- **Jojo**: seragam + rompi army + kamera, liputan (kupluk oranye + ransel kamera), kaus "HORAS!" + celana pendek, kemeja hawaii + kargo + sandal gunung.
+- **Andra**: seragam STM kena cat + boots, melukis mural (kaus penuh cat + overall + masker + topi terbalik), Serigala Besi (rompi jeans patch serigala), kemeja bunga + kulot, sarung (rok.js) + kaus partai.
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai
@@ -49,7 +57,7 @@ semua gerakan game (`ANIMS`) tanpa perubahan.
 - `src/`
   - `rig.js`: rig Raka yang kini memakai konfigurasi kerangka `K` (panjang ruas, lebar bahu, jarak pinggul) per tokoh.
   - `model.js`: Raka + registri bahan bersama (`addRamps`), `assemble`, `paintFace`.
-  - `rani.js`, `bimo.js`, `bram.js`, `nadia.js`, `dimas.js`, `sekar.js`, `arga.js`, `laras.js`, `rizal.js`, `uti.js`, `tegar.js`: kerangka (`SKEL`), bahan, peta wajah 14x15, rambut, dan baju tiap tokoh.
+  - `rani.js`, `bimo.js`, `bram.js`, `nadia.js`, `dimas.js`, `sekar.js`, `arga.js`, `laras.js`, `rizal.js`, `uti.js`, `tegar.js`, `sasha.js`, `kirana.js`, `jojo.js`, `andra.js`: kerangka (`SKEL`), bahan, peta wajah 14x15, rambut, dan baju tiap tokoh.
   - `rok.js`: pembuat rok (pinggang, panel depan/belakang, tabung kaki) + data `P.skirt`; `frame.js` mengisi lambung cembung kain rok per lapis supaya rok tidak terbelah saat jalan/lari.
   - `chars.js`: daftar tokoh untuk penampil.
   - `frame.js`, `expr.js`, `vox.js`, `voxlib.js`, `npc_styles.js`, `anims.js`: sama dengan versi game.
