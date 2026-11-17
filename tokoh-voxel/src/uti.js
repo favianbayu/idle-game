@@ -70,13 +70,16 @@ function head(o) {
   hair.rrect(16, -8, -8, 6, 7, 'uHair', 5); hair.rrect(17, -7, -6, 5, 5, 'uHair', 4); hair.rrect(18, -4, -4, 2, 2, 'uHair', 2);
   const zmin = (x, y) => x >= 4 && Math.abs(y + 0.5) > 7 ? 9 : x >= 5 ? FR[Math.max(0, Math.min(13, y + 7))] : x >= 1 ? (Math.abs(y + 0.5) > 6.5 ? 3 + (rnd(x, y, 1) % 3) : 0) : 2 + (rnd(x, y, 2) % 3);
   hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= zmin(x, y)) v.set(x, y, z, c); });
-  for (const [x, y] of [[-2, 1], [1, -5], [-5, -3], [4, 3], [6, -6], [-7, 5], [0, -2]]) { const z = topZ(v, x, y); if (z !== null) v.set(x, y, z + 1, 'uHair'); }   // jambul berantakan
+  if (!o.cap) for (const [x, y] of [[-2, 1], [1, -5], [-5, -3], [4, 3], [6, -6], [-7, 5], [0, -2]]) { const z = topZ(v, x, y); if (z !== null) v.set(x, y, z + 1, 'uHair'); }   // jambul berantakan
   for (const y of [-6, -2, 1, 5]) for (let x = -6; x <= 5; x++) { const z = topZ(v, x, y); if (z !== null && rnd(x, y, 5) % 3 === 0 && v.get(x, y, z) === 'uHair') v.set(x, y, z, 'uHairT'); }
-  if (o.cap) {   // topi terbalik marun: kubah di atas bob, pet ke belakang
-    for (let z = 15; z <= 18; z++) { const k = z - 15; v.shell(z, -8 + k, -8 + k, 6 - k, 7 - k, 'topiU', 4); }
-    v.rrect(19, -4, -4, 2, 3, 'topiU', 2);
-    for (let x = -13; x <= -8; x++) for (let y = -4; y <= 3; y++) v.set(x, y, 15, 'topiU');
-    v.set(6, -1, 16, 'marunS'); v.set(6, 0, 16, 'marunS');
+  if (o.cap) {   // topi terbalik marun: membungkus rambut bagian atas saja (z >= 13), bob tetap keluar di bawah
+    v.each((x, y, z, c) => { if (z >= 13 && (c === 'uHair' || c === 'uHairT')) v.set(x, y, z, 'topiU'); });
+    const ring = [];   // lis bawah topi 1 voxel menonjol keluar
+    v.each((x, y, z, c) => { if (z === 13 && c === 'topiU') for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!v.has(x + dx, y + dy, z)) ring.push([x + dx, y + dy]); });
+    for (const [x, y] of ring) v.set(x, y, 13, 'marunS');
+    for (let y = -4; y <= 3; y++) { const xb = v.back(y, 13); for (let x = xb - 1; x >= xb - 6; x--) v.set(x, y, 13, 'topiU'); }   // pet di belakang
+    for (let y = -2; y <= 1; y++) { const z = 14, x = v.front(y, z); if (x !== null) v.set(x, y, z, Math.abs(y + 0.5) < 1 ? 'uHair' : 'marunS'); }   // bukaan pengatur di depan
+    const tz = Math.max(...[-1, 0].map(y => topZ(v, -1, y))); v.set(-1, 0, tz + 1, 'marunS');   // kancing atas topi
   }
   return v;
 }
@@ -90,7 +93,7 @@ function chest(o) {
   if (F) {   // jersey futsal putri: garis putih di bahu, nomor 7 di punggung dan dada kecil
     for (let y = -2; y <= 1; y++) v.pf(y, 51, 'uSkin'); v.shell(52, -3, -3, 3, 2, 'uNum', 1);
     for (const s of [-1, 1]) v.psBox(s, -3, 40, 3, 51, 'uNum');
-    ['XXXXX', '....X', '...X.', '..X..', '..X..', '.X...', '.X...'].forEach((row, r) => [...row].forEach((ch, c) => { if (ch === 'X') v.pb(c - 2, 48 - r, 'uNum'); }));
+    ['XXXXX', '....X', '...X.', '..X..', '..X..', '.X...', '.X...'].forEach((row, r) => [...row].forEach((ch, c) => { if (ch === 'X') v.pb(2 - c, 48 - r, 'uNum'); }));
     return v;
   }
   if (W || B) {   // kaus hitam (bengkel) / kaus band motor bersablon roda bersayap (jalan)

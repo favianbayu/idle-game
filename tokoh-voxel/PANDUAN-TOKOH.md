@@ -90,6 +90,10 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
   **Jangan 2 atau 3 warna**: `voxelFrame` gagal (`reading '0'`). Pilih 1 atau 4.
 - Jumlah bahan global sudah lewat 255: kisi `Vox.dense` dan `voxelFrame` memakai `Uint16Array`. Kalau menyalin
   `vox.js`/`frame.js` ke game, salin versi 16 bit ini juga, kalau tidak warna tokoh terakhir jadi kacau.
+- Tulisan/nomor di punggung (`pb`) harus dicerminkan: kolom `c` peta jadi `y = tengah - c`, bukan `c - tengah`, kalau
+  tidak angkanya terbalik dari belakang (kasus nomor 7 Uti). Di dada (`pf`) pakai `y = c - tengah`.
+- Topi di atas rambut: warnai ulang voxel rambut di atas garis topi (Uti: z >= 13) jadi bahan topi + lis 1 voxel,
+  jangan buat kubah kecil terpisah; ukurannya otomatis pas dengan rambut.
 - Garis belahan rambut diwarnai lebih gelap dari rambut, bukan warna kulit: dari atas, garis kulit terbaca botak.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file
   tokoh lain (misalnya `denim`, `kick` dari `rani.js`) hanya boleh dipakai kalau file itu dimuat lebih dulu di `build.mjs`.
