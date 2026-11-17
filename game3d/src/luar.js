@@ -221,7 +221,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       for (let i = 0; i < GW; i++) { let s = 0; for (let j = -r; j <= r; j++) s += B[idx(i, Math.max(0, Math.min(GH - 1, j)))]; for (let j = 0; j < GH; j++) { A[idx(i, j)] = s / (2 * r + 1); s += B[idx(i, Math.min(GH - 1, j + r + 1))] - B[idx(i, Math.max(0, j - r))]; } } };
     for (let k = 0; k < 3; k++) blur(H, 3);
     // tinggi target guide 86 (tanjakan pegunungan): koreksi halus (gauss) supaya titik kunci pas, tepi kota tetap 0
-    { const CP = [[138, 0, 0], [128, -23, 10], [152, -46, 22], [170, -52, 22], [119, -52, 25], [128, -62, 26], [250, -28, 10], [262, -45, 10], [282, -32, 11], [110, -96, 40], [100, -110, 38], [118, -118, 32]];
+    { const CP = [[138, 0, 0], [128, -23, 10], [152, -46, 22], [170, -52, 22], [119, -52, 25], [128, -62, 26], [250, -28, 20], [262, -45, 20], [282, -32, 19], [268, -60, 20], [110, -96, 40], [100, -110, 38], [118, -118, 32]];
       for (let x = 0; x <= 260; x += 26) CP.push([x, 2, 0]); for (let z = 0; z <= 180; z += 30) CP.push([-2, z, 0], [262, z, 0]);
       const at = (x, z) => H[idx(Math.max(0, Math.min(GW - 1, Math.round(x - BX0))), Math.max(0, Math.min(GH - 1, Math.round(z - BZ0))))];
       const res = CP.map(([x, z, t]) => t - at(x, z)), s2 = 2 * 22 * 22;
@@ -240,7 +240,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const k = idx(i, j), x = i + BX0, z = j + BZ0;
       if (flat[k] === 2) { const li = [9, 25].find(l => inPoly(x, z, K.areas[l].pts)); H[k] = li ? lakeLv[li] : -0.35; pin[k] = 2; }
-      else if (flat[k] === 1) { H[k] = inR(TOWN, x, z) || !(AL[k] === AL[k]) ? 0 : AL[k]; pin[k] = 1; }
+      else if (flat[k] === 1) { const tw = inR(TOWN, x, z) || !(AL[k] === AL[k]); H[k] = tw ? 0 : AL[k]; pin[k] = tw ? 1 : 0; }   // desa/sawah di lereng: rata tapi tepinya boleh melandai ke jalan
     }
     // jalan: tinggi as jalan = tanah di sepanjangnya (dihaluskan), dibatasi kemiringan 10% (setapak 25%)
     RIVL = new Float32Array(GW * GH).fill(NaN);
