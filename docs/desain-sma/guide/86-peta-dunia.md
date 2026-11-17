@@ -126,7 +126,7 @@ Kontur gunung memberi tinggi dasar. Di jalan pegunungan, tanjakan dibuat lebih t
 | Tikungan ke-4 (128, -23) | +10 |
 | Bukit Bintang / ujung serpentin (152, -46) | +22 |
 | Basecamp (128, -62) | +26 |
-| Pertigaan Jl. Raya Puncak (250, -28) dan Desa Sukamekar | +16 |
+| Pertigaan Jl. Raya Puncak (250, -28) dan Desa Sukamekar | +16 (Jl. Raya Puncak dari batas kota diberi 3 kelokan di x 272..296, panjangnya ~120 petak supaya tanjakan 18% cukup) |
 | Alun-alun Edelweis dan kawah | +40 (setapak saja) |
 
 - Kemiringan maksimum:
