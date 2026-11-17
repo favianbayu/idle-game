@@ -24,4 +24,7 @@ export const EXTRA_STYLES = {
   mekanik:  { name: 'Mekanik', scale: 1.3, skin: '#c48a60', hair: '#1a1410', hairStyle: 'capback', cap: '#d8342c', top: '#d8342c', top2: '#2a2a30', topPattern: 'stripe', sleeves: 'long', bottom: '#d8342c', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe' },
   pendaki:  { name: 'Pendaki', scale: 1.28, skin: '#e0b090', hair: '#1a1410', hairStyle: 'messy', top: '#e86a1a', top2: '#2a2a30', topPattern: 'stripe', sleeves: 'long', bottom: '#4a4a52', bottomStyle: 'pants', shoe: '#5a3a2a', shoeStyle: 'shoe', box: '#2a6ac0' },
   buruh:    { name: 'Buruh Pabrik', scale: 1.3, skin: '#b07a52', hairStyle: 'helmet', helmet: '#f2f2ee', top: '#2a4a8a', top2: '#f2c230', topPattern: 'stripe', sleeves: 'long', bottom: '#2a3a5a', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'shoe' },
+  // tokoh voxel halus yang belum punya gaya lama sendiri (bentuknya dari src/raka/, gaya ini hanya cadangan)
+  wulan:    { name: 'Wulan', scale: 1.26, skin: '#c99068', hair: '#141010', hairStyle: 'long', top: '#1e2a4a', sleeves: 'long', bottom: '#1e2a4a', bottomStyle: 'skirt', shoe: '#1a1a1a', shoeStyle: 'shoe' },
+  rtSlamet: { name: 'Pak RT Slamet', scale: 1.32, skin: '#c48a5e', hair: '#1a1410', hairStyle: 'sidepart', top: '#7a4a24', top2: '#e8c070', topPattern: 'batik', sleeves: 'short', bottom: '#2a2a30', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe', belly: 0.5 },
 };

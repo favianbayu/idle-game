@@ -588,7 +588,7 @@ function updatePlayer(dt) {
 // variasi diam NPC: siswa main HP/ngobrol/baca, orang dewasa jongkok/peregangan, anak-anak joget; beberapa tokoh punya kebiasaan sendiri (guide)
 const STUDENTS = new Set(['raka', 'rani', 'bimo', 'tegar', 'jojo', 'uti', 'nadia', 'sekar', 'laras', 'dimas', 'arga', 'rizal', 'bram', 'rio', 'kevin', 'sasha', 'siswaA', 'siswiA', 'siswiB', 'siswaB', 'paskibra', 'kirana', 'mei', 'andra']);
 const KIDS = new Set(['anakSD', 'anakSDcw', 'bocah', 'cici']);
-const HABIT = { pakUjang: 'sweep', gilang: 'carry', mei: 'read', rizal: 'read', jojo: 'phone', sekar: 'think', fajar: 'squat', satpam: 'salute', paskibra: 'salute', polisi: 'salute', kakek: 'squat', andra: 'think', laras: 'carry', bimo: 'laugh', tegar: 'read', pakGunadi: 'think', buRatna: 'read' };
+const HABIT = { pakUjang: 'sweep', mei: 'read', rizal: 'read', jojo: 'phone', sekar: 'think', fajar: 'squat', satpam: 'salute', paskibra: 'salute', polisi: 'salute', kakek: 'squat', andra: 'think', laras: 'carry', bimo: 'laugh', tegar: 'read', pakGunadi: 'think', buRatna: 'read' };
 const IDLES = { student: ['idle', 'idle', 'phone', 'talk', 'look', 'think', 'laugh', 'read', 'clap'], adult: ['idle', 'idle', 'look', 'phone', 'talk', 'squat', 'stretch', 'scratch'], kid: ['idle', 'look', 'dance', 'squat', 'wave', 'clap'] };
 const pick3 = a => a[Math.floor(Math.random() * a.length)];
 function pickIdle(n) {
@@ -600,7 +600,7 @@ function updateNPC(n, dt) {
   const dx = n.x - player.x, dz = n.z - player.z, far = n.away || dx * dx + dz * dz > 70 * 70;   // away: tokohnya sedang dipakai di tempat lain (mis. balapan)
   n.c.group.visible = !far;
   if (far) return;
-  if (fight.updateNPC(n, dt)) return;
+  if (fight.updateNPC(n, dt)) { n.galon = false; return; }   // berantem: galon Gilang ditaruh dulu
   if (n.ext) {   // NPC dengan perilaku sendiri (anak main bola): posisi & animasi diatur modulnya
     n.ext(n, dt); n.c.heading = n.heading; n.c.play(n.anim || 'idle'); n.c.sink = n.sink || 0; n.c.blob.visible = !n.sink;
     n.c.group.position.set(n.x, n.yAbs ?? (n.area === 'luar' ? luar.groundY(n.x, n.z) : kota.groundY(n.x, n.z)) + (n.dy || 0), n.z); n.c.update(dt);
@@ -618,7 +618,8 @@ function updateNPC(n, dt) {
       const t = Math.random(), [a, b] = n.path; n.tx = a.x + (b.x - a.x) * t; n.tz = a.z + (b.z - a.z) * t;
       if (n.idle === 'wave' && !n.say && Math.random() < 0.35) n.say = { text: pick3(['Priiit! Kiri, kiri... terus!', 'Mundur, mundur... stop!', 'Ayo, ayo, masih muat!', 'Priit priiit!']), t: 2.2 };
     }
-    else if (d < 0.2) { n.idle = pickIdle(n); n.wait = n.idle === 'idle' ? 2 + Math.random() * 5 : 5 + Math.random() * 8; const a = Math.random() * 6.28, r = Math.random() * (n.roam ?? 3); n.tx = n.home.x + Math.cos(a) * r; n.tz = n.home.z + Math.sin(a) * r; }
+    else if (d < 0.2) { n.idle = pickIdle(n); if (n.sid === 'gilang') { n.galon = Math.random() < 0.6; if (n.galon) n.idle = 'galon'; }   // lagi nganter galon: galon di pundak
+      n.wait = n.idle === 'idle' ? 2 + Math.random() * 5 : 5 + Math.random() * 8; const a = Math.random() * 6.28, r = Math.random() * (n.roam ?? 3); n.tx = n.home.x + Math.cos(a) * r; n.tz = n.home.z + Math.sin(a) * r; }
     else {
       const s = 1.1 * dt; const p = n.parkir ? { x: n.x + tx / d * s, z: n.z + tz / d * s } : collision.move(n, n.x + tx / d * s, n.z + tz / d * s, 0.26); if (!n.parkir) kota.traffic.push(p, 0.26);   // tukang parkir menyusup di sela motor
       if (Math.hypot(p.x - n.x, p.z - n.z) < s * 0.3) { n.tx = n.x; n.tz = n.z; }
@@ -627,7 +628,7 @@ function updateNPC(n, dt) {
   }
   // jangan tembus pemain
   const pd = Math.hypot(dx, dz); if (pd < 0.55 && pd > 1e-4) { n.x = player.x + dx / pd * 0.55; n.z = player.z + dz / pd * 0.55; }
-  n.c.heading = n.heading; n.c.play(moving ? 'walk' : n.say && !n.filler ? 'talk' : n.idle || 'idle');
+  n.c.heading = n.heading; n.c.play(moving ? (n.galon ? 'galonWalk' : 'walk') : n.galon ? 'galon' : n.say && !n.filler ? 'talk' : n.idle || 'idle');
   n.c.group.position.set(n.x, !n.area || n.area === 'kota' ? kota.groundY(n.x, n.z) : n.area === 'luar' ? luar.groundY(n.x, n.z) : 0, n.z); n.c.update(dt);
   if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
   n.greetT -= dt;

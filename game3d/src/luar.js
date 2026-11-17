@@ -37,7 +37,7 @@ const FOLK = [
   ['gunung', 'pemuda', 'Kang Ujang (porter)', 131, -57, ['Mau muncak? Lapor dulu di pos 1, Dek.', 'Jalur ke kawah 3 jam kalau santai.', 'Bawa jaket, di atas dingin banget.']],
   ['gunung', 'ibuHijab', 'Teh Neneng', 168, -50, ['Jagung bakar, Dek! Malam di sini lampu kotanya cakep.', 'Bukit Bintang paling rame malam Minggu.']],
   ['gunung', 'kakek', 'Abah Oyo', 60, -45, ['Air panas Sangkala bikin pegel ilang.', 'Dulu Abah tiap subuh berendam di sini.']],
-  ['sukamekar', 'mbak', 'Mbak Wulan', 268, -42, ['Aku sekolah di SMK Pariwisata sini.', 'Kebun teh paling bagus pas kabut turun.']],
+  ['sukamekar', 'wulan', 'Wulan', 268, -42, ['Aku sekolah di SMK Pariwisata sini.', 'Kebun teh paling bagus pas kabut turun.']],
   ['sukamekar', 'bapakPeci', 'Pak Mandor Teh', 280, -28, ['Pabrik teh ini udah dari zaman Belanda.', 'Butuh tenaga petik? Datang pagi-pagi.']],
   ['waduk', 'ibuDaster', 'Bu Atun', -58, -14, ['Ikan bakar nila, sambel dadak. Mau?', 'Perahu ke tengah waduk 10 ribu.']],
   ['waduk', 'kakek', 'Ki Sarpan', -92, -72, ['Batu Tulis itu jangan diinjak, Nak.', 'Tulisannya belum ada yang bisa baca.']],

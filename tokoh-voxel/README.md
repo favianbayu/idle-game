@@ -3,8 +3,10 @@
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
 Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya yang sama dengan Raka v3
-(yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sampai Andra sudah dipasang di game (`game3d/src/raka/`,
-peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, dan Bu Melati masih pratinjau, menunggu persetujuan.
+(yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sudah dipasang di game (`game3d/src/raka/`,
+peta `FINE` di `voxworker.js`) dengan baju `seragam` (tokoh bukan siswa memakai baju hariannya). Wulan dan Pak RT Slamet
+memakai sid baru `wulan` dan `rtSlamet`. Gilang memikul galon (gerakan `galon`/`galonWalk`) saat sedang mengantar,
+dan galonnya ditaruh saat berantem.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|

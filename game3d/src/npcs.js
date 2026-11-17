@@ -17,7 +17,7 @@ export const NPCS = [
   { sid: 'mbak', name: 'Mbak Rini', filler: true, home: { house: 'kampung', n: 14 }, roam: 2 },
   { sid: 'ibuHijab', name: 'Teh Euis', filler: true, home: { house: 'kampung', n: 21 }, roam: 1.5 },
   { sid: 'bapakPeci', name: 'Ustaz Hasan', filler: true, home: 'musala', roam: 1.5 },
-  { sid: 'pakRT', name: 'Pak RT Sobari', filler: true, home: { house: 'kampung', n: 1 }, roam: 1.5, lines: ['Malam ini giliran kamu ronda, Raka.', 'Iuran kebersihan jangan lupa, ya.', 'Kalau ada ribut-ribut, lapor ke pos ronda.'] },
+  { sid: 'rtSlamet', name: 'Pak RT Slamet', filler: true, home: { house: 'kampung', n: 1 }, roam: 1.5, lines: ['Malam ini giliran kamu ronda, Raka.', 'Iuran kebersihan jangan lupa, ya.', 'Kalau ada ribut-ribut, lapor ke pos ronda.'] },
   // ---- Perumahan Bukit Asri
   { sid: 'sasha', home: { house: 'perum', n: 2 }, roam: 2 },
   { sid: 'buRatna', home: { house: 'perum', n: 0 }, roam: 2 },
