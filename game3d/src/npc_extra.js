@@ -15,4 +15,13 @@ export const EXTRA_STYLES = {
   siswaA:   { name: 'Andi', scale: 1.26, skin: '#e0b090', hair: '#1a1410', hairStyle: 'sidepart', glasses: true, ...SMA, bottomStyle: 'pants' },
   siswaB:   { name: 'Bayu', scale: 1.28, skin: '#c98e66', hair: '#1a1410', hairStyle: 'spiky', ...SMA, bottomStyle: 'pants' },
   paskibra: { name: 'Maya', scale: 1.22, skin: '#d9a27a', hair: '#141010', ...SMA, bottomStyle: 'skirt', pleats: true, hairStyle: 'braid' },
+  // pengisi luar kota: tentara (kaos loreng hijau, lari pagi), petani bercaping, nelayan, pemetik teh, mekanik, pendaki
+  tentara:  { name: 'Prajurit', scale: 1.32, skin: '#b07a52', hair: '#141010', hairStyle: 'buzz', top: '#4a5a32', top2: '#3a4628', topPattern: 'stripe', sleeves: 'short', bottom: '#3e4a2c', bottomStyle: 'shorts', shoe: '#1a1a1a', shoeStyle: 'shoe', brow: 'thick' },
+  tentaraJaga: { name: 'Prajurit Jaga', scale: 1.32, skin: '#c48a60', hair: '#141010', hairStyle: 'cap', cap: '#3e4a2c', top: '#55663a', top2: '#3a4628', topPattern: 'stripe', sleeves: 'long', bottom: '#4a5a32', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe', beard: 'mustache' },
+  petani:   { name: 'Pak Tani', scale: 1.28, skin: '#9a6a42', hair: '#1a1410', hairStyle: 'caping', cap: '#d8c48a', top: '#6a7a8a', sleeves: 'long', bottom: '#3a3a40', bottomStyle: 'pants', shoe: '#9a6a42', shoeStyle: 'sandal', beard: 'stubble' },
+  petaniW:  { name: 'Bu Tani', scale: 1.24, skin: '#a8744a', hair: '#1a1410', hairStyle: 'caping', cap: '#e0cc90', top: '#b0506a', top2: '#e8c870', topPattern: 'batik', sleeves: 'long', bottom: '#4a3a5a', bottomStyle: 'skirt', bottomPattern: 'batik', shoe: '#9a6a42', shoeStyle: 'sandal' },
+  nelayan:  { name: 'Nelayan', scale: 1.3, skin: '#8a5a36', hair: '#141010', hairStyle: 'caping', cap: '#c8b47a', top: '#2a6a9a', sleeves: 'short', bottom: '#3a3a40', bottomStyle: 'shorts', shoe: '#8a5a36', shoeStyle: 'sandal', beard: 'stubble' },
+  mekanik:  { name: 'Mekanik', scale: 1.3, skin: '#c48a60', hair: '#1a1410', hairStyle: 'capback', cap: '#d8342c', top: '#d8342c', top2: '#2a2a30', topPattern: 'stripe', sleeves: 'long', bottom: '#d8342c', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe' },
+  pendaki:  { name: 'Pendaki', scale: 1.28, skin: '#e0b090', hair: '#1a1410', hairStyle: 'messy', top: '#e86a1a', top2: '#2a2a30', topPattern: 'stripe', sleeves: 'long', bottom: '#4a4a52', bottomStyle: 'pants', shoe: '#5a3a2a', shoeStyle: 'shoe', box: '#2a6ac0' },
+  buruh:    { name: 'Buruh Pabrik', scale: 1.3, skin: '#b07a52', hairStyle: 'helmet', helmet: '#f2f2ee', top: '#2a4a8a', top2: '#f2c230', topPattern: 'stripe', sleeves: 'long', bottom: '#2a3a5a', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'shoe' },
 };

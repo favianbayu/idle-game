@@ -226,6 +226,10 @@ function hairAt(hs, dx, dy, dz, face) {
       if (dz > -1.6 && ((dx + 0.2) / 4.9) ** 2 + (dy / 4.7) ** 2 + ((dz - 0.4) / 4.9) ** 2 <= 1) return dx > 3.0 && dz < 1.6 ? 'visor' : 'helmet';
       return 0;
     case 'peci': if (dz > 2.0 && dz < 4.7 && ((dx + 0.1) / 4.1) ** 2 + (dy / 3.9) ** 2 <= 1) return 'peci'; return !face && dz < 2.0 && shellIn(dx, dy, dz) ? 1 : 0;
+    case 'caping': {   // topi caping petani/nelayan: kerucut lebar dari anyaman bambu
+      const r = Math.hypot(dx + 0.2, dy), top = 2.7 + (8.4 - r) * 0.42;
+      if (r < 8.4 && dz > 2.3 && dz < top && dz > top - 1.2) return 'cap';
+      return !face && dz < 2.3 && shellIn(dx, dy, dz) ? 1 : 0; }
     case 'cap':
       if (dz > 1.6 && ((dx + 0.2) / 4.3) ** 2 + (dy / 4.1) ** 2 + ((dz - 0.8) / 4.2) ** 2 <= 1) return 'cap';
       if (dx > 2.5 && dx < 6.4 && dz > 1.5 && dz < 2.5 && Math.abs(dy) < 3.0) return 'cap';
@@ -448,7 +452,7 @@ function humanShape(P0, st, part = 'all') {
     return ((dx - cx) / rx) ** 2 + (dy / ry) ** 2 <= 1;
   };
   const earAt = (dx, dy, dz) => Math.abs(Math.abs(dy) - 3.7) < 0.6 && Math.abs(dx + 0.25) < 0.75 && dz > -1.4 && dz < 0.6;
-  const SHORT = new Set(['short', 'buzz', 'spiky', 'sidepart', 'messy', 'crew', 'slick', 'mohawk', 'bald', 'peci', 'cap', 'capback', 'curly', 'helmet']);
+  const SHORT = new Set(['caping', 'short', 'buzz', 'spiky', 'sidepart', 'messy', 'crew', 'slick', 'mohawk', 'bald', 'peci', 'cap', 'capback', 'curly', 'helmet']);
   const UNI = st.uniform === 'sma';
   const uniMat = (f, wy, rx, t) => {   // detail seragam SMA di badan atas (t = 0 pinggul .. 1 leher)
     const front = f > rx * 0.62;
@@ -511,6 +515,7 @@ function humanShape(P0, st, part = 'all') {
       if (hs === 'helmet') return dz > -1.5 ? 'helmet' : 'hair';
       if (hs === 'peci' && dz > 2.2) return 'peci';
       if (hs === 'cap' && dz > 1.9) return 'cap';
+      if (hs === 'caping' && dz > 2.3) return 'cap';
       if (hs === 'bald' && dz > 0.9) return 'skin';
       if (hs === 'mohawk' && Math.abs(dy) > 1.1 && dz > -1.5) return 'stubble';
       return strand();
@@ -612,6 +617,7 @@ function humanShape(P0, st, part = 'all') {
   };
   // kotak batas supaya hanya area tubuh yang dihitung
   const sp = [[pelvis, 4.6], [neck, 4.2], [head, 6.8 * HS], [add(head, hu, -7 * HS * S), 5.2 * HS]];
+  if (hs === 'caping') sp.push([head, 9.6 * HS]);
   for (const a of arms) sp.push([a.sh, 2], [a.elbow, 2], [a.hand, 2]);
   const lr = bs === 'sarung' || bs === 'skirt' ? 3.8 : 2.4;
   for (const l of legs) sp.push([l.hip, lr], [l.knee, lr], [l.ankle, lr], [l.toe, 2.2]);

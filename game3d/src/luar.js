@@ -9,6 +9,8 @@ import { MAT, hash, pick, inPoly, makePatterns, PAT, groundDetail, FLOOR } from 
 import { plant, SMALL } from './veg.js';
 import { waterMat, grassVariety, roadWear, strokeOffset, strokePath, resample } from './kota.js';
 import { setAge, ageTint, weather, posRonda, lahanKosong } from './buildings.js';
+import { spawnWarga } from './warga.js';
+import { buildTraffic } from './traffic.js';
 
 export const LZ = 1000;
 const PX = 16, TOWN = [0, 0, 260, 180], [BX0, BZ0, BX1, BZ1] = DUNIA.bounds, GW = BX1 - BX0 + 1, GH = BZ1 - BZ0 + 1;
@@ -609,9 +611,9 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     // laut/danau di luar batas wilayah tetap kelihatan sampai cakrawala: bidang biru/hijau besar di bawah
     { const far = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshLambertMaterial({ color: new THREE.Color(Z.z1 > 250 ? '#5f98c4' : '#9cbc78') })); far.rotation.x = -Math.PI / 2; far.position.set((Z.x0 + Z.x1) / 2, -0.8, (Z.z0 + Z.z1) / 2 + LZ); group.add(far); }
     // air: dari raster air wilayah (jalan & jembatan sudah dilubangi), tinggi per sel: danau / kali / laut
+    const lvl = (x, z) => { if (G.l9(x, z)) return LAKE[9] + 0.12; if (G.l25(x, z)) return LAKE[25] + 0.12;
+      const v = RIVL[idx(Math.round(x - BX0), Math.round(z - BZ0))]; return v === v ? v + 0.1 : -0.23; };
     { const m = new Merger(), cw = col('#4f8ab8'), R = G.R, cs = 1 / R;
-      const lvl = (x, z) => { if (G.l9(x, z)) return LAKE[9] + 0.12; if (G.l25(x, z)) return LAKE[25] + 0.12;
-        const v = RIVL[idx(Math.round(x - BX0), Math.round(z - BZ0))]; return v === v ? v + 0.1 : -0.23; };
       for (let j = 0; j < G.H; j++) { let i = 0;
         while (i < G.W) { if (!G.water[j * G.W + i]) { i++; continue; }
           const z0 = Z.z0 + j * cs, x0 = Z.x0 + i * cs, L = lvl(x0 + cs / 2, z0 + cs / 2); let i1 = i + 1;
@@ -670,7 +672,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     const Y = (x, z) => heightAt(x, z);
     const trees = K.trees.filter(([x, z]) => x >= Z.x0 && x < Z.x1 && z >= Z.z0 && z < Z.z1);
     trees.forEach(([x, z, rr], i) => {
-      if (!free(x, z)) return;
+      if (!free(x, z) || [28, 29, 31].some(a => inPoly(x, z, K.areas[a].pts))) return;
       const r = hash(i, 91), lv = (HG[idx(Math.round(x - BX0), Math.round(z - BZ0))] || 0);
       let k = 'bulat', s = 0.55 + rr * 0.3;
       if (inPoly(x, z, K.areas[24].pts)) { k = 'bulat'; s = 0.45; }
@@ -687,7 +689,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     const TINT = ['#ffffff', '#eef4dc', '#f4f0c8', '#dcebd0', '#e4ecc4'];
     const slope = (x, z) => Math.hypot(Y(x + 0.7, z) - Y(x - 0.7, z), Y(x, z + 0.7) - Y(x, z - 0.7)) / 1.4;
     const inA = (x, z, L) => L.some(a => inPoly(x, z, K.areas[a].pts));
-    const bare = (x, z) => inA(x, z, [15, 17, 18, 19, 31]) || (K.polys[0] && inPoly(x, z, K.polys[0].pts));
+    const bare = (x, z) => inA(x, z, [15, 17, 18, 19, 28, 29, 31]) || (K.polys[0] && inPoly(x, z, K.polys[0].pts));
     const grassAt = (x, z, k, s) => veg.push({ k, x, z: z + LZ, y: Y(x, z), a: hash(x * 7, z * 3) * 6.28, s, c: pick(TINT, hash(x * 3, z * 11)) });
     for (let i = 0; i < A / 1.6; i++) {
       const x = Z.x0 + hash(i, 301 + id.length) * (Z.x1 - Z.x0), z = Z.z0 + hash(i, 302 + id.length) * (Z.z1 - Z.z0); if (!free(x, z)) continue;
@@ -733,7 +735,25 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       const n = { sid, name, lines, filler: true, area: 'luar', key: 'L' + name, c, home: { x: p.x, z: p.z }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: Math.random() * 3, heading: Math.random() * 6, say: null, greetT: 5, roam: 2 };
       npcs.push(n); folk.push(n);
     }
-    cur = { Z, group, texs, ims, folk, canvas: cv };
+    // kesibukan warga per wilayah (warga.js)
+    const warga = spawnWarga({ id, Z, LZ, K, Y, free, inA, isW: (x, z) => G.w(x, z), isB: (x, z) => G.b(x, z), wl: lvl, Character, scene, group, npcs, player, roads, C });
+    // lalu lintas: ruas jalan raya/jalan di dalam wilayah; ujung yang terpotong batas wilayah jadi gerbang keluar-masuk kendaraan
+    const TG = new THREE.Group(); scene.add(TG);
+    const runs = [];
+    for (const r of roads) { if (r.kind !== 'raya' && r.kind !== 'jalan') continue;
+      let run = null, k = 0;
+      const flush = cut => { if (run && run.pts.length > 6) runs.push({ kind: r.kind, w: r.w, name: r.name, pts: run.pts, gate0: run.g0, gate1: cut }); run = null; };
+      for (let i = 1; i < r.pts.length; i++) { const [ax, az] = r.pts[i - 1], [bx, bz] = r.pts[i], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 2.5));
+        for (let j = i > 1 ? 1 : 0; j <= n; j++, k++) { const x = ax + (bx - ax) * j / n, z = az + (bz - az) * j / n;
+          if (zoneOf(x, z) === id) { if (!run) run = { pts: [], g0: k > 0 }; run.pts.push([x, z + LZ]); } else if (run) flush(true); } }
+      flush(false); }
+    if (id === 'sirkuit') runs.push({ kind: 'raya', w: 4.2, pts: K.track.map(([x, z]) => [x, z + LZ]), closed: true, oneway: true, only: 'sport', vmul: 1.9, riders: ['mekanik', 'pemuda', 'anakPunk'] });
+    const desa = id !== 'timur' && id !== 'sirkuit';
+    const traffic = buildTraffic(TG, { roads: runs, traffic: { noSignals: true, onEdge: () => false, gap: { raya: 30, jalan: 55 }, riders: ['petani', 'pemuda', 'ojol', 'ibuHijab', 'bapakPeci', 'mbak', 'remaja', 'nelayan', 'pakRT', 'buruh'],
+      pick: (r, h, h2) => r.only ? { type: 'motor', kind: h2 < 0.75 ? 'sport' : 'trail' }
+        : desa ? (h < 0.18 ? { type: 'car', kind: ['pikap', 'pikap', 'angkot', 'mpv', 'truk', 'suv'][Math.floor(h2 * 6)] } : h < 0.88 ? { type: 'motor', kind: ['bebek', 'bebek', 'matic', 'trail', 'matic', 'vespa'][Math.floor(h2 * 6)] } : { type: 'sepeda', kind: 'onthel' })
+        : (h < 0.4 ? { type: 'car', kind: ['truk', 'truk', 'pikap', 'mpv', 'angkot', 'sedan'][Math.floor(h2 * 6)] } : h < 0.95 ? { type: 'motor' } : { type: 'sepeda' }) } }, null, null, (x, z) => heightAt(x, z - LZ));
+    cur = { Z, group, texs, ims, folk: [...folk, ...warga.list], canvas: cv, traffic, TG };
   }
   const centroid = pts => { let x = 0, z = 0; for (const p of pts) { x += p[0]; z += p[1]; } return [x / pts.length, z / pts.length]; };
   function unload() {
@@ -742,6 +762,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     cur.group.traverse(o => { if (o.isMesh && o.geometry && !o.isInstancedMesh) o.geometry.dispose(); if (o.material?.map) o.material.map.dispose(); });
     for (const im of cur.ims) { const i = SMALL.indexOf(im); if (i >= 0) SMALL.splice(i, 1); im.dispose?.(); }
     for (const n of cur.folk) { scene.remove(n.c.group); const i = npcs.indexOf(n); if (i >= 0) npcs.splice(i, 1); }
+    scene.remove(cur.TG);
     cur = null;
   }
 
@@ -750,6 +771,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
   return {
     ZONES, LZ, portals, marks, zoneOf, bldgs: K.bldgs,
     get cur() { return cur && cur.Z; },
+    get traffic() { return cur && cur.traffic; },
     load, unload, heightAt,
     groundY: (x, z) => heightAt(x, z - LZ),
     // boleh berdiri di sini? (hanya di dalam wilayah yang sedang dimuat)

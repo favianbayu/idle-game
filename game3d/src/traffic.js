@@ -35,7 +35,10 @@ function nearest(rd, x, z) {
   return best;
 }
 
+// K.traffic (opsional, dipakai luar kota): { noSignals, gap: {raya, jalan}, pick(r, h, h2, h3) -> {type, kind}, onEdge(p) }
+// per jalan: r.gate0 / r.gate1 = ujung itu batas wilayah (kendaraan keluar-masuk di sana), r.vmul = pengali kecepatan
 export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
+  const OPT = K.traffic || {};
   const roads = K.roads.map((r, i) => ({ ...r, i })).filter(r => r.kind === 'raya' || r.kind === 'jalan').map(r => ({ ...r, ...path(r) }));
   // ---------- simpang: ujung jalan menempel jalan lain, atau dua ruas berpotongan
   const J = [];
@@ -45,7 +48,7 @@ export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
     for (const [r, s] of [[a, sa], [b, sb]]) if (!j.on.some(o => o.r === r && Math.abs(o.s - s) < 4)) j.on.push({ r, s });
   };
   for (const A of roads) for (const B of roads) {
-    if (A === B) continue;
+    if (A === B || A.only || B.only) continue;   // jalur khusus (lintasan sirkuit) tidak tersambung ke jalan umum
     if (!A.closed) for (const [e, se] of [[A.P[0], 0], [A.P.at(-1), A.L]]) { const n = nearest(B, e.x, e.z); if (n.d < B.w / 2 + 1.5) addJ(n.x, n.z, A, se, B, n.s); }
     if (A.i < B.i) for (let i = 1; i < A.P.length; i++) for (let j = 1; j < B.P.length; j++) {
       const p0 = A.P[i - 1], p1 = A.P[i], q0 = B.P[j - 1], q1 = B.P[j];
@@ -60,7 +63,7 @@ export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
   const signals = [];
   J.forEach((j, ji) => {
     const raya = j.on.some(o => o.r.kind === 'raya' && !o.r.closed);
-    if (!raya || j.on.length < 2) return;
+    if (!raya || j.on.length < 2 || OPT.noSignals) return;
     j.signal = true; signals.push(j);
     for (const o of j.on) {
       const other = Math.max(...j.on.filter(q => q !== o).map(q => q.r.w)), back = other / 2 + 1.1, grp = o.r.kind === 'raya' ? 'A' : 'B';
@@ -89,8 +92,8 @@ export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
     }
   });
   const sigMat = {}, sigMeshes = [];
-  for (const k in lamp) { sigMat[k] = new THREE.MeshBasicMaterial({ vertexColors: false, color: 0x222222 }); const me = new THREE.Mesh(lamp[k].build(), sigMat[k]); lift(me); scene.add(me); sigMeshes.push(me); }
-  const pm = new THREE.Mesh(poles.build(), MAT.world); lift(pm); pm.castShadow = true; scene.add(pm);
+  if (signals.length) for (const k in lamp) { sigMat[k] = new THREE.MeshBasicMaterial({ vertexColors: false, color: 0x222222 }); const me = new THREE.Mesh(lamp[k].build(), sigMat[k]); lift(me); scene.add(me); sigMeshes.push(me); }
+  if (signals.length) { const pm = new THREE.Mesh(poles.build(), MAT.world); lift(pm); pm.castShadow = true; scene.add(pm); }
   const ON = { r: new THREE.Color('#ff3a2a'), y: new THREE.Color('#ffc020'), g: new THREE.Color('#3aff6a') }, OFF = { r: new THREE.Color('#3a1a1a'), y: new THREE.Color('#3a301a'), g: new THREE.Color('#1a3a22') };
   const CYCLE = 22, light = (grp, t) => {   // A (jalan raya) hijau dulu, lalu B
     const u = t % CYCLE, a = u < 9 ? 'g' : u < 11 ? 'y' : 'r', b = u < 11 ? 'r' : u < 20 ? 'g' : 'y';
@@ -104,27 +107,28 @@ export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
   let seed = 1;
   const pick = (arr, h) => arr[Math.floor(h * arr.length) % arr.length];
   for (const r of roads) {
-    const n = Math.floor(r.L / (r.kind === 'raya' ? 18 : 30));
+    const n = Math.floor(r.L / (OPT.gap?.[r.kind] ?? (r.kind === 'raya' ? 18 : 30)));
     for (let i = 0; i < n; i++) {
       const h = hash(r.i * 31 + i, seed++), h2 = hash(i, r.i + 5), h3 = hash(i * 7, r.i + 9);
       // raya: mobil & motor; jalan: kebanyakan motor + sepeda
-      const type = r.kind === 'raya' ? (h < 0.45 ? 'car' : h < 0.93 ? 'motor' : 'sepeda') : (h < 0.25 ? 'car' : h < 0.78 ? 'motor' : 'sepeda');
-      let kind, color, rd;
-      if (type === 'car') { kind = pick(['mpv', 'mpv', 'sedan', 'hatch', 'suv', 'angkot', 'pikap', 'taksi', 'truk'], h2); color = kind === 'angkot' ? '#8ac8e0' : kind === 'taksi' ? '#2a6ac0' : pick(CARC, h3); rd = makeRide('car', kind, color, { cargo: '#c8a060', stripe: kind === 'angkot' ? '#f0c020' : null, box: pick(['#e8e4d8', '#f2c230', '#3a6ab0'], h3) }); }
-      else if (type === 'motor') { kind = pick(['bebek', 'bebek', 'matic', 'matic', 'matic', 'sport', 'trail', 'vespa'], h2); color = pick(MOTC, h3); rd = makeRide('motor', kind, color); }
-      else { kind = pick(['kota', 'mtb', 'onthel', 'bmx'], h2); color = pick(['#2a8ae0', '#d23a3a', '#3a9a5a', '#f2c230', '#e8e8e8'], h3); rd = makeRide('sepeda', kind, color); }
+      const pk = OPT.pick?.(r, h, h2, h3);
+      const type = pk ? pk.type : r.kind === 'raya' ? (h < 0.45 ? 'car' : h < 0.93 ? 'motor' : 'sepeda') : (h < 0.25 ? 'car' : h < 0.78 ? 'motor' : 'sepeda');
+      let kind = pk?.kind, color, rd;
+      if (type === 'car') { kind ??= pick(['mpv', 'mpv', 'sedan', 'hatch', 'suv', 'angkot', 'pikap', 'taksi', 'truk'], h2); color = kind === 'angkot' ? '#8ac8e0' : kind === 'taksi' ? '#2a6ac0' : pick(CARC, h3); rd = makeRide('car', kind, color, { cargo: '#c8a060', stripe: kind === 'angkot' ? '#f0c020' : null, box: pick(['#e8e4d8', '#f2c230', '#3a6ab0'], h3) }); }
+      else if (type === 'motor') { kind ??= pick(['bebek', 'bebek', 'matic', 'matic', 'matic', 'sport', 'trail', 'vespa'], h2); color = pick(MOTC, h3); rd = makeRide('motor', kind, color); }
+      else { kind ??= pick(['kota', 'mtb', 'onthel', 'bmx'], h2); color = pick(['#2a8ae0', '#d23a3a', '#3a9a5a', '#f2c230', '#e8e8e8'], h3); rd = makeRide('sepeda', kind, color); }
       scene.add(rd.group);
       const riders = [];
       if (type !== 'car') {
-        const sid = kind === 'bmx' ? pick(['bocah', 'anakSD'], h3) : pick(RIDERS, hash(i * 3, r.i)), ch = new Character(sid); rd.mount(ch); riders.push(ch);
+        const sid = kind === 'bmx' ? pick(['bocah', 'anakSD'], h3) : pick(r.riders || OPT.riders || RIDERS, hash(i * 3, r.i)), ch = new Character(sid); rd.mount(ch); riders.push(ch);
         if (type === 'motor' && kind !== 'sport' && hash(i, 99 + r.i) < 0.3) { const p2 = new Character(pick(['ibuHijab', 'mbak', 'siswiA', 'bocah', 'ibuDaster'], h)); rd.mount(p2, true); riders.push(p2); }
       }
-      const s = (i + hash(i, 11)) / n * r.L, dir = hash(i, 13) < 0.5 ? 1 : -1;
-      const base = type === 'sepeda' ? 2.6 : (r.kind === 'raya' ? 6.5 : 4.2) * (type === 'motor' ? 1.1 : 1);
+      const s = (i + hash(i, 11)) / n * r.L, dir = r.oneway || hash(i, 13) < 0.5 ? 1 : -1;
+      const base = (type === 'sepeda' ? 2.6 : (r.kind === 'raya' ? 6.5 : 4.2) * (type === 'motor' ? 1.1 : 1)) * (r.vmul || 1);
       cars.push({ id: cars.length, r, s, dir, type, motor: type !== 'car', rd, riders, grp: rd.group, len: type === 'car' ? (kind === 'hatch' ? 1.5 : 1.8) : 1.0, wid: type === 'car' ? 1.0 : 0.45, vmax: base * (0.85 + 0.3 * hash(i, 17)), v: 0, x: 0, z: 0, h: 0, init: false });
     }
   }
-  const lane = v => v.motor ? Math.min(v.r.w / 2 - (v.type === 'sepeda' ? 0.35 : 0.45), v.r.w / 4 + 0.45) : v.r.w / 4 + 0.05;
+  const lane = v => v.r.oneway ? ((v.id % 3) - 1) * v.r.w / 4 : v.motor ? Math.min(v.r.w / 2 - (v.type === 'sepeda' ? 0.35 : 0.45), v.r.w / 4 + 0.45) : v.r.w / 4 + 0.05;
   function target(v) {
     const p = at(v.r, v.s), dx = p.tx * v.dir, dz = p.tz * v.dir, lx = dz, lz = -dx, o = lane(v);
     return { x: p.x + lx * o, z: p.z + lz * o, h: Math.atan2(dx, dz), fx: dx, fz: dz };
@@ -141,17 +145,17 @@ export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
     v.s += v.dir * 2.5;
   }
   // ujung jalan di tepi peta: kendaraan yang keluar menghilang, lalu muncul lagi (acak) dari ujung tepi peta lain
-  const [MW, MH] = K.size, EDGE = 3;
-  const onEdge = p => p.x < EDGE || p.z < EDGE || p.x > MW - EDGE || p.z > MH - EDGE;
+  const [MW, MH] = K.size || [1e9, 1e9], EDGE = 3;
+  const onEdge = OPT.onEdge || (p => p.x < EDGE || p.z < EDGE || p.x > MW - EDGE || p.z > MH - EDGE);
   const gates = [];
-  for (const r of roads) if (!r.closed) { if (onEdge(r.P[0])) gates.push({ r, s: 0, dir: 1 }); if (onEdge(r.P.at(-1))) gates.push({ r, s: r.L, dir: -1 }); }
+  for (const r of roads) if (!r.closed) { if (r.gate0 || onEdge(r.P[0])) gates.push({ r, s: 0, dir: 1 }); if (r.gate1 || onEdge(r.P.at(-1))) gates.push({ r, s: r.L, dir: -1 }); }
   const isGate = (r, s) => gates.some(g => g.r === r && Math.abs(g.s - s) < 1);
   function respawn(v) {
     v.grp.visible = false; for (const ch of v.riders) ch.group.visible = false;
     v.wait = 1 + Math.random() * 5; v.v = 0;
   }
   function enter(v) {
-    const opts = gates.filter(g => !(g.r.kind === 'raya') === !(v.r.kind === 'raya') || Math.random() < 0.3);
+    const opts = gates.filter(g => (!(g.r.kind === 'raya') === !(v.r.kind === 'raya') || Math.random() < 0.3) && !g.r.only === !v.r.only);
     const g = (opts.length ? opts : gates)[Math.floor(Math.random() * (opts.length || gates.length))];
     v.r = g.r; v.dir = g.dir; v.s = g.dir > 0 ? 0.5 : g.r.L - 0.5;
     const t = target(v);
@@ -161,7 +165,7 @@ export function buildTraffic(scene, K, C, M, HT = () => 0, lift = () => {}) {
   let T = 0, block = null;   // block(x, z): zona yang dikosongkan (mis. jalur balap drag)
   function update(dt, player) {
     T += dt;
-    for (const g of ['A', 'B']) { const st = light(g, T); for (const k of ['r', 'y', 'g']) sigMat[g + k].color.copy(st === k ? ON[k] : OFF[k]); }
+    if (signals.length) for (const g of ['A', 'B']) { const st = light(g, T); for (const k of ['r', 'y', 'g']) sigMat[g + k].color.copy(st === k ? ON[k] : OFF[k]); }
     for (const v of cars) {
       if (v.wait) { v.wait = Math.max(0, v.wait - dt) || 1e-6; if (v.wait <= 1e-6) enter(v); if (v.wait) continue; }
       if (block && v.init && block(v.x, v.z)) { respawn(v); continue; }

@@ -529,6 +529,7 @@ function updatePlayer(dt) {
     for (const sd of [1, -1]) { const f = { x: np.x + cx * hl * sd, z: np.z + cz * hl * sd }, g = collision.resolve({ ...f }, 0.26); np = { x: np.x + g.x - f.x, z: np.z + g.z - f.z }; }
     if (collision.blockedMask(np.x, np.z) || acts.poolAt(np.x, np.z)) np = { x: player.x, z: player.z };
   }
+  if (player.area === 'luar' && luar.traffic) luar.traffic.push(np, ride ? 0.4 : 0.28);
   if (player.area === 'kota') { kota.traffic.push(np, ride ? 0.4 : 0.28); if (ride) { const hl = RIDES[ride].r.half || 0.45, cx = Math.cos(player.heading), cz = Math.sin(player.heading); for (const sd of [1, -1]) { const f = { x: np.x + cx * hl * sd, z: np.z + cz * hl * sd }, g = kota.traffic.push({ ...f }, 0.25); np.x += g.x - f.x; np.z += g.z - f.z; } } }
   pushParked(np, ride ? 0.4 : 0.28);
   if (player.area === 'luar' && !luar.allowed(np.x, np.z)) np = luar.allowed(np.x, player.z) ? { x: np.x, z: player.z } : luar.allowed(player.x, np.z) ? { x: player.x, z: np.z } : { x: player.x, z: player.z };   // batas wilayah: keluar lewat jalan (Aksi)
@@ -574,8 +575,11 @@ function updateNPC(n, dt) {
   if (far) return;
   if (fight.updateNPC(n, dt)) return;
   if (n.ext) {   // NPC dengan perilaku sendiri (anak main bola): posisi & animasi diatur modulnya
-    n.ext(n, dt); n.c.heading = n.heading; n.c.play(n.anim || 'idle'); n.c.group.position.set(n.x, kota.groundY(n.x, n.z), n.z); n.c.update(dt);
+    n.ext(n, dt); n.c.heading = n.heading; n.c.play(n.anim || 'idle'); n.c.sink = n.sink || 0; n.c.blob.visible = !n.sink;
+    n.c.group.position.set(n.x, n.yAbs ?? (n.area === 'luar' ? luar.groundY(n.x, n.z) : kota.groundY(n.x, n.z)) + (n.dy || 0), n.z); n.c.update(dt);
     if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
+    n.greetT -= dt;   // warga luar kota & pejalan kaki: sapa pemain yang lewat dekat
+    if (n.filler && n.lines && !n.say && n.greetT <= 0 && dx * dx + dz * dz < 9) { n.say = { text: n.lines[Math.floor(Math.random() * n.lines.length)], t: 3 }; n.greetT = 30; }
     return;
   }
   n.wait -= dt;
@@ -635,6 +639,7 @@ function loop(now) {
   const v = updatePlayer(dt);
   for (const n of npcs) updateNPC(n, dt);
   kota.traffic.update(dt, player);
+  if (player.area === 'luar') luar.traffic?.update(dt, player);
   kota.portal?.update(dt, player, kota.traffic.cars, !!ride);
   kota.signs?.update(now / 1000);
   // kamera
