@@ -147,3 +147,7 @@ npm run peta         # ekspor ulang peta kota kalau peta_organik.py berubah (but
 
 Kode: `src/main.js` (loop, kamera, input, UI), `src/kota.js` (kota, jalan, tanah), `src/buildings.js` (tipe rumah), `src/world.js` (sekolah), `src/common.js` (tabrakan, bahan, pola tanah), `src/veg.js` (tanaman), `src/geom.js` (penggabung mesh),
 `src/chars.js` + `src/voxworker.js` (tokoh), `src/voxlib.js` (diekstrak dari `sprite-stacking/index.html`), `src/npcs.js`.
+Raka (pemain) memakai model sendiri di `src/raka/` (desain dari `raka-voxel-v3/`): bagian badan digambar tangan dengan
+voxel 2x lebih rapat (1/64 petak) dan proporsi tokoh lama, di-voxel ulang ke satu kisi lurus tiap frame (`frame.js`).
+Pose = `ANIMS` game yang sama; ekspresi wajah & helm motor otomatis dari nama gerakan (`expr.js`); properti tangan
+(HP, kardus, buku, sapu, pancing, pedang, orb) dibuat di `rig.js`.
