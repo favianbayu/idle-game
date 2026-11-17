@@ -2,7 +2,7 @@
 // Tiap modul dibungkus fungsi & punya ruang nama sendiri (NS.<file>), import dipetakan ke ruang nama sumbernya.
 import fs from 'fs';
 let code = 'const NS = {};\n';
-for (const f of ['voxlib', 'npc_styles', 'vox', 'rig', 'model', 'rani', 'bimo', 'bram', 'nadia', 'dimas', 'rok', 'sekar', 'arga', 'laras', 'rizal', 'chars', 'frame', 'anims', 'viewer']) {
+for (const f of ['voxlib', 'npc_styles', 'vox', 'rig', 'model', 'rani', 'bimo', 'bram', 'nadia', 'dimas', 'rok', 'sekar', 'arga', 'laras', 'rizal', 'uti', 'tegar', 'chars', 'frame', 'anims', 'viewer']) {
   let s = fs.readFileSync(`src/${f}.js`, 'utf8');
   const exports = [...s.matchAll(/^export (?:function|const|let|class) (\w+)/gm)].map(m => m[1]);
   for (const m of s.matchAll(/^export \{([^}]*)\};?$/gm)) exports.push(...m[1].split(',').map(x => x.trim()).filter(Boolean));

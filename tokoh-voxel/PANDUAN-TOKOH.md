@@ -1,7 +1,7 @@
 # Panduan membuat tokoh voxel halus (gaya Raka v3)
 
 Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus. Contoh kodenya ada di `src/`
-(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal). Ikuti urutan bagian di bawah saat membuat tokoh baru.
+(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 
 ## 1. Ukuran dan kisi
 
@@ -33,7 +33,7 @@ Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus
   (kasus Nadia, sudah diperbaiki).
 - **Alis dan mata harus berjarak 1 baris kosong** (wajah biasa/kedip/nyengir/ketawa). Alis yang menempel langsung di
   atas mata terbaca sebagai alis super tebal (kasus Laras, sudah diperbaiki). Poni harus cukup tinggi supaya baris alis
-  tidak tertutup.
+  tidak tertutup; alis tebal 2 baris (Uti) juga perlu 1 baris kulit di atasnya supaya tidak menyatu dengan poni.
 - Mata 2-3 baris. Baris putih (`W`) di sisi luar membuat mata terbaca dari jauh. Pipi merah memakai bahan satu warna.
 - Semua tokoh wajib punya 7 ekspresi: `biasa, kedip, marah, teriak, nyengir, ketawa, sakit`. `expr.js` memilihnya otomatis dari gerakan.
 - Ciri khusus dilukis di peta wajah, misalnya bekas luka memotong alis (Arga), plester (Rani), atau lesung pipit.
@@ -88,6 +88,9 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
 
 - Tiap bahan didaftarkan dengan `addRamps({ nama: [4 warna gelap → terang] })`. Satu warna saja = tidak diarsir.
   **Jangan 2 atau 3 warna**: `voxelFrame` gagal (`reading '0'`). Pilih 1 atau 4.
+- Jumlah bahan global sudah lewat 255: kisi `Vox.dense` dan `voxelFrame` memakai `Uint16Array`. Kalau menyalin
+  `vox.js`/`frame.js` ke game, salin versi 16 bit ini juga, kalau tidak warna tokoh terakhir jadi kacau.
+- Garis belahan rambut diwarnai lebih gelap dari rambut, bukan warna kulit: dari atas, garis kulit terbaca botak.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file
   tokoh lain (misalnya `denim`, `kick` dari `rani.js`) hanya boleh dipakai kalau file itu dimuat lebih dulu di `build.mjs`.
 - Kulit dan rambut mengikuti warna `NPC_STYLES` lama, atau warna kunci di guide desain tokoh (`docs/desain-sma/guide`).

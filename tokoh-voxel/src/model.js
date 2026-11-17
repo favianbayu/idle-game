@@ -27,7 +27,7 @@ export const RAMPS = {
   box: ['#7a5c34', '#98744a', '#b8905a', '#d2ac78'], seam: ['#d9c49a'], book: ['#22406e', '#2e5590', '#3a6ab0', '#5a88cc'], page: ['#f4f0e2'],
   plaster: ['#f4e2bf'], plasterS: ['#dcc396'], osis: ['#c7922b'], tag: ['#2a3350'], gold: ['#f0cb52'],
 };
-// daftar bahan bersama untuk semua tokoh (indeks 1..n, maks 255); tokoh lain menambah lewat addRamps()
+// daftar bahan bersama untuk semua tokoh (indeks 1..n, maks 65535; kisi memakai Uint16Array); tokoh lain menambah lewat addRamps()
 const MAT = [], MI = {}, RAMP_RGB = [];
 const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
 export function addRamps(o) { for (const k in o) { RAMPS[k] = o[k]; if (!MI[k]) { MAT.push(k); MI[k] = MAT.length; RAMP_RGB.push(null); } RAMP_RGB[MI[k] - 1] = o[k].map(hex); } }

@@ -32,7 +32,7 @@ export function voxelFrame(P, pose) {
   for (const b of balls) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], b.c[k] - b.r); hi[k] = Math.max(hi[k], b.c[k] + b.r); }
   const x0 = Math.floor(lo[0]) - PAD, y0 = Math.floor(lo[1]) - PAD, z0 = Math.floor(lo[2]) - PAD;
   const L = Math.ceil(hi[0]) - x0 + PAD, W = Math.ceil(hi[1]) - y0 + PAD, H = Math.ceil(hi[2]) - z0 + PAD;
-  const G = new Uint8Array(L * W * H), LW = L * W;
+  const G = new Uint16Array(L * W * H), LW = L * W;   // 16 bit: bahan bisa lebih dari 255
   // properti dulu (menang atas tangan yang menggenggamnya); ditandai supaya boleh menembus tanah
   const PR = r.prims.length ? new Uint8Array(L * W * H) : null;
   for (const q of r.prims) {

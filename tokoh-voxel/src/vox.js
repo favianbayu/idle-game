@@ -50,11 +50,11 @@ export class Vox {
   mirrorY() { const o = new Vox(); this.each((x, y, z, c) => o.set(x, -1 - y, z, c)); return o; }
   add(o) { o.each((x, y, z, c) => this.set(x, y, z, c)); return this; }
 }
-// kisi padat: { o:[x0,y0,z0], n:[nx,ny,nz], d: Uint8Array (0 = kosong, i = indeks bahan + 1) }
+// kisi padat: { o:[x0,y0,z0], n:[nx,ny,nz], d: Uint16Array (0 = kosong, i = indeks bahan + 1) }
 export function dense(v, matIndex) {
   const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
   v.each((x, y, z) => { lo[0] = Math.min(lo[0], x); lo[1] = Math.min(lo[1], y); lo[2] = Math.min(lo[2], z); hi[0] = Math.max(hi[0], x); hi[1] = Math.max(hi[1], y); hi[2] = Math.max(hi[2], z); });
-  const n = [hi[0] - lo[0] + 1, hi[1] - lo[1] + 1, hi[2] - lo[2] + 1], d = new Uint8Array(n[0] * n[1] * n[2]);
+  const n = [hi[0] - lo[0] + 1, hi[1] - lo[1] + 1, hi[2] - lo[2] + 1], d = new Uint16Array(n[0] * n[1] * n[2]);
   v.each((x, y, z, c) => { d[((z - lo[2]) * n[1] + (y - lo[1])) * n[0] + (x - lo[0])] = matIndex(c); });
   return { o: lo, n, d };
 }

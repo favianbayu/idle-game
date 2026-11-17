@@ -1,4 +1,4 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
@@ -16,6 +16,8 @@ Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya ya
 | Sekar | NPC romance cewek, gitaris band | 1.22 | 80 | kurus, kulit pucat, rambut hitam panjang kuncir dua rendah ikat ungu, poni menutupi alis, mata sayu, jaket jeans kebesaran, rok abu panjang, gitar di punggung |
 | Laras | NPC romance cewek, penjual nasi uduk | 1.24 | 81 | kulit sawo matang, kuncir tinggi tebal + karet merah, jepit kayu, poni berantakan, pipi merah, gigi gingsul, seragam agak kusut, sepatu sol ditambal |
 | Rizal | NPC romance cowok, sekretaris OSIS | 1.32 | 86 | kurus, rambut belah samping poni jatuh, kacamata frame tipis kotak, bulu mata panjang, mata sayu, jari bernoda tinta, rompi rajut cokelat, tas selempang kanvas |
+| Uti | NPC romance cewek, tomboi montir + kapten futsal | 1.24 | 82 | atletis, kulit sawo matang, bob pendek berantakan potong sendiri, alis tebal, coretan oli di pipi, bekas luka di dagu, seringai, jaket marun kebesaran milik almarhum kakak + kunci pas di saku, celana panjang abu |
+| Tegar | NPC romance cowok, ketua kelas & juara umum | 1.32 | 86 | kulit pucat, rambut klimis belah samping mengilap, kacamata bingkai hitam tebal, kantong mata gelap, seragam disetrika tajam + dasi abu + badge ketua kelas, pantofel |
 | Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
@@ -31,6 +33,8 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Arga**: seragam + jaket kulit, jaket Lampu Kota + sarung tangan tanpa jari, flanel abu + jeans hitam, kaus abu + celana kerja (bantu kakek).
 - **Laras**: seragam agak kusut + rok panjang, jualan subuh (kaus oranye + celemek kunyit + handuk + training + sandal), kemeja kotak hijau di pinggang + jeans + kets, daster batik.
 - **Rizal**: seragam + rompi rajut + tas selempang, jas almamater + pulpen di telinga, kaus festival literasi + sarung (rok.js), kemeja kotak cokelat + slacks + sepatu kanvas.
+- **Uti**: seragam + jaket marun, jersey futsal #7 + decker + sepatu futsal merah, bengkel (kaus hitam + wearpack diikat di pinggang + sarung tangan kain), kaus band motor + jeans robek + boots + topi terbalik, malam (jaket marun tertutup + helm half-face kuning bergambar petir; juga dipakai saat naik motor).
+- **Tegar**: seragam + dasi, les (kemeja biru langit + celana bahan + ransel penuh buku), piama biru tua + selop, polo abu + chino + kets putih bersih.
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai
@@ -45,7 +49,7 @@ semua gerakan game (`ANIMS`) tanpa perubahan.
 - `src/`
   - `rig.js`: rig Raka yang kini memakai konfigurasi kerangka `K` (panjang ruas, lebar bahu, jarak pinggul) per tokoh.
   - `model.js`: Raka + registri bahan bersama (`addRamps`), `assemble`, `paintFace`.
-  - `rani.js`, `bimo.js`, `bram.js`, `nadia.js`, `dimas.js`, `sekar.js`, `arga.js`, `laras.js`, `rizal.js`: kerangka (`SKEL`), bahan, peta wajah 14x15, rambut, dan baju tiap tokoh.
+  - `rani.js`, `bimo.js`, `bram.js`, `nadia.js`, `dimas.js`, `sekar.js`, `arga.js`, `laras.js`, `rizal.js`, `uti.js`, `tegar.js`: kerangka (`SKEL`), bahan, peta wajah 14x15, rambut, dan baju tiap tokoh.
   - `rok.js`: pembuat rok (pinggang, panel depan/belakang, tabung kaki) + data `P.skirt`; `frame.js` mengisi lambung cembung kain rok per lapis supaya rok tidak terbelah saat jalan/lari.
   - `chars.js`: daftar tokoh untuk penampil.
   - `frame.js`, `expr.js`, `vox.js`, `voxlib.js`, `npc_styles.js`, `anims.js`: sama dengan versi game.
