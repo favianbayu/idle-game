@@ -1,7 +1,7 @@
 # Panduan membuat tokoh voxel halus (gaya Raka v3)
 
 Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus. Contoh kodenya ada di `src/`
-(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga). Ikuti urutan bagian di bawah saat membuat tokoh baru.
+(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 
 ## 1. Ukuran dan kisi
 
@@ -13,7 +13,7 @@ Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus
 | Templat | Skala lama | `SKEL` | Pinggul `pz` | Dada `cz` | Kepala | Contoh |
 |---|---|---|---|---|---|---|
 | Cewek | 1.22-1.24 | ank 4.5, shin 12.5, thigh 13, up 4, neck 21, shY 8, shZ 15, upper 10, fore 9, hipY 4 | 30 | 34 | 55 | Rani, Nadia, Sekar |
-| Cowok sedang | 1.3-1.34 | ank 4.5, shin 13.5, thigh 14, up 4, neck 24, shY 9.5-10, shZ 17, upper 10.5, fore 12-12.5, hipY 4.5-5 | 32 | 36 | 60 | Bimo, Arga (Raka memakai `SKEL_RAKA`) |
+| Cowok sedang | 1.3-1.34 | ank 4.5, shin 13.5, thigh 14, up 4, neck 24, shY 9.5-10, shZ 17, upper 10.5, fore 12-12.5, hipY 4.5-5 | 32 | 36 | 60 | Bimo, Arga, Rizal (shY 9, lebih ramping; Raka memakai `SKEL_RAKA`) |
 | Cowok tinggi | 1.36-1.38 | ank 4.5, shin 15, thigh 15.5, up 4, neck 24, shY 10, shZ 17, upper 11, fore 11.5, hipY 4.5 | 35 | 39 | 63 | Bram, Dimas |
 
 - Titik sendi dihitung oleh `pivots(SKEL)` di `rig.js`. Bagian badan digambar dengan **koordinat tokoh mutlak**
@@ -78,11 +78,13 @@ Rok **tidak boleh terbelah** jadi dua kaki saat jalan atau lari. Pakai `src/rok.
 
 Dengan `P.skirt`, `frame.js` mengisi **lambung cembung** semua voxel kain rok per lapis z. Celah di antara kaki
 tertutup kain di setiap pose. Rok selutut (Rani) cukup memakai pelvis dan panel (`panjang = false`). Celana kulot
-tidak memakai `P.skirt`. Cek lembar `rok` (jalan, lari, tampak samping & depan) setiap kali mengubah rok.
+tidak memakai `P.skirt`. Sarung cowok (Rizal) juga rok panjang: pakai `rok.js` yang sama, motif kotak cukup dicat
+ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lembar `rok` (jalan, lari, tampak samping & depan) setiap kali mengubah rok.
 
 ## 6. Bahan dan warna
 
 - Tiap bahan didaftarkan dengan `addRamps({ nama: [4 warna gelap → terang] })`. Satu warna saja = tidak diarsir.
+  **Jangan 2 atau 3 warna**: `voxelFrame` gagal (`reading '0'`). Pilih 1 atau 4.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file
   tokoh lain (misalnya `denim`, `kick` dari `rani.js`) hanya boleh dipakai kalau file itu dimuat lebih dulu di `build.mjs`.
 - Kulit dan rambut mengikuti warna `NPC_STYLES` lama, atau warna kunci di guide desain tokoh (`docs/desain-sma/guide`).
