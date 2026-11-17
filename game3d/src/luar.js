@@ -8,6 +8,7 @@ import { Merger, Chunks, col, shade } from './geom.js';
 import { MAT, hash, pick, inPoly, makePatterns, PAT, groundDetail, FLOOR } from './common.js';
 import { plant, SMALL } from './veg.js';
 import { waterMat, grassVariety, roadWear, strokeOffset, strokePath, resample } from './kota.js';
+import { setAge, ageTint, weather, posRonda, lahanKosong } from './buildings.js';
 
 export const LZ = 1000;
 const PX = 16, TOWN = [0, 0, 260, 180], [BX0, BZ0, BX1, BZ1] = DUNIA.bounds, GW = BX1 - BX0 + 1, GH = BZ1 - BZ0 + 1;
@@ -104,7 +105,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       for (let i = 1; i < P.length; i++) { const [ax, az] = P[i - 1], [bx, bz] = P[i];
         if (Math.min(ax, bx) - 30 > x || Math.max(ax, bx) + 30 < x || Math.min(az, bz) - 30 > z || Math.max(az, bz) + 30 < z) continue;
         const dx = bx - ax, dz = bz - az, l = Math.hypot(dx, dz) || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (l * l))), px = ax + dx * t, pz = az + dz * t, d = Math.hypot(x - px, z - pz) - r.w / 2;
-        if (!best || d < best.d) best = { d, px, pz, tx: dx / l, tz: dz / l, r }; } });
+        if (!best || d < best.d) best = { d, px, pz, tx: dx / l, tz: dz / l, r, u: i + t }; } });
     return best;
   }
   const corners = (b, e = 0) => { const c = Math.cos(b.a), s = Math.sin(b.a), hw = b.w / 2 + e, hd = b.h / 2 + e; return [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map(([u, v]) => [b.x + u * c - v * s, b.y + u * s + v * c]); };
@@ -162,6 +163,20 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       dropped++;
     });
     if (dropped) console.info('[luar] bangunan dibatalkan (tidak muat tanpa menabrak jalan/air):', dropped);
+    // guide 90 anti-monoton: urut per sisi jalan; tipe sama maks 3 berturut-turut, tetangga tidak kembar warna, tiap 6-10
+    // rumah ada pemecah (pos ronda, warung, lahan kosong berpohon), umur 3 tingkat (desa & pesisir lebih banyak yang tua)
+    const NW = { D1: 3, D2: 5, D3: 3, N1: 6, K: 6, W: 3 }, groups = new Map(), RB = {};
+    for (const b of out) { if (b.fixed || b.type === 'B') continue; const nr = nearestRoad(b.x, b.y); if (!nr) continue;
+      const side = Math.sign((b.x - nr.px) * -nr.tz + (b.y - nr.pz) * nr.tx) || 1, key = roads.indexOf(nr.r) + ':' + side;
+      b._u = nr.u; (groups.get(key) || groups.set(key, []).get(key)).push(b); }
+    for (const [key, g] of groups) { g.sort((a, b) => a._u - b._u); let prev = null; const seq = [];
+      g.forEach((b, n) => { const sd = Math.round(b.x * 13 + b.y * 7), R = RB[b.zone] || (RB[b.zone] = { since: 0, next: 6 + Math.floor(hash(sd, 1) * 5) });
+        if (R.since >= R.next && b.w * b.h < 16) { const k = hash(sd, 2); b.type = k < 0.4 ? 'POS' : k < 0.75 ? 'W' : 'LK'; R.since = 0; R.next = 6 + Math.floor(hash(sd, 3) * 5); }
+        else { R.since++; if (seq.length >= 3 && seq.slice(-3).every(t => t === b.type)) for (let k = 1; k < 8 && b.type === seq.at(-1); k++) b.type = typeOf(b.x, b.y, hash(sd, 10 + k)); }
+        seq.push(b.type);
+        const nw = NW[b.type] || 1; b.wallI = Math.floor(hash(sd, 5) * nw); if (prev && prev.type === b.type && prev.wallI === b.wallI) b.wallI = (b.wallI + 1) % nw;
+        const ar = hash(sd, 70), desa = /^[DN]/.test(b.type) || b.type === 'W'; b.age = desa ? (ar < 0.4 ? 2 : ar < 0.8 ? 1 : 0) : (ar < 0.25 ? 2 : ar < 0.65 ? 1 : 0);
+        prev = b; }); }
     return out;
   }
 
@@ -385,15 +400,29 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
   // rumah: tipe dari tata letak (K kampung, D1 panggung desa, D2 limasan, D3 bilik bambu, N1 nelayan, B besar)
   const WALLS = { K: ['#e8dcc4', '#d8e4d0', '#f0e0b0', '#c8d8e8', '#e8c8b8', '#f2f0e8'], D2: ['#f0ead8', '#e8dcc0', '#d8c8a8', '#f2f0e8', '#c8b898'],
     N1: ['#4ab0c8', '#e8d040', '#5ac080', '#f08060', '#a0c8f0', '#f2a8c0'] };
-  function house(m, b, y, C) {
-    const seed = Math.round(b.x * 13 + b.y * 7), r1 = hash(seed, 3), r2 = hash(seed, 5), r3 = hash(seed, 9), t = b.type || 'K';
+  function house(m, b, y, C, vg) {
+    const seed = Math.round(b.x * 13 + b.y * 7), r1 = hash(seed, 3), r2 = hash(seed, 5), r3 = hash(seed, 9), t = b.type || 'K', age = b.age || 0;
+    const pk = A => ageTint(A[b.wallI != null ? b.wallI % A.length : Math.floor(r2 * A.length)], age), rf = (A, r) => col(ageTint(pick(A, r), age, 0.7));
+    setAge(age, seed);
     let a = b.a, W2 = b.w, D2 = b.h;
     if (!b.face) {   // data lama: pintu ke jalan terdekat, putar per 90 derajat
       let best = 0, bd = 1e9; for (let k = 0; k < 4; k++) { const aa = b.a + k * Math.PI / 2, nx = -Math.sin(aa), nz = Math.cos(aa), half = k % 2 ? b.w / 2 : b.h / 2, rd = roadDist(b.x + nx * (half + 1.5), b.y + nz * (half + 1.5)); if (rd < bd - 0.3) { bd = rd; best = k; } }
       a = b.a + best * Math.PI / 2; W2 = best % 2 ? b.h : b.w; D2 = best % 2 ? b.w : b.h;
     }
     const xf = { x: b.x, z: b.y + LZ, a, y }, ar = W2 * D2, fz = D2 / 2 + 0.02, glass = col('#3a4a5a'), fr = col('#f2eee6');
-    const wood = col(pick(['#8a5a3a', '#7a4e32', '#9a6a44'], r2)), bamboo = col(pick(['#c8a868', '#b8985a', '#d4b478'], r2));
+    // pemecah ritme jalan (guide 90)
+    if (t === 'POS') { setAge(0, 0); posRonda(m, xf, { seed, C }); return null; }
+    if (t === 'LK') { setAge(0, 0); lahanKosong(m, xf, { seed, C, veg: vg }); return null; }
+    if (t === 'W') {   // warung desa: depan terbuka, etalase, renceng jajanan, tenda
+      const wall = col(pk(['#e8dcc0', '#c8a868', '#d8e4d0'])), Hh = FLOOR, awn = col(pick(['#2a6ac0', '#c8503a', '#3a9a6a'], r1));
+      m.box(xf, 0, -0.3, 0, W2 + 0.1, 0.3, D2 + 0.1, col('#a8a090')); m.box(xf, 0, 0, 0, W2, Hh, D2, wall); weather(m, xf, 0, 0, W2, D2, Hh, wall, 0);
+      m.box(xf, 0, 0.25, fz, W2 - 0.5, 1.1, 0.03, col('#3a2a20')); m.box(xf, 0, 0, fz + 0.28, W2 - 0.4, 0.8, 0.5, col('#c8a878')); m.box(xf, -W2 * 0.15, 0.8, fz + 0.28, W2 * 0.35, 0.4, 0.4, col('#b8d8e8'));
+      for (let i = 0; i < 6; i++) m.box(xf, -W2 / 2 + 0.4 + i * (W2 - 0.8) / 5, 1.15, fz + 0.75, 0.16, 0.42, 0.03, col(pick(['#f2c230', '#e85a5a', '#3a9ae0', '#6ab85a', '#f28ab4'], hash(seed, i + 30))));
+      m.poly2([[0, 1.75, 0], [1, 1.75, 0], [1, 1.45, 1], [0, 1.45, 1]].map(([u, yy, v]) => { const lx = -W2 / 2 + u * W2, lz = fz + v * 1.1, c = Math.cos(a), sn = Math.sin(a); return [b.x + lx * c - lz * sn, y + yy, b.y + LZ + lx * sn + lz * c]; }), awn);
+      m.gable(xf, 0, Hh, 0, W2, D2, Math.min(1.1, D2 * 0.45), rf(ROOFS, r1), 0.3, wall); m.box(xf, 0, Hh - 0.1, fz + 0.04, W2 * 0.7, 0.3, 0.05, col('#f4f0e0'));
+      return { xf, w: W2, d: D2 };
+    }
+    const wood = col(pk(['#8a5a3a', '#7a4e32', '#9a6a44'])), bamboo = col(pk(['#c8a868', '#b8985a', '#d4b478']));
     const win = (u, yy, side, cf = fr) => {   // side: 0 depan, 1 kanan, 2 belakang, 3 kiri
       if (side === 0 || side === 2) { const z = side ? -fz : fz, o = side ? -0.01 : 0.01; m.box(xf, u, yy, z, 0.7, 0.62, 0.05, cf); m.box(xf, u, yy + 0.06, z + o, 0.56, 0.5, 0.05, glass); }
       else { const x = side === 1 ? W2 / 2 + 0.02 : -W2 / 2 - 0.02, o = side === 1 ? 0.01 : -0.01; m.box(xf, x, yy, u, 0.05, 0.62, 0.7, cf); m.box(xf, x + o, yy + 0.06, u, 0.05, 0.5, 0.56, glass); } };
@@ -415,7 +444,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       const P = 0.8, Hh = FLOOR * 0.95, gev = col('#e8d8b0');
       for (const u of [-W2 / 2 + 0.15, 0, W2 / 2 - 0.15]) for (const v of [-D2 / 2 + 0.15, D2 / 2 - 0.15]) m.box(xf, u, -0.5, v, 0.2, P + 0.5, 0.2, col('#5a4028'));
       m.box(xf, 0, P - 0.12, 0.35, W2 + 0.3, 0.14, D2 + 0.7, shade(wood, 0.85));
-      m.box(xf, 0, P, 0, W2, Hh, D2, wood);
+      m.box(xf, 0, P, 0, W2, Hh, D2, wood); weather(m, { ...xf, y: y + P }, 0, 0, W2, D2, Hh, wood, 0);
       for (let u = -W2 / 2; u <= W2 / 2; u += 0.5) m.box(xf, u, P, fz + 0.01, 0.04, Hh, 0.03, shade(wood, 0.7));
       m.gable(xf, 0, P + Hh, 0, W2, D2, 1.3, col(pick(['#6a3a2a', '#4a4a50', '#8a4a32'], r1)), 0.35, gev);
       for (const sd of [-1, 1]) { m.box(xf, sd * (W2 / 2 + 0.3), P + Hh + 1.25, 0, 0.08, 0.5, 0.08, col('#3a2a1a')); }   // tanduk nok
@@ -428,7 +457,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     if (t === 'D3') {   // bilik bambu, atap ijuk
       const Hh = FLOOR * 0.85;
       m.box(xf, 0, -0.3, 0, W2 + 0.1, 0.3, D2 + 0.1, col('#8a7a62'));
-      m.box(xf, 0, 0, 0, W2, Hh, D2, bamboo);
+      m.box(xf, 0, 0, 0, W2, Hh, D2, bamboo); weather(m, xf, 0, 0, W2, D2, Hh, bamboo, 0);
       for (let v = 0.2; v < Hh; v += 0.35) m.box(xf, 0, v, fz + 0.005, W2, 0.04, 0.02, shade(bamboo, 0.78));
       for (const u of [-W2 / 2, W2 / 2]) for (const v of [-D2 / 2, D2 / 2]) m.box(xf, u, 0, v, 0.14, Hh, 0.14, col('#7a5a30'));
       m.gable(xf, 0, Hh, 0, W2, D2, Math.min(1.5, D2 * 0.55), col(pick(['#4a3a2a', '#5a4632', '#3e3226'], r1)), 0.4, bamboo);
@@ -437,10 +466,10 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       return { xf, w: W2, d: D2 };
     }
     if (t === 'D2') {   // limasan sawah: atap limas tinggi, teras bertiang, bale-bale, lumbung
-      const wall = col(pick(WALLS.D2, r2)), Hh = FLOOR * (r3 < 0.25 ? 1.25 : 1), roof = col(pick(['#a8523a', '#8a4a32', '#6a4a3a', '#b4583e'], r1));
+      const wall = col(pk(WALLS.D2)), Hh = FLOOR * (r3 < 0.25 ? 1.45 : 1), roof = rf(['#a8523a', '#8a4a32', '#6a4a3a', '#b4583e'], r1);
       const [fx, fzz] = at(0, D2 / 2 + 1.2), teras = roadDist(fx, fzz - LZ) > 0.9, tp = teras ? 0.9 : 0;   // teras bertiang kalau halaman depan cukup
       m.box(xf, 0, -0.45, tp / 2 - 0.05, W2 + 0.3, 0.45, D2 + 0.2 + tp, col('#a49a88'));
-      m.box(xf, 0, 0, 0, W2, Hh, D2, wall); m.box(xf, 0, 0, fz, W2, 0.35, 0.03, shade(wall, 0.7));
+      m.box(xf, 0, 0, 0, W2, Hh, D2, wall); m.box(xf, 0, 0, fz, W2, 0.35, 0.03, shade(wall, 0.7)); weather(m, xf, 0, 0, W2, D2, Hh, wall, 0);
       m.hip(xf, 0, Hh, tp / 3, W2 + 0.2, D2 + tp * 0.9, Math.min(1.8, D2 * 0.6), roof, 0.25);
       if (teras) for (const u of [-W2 / 2 + 0.2, W2 / 2 - 0.2]) m.box(xf, u, 0, D2 / 2 + 0.6, 0.14, Hh, 0.14, wood);
       m.box(xf, -W2 * 0.18, 0, fz, 0.85, 1.4, 0.06, wood); win(W2 * 0.22, 0.7, 0, wood); if (W2 > 4) win(-W2 * 0.38, 0.7, 0, wood); sideWins(0.7, wood);
@@ -452,9 +481,9 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       return { xf, w: W2, d: D2 };
     }
     if (t === 'N1') {   // rumah nelayan: cat terang, kusen kuning, jaring dijemur, perahu
-      const wall = col(pick(WALLS.N1, r2)), yel = col('#f2c230'), Hh = FLOOR, roof = col(pick(['#b4583e', '#8a8a92', '#5a6a80'], r1));
+      const wall = col(pk(WALLS.N1)), yel = col('#f2c230'), Hh = FLOOR * (r3 < 0.2 ? 1.45 : 1), roof = rf(['#b4583e', '#8a8a92', '#5a6a80'], r1);
       m.box(xf, 0, -0.4, 0, W2 + 0.2, 0.4, D2 + 0.2, col('#a8a090'));
-      m.box(xf, 0, 0, 0, W2, Hh, D2, wall); m.gable(xf, 0, Hh, 0, W2, D2, Math.min(1.1, D2 * 0.45), roof, 0.3, wall);
+      m.box(xf, 0, 0, 0, W2, Hh, D2, wall); weather(m, xf, 0, 0, W2, D2, Hh, wall, 0); m.gable(xf, 0, Hh, 0, W2, D2, Math.min(1.1, D2 * 0.45), roof, 0.3, wall);
       m.box(xf, -W2 * 0.18, 0, fz, 0.95, 1.45, 0.05, yel); m.box(xf, -W2 * 0.18, 0, fz + 0.01, 0.75, 1.35, 0.05, col('#6a4a30'));
       win(W2 * 0.22, 0.7, 0, yel); sideWins(0.7, yel);
       m.box(xf, 0, 0, D2 / 2 + 0.5, W2, 0.08, 0.9, col('#c4beb2'));
@@ -463,9 +492,9 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       return { xf, w: W2, d: D2 };
     }
     // K: rumah kampung
-    const c = col(b.color || pick(WALLS.K, r2)), Hh = FLOOR * (ar > 18 ? 1.3 : 1), roof = col(pick(ROOFS, r1));
+    const c = col(pk(WALLS.K)), Hh = FLOOR * (ar > 18 ? 1.3 : r3 < 0.25 ? 1.45 : 1), roof = rf(ROOFS, r1);
     m.box(xf, 0, -0.6, 0, W2 + 0.2, 0.6, D2 + 0.2, col('#8a8478'));
-    m.box(xf, 0, 0, 0, W2, Hh, D2, c);
+    m.box(xf, 0, 0, 0, W2, Hh, D2, c); weather(m, xf, 0, 0, W2, D2, Hh, c, 0);
     if (W2 >= D2) m.gable(xf, 0, Hh, 0, W2, D2, Math.min(1.4, D2 * 0.4), roof, 0.3, c); else m.gable({ ...xf, a: a + Math.PI / 2 }, 0, Hh, 0, D2, W2, Math.min(1.4, W2 * 0.4), roof, 0.3, c);
     m.box(xf, -W2 * 0.18, 0, fz, 0.8, 1.35, 0.06, col('#6a4a30'));
     for (let u = W2 * 0.15; u < W2 / 2 - 0.4; u += 1.2) win(u, 0.7, 0);
@@ -618,13 +647,13 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     // air menghalangi (kecuali jembatan) — mask 2 sel/petak
     if (first) collision.mask({ ox: Z.x0, oz: Z.z0 + LZ, res: G.R, w: G.W, h: G.H, data: G.water });
     // bangunan
-    const ch = new Chunks(32);
+    const ch = new Chunks(32), bveg = [];
     for (const b of K.bldgs) {
       if (zoneOf(b.x, b.y) !== id) continue;
       const m = ch.at(b.x, b.y + LZ), y = heightAt(b.x, b.y), sp = SPECIAL.find(([x, z]) => Math.abs(x - b.x) < 0.6 && Math.abs(z - b.y) < 0.6);
       if (sp) { const solid = sp[2](m, b, y, C); if (solid === false) C.box(b.x, b.y + LZ, b.w / 2, b.h / 2, b.a); continue; }
       if (Math.abs(b.y - 258) < 0.5 && b.x >= 119 && b.x <= 157) { warungPantai(m, b, y, C); continue; }
-      const r = house(m, b, y, C);
+      const r = house(m, b, y, C, bveg); if (!r) continue;
       if (b.x >= 303 && b.x <= 326 && Math.abs(b.y - 40) < 1) { /* barak: atap hijau tentara */ m.gable({ ...r.xf, a: r.xf.a + Math.PI / 2 }, 0, FLOOR * 1.3 + 0.02, 0, r.d, r.w, 1.0, col('#5a7a4a'), 0.32); }
       C.box(b.x, b.y + LZ, r.w / 2 + 0.05, r.d / 2 + 0.05, r.xf.a);
     }
@@ -636,7 +665,8 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       C.box(p.x - Math.sin(p.h) * 0.6, p.z + LZ + Math.cos(p.h) * 0.6, 1.3, 0.25, p.h); }
     for (const me of ch.meshes(MAT.world)) group.add(me);
     // tumbuhan
-    const veg = [...edgeRocks], free = (x, z) => !G.r(x, z) && !G.w(x, z) && !G.b(x, z) && zoneOf(x, z) === id;
+    setAge(0, 0);
+    const veg = [...edgeRocks, ...bveg.map(v => ({ ...v, y: heightAt(v.x, v.z - LZ) }))], free = (x, z) => !G.r(x, z) && !G.w(x, z) && !G.b(x, z) && zoneOf(x, z) === id;
     const Y = (x, z) => heightAt(x, z);
     const trees = K.trees.filter(([x, z]) => x >= Z.x0 && x < Z.x1 && z >= Z.z0 && z < Z.z1);
     trees.forEach(([x, z, rr], i) => {

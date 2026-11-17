@@ -33,6 +33,28 @@ function windowsSide(m, xf, w, d, floors, side, o = {}) { facade(m, xf, w, d, si
 // atap pelana dengan bubungan sejajar sumbu z lokal (ujung segitiga menghadap jalan)
 function gableZ(m, xf, lx, y, lz, w, d, h, c, wall, ov = 0.22) { m.gable(at(xf, lx, lz, Math.PI / 2, xf.y), 0, y, 0, d, w, h, c, ov, wall); }
 function gableX(m, xf, lx, y, lz, w, d, h, c, wall, ov = 0.22) { m.gable(at(xf, lx, lz, 0, xf.y), 0, y, 0, w, d, h, c, ov, wall); }
+// umur bangunan (guide 90 "Umur bangunan"): 0 baru, 1 biasa (sedikit pudar), 2 tua (pudar + noda rembes + lumut di sisi
+// utara + retak). Diset sebelum tiap rumah dibangun; body() menambah noda/lumut/retak di dinding.
+let AGE = { level: 0, seed: 0 };
+export function setAge(level, seed) { AGE = { level, seed }; }
+export function ageTint(c, level, k = 1) {   // '#rrggbb' -> '#rrggbb' dipudarkan ke krem keabuan
+  if (!level) return c; const t = (level === 2 ? 0.32 : 0.14) * k, a = parseInt(c.slice(1), 16), b = 0xb8b0a0;
+  const ch = sh => Math.round(((a >> sh) & 255) * (1 - t) + ((b >> sh) & 255) * t);
+  return '#' + ((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0'); }
+export function weather(m, xf, lx, lz, w, d, h, wall, plinth = 0.15) {
+  if (AGE.level < 2) return;
+  const r = k => hash(AGE.seed + Math.round(lx * 7 + lz * 13), k), stain = shade(wall, 0.72), moss = col('#5a7a3a'), moss2 = col('#6a8a44'), crack = shade(wall, 0.5);
+  const ca = Math.cos(xf.a || 0), sa = Math.sin(xf.a || 0);
+  // 4 sisi: [pusat x, pusat z, panjang, arah normal lokal]
+  for (const [cx, cz, len, nx, nz] of [[lx, lz + d / 2, w, 0, 1], [lx, lz - d / 2, w, 0, -1], [lx + w / 2, lz, d, 1, 0], [lx - w / 2, lz, d, -1, 0]]) {
+    const north = nx * sa + nz * ca < -0.4, o = 0.012, along = (u, y, lu, ly, c) => nz ? m.box(xf, cx + u, y, cz + nz * o, lu, ly, 0.02, c) : m.box(xf, cx + nx * o, y, cz + u, 0.02, ly, lu, c);
+    const n = 2 + Math.floor(r(nx * 3 + nz * 5 + 7) * 3);
+    for (let i = 0; i < n; i++) { const u = (r(i * 3 + nx + nz * 2 + 20) - 0.5) * (len - 0.4), l = 0.35 + r(i + 40 + nx) * 0.6; along(u, h - 0.16 - l, 0.08 + r(i + 50) * 0.1, l, stain); }   // noda rembes dari atas
+    if (north) { along(0, plinth, len, 0.16 + r(60) * 0.1, moss); for (let i = 0; i < 4; i++) along((r(i + 61) - 0.5) * (len - 0.5), plinth + 0.15, 0.3 + r(i + 65) * 0.4, 0.12 + r(i + 69) * 0.2, moss2); }   // lumut sisi utara
+    else if (r(nx + nz * 3 + 80) < 0.4) along((r(81) - 0.5) * (len - 0.6), plinth, 0.5, 0.12, moss);
+    if (nz === 1) { let u = (r(90) - 0.5) * (len - 1), y = h * 0.75; for (let k = 0; k < 4; k++) { const du = (r(91 + k) - 0.5) * 0.18; along(u + du / 2, y - 0.16, 0.025, 0.17, crack); u += du; y -= 0.16; } }   // retak
+  }
+}
 function body(m, xf, lx, lz, w, d, h, wall, plinth = 0.15) {
   m.box(xf, lx, 0, lz, w + 0.04, plinth, d + 0.04, shade(wall, 0.7));
   m.box(xf, lx, plinth, lz, w, h - plinth, d, wall);
@@ -42,6 +64,9 @@ function body(m, xf, lx, lz, w, d, h, wall, plinth = 0.15) {
   m.box(xf, lx, h - 0.14, lz, w + 0.06, 0.14, d + 0.06, trim);
   m.box(xf, lx, plinth, lz, w + 0.012, 0.18, d + 0.012, shade(wall, 0.86));
   for (let f = 1; f * FLOOR < h - 0.3; f++) m.box(xf, lx, f * FLOOR - 0.06, lz, w + 0.12, 0.12, d + 0.12, trim);   // lis lantai menonjol
+  // rumah 1,5 lantai (loteng): roster ventilasi di atas jendela depan
+  if (h > FLOOR * 1.3 && h < FLOOR * 1.7) for (let i = -2; i <= 2; i++) { m.box(xf, lx + i * 0.26, h - 0.62, lz + d / 2 + 0.012, 0.22, 0.22, 0.03, col('#d8d2c4')); m.box(xf, lx + i * 0.26, h - 0.58, lz + d / 2 + 0.03, 0.12, 0.12, 0.02, col('#3a3a3a')); }
+  weather(m, xf, lx, lz, w, d, h, wall, plinth);
 }
 function door(m, xf, lx, lz, c, side = 0) {   // pintu menempel di dinding depan (z = lz)
   m.box(xf, lx, 0, lz + 0.03, 0.56, 1.42, 0.06, FRAME); m.box(xf, lx, 0, lz + 0.05, 0.48, 1.36, 0.06, c);
@@ -88,7 +113,7 @@ function potRow(veg, seed, lx0, lx1, lz, o = {}) {
 /* ---------- RUMAH KAMPUNG */
 // o: { wall, roof, accent, seed, veg(list), C(collision), darto }
 export function kampung(m, xf, type, o) {
-  const { seed } = o, wall = col(o.wall), roof = col(o.roof), acc = col(o.accent), H = FLOOR;
+  const { seed } = o, wall = col(o.wall), roof = col(o.roof), acc = col(o.accent), H = FLOOR * (o.tall || 1);
   const C = (lx, lz, sx, sz) => colLocal(o.C, xf, lx, lz, sx, sz);
   const veg = (k, lx, lz, extra = {}) => { const [x, z] = L(xf, lx, lz); o.veg.push({ k, x, z, a: xf.a + hash(seed, x) * 6, ...extra }); };
   const r = k => hash(seed, k);
@@ -281,3 +306,20 @@ export function ruko(m, xf, type, o) {
   colLocal(o.C, xf, 0, 0, w + (type === 'R3' ? 0.9 : 0), d);
 }
 export { body, door, win, nako, tandon, chair, at, rot, parabola };
+
+/* ---------- PEMECAH RITME JALAN (guide 90): pos ronda & lahan kosong berpohon */
+export function posRonda(m, xf, o) {
+  const wood = col('#7a5434'), roof = col(pick(['#8a8a92', '#a8523a', '#5a6a80'], hash(o.seed, 1))), C = (lx, lz, sx, sz) => colLocal(o.C, xf, lx, lz, sx, sz);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { m.box(xf, sx * 0.9, 0, sz * 0.8, 0.12, 2.0, 0.12, wood); C(sx * 0.9, sz * 0.8, 0.15, 0.15); }
+  m.box(xf, 0, 0.45, 0, 1.9, 0.08, 1.7, col('#a8845c')); for (let i = -3; i <= 3; i++) m.box(xf, i * 0.26, 0.53, 0, 0.2, 0.02, 1.7, col('#b8946a'));   // bale papan
+  m.box(xf, 0, 0.45, -0.85, 1.9, 0.6, 0.05, col('#8a6440'));   // dinding belakang rendah
+  m.gable(xf, 0, 2.0, 0, 1.9, 1.7, 0.6, roof, 0.25);
+  m.box(xf, 0.75, 1.15, 0.86, 0.14, 0.55, 0.14, col('#8a5a2c')); m.box(xf, 0.75, 1.7, 0.86, 0.03, 0.3, 0.03, col('#3a3a3a'));   // kentongan
+  m.box(xf, -0.3, 1.75, 0.9, 1.0, 0.24, 0.03, col('#f2f0e6')); m.box(xf, -0.3, 1.78, 0.91, 0.86, 0.14, 0.02, col('#2a5a3a'));   // papan "POS RONDA"
+}
+export function lahanKosong(m, xf, o) {
+  const r = k => hash(o.seed, k), [x, z] = L(xf, (r(1) - 0.5) * 1.2, (r(2) - 0.5) * 1.2);
+  o.veg.push({ k: r(3) < 0.4 ? 'pisang' : r(3) < 0.75 ? 'bulat' : 'ketapang', x, z, a: r(4) * 6, s: 0.6 + r(5) * 0.25 }); o.C.circle(x, z, 0.3);
+  for (let i = 0; i < 4; i++) { const [a, b] = L(xf, (r(10 + i) - 0.5) * 2.6, (r(20 + i) - 0.5) * 2.4); o.veg.push({ k: i % 2 ? 'semak' : 'rumputPendek', x: a, z: b, a: r(30 + i) * 6 }); }
+  if (r(6) < 0.5) { m.box(xf, 0.9, 0, 0.9, 1.2, 0.4, 0.4, col('#b8a07a')); for (const sd of [-1, 1]) m.box(xf, 0.9 + sd * 0.5, 0, 0.9, 0.08, 0.4, 0.4, col('#7a5a3a')); }   // bangku kayu
+}
