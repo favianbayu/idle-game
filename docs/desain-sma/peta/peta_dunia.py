@@ -158,21 +158,22 @@ def peta_dunia(path="peta_dunia.png"):
     hl_timur = m.forest(blob(210, -78, 44, 26, rng), 0, tint=(70, 112, 66))
     m.area(blob(92, -100, 7, 4, rng), (214, 214, 196), outline=(150, 150, 130))     # alun-alun edelweis
     # ---------- kebun teh Sukamekar
-    rows(m, [(150, -30), (200, -26), (236, -12), (240, 2), (300, 0), (330, -8), (330, -40), (300, -54), (262, -58), (226, -52), (190, -40)],
+    rows(m, [(150, -30), (200, -26), (228, -18), (230, -50), (262, -54), (286, -50), (288, -10), (300, 0), (330, -8), (330, -40), (300, -60), (262, -64), (226, -58), (190, -40)],   # kebun mengelilingi desa (U)
+        
          TEA, (96, 146, 72), angle=-18)
     # ---------- waduk, sawah barat, karet, industri, batalyon, desa selatan
     waduk = m.area(blob(-88, 6, 36, 22, rng, k=0.14), C["water"], outline=C["water_edge"], block=True)
-    m.sawah([(-150, 120), (-60, 112), (-8, 132), (-10, 176), (-60, 196), (-150, 200)], 25)
+    m.sawah([(-150, 132), (-60, 130), (-8, 138), (-10, 176), (-60, 196), (-150, 200)], 25)
     m.sawah([(-6, 184), (40, 184), (90, 190), (120, 214), (100, 238), (30, 240), (-10, 228)], -12)
-    m.sawah([(168, 186), (230, 184), (262, 196), (262, 226), (200, 236), (168, 220)], 8)
+    m.sawah([(158, 184), (176, 186), (180, 230), (210, 236), (244, 232), (258, 238), (236, 247), (170, 247), (158, 228)], 8)   # sawah di barat & selatan desa
     karet = m.forest([(-150, 204), (-70, 200), (-30, 224), (-40, 246), (-150, 248)], 0, tint=(96, 130, 80))
     kelapa = m.forest([(-60, 252), (220, 252), (220, 260), (-60, 258)], 0, tint=(170, 190, 120))
     m.area([(282, 96), (400, 96), (404, 137), (300, 138), (282, 128)], (204, 204, 208), alpha=170)            # kawasan industri
     m.area([(292, 30), (360, 30), (362, 72), (292, 72)], (186, 196, 160), smooth=False, outline=(80, 90, 60), width=3)   # batalyon (pagar)
     m.area([(330, 248), (380, 246), (390, 262), (336, 264)], (90, 130, 90), alpha=200)                       # hutan bakau
     # ---------- sungai & rel luar kota
-    m.river([(-74, 28), (-66, 50), (-50, 80), (-30, 104), (-12, 112), (0, 116)], 5)          # dari bendungan ke Kali Cendana
-    m.river([(260, 136), (284, 146), (300, 168), (294, 198), (302, 228), (316, 254), (320, 272)], 7)   # Kali Cendana ke muara
+    sungai = [(m.river([(-73, 37), (-66, 50), (-50, 80), (-30, 104), (-12, 112), (0, 116)], 5), 5),          # dari bendungan ke Kali Cendana
+              (m.river([(260, 136), (284, 146), (300, 168), (294, 198), (302, 228), (318, 248), (328, 260), (332, 272)], 7), 7)]   # Kali Cendana ke muara (lewat bakau)
     m.rail([(9, 0), (7, -30), (4, -60), (0, -100), (-4, -130)])
     m.rail([(23, 180), (27, 205), (31, 228), (34, 244)])
     for k in range(6):   # terowongan rel
@@ -191,8 +192,9 @@ def peta_dunia(path="peta_dunia.png"):
     R = m.road
     # barat
     R([(0, 80), (-30, 74), (-70, 78), (-110, 70), (-150, 72)], "raya", name="Jl. Raya Kalisari")
-    R([(-70, 78), (-72, 56), (-76, 34), (-96, 28), (-124, 12), (-128, -12), (-110, -34), (-92, -52)], "jalan", 3.5)   # bendungan, keliling waduk, ke Batu Tulis
-    R([(0, 11), (-24, 8), (-50, -6), (-76, -14), (-110, -34)], "jalan", 3)            # stasiun/bukit ke waduk utara
+    R([(-70, 78), (-76, 62), (-84, 48), (-100, 42), (-118, 36), (-134, 20), (-138, -2), (-130, -24), (-112, -40), (-92, -52)], "jalan", 3.5)   # bendungan, keliling waduk (barat), ke Batu Tulis
+    R([(-84, 48), (-80, 40)], "gang", 2)                                               # ke puncak bendungan
+    R([(0, 11), (-24, 8), (-46, -12), (-70, -26), (-92, -34), (-112, -40)], "jalan", 3)   # stasiun/bukit ke waduk utara
     R([(0, 104), (-24, 100), (-60, 104), (-96, 100), (-130, 108), (-150, 112)], "jalan", 3, name="Jl. Tegalsari")
     R([(-60, 104), (-56, 140), (-46, 176), (-36, 210), (-24, 250)], "jalan", 3)       # Tegalsari ke pantai
     R([(-110, 70), (-104, 100)], "jalan", 3)
@@ -200,8 +202,8 @@ def peta_dunia(path="peta_dunia.png"):
     R([(138, 0), (144, -6), (128, -11), (148, -17), (128, -23), (150, -29), (130, -35), (152, -41), (152, -46), (140, -54), (128, -62)],
       "jalan", 3, name="Jl. Tikungan Seribu")
     R([(260, 6), (284, -2), (272, -18), (250, -28), (222, -36), (196, -42), (172, -45), (152, -46)], "jalan", 3.5, name="Jl. Raya Puncak")
-    R([(40, 8), (36, -10), (46, -30), (60, -46), (90, -56), (128, -62)], "setapak", 1.6)   # perkemahan - air panas - basecamp
-    R([(128, -62), (124, -70), (114, -76), (120, -82), (112, -86), (100, -96), (106, -104)], "setapak", 1.2)   # jalur pendakian
+    R([(40, 8), (36, -10), (44, -30), (48, -42), (54, -54), (72, -58), (98, -60), (128, -62)], "setapak", 1.6)   # perkemahan - air panas - basecamp
+    R([(128, -62), (124, -70), (114, -76), (121, -82), (120, -91), (112, -96), (102, -99), (94, -101)], "setapak", 1.2)   # jalur pendakian (memutar danau kawah)
     R([(250, -28), (262, -42), (276, -56), (300, -60), (330, -48), (360, -40), (410, -42)], "jalan", 3)          # desa ke timur
     # timur
     R([(260, 92), (290, 94), (330, 90), (370, 96), (410, 94)], "raya", name="Jl. Raya Pradana")
@@ -215,33 +217,56 @@ def peta_dunia(path="peta_dunia.png"):
     R([(-150, 248), (-90, 246), (-24, 250), (40, 252), (100, 254), (160, 252), (210, 254), (240, 257), (270, 252), (300, 246),
        (340, 241), (380, 244), (410, 243)], "raya", name="Jl. Pesisir Selatan")
     R([(150, 178), (152, 200), (156, 226), (160, 252)], "jalan", 3.5, name="Jl. Pantai Lintang")
-    R([(205, 180), (214, 204), (230, 230), (240, 257)], "jalan", 3)
+    jl_pd = R([(205, 180), (214, 204), (230, 230), (240, 257)], "jalan", 3)
     R([(34, 180), (36, 206), (40, 232), (40, 252)], "setapak", 1.4)
     R([(57, 164), (70, 190), (96, 214), (122, 222), (152, 214)], "gang", 2)            # kandang - desa - jalan pantai
     R([(410, 180), (390, 182)], "jalan", 3)                                             # jalan servis sirkuit timur (keluar daerah)
     R([(408, 192), (398, 191)], "jalan", 2.4)
-    R([(300, 246), (312, 258), (326, 262)], "jalan", 2.6)                               # ke TPI/dermaga
+    tpi = R([(300, 246), (304, 256), (308, 264)], "jalan", 2.6)                          # ke kampung nelayan, TPI & dermaga
     R([(240, 257), (238, 266), (236, 278)], "setapak", 1.2)                              # ke mercusuar
+    # gang desa (kampung padat: rumah menghadap gang, guide 90)
+    gang_tg = [R([(-120, 86), (-100, 85), (-84, 86), (-66, 87), (-52, 94)], "gang", 2, name="Gg. Melati"),
+               R([(-84, 86), (-82, 101)], "gang", 2),
+               R([(-66, 87), (-66, 103)], "gang", 2),
+               R([(-118, 106), (-118, 121), (-100, 121), (-80, 120), (-60, 119), (-52, 116)], "gang", 2, name="Gg. Kenari"),
+               R([(-104, 101), (-104, 121)], "gang", 2),
+               R([(-80, 101), (-80, 120)], "gang", 2),
+               R([(-68, 103), (-66, 119)], "gang", 2)]
+    gang_sm = [R([(240, -26), (252, -34), (262, -42)], "gang", 2),
+               R([(262, -42), (270, -38), (272, -18)], "gang", 2)]
+    gang_pd = [R([(214, 204), (198, 210), (182, 210)], "gang", 2),
+               R([(219, 212), (232, 212), (242, 212)], "gang", 2),
+               R([(224, 219), (210, 224), (198, 224)], "gang", 2)]
     saved = m.roads; m.roads = saved[n0:]; m.draw_roads(); m.roads = saved
+    for sm, wd, _f, _e, kind, name in saved[n0:]:
+        rl = LineString(sm)
+        for rs, rw in sungai:
+            x = rl.intersection(LineString(rs))
+            for p in getattr(x, "geoms", [x]):
+                if p.is_empty:
+                    continue
+                d = rl.project(p)
+                a, b = rl.interpolate(max(0, d - 0.6)), rl.interpolate(min(rl.length, d + 0.6))
+                m.jembatan(p.x, p.y, math.degrees(math.atan2(b.y - a.y, b.x - a.x)), rw + 4, wd + 1.2, name)
     # ---------- bangunan & tempat luar kota
     B = m.bldg
     # utara
-    B(128, -62, 5, 3, 0, (150, 110, 80)); B(122, -60, 3, 2, 0, (190, 150, 110))       # basecamp pendakian + warung
+    B(119, -56, 5, 3, 0, (150, 110, 80)); B(113, -56, 3, 2, 0, (190, 150, 110))       # basecamp pendakian + warung
     B(62, -48, 6, 4, 10, (200, 180, 160)); m.ellipse_area(56, -44, 3, 2, (130, 200, 200), outline=(90, 150, 150))  # air panas
-    B(172, -48, 4, 2.5, 0, (180, 120, 80)); B(178, -47, 3, 2, 0, (190, 130, 90))      # warung jagung bakar Bukit Bintang
+    B(172, -51, 4, 2.5, 0, (180, 120, 80)); B(178, -50.5, 3, 2, 0, (190, 130, 90))      # warung jagung bakar Bukit Bintang
     for k, (x, y) in enumerate([(196, -48), (204, -50), (212, -49), (190, -54), (200, -56)]):
         B(x, y, 4, 3, 8, C["roof_perum"][k % 4])                                        # villa
     reg_desa = Polygon([(236, -40), (262, -48), (280, -46), (282, -24), (262, -16), (238, -24)])
     m.area(list(reg_desa.exterior.coords), DIST["kampung"], alpha=140)
-    B(266, -46, 8, 4, 0, (220, 190, 120)); B(246, -36, 4, 3, 0, (176, 220, 214))       # SMK Pariwisata, masjid desa
+    B(252, -46, 8, 4, 0, (220, 190, 120)); B(246, -36, 4, 3, 0, (176, 220, 214))       # SMK Pariwisata, masjid desa
     B(276, -30, 4, 4, 0, (210, 200, 186))                                              # pabrik teh
     # barat
     B(-74, 34, 16, 2, -10, (170, 170, 176)); B(-62, 42, 5, 4, 0, (170, 176, 184))      # bendungan & PLTA
     B(-120, -4, 3, 2, 0, (150, 110, 80)); B(-60, -12, 4, 3, 0, (190, 150, 110))        # dermaga perahu, warung ikan bakar
-    reg_tg = Polygon([(-120, 84), (-70, 84), (-50, 96), (-56, 116), (-120, 118)])
+    reg_tg = Polygon([(-128, 79), (-66, 79), (-45, 92), (-45, 106), (-50, 128), (-128, 128)])
     m.area(list(reg_tg.exterior.coords), DIST["kampung"], alpha=140)
     B(-92, 108, 8, 5, 0, (200, 170, 120))                                              # pasar hewan
-    B(-110, 92, 10, 4, 0, (240, 240, 230)); B(-102, 96, 4, 3, 0, (176, 220, 214))     # pesantren
+    B(-116, 94, 10, 4, 0, (240, 240, 230)); B(-112, 99, 4, 3, 0, (176, 220, 214))     # pesantren
     # timur
     for k in range(4):
         B(304 + k * 7, 40, 5, 10, 0, (150, 160, 120))                                  # barak
@@ -252,7 +277,7 @@ def peta_dunia(path="peta_dunia.png"):
                                       (300, 130, 16, 8), (334, 128, 12, 8), (360, 130, 14, 8), (390, 130, 10, 8)]):
         B(x, y, w, h, 0, [(176, 186, 200), (200, 200, 206), (186, 176, 170), (170, 190, 186)][k % 4])
     # selatan
-    reg_pd = Polygon([(176, 200), (226, 196), (248, 210), (236, 228), (196, 230)])
+    reg_pd = Polygon([(182, 186), (248, 186), (258, 206), (246, 228), (198, 230), (184, 222)])
     m.area(list(reg_pd.exterior.coords), DIST["kampung"], alpha=140)
     B(34, 240, 8, 4, 0, (190, 206, 228))                                               # Stasiun Lintang
     for k in range(7):
@@ -260,18 +285,30 @@ def peta_dunia(path="peta_dunia.png"):
     m.area([(110, 260), (118, 260), (118, 265), (110, 265)], SAND, smooth=False, outline=(150, 120, 80))   # voli pantai
     B(206, 259, 12, 4, 0, (240, 236, 226))                                             # Hotel Samudra
     B(236, 280, 2.4, 2.4, 0, (250, 250, 250)); B(236, 280, 1.2, 1.2, 0, (210, 50, 50), roof=False)   # mercusuar
-    B(318, 260, 8, 3, 0, (120, 150, 190)); B(328, 264, 2, 6, 0, (150, 110, 80))         # TPI & dermaga
+    B(314, 264, 6, 3, 0, (120, 150, 190)); B(318, 270, 2, 6, 0, (150, 110, 80))         # TPI & dermaga
     for k in range(5):
-        X, Y = m.P([(322 + k * 2.2, 270)])[0]
+        X, Y = m.P([(304 + k * 2.2, 271)])[0]
         m.d.polygon([(X, Y), (X + 1.6 * m.s, Y), (X + 0.8 * m.s, Y + 3 * m.s)], fill=[(210, 70, 50), (60, 120, 190), (240, 200, 60)][k % 3], outline=(40, 40, 40))
     for k in range(8):
-        B(300 + (k % 4) * 4.5, 254 + (k // 4) * 3.4, 3, 2.4, rng.uniform(-15, 15), C["roof_kampung"][k % 5])   # kampung nelayan
+        rng.uniform(-15, 15)                                                           # (seed tetap) kampung nelayan kini di sepanjang jalan TPI
     B(-12, 262, 3, 2, 0, (170, 130, 90))                                               # gubuk Pantai Watu Sepi
     sirkuit(m)
     # ---------- rumah desa & pohon
-    m.fill_houses(reg_desa, 26)
-    m.fill_houses(reg_tg, 30)
-    m.fill_houses(reg_pd, 24)
+    # rumah: hanya di sepanjang jalan/gang, menghadap jalan, jarak dari tepi aspal >= 1 petak (guide 90)
+    kampung = dict(spacing=(2.0, 2.5), depth=(2.4, 3.2), width=(2.2, 3.0), gap=(1.0, 1.3), jitter=4, skip=0.04)
+    desa = dict(spacing=(2.6, 3.6), depth=(2.6, 3.4), width=(2.4, 3.2), gap=(1.4, 2.4), jitter=4, skip=0.08)
+    by_name = {r[5]: r[0] for r in m.roads if r[5]}
+    for g in gang_tg:
+        m.houses_along(g, reg_tg, **kampung)
+    m.houses_along(by_name["Jl. Tegalsari"], reg_tg, **desa)
+    for g in gang_sm:
+        m.houses_along(g, reg_desa, **kampung)
+    m.houses_along(by_name["Jl. Raya Puncak"], reg_desa, **desa)
+    for g in gang_pd:
+        m.houses_along(g, reg_pd, **kampung)
+    m.houses_along(jl_pd, reg_pd, **desa)
+    reg_nl = Polygon([(294, 250), (316, 250), (316, 268), (294, 268)])
+    m.houses_along(tpi, reg_nl, **kampung)                                             # kampung nelayan
     for g in (hl_barat, hl_timur):
         m.trees(g, 160, (1.2, 2.2))
     m.trees(karet, 140, (1.0, 1.6))
@@ -300,19 +337,19 @@ def peta_dunia(path="peta_dunia.png"):
     # ---------- penanda (lanjutan nomor peta kota)
     pts = [
         (110, -96, "Kawah Sangkala & danau kawah (puncak, Bab 12 kemah)"),
-        (128, -66, "Basecamp pendakian & pos 1"),
+        (119, -52, "Basecamp pendakian & pos 1"),
         (92, -104, "Alun-alun Edelweis (kemah puncak)"),
         (58, -52, "Pemandian air panas Sangkala"),
         (170, -52, "Bukit Bintang: warung jagung bakar, lampu kota malam"),
         (204, -60, "Kawasan villa Puncak"),
         (138, -24, "Jl. Tikungan Seribu: balap liar turunan (Bab 8+)"),
-        (266, -50, "SMK Pariwisata (sekolah Wulan) & Desa Sukamekar"),
+        (252, -50, "SMK Pariwisata (sekolah Wulan) & Desa Sukamekar"),
         (282, -32, "Pabrik teh tua (tur & kerja paruh waktu)"),
         (-74, 38, "Bendungan & PLTA Sirnagalih"),
         (-60, -16, "Warung ikan bakar & dermaga perahu waduk"),
         (-92, -76, "Batu Tulis (prasasti, rahasia)"),
         (-92, 112, "Pasar hewan Tegalsari"),
-        (-110, 88, "Pondok pesantren Darul Falah"),
+        (-116, 90, "Pondok pesantren Darul Falah"),
         (318, 60, "Asrama Batalyon 3 (rumah Dimas): gerbang jaga"),
         (346, 112, "Kawasan Industri Pradana (kerja shift)"),
         (368, 230, "Sirkuit Tanjung Pradana: tribun utama & pit"),

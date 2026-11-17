@@ -97,6 +97,7 @@ class Map:
         self.d = _Shift(self.raw, -x0 * s, -y0 * s) if (x0 or y0) else self.raw
         self.blocked = []
         self.roads = []
+        self.bridges = []
         self.forests = []
         self.legend = []
         self.title, self.sub = title, sub
@@ -202,6 +203,20 @@ class Map:
                 x, y = p.x * self.s - (tb[2] - tb[0]) / 2, p.y * self.s - (tb[3] - tb[1]) / 2 - 1
                 self.d.rectangle((x - 3, y - 1, x + tb[2] - tb[0] + 3, y + tb[3] - tb[1] + 4), fill=(40, 40, 44, 170))
                 self.d.text((x, y), name, font=f, fill=(250, 250, 240))
+
+    def jembatan(self, x, y, ang, length, width, name=None):
+        """Dek jembatan di (x, y) searah jalan (ang derajat). Dicatat di self.bridges untuk game."""
+        g = rotate(box(x - length / 2, y - width / 2, x + length / 2, y + width / 2), ang, origin=(x, y))
+        self.d.polygon(self.P(list(g.exterior.coords)), fill=(168, 164, 156), outline=(70, 66, 60), width=2)
+        a = math.radians(ang)
+        ux, uy = math.cos(a), math.sin(a)
+        nx, ny = -uy, ux
+        for sd in (-1, 1):   # pagar
+            o = sd * (width / 2 - 0.25)
+            self.d.line(self.P([(x - ux * length / 2 + nx * o, y - uy * length / 2 + ny * o),
+                                (x + ux * length / 2 + nx * o, y + uy * length / 2 + ny * o)]), fill=(60, 56, 50), width=2)
+        self.bridges.append(dict(x=round(x, 2), y=round(y, 2), a=round(a, 4), len=round(length, 2), w=round(width, 2), name=name))
+        return g
 
     # ---------- bangunan
     def bldg(self, cx, cy, w, h, ang=0, color=(200, 180, 160), roof=True, block=True, outline=(60, 50, 44)):
