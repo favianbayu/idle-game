@@ -1,10 +1,10 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
 Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya yang sama dengan Raka v3
 (yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sampai Andra sudah dipasang di game (`game3d/src/raka/`,
-peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei dan Gilang masih pratinjau, menunggu persetujuan.
+peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, dan Kobar masih pratinjau, menunggu persetujuan.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
@@ -25,6 +25,11 @@ peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei dan Gilang masih prati
 | Andra | NPC romance cowok, pelukis mural STM | 1.32 | 85 | kulit cokelat, rambut ikal sebahu setengah diikat, alis tebal, senyum malas, tindik kiri, tangan & celana kena cat, tato spidol di lengan, boots |
 | Mei | NPC romance cewek, anak Toko Buku Pena, ilustrator | 1.18 | 80 | bob sebahu lurus + jepit pensil, kacamata bulat besar, pipi tembam merah, mata sipit, noda tinta di jari |
 | Gilang | NPC romance cowok, pengantar galon & skater, paket C | 1.34 | 86 | kulit cokelat gelap, rambut berantakan, topi terbalik biru-kuning, gigi depan renggang, alis jahil tak sejajar, plester di lutut & siku |
+| Wulan | NPC romance cewek, pesilat SMK Pariwisata dari desa | 1.26 | 80 | kepang satu tebal sampai pinggang, alis lurus, mata besar teduh, memar di lengan |
+| Om Darto | paman pemain, pemilik Warkop Simpang | 1.32 | 84 | gempal perut buncit, cepak beruban di samping, kumis tebal, tato bunga pudar |
+| Cici | sepupu 8 tahun, anak Om Darto | 0.98 | 64 | rangka anak, kuncir dua ikat stroberi, gigi depan ompong, pipi merah |
+| Mas Fajar | montir, anggota senior Lampu Kota | 1.34 | 89 | rambut jabrik, kaus kerja penuh oli, jeans robek, handuk, gelang karet |
+| Kobar | ketua Serigala Besi, kakak Kirana | 1.36 | 95 | kekar, mohawk hitam-merah sisi dicukur, jahitan di dagu, rompi patch serigala, rantai dompet |
 | Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
@@ -47,7 +52,12 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Jojo**: seragam + rompi army + kamera, liputan (kupluk oranye + ransel kamera), kaus "HORAS!" + celana pendek, kemeja hawaii + kargo + sandal gunung.
 - **Andra**: seragam STM kena cat + boots, melukis mural (kaus penuh cat + overall + masker + topi terbalik), Serigala Besi (rompi jeans patch serigala), kemeja bunga + kulot, sarung (rok.js) + kaus partai.
 - **Mei**: seragam Bina Bangsa (rompi & rok kotak hijau + dasi pita, rok.js), jaga toko (kaus mustard + apron PENA + pensil di telinga), piama kucing + kaus kaki tidak sepasang, overall + kaus garis + baret + tas tote berpin.
-- **Gilang**: antar galon (kaus Depot Air Segar + handuk + galon di pundak + sandal jepit), skate (kaus kartun kebesaran + kargo sobek + papan di punggung + sepatu diikat karet), paket C (kemeja kotak dikancing sampai atas), di rumah (telanjang dada + sarung rok.js), windbreaker kuning-biru. Di game (`seragam`) ia memakai baju antar galon tanpa galon.
+- **Gilang**: antar galon (kaus Depot Air Segar + handuk + sandal jepit; galonnya properti gerakan `galon`/`galonWalk`, bukan bagian baju), skate (kaus kartun kebesaran + kargo sobek + papan di punggung + sepatu diikat karet), paket C (kemeja kotak dikancing sampai atas), di rumah (telanjang dada + sarung rok.js), windbreaker kuning-biru. Di game (`seragam`) ia memakai baju antar galon.
+- **Wulan**: SMK Pariwisata (blazer biru tua + rok span + hak rendah), silat (pangsi hitam + sabuk hijau + ikat kepala batik, tanpa alas kaki), pemandu kebun teh (kemeja hijau + caping + boots karet), di desa (kaus lengan panjang + sarung batik rok.js), ke kota (kemeja kotak hijau + jeans + tas anyaman).
+- **Om Darto**: jaga warkop (kaus oblong belel + celemek hijau KOPI), santai (sarung di pundak + celana pendek), di rumah (kaus kutang + sarung rok.js).
+- **Cici**: seragam SD merah putih, kaus kucing + rok tutu, piama bintang.
+- **Mas Fajar**: bengkel (kaus kerja penuh oli + jeans robek + handuk), jaket Lampu Kota, santai (kaus putih + sandal jepit).
+- **Kobar**: Serigala Besi (rompi jeans patch serigala + kutang hitam + rantai dompet + boots), Wijaya Motor (coverall diikat di pinggang), jaket balap nomor 1.
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai

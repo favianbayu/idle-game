@@ -109,7 +109,7 @@ const addv = (a, d, k) => [a[0] + d[0] * k, a[1] + d[1] * k, a[2] + d[2] * k];
 const rotYo = (v, t) => [v[0] * Math.cos(t) - v[2] * Math.sin(t), v[1], v[2] * Math.cos(t) + v[0] * Math.sin(t)];   // sama dengan voxlib
 function props(P, m, C, K) {
   const out = [];
-  if (!(P.sword > 0.5 || P.broom > 0.5 || P.rod > 0.5 || P.phone > 0.5 || P.box > 0.5 || P.book > 0.5 || P.orb > 0)) return out;
+  if (!(P.sword > 0.5 || P.broom > 0.5 || P.rod > 0.5 || P.phone > 0.5 || P.box > 0.5 || P.book > 0.5 || P.orb > 0 || P.galon > 0.5)) return out;
   const hand = k => apply(m['fore' + k], [0.5, 0, -K.fore - 1.5]), elbow = k => apply(m['fore' + k], [0, 0, 0]);
   const hR = hand('R'), hL = hand('L'), fw = [Math.cos(P.lean), 0, -Math.sin(P.lean)], up = [Math.sin(P.lean), 0, Math.cos(P.lean)];
   const cap = (a, b, r0, r1, mat) => out.push({ t: 'cap', p: [a, b], r: [r0, r1], mat });
@@ -139,6 +139,13 @@ function props(P, m, C, K) {
     cap(r0, addv(hR, rd, 3 * U), 0.75 * U, 0.6 * U, 'hilt');
     cap(r0, r1, 0.5, 0.5, 'stick');
     if (P.rod > 1.5) cap(r1, addv(r1, [0, 0, 1], -9 * U), 0.5, 0.5, 'line');
+  }
+  if (P.galon > 0.5) {   // galon 19 L rebah di pundak kanan, menempel ke sisi kepala; leher galon menghadap belakang (ikut dada)
+    const C0 = apply(m.chest, [0, 0, 0]), ax = nrm(apply(m.chest, [1, 0, 0]).map((v, i) => v - C0[i]));
+    const c = apply(m.chest, [0, K.shY + 5, K.shZ + 8.5]), at = k => addv(c, ax, k);
+    cap(at(-5), at(5), 7, 7, 'galon');
+    for (const k of [-3, 0, 3]) cap(at(k - 0.3), at(k + 0.3), 7.5, 7.5, 'galonS');
+    cap(at(-12), at(-13.5), 2.4, 2.4, 'galonT'); cap(at(-11), at(-12), 1.8, 1.8, 'galon');
   }
   if (P.broom > 0.5) {
     const brd = nrm([0.5, P.bsw, -1]);

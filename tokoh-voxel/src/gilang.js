@@ -17,7 +17,7 @@ addRamps({
   glTopi: ['#2470b0', '#2f86c8', '#3d9be0', '#64b4ee'], glKuning: ['#c8a42a', '#dcb830', '#f5d13a', '#f8e070'],
   glKaus: ['#2470b0', '#2f86c8', '#3d9be0', '#64b4ee'], glPutih: ['#c4bfb0', '#d4cfc0', '#e4dfd0', '#f0ece0'],
   glCelana: ['#26303c', '#303c4a', '#3a4a5a', '#4e6072'], glHanduk: ['#cfcac0', '#ddd8ce', '#ebe6dc', '#f6f2ea'],
-  glGalon: ['#4a90c4', '#62a6d4', '#82bce2', '#aad4f0'], glGalonS: ['#3a78a8'], glJepit: ['#2a2a30', '#34343a', '#3f3f46', '#55555e'],
+  glJepit: ['#2a2a30', '#34343a', '#3f3f46', '#55555e'],
   glKausS: ['#c4c0b4', '#d4d0c4', '#e4e0d4', '#f2eee2'], glKargo: ['#3c4230', '#4a5140', '#596150', '#6e7764'],
   glSepatu: ['#1a1a20', '#24242b', '#2e2e36', '#42424c'], glPapan: ['#8a2a22', '#a8342a', '#c4422e', '#d8603c'],
   glKotak: ['#6a1e22', '#82262a', '#9a3034', '#b4444a'], glKotakS: ['#1e2436'], glKancing: ['#e8e2d2'],
@@ -97,15 +97,6 @@ function chest(o) {
     // handuk melingkar di leher, kedua ujung menjuntai di dada
     for (let z = 56; z <= 58; z++) v.shell(z, -4, -5, 4, 4, 'glHanduk', 2);
     for (const y of [-5, -4, 3, 4]) for (let z = 46; z <= 55; z++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z <= 47 ? 'glKuning' : 'glHanduk'); }
-    if (o.galon) {   // galon 19 L rebah di pundak kanan, di samping kepala; leher galon menghadap belakang
-      for (let x = -9; x <= 9; x++) for (let y = 7; y <= 21; y++) for (let z = 55; z <= 69; z++) {
-        const r = Math.hypot(y - 14, z - 62), R = Math.abs(x) >= 8 ? 5 : 6;
-        if (r <= R + 0.3) v.set(x, y, z, (x === -4 || x === 0 || x === 4) && r > R - 0.8 ? 'glGalonS' : 'glGalon');
-      }
-      for (let x = -13; x <= -10; x++) for (let y = 12; y <= 16; y++) for (let z = 60; z <= 64; z++) if (Math.hypot(y - 14, z - 62) <= (x <= -12 ? 2.3 : 1.6)) v.set(x, y, z, x <= -12 ? 'glTopi' : 'glGalon');
-      for (let y = 11; y <= 17; y++) v.set(10, y, 62, 'glPutih');   // label
-      for (let z = 59; z <= 65; z++) v.set(10, 14, z, 'glPutih');
-    }
     return v;
   }
   if (T === 'skate') {   // kaus kebesaran bergambar kartun muka nyengir, papan skate di punggung
@@ -230,15 +221,16 @@ function foot(o) {
 }
 
 export const OUTFITS = {
-  kerja: { name: 'Antar galon: kaus Depot Air Segar + celana pendek + sandal jepit + handuk + galon', top: 'kerja', cap: true, galon: true },
+  kerja: { name: 'Antar galon: kaus Depot Air Segar + celana pendek + sandal jepit + handuk', top: 'kerja', cap: true },
   skate: { name: 'Skate: kaus kartun kebesaran + kargo sobek + sepatu diikat karet + papan', top: 'skate', cap: true, board: true },
   paket: { name: 'Paket C malam: kemeja kotak dikancing sampai atas', top: 'paket' },
   rumah: { name: 'Di rumah: telanjang dada + sarung', top: 'telanjang' },
   jalan: { name: 'Windbreaker kuning-biru loakan + jeans + topi terbalik', top: 'jalan', cap: true },
 };
 export function build(opt = {}) {
-  // game memanggil outfit 'seragam': Gilang tidak sekolah, jadi pakai baju kerja tanpa galon
-  const base = OUTFITS[opt.outfit] || { ...OUTFITS.kerja, galon: false };
+  // game memanggil outfit 'seragam': Gilang tidak sekolah, jadi pakai baju kerja. Galon bukan bagian badan: ia properti
+  // gerakan 'galon' / 'galonWalk' (rig.js), jadi hilang sendiri saat Gilang berantem
+  const base = OUTFITS[opt.outfit] || OUTFITS.kerja;
   const o = { ...base, expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   const sar = o.top === 'telanjang', panel = sg => sar ? plaid(skirtPanel('glSarung', 'glSarungS', sg, 5)) : null;

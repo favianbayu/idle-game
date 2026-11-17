@@ -1,7 +1,7 @@
 # Panduan membuat tokoh voxel halus (gaya Raka v3)
 
 Panduan ini merangkum aturan yang sudah disetujui favian untuk tokoh voxel halus. Contoh kodenya ada di `src/`
-(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang). Ikuti urutan bagian di bawah saat membuat tokoh baru.
+(Raka, Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 
 ## 1. Ukuran dan kisi
 
@@ -99,6 +99,12 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
 - Tokoh yang tidak bersekolah tetap harus bisa dibangun dengan outfit `seragam`, karena game selalu memanggil `seragam`:
   `build()` jatuh ke baju harian (Gilang: baju antar galon tanpa galon).
 - Topi terbalik memakai lis di z 12..14, jadi alis tokoh bertopi turun ke z 11..10 (baris peta 3..4) supaya tidak tertutup lis.
+- Barang yang dibawa sesekali (galon Gilang) jangan ditempel di baju: buat properti di `rig.js` `props()` yang
+  dinyalakan oleh nilai pose (`galon: 1`) dan gerakan sendiri (`galon`, `galonWalk`). Gerakan lain (berantem) otomatis
+  tanpa barang itu.
+- Tokoh anak (Cici): rangka anak sendiri (pinggul z 20, dada z 23..35, bahu z 34, kepala z 39), kepala tetap ukuran
+  normal (chibi). Rok anak cukup dibuat di pelvis saja karena pendek.
+- Kepang/rambut panjang di punggung harus menempel ke punggung (x kepala sekitar -6), bukan melayang di x -9.
 - Pola acak `rnd(x, y, z) % n` dengan n pangkat dua (8, 16) membuat garis miring; pakai n ganjil (7, 9, 13).
 - Garis belahan rambut diwarnai lebih gelap dari rambut, bukan warna kulit: dari atas, garis kulit terbaca botak.
 - Beri awalan unik per tokoh (`nSkin`, `dHair`, `aBuzz`) supaya tidak bertabrakan. Daftar bahan bersifat global. Bahan dari file

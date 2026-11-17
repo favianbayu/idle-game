@@ -16,6 +16,11 @@ import { build as jojoBuild, OUTFITS as JOJO_OUT, EXPRS as JOJO_EX } from './joj
 import { build as andraBuild, OUTFITS as ANDRA_OUT, EXPRS as ANDRA_EX } from './andra.js';
 import { build as meiBuild, OUTFITS as MEI_OUT, EXPRS as MEI_EX } from './mei.js';
 import { build as gilangBuild, OUTFITS as GILANG_OUT, EXPRS as GILANG_EX } from './gilang.js';
+import { build as wulanBuild, OUTFITS as WULAN_OUT, EXPRS as WULAN_EX } from './wulan.js';
+import { build as dartoBuild, OUTFITS as DARTO_OUT, EXPRS as DARTO_EX } from './darto.js';
+import { build as ciciBuild, OUTFITS as CICI_OUT, EXPRS as CICI_EX } from './cici.js';
+import { build as fajarBuild, OUTFITS as FAJAR_OUT, EXPRS as FAJAR_EX } from './fajar.js';
+import { build as kobarBuild, OUTFITS as KOBAR_OUT, EXPRS as KOBAR_EX } from './kobar.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -35,5 +40,10 @@ export const CHARS = {
   andra: { name: 'Andra', build: andraBuild, OUTFITS: ANDRA_OUT, EXPRS: ANDRA_EX },
   mei: { name: 'Mei', build: meiBuild, OUTFITS: MEI_OUT, EXPRS: MEI_EX },
   gilang: { name: 'Gilang', build: gilangBuild, OUTFITS: GILANG_OUT, EXPRS: GILANG_EX },
+  wulan: { name: 'Wulan', build: wulanBuild, OUTFITS: WULAN_OUT, EXPRS: WULAN_EX },
+  omDarto: { name: 'Om Darto', build: dartoBuild, OUTFITS: DARTO_OUT, EXPRS: DARTO_EX },
+  cici: { name: 'Cici', build: ciciBuild, OUTFITS: CICI_OUT, EXPRS: CICI_EX },
+  fajar: { name: 'Mas Fajar', build: fajarBuild, OUTFITS: FAJAR_OUT, EXPRS: FAJAR_EX },
+  kobar: { name: 'Kobar', build: kobarBuild, OUTFITS: KOBAR_OUT, EXPRS: KOBAR_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };

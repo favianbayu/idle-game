@@ -55,7 +55,7 @@ const MINE = {
   rideSport: { name: 'Naik motor (balap)', n: 4, fps: 6, loop: true, pose: t => ({ lean: 0.62, hp: -0.5 + 0.02 * sinT(t), thL: 1.25, thR: 1.25, knL: 2.05, knR: 2.05, lgL: 0.2, lgR: 0.2, ftL: 0.45, ftR: 0.45, arL: 1.0, arR: 1.0, elL: 0.35, elR: 0.35, spL: 0.08, spR: 0.08, tail: 0.75 + 0.1 * sinT(t), bob: 0.15 * sinT(t) }) },
 };
 export const ANIMS = { ...OLD, ...MINE };
-export const ANIM_LIST = ['stand', 'idle', 'walk', 'run', 'sprint', 'guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'hurt', 'taunt', 'hairFix', 'squat',
+export const ANIM_LIST = ['stand', 'idle', 'walk', 'run', 'galon', 'galonWalk', 'sprint', 'guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'hurt', 'taunt', 'hairFix', 'squat',
   'rideSport', 'wave', 'talk', 'laugh', 'dance', 'scratch', 'think', 'clap', 'sit', 'jump', 'fall', 'getup', 'bow', 'raiseHand', 'salute', 'crouch', 'climb', 'push'];
 // ekspresi otomatis mengikuti gerakan
 const FIGHT = new Set(['guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'rideSport', 'motoLean', 'sprint', 'push', 'climb']);

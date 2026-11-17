@@ -721,6 +721,8 @@ const ANIMS = {
   squat:  { name: 'Jongkok', kind: 'full', move: 0, n: 4, fps: 3, loop: true, pose: t => ({ lean: 0.42 + 0.02 * sinT(t), hp: -0.3, thL: 1.95, thR: 1.85, knL: 2.65, knR: 2.6, ftL: 0.2, ftR: 0.2, arL: 0.95, arR: 0.9, elL: 0.8, elR: 0.9, spL: 0.3, spR: 0.3 }) },
   lie:    { name: 'Berbaring', kind: 'full', move: 0, n: 4, fps: 2, loop: true, pose: t => ({ lean: -1.5, hp: 0.12, thL: 1.5, thR: 1.35, knL: 0.05, knR: 0.6, arL: -1.5, arR: -1.35, elL: 1.2, elR: 1.0, spL: 0.55, spR: 0.5, px: 4, sy: 0.05 * sinT(t) }) },
   carry:  { name: 'Bawa kardus', kind: 'upper', n: 2, fps: 2, loop: true, pose: t => ({ box: 1, arL: 0.75, arR: 0.75, elL: 1.05, elR: 1.05, spL: 0.42, spR: 0.42, lean: -0.04, hp: 0.02 * sinT(t) }) },
+  galon:  { name: 'Pikul galon', kind: 'upper', n: 2, fps: 2, loop: true, pose: t => ({ galon: 1, arR: 1.2, elR: 2.1, spR: 1.35, hy: -0.12, lean: -0.03 + 0.01 * sinT(t) }) },
+  galonWalk: { name: 'Jalan pikul galon', kind: 'loco', n: 8, fps: 9, stride: 34, loop: true, pose: t => ({ ...ANIMS.walk.pose(t), galon: 1, arR: 1.2, elR: 2.1, spR: 1.35, hy: -0.12 }) },
   push:   { name: 'Dorong', kind: 'loco', n: 8, fps: 7, stride: 18, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
     return { lean: 0.55, hp: -0.25, thL: 0.55 + 0.35 * s, thR: 0.55 - 0.35 * s, knL: 0.35 + 0.6 * Math.max(0, c), knR: 0.35 + 0.6 * Math.max(0, -c), ftL: -0.3, ftR: -0.3, arL: 1.45, arR: 1.45, elL: 0.35, elR: 0.35, spL: 0.25, spR: 0.25 }; } },
   climb:  { name: 'Memanjat', kind: 'full', move: 0, n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
