@@ -56,6 +56,16 @@ import { build as yuniBuild, OUTFITS as YUNI_OUT, EXPRS as YUNI_EX } from './yun
 import { build as raffiBuild, OUTFITS as RAFFI_OUT, EXPRS as RAFFI_EX } from './raffi.js';
 import { build as willemBuild, OUTFITS as WILLEM_OUT, EXPRS as WILLEM_EX } from './willem.js';
 import { build as litaBuild, OUTFITS as LITA_OUT, EXPRS as LITA_EX } from './lita.js';
+import { build as kurirBuild, OUTFITS as KURIR_OUT, EXPRS as KURIR_EX } from './kurir.js';
+import { build as kevinkecilBuild, OUTFITS as KEVINKECIL_OUT, EXPRS as KEVINKECIL_EX } from './kevinkecil.js';
+import { build as sugengBuild, OUTFITS as SUGENG_OUT, EXPRS as SUGENG_EX } from './sugeng.js';
+import { build as baristaBuild, OUTFITS as BARISTA_OUT, EXPRS as BARISTA_EX } from './barista.js';
+import { build as lastriBuild, OUTFITS as LASTRI_OUT, EXPRS as LASTRI_EX } from './lastri.js';
+import { build as tarnoBuild, OUTFITS as TARNO_OUT, EXPRS as TARNO_EX } from './tarno.js';
+import { build as dewiBuild, OUTFITS as DEWI_OUT, EXPRS as DEWI_EX } from './dewi.js';
+import { build as dulBuild, OUTFITS as DUL_OUT, EXPRS as DUL_EX } from './dul.js';
+import { build as hendrikBuild, OUTFITS as HENDRIK_OUT, EXPRS as HENDRIK_EX } from './hendrik.js';
+import { build as watiBuild, OUTFITS as WATI_OUT, EXPRS as WATI_EX } from './wati.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -115,5 +125,15 @@ export const CHARS = {
   kakRaffi: { name: 'Kak Raffi', build: raffiBuild, OUTFITS: RAFFI_OUT, EXPRS: RAFFI_EX },
   opaWillem: { name: 'Opa Willem', build: willemBuild, OUTFITS: WILLEM_OUT, EXPRS: WILLEM_EX },
   nyonyaLita: { name: 'Nyonya Lita', build: litaBuild, OUTFITS: LITA_OUT, EXPRS: LITA_EX },
+  kurirBayu: { name: 'Kurir Bayu', build: kurirBuild, OUTFITS: KURIR_OUT, EXPRS: KURIR_EX },
+  kevinKecil: { name: 'Kevin kecil', build: kevinkecilBuild, OUTFITS: KEVINKECIL_OUT, EXPRS: KEVINKECIL_EX },
+  polisiSugeng: { name: 'Pak Polisi Sugeng', build: sugengBuild, OUTFITS: SUGENG_OUT, EXPRS: SUGENG_EX },
+  masBarista: { name: 'Mas Barista Kevin', build: baristaBuild, OUTFITS: BARISTA_OUT, EXPRS: BARISTA_EX },
+  buLastri: { name: 'Bu Lastri', build: lastriBuild, OUTFITS: LASTRI_OUT, EXPRS: LASTRI_EX },
+  pakTarno: { name: 'Pak Tarno', build: tarnoBuild, OUTFITS: TARNO_OUT, EXPRS: TARNO_EX },
+  mbakDewi: { name: 'Mbak SPG Dewi', build: dewiBuild, OUTFITS: DEWI_OUT, EXPRS: DEWI_EX },
+  pengamenDul: { name: 'Pengamen Dul', build: dulBuild, OUTFITS: DUL_OUT, EXPRS: DUL_EX },
+  omHendrik: { name: 'Om Hendrik', build: hendrikBuild, OUTFITS: HENDRIK_OUT, EXPRS: HENDRIK_EX },
+  buWati: { name: 'Bu Wati', build: watiBuild, OUTFITS: WATI_OUT, EXPRS: WATI_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };

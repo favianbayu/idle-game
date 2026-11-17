@@ -1,6 +1,6 @@
 {
  "barisan": {
-  "cols": 58,
+  "cols": 68,
   "cell": [
    240,
    480
@@ -266,6 +266,46 @@
    {
     "label": "Nyonya Lita",
     "char": "nyonyaLita"
+   },
+   {
+    "label": "Kurir Bayu",
+    "char": "kurirBayu"
+   },
+   {
+    "label": "Kevin kecil",
+    "char": "kevinKecil"
+   },
+   {
+    "label": "Pak Polisi Sugeng",
+    "char": "polisiSugeng"
+   },
+   {
+    "label": "Mas Barista Kevin",
+    "char": "masBarista"
+   },
+   {
+    "label": "Bu Lastri",
+    "char": "buLastri"
+   },
+   {
+    "label": "Pak Tarno",
+    "char": "pakTarno"
+   },
+   {
+    "label": "Mbak SPG Dewi",
+    "char": "mbakDewi"
+   },
+   {
+    "label": "Pengamen Dul",
+    "char": "pengamenDul"
+   },
+   {
+    "label": "Om Hendrik",
+    "char": "omHendrik"
+   },
+   {
+    "label": "Bu Wati",
+    "char": "buWati"
    },
    {
     "label": "Raka · belakang",
@@ -555,6 +595,56 @@
    {
     "label": "Nyonya Lita · belakang",
     "char": "nyonyaLita",
+    "yaw": 2.6
+   },
+   {
+    "label": "Kurir Bayu · belakang",
+    "char": "kurirBayu",
+    "yaw": 2.6
+   },
+   {
+    "label": "Kevin kecil · belakang",
+    "char": "kevinKecil",
+    "yaw": 2.6
+   },
+   {
+    "label": "Pak Polisi Sugeng · belakang",
+    "char": "polisiSugeng",
+    "yaw": 2.6
+   },
+   {
+    "label": "Mas Barista Kevin · belakang",
+    "char": "masBarista",
+    "yaw": 2.6
+   },
+   {
+    "label": "Bu Lastri · belakang",
+    "char": "buLastri",
+    "yaw": 2.6
+   },
+   {
+    "label": "Pak Tarno · belakang",
+    "char": "pakTarno",
+    "yaw": 2.6
+   },
+   {
+    "label": "Mbak SPG Dewi · belakang",
+    "char": "mbakDewi",
+    "yaw": 2.6
+   },
+   {
+    "label": "Pengamen Dul · belakang",
+    "char": "pengamenDul",
+    "yaw": 2.6
+   },
+   {
+    "label": "Om Hendrik · belakang",
+    "char": "omHendrik",
+    "yaw": 2.6
+   },
+   {
+    "label": "Bu Wati · belakang",
+    "char": "buWati",
     "yaw": 2.6
    }
   ]
@@ -6467,6 +6557,22 @@
     "label": "Ustaz Hasan gamis lari",
     "char": "ustazHasan",
     "outfit": "gamis",
+    "anim": "run",
+    "i": 2,
+    "yaw": 1.5
+   },
+   {
+    "label": "Bu Lastri jarik lari",
+    "char": "buLastri",
+    "outfit": "keliling",
+    "anim": "run",
+    "i": 2,
+    "yaw": 1.5
+   },
+   {
+    "label": "Bu Wati rok span lari",
+    "char": "buWati",
+    "outfit": "kantor",
     "anim": "run",
     "i": 2,
     "yaw": 1.5
@@ -21409,6 +21515,3336 @@
    {
     "label": "Kondangan",
     "outfit": "kondangan"
+   }
+  ]
+ },
+ "kurirBayu": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "kurirBayu",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "kurirBayuKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 740,
+   "anim": "stand",
+   "char": "kurirBayu"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "kurirBayuWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 575,
+   "anim": "stand",
+   "char": "kurirBayu"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "kurirBayuPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "kurirBayu"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "kurirBayuGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "kurirBayu"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "kurirBayuBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "kurirBayu",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Antar paket",
+    "outfit": "antar"
+   },
+   {
+    "label": "Istirahat",
+    "outfit": "istirahat"
+   }
+  ]
+ },
+ "kevinKecil": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "kevinKecil",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "kevinKecilKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 520,
+   "anim": "stand",
+   "char": "kevinKecil"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "kevinKecilWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 395,
+   "anim": "stand",
+   "char": "kevinKecil"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "kevinKecilPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "kevinKecil"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "kevinKecilGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "kevinKecil"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "kevinKecilBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "kevinKecil",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Main drone",
+    "outfit": "main"
+   },
+   {
+    "label": "Sekolah",
+    "outfit": "sekolah"
+   }
+  ]
+ },
+ "polisiSugeng": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "polisiSugeng",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "polisiSugengKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 740,
+   "anim": "stand",
+   "char": "polisiSugeng"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "polisiSugengWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 575,
+   "anim": "stand",
+   "char": "polisiSugeng"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "polisiSugengPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "polisiSugeng"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "polisiSugengGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "polisiSugeng"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "polisiSugengBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "polisiSugeng",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Atur lalu lintas",
+    "outfit": "lantas"
+   },
+   {
+    "label": "Dinas",
+    "outfit": "dinas"
+   }
+  ]
+ },
+ "masBarista": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "masBarista",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "masBaristaKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 740,
+   "anim": "stand",
+   "char": "masBarista"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "masBaristaWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 575,
+   "anim": "stand",
+   "char": "masBarista"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "masBaristaPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "masBarista"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "masBaristaGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "masBarista"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "masBaristaBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "masBarista",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Di bar",
+    "outfit": "kafe"
+   },
+   {
+    "label": "Santai",
+    "outfit": "santai"
+   }
+  ]
+ },
+ "buLastri": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "buLastri",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "buLastriKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 700,
+   "anim": "stand",
+   "char": "buLastri"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "buLastriWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 535,
+   "anim": "stand",
+   "char": "buLastri"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "buLastriPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "buLastri"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "buLastriGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "buLastri"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "buLastriBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "buLastri",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Keliling",
+    "outfit": "keliling"
+   },
+   {
+    "label": "Meracik",
+    "outfit": "racik"
+   }
+  ]
+ },
+ "pakTarno": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "pakTarno",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "pakTarnoKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 740,
+   "anim": "stand",
+   "char": "pakTarno"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "pakTarnoWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 575,
+   "anim": "stand",
+   "char": "pakTarno"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "pakTarnoPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "pakTarno"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "pakTarnoGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "pakTarno"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "pakTarnoBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "pakTarno",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Jaga parkir",
+    "outfit": "parkir"
+   },
+   {
+    "label": "Ngaso",
+    "outfit": "ngaso"
+   }
+  ]
+ },
+ "mbakDewi": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "mbakDewi",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "mbakDewiKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 700,
+   "anim": "stand",
+   "char": "mbakDewi"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "mbakDewiWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 535,
+   "anim": "stand",
+   "char": "mbakDewi"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "mbakDewiPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "mbakDewi"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "mbakDewiGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "mbakDewi"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "mbakDewiBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "mbakDewi",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Jaga stan",
+    "outfit": "stan"
+   },
+   {
+    "label": "Pulang",
+    "outfit": "pulang"
+   }
+  ]
+ },
+ "pengamenDul": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "pengamenDul",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "pengamenDulKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 740,
+   "anim": "stand",
+   "char": "pengamenDul"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "pengamenDulWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 575,
+   "anim": "stand",
+   "char": "pengamenDul"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "pengamenDulPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "pengamenDul"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "pengamenDulGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "pengamenDul"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "pengamenDulBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "pengamenDul",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Ngamen",
+    "outfit": "ngamen"
+   },
+   {
+    "label": "Nongkrong",
+    "outfit": "nongkrong"
+   }
+  ]
+ },
+ "omHendrik": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "omHendrik",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "omHendrikKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 740,
+   "anim": "stand",
+   "char": "omHendrik"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "omHendrikWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 575,
+   "anim": "stand",
+   "char": "omHendrik"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "omHendrikPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "omHendrik"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "omHendrikGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "omHendrik"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "omHendrikBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "omHendrik",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Jaga kios",
+    "outfit": "kios"
+   },
+   {
+    "label": "Antar pagi",
+    "outfit": "antar"
+   }
+  ]
+ },
+ "buWati": {
+  "cols": 4,
+  "cell": [
+   300,
+   460
+  ],
+  "base": {
+   "scale": 10.5,
+   "pitch": 0.22,
+   "anim": "stand",
+   "char": "buWati",
+   "cy": 420
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.75
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "buWatiKepala": {
+  "cols": 4,
+  "cell": [
+   300,
+   300
+  ],
+  "base": {
+   "scale": 18,
+   "pitch": 0.15,
+   "cy": 700,
+   "anim": "stand",
+   "char": "buWati"
+  },
+  "items": [
+   {
+    "label": "Depan",
+    "yaw": 0
+   },
+   {
+    "label": "Serong",
+    "yaw": 0.7
+   },
+   {
+    "label": "Samping",
+    "yaw": 1.5708
+   },
+   {
+    "label": "Belakang serong",
+    "yaw": 2.5
+   }
+  ]
+ },
+ "buWatiWajah": {
+  "cols": 7,
+  "cell": [
+   190,
+   210
+  ],
+  "base": {
+   "scale": 14,
+   "pitch": 0.1,
+   "cy": 535,
+   "anim": "stand",
+   "char": "buWati"
+  },
+  "items": [
+   {
+    "label": "biasa",
+    "expr": "biasa"
+   },
+   {
+    "label": "kedip",
+    "expr": "kedip"
+   },
+   {
+    "label": "marah",
+    "expr": "marah"
+   },
+   {
+    "label": "teriak",
+    "expr": "teriak"
+   },
+   {
+    "label": "nyengir",
+    "expr": "nyengir"
+   },
+   {
+    "label": "ketawa",
+    "expr": "ketawa"
+   },
+   {
+    "label": "sakit",
+    "expr": "sakit"
+   },
+   {
+    "label": "biasa · game",
+    "expr": "biasa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "kedip · game",
+    "expr": "kedip",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "marah · game",
+    "expr": "marah",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "teriak · game",
+    "expr": "teriak",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "nyengir · game",
+    "expr": "nyengir",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "ketawa · game",
+    "expr": "ketawa",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   },
+   {
+    "label": "sakit · game",
+    "expr": "sakit",
+    "pixel": 5,
+    "scale": 8,
+    "pitch": 0.6,
+    "cy": 330,
+    "yaw": 0.35
+   }
+  ]
+ },
+ "buWatiPose": {
+  "cols": 4,
+  "cell": [
+   300,
+   340
+  ],
+  "base": {
+   "scale": 6.6,
+   "pitch": 0.42,
+   "cy": 300,
+   "char": "buWati"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "i": 0,
+    "yaw": 0.5
+   },
+   {
+    "label": "Jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   },
+   {
+    "label": "Kuda-kuda",
+    "anim": "guard",
+    "i": 1,
+    "yaw": 0.7
+   },
+   {
+    "label": "Jab",
+    "anim": "jab",
+    "i": 2,
+    "yaw": 1.0
+   },
+   {
+    "label": "Pukulan lurus",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "Hook",
+    "anim": "hook",
+    "i": 4,
+    "yaw": 0.6
+   },
+   {
+    "label": "Uppercut",
+    "anim": "uppercut",
+    "i": 4,
+    "yaw": 0.8
+   },
+   {
+    "label": "Tendangan depan",
+    "anim": "kickFront",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Tendangan tinggi",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "Kena pukul",
+    "anim": "hurt",
+    "i": 2,
+    "yaw": 0.8
+   },
+   {
+    "label": "Provokasi",
+    "anim": "taunt",
+    "i": 2,
+    "yaw": 0.5
+   }
+  ]
+ },
+ "buWatiGame": {
+  "cols": 3,
+  "cell": [
+   200,
+   230
+  ],
+  "base": {
+   "scale": 4.8,
+   "pixel": 3,
+   "pitch": 0.6,
+   "cy": 205,
+   "char": "buWati"
+  },
+  "items": [
+   {
+    "label": "Diam",
+    "anim": "idle",
+    "yaw": 0.3
+   },
+   {
+    "label": "jalan",
+    "anim": "walk",
+    "i": 1,
+    "yaw": 0.9
+   },
+   {
+    "label": "belakang",
+    "anim": "idle",
+    "yaw": 2.7
+   },
+   {
+    "label": "pukul",
+    "anim": "straight",
+    "i": 4,
+    "yaw": 0.9
+   },
+   {
+    "label": "tendang",
+    "anim": "kickHigh",
+    "i": 4,
+    "yaw": 1.1
+   },
+   {
+    "label": "lari",
+    "anim": "run",
+    "i": 2,
+    "yaw": 0.9
+   }
+  ]
+ },
+ "buWatiBaju": {
+  "cols": 2,
+  "cell": [
+   280,
+   480
+  ],
+  "base": {
+   "scale": 10,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "char": "buWati",
+   "cy": 450
+  },
+  "items": [
+   {
+    "label": "Kantor bank",
+    "outfit": "kantor"
+   },
+   {
+    "label": "Akhir pekan",
+    "outfit": "libur"
    }
   ]
  }

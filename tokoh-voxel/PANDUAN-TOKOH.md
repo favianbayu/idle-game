@@ -57,6 +57,11 @@ Opa Willem, Nyonya Lita). Ikuti urutan bagian di bawah saat membuat tokoh baru.
   bukan pola `x*a + y*b`, karena pola itu membentuk garis diagonal.
 - Kuncir panjang yang perlu berayun memakai bagian `tail` (Rani). Kuncir dua rendah yang menggantung diam boleh
   digambar di dalam kepala (Sekar).
+- Kuncir kuda yang digambar di kepala minimal 3 voxel tebal (x) dan 5 lebar (y) di pangkal; kalau 2x3 terlihat seperti
+  tongkat dari samping (Mbak Dewi). Ikat rambut diletakkan di pangkal, ekornya menjuntai dari situ.
+- Sanggul harus cukup besar (radius ±5, menonjol sampai x = -14) supaya kelihatan dari tampak serong (Bu Lastri).
+- Uban di pelipis digambar sebagai petak polos (misalnya `z ≤ 12, x ≥ -2`), bukan pola papan catur, yang terlihat
+  seperti kain kotak-kotak (Pak Tarno).
 
 ## 4. Badan dan baju
 
@@ -70,6 +75,12 @@ Opa Willem, Nyonya Lita). Ikuti urutan bagian di bawah saat membuat tokoh baru.
 - Lapisan baju menimpa bentuk dasar dengan `paint`, `pf/pb` (permukaan depan/belakang), dan `shell` (lapis luar).
   Jaket terbuka dibuat dengan menggeser bagian tengah depan 1 voxel ke dalam dan mengisinya dengan baju dalam.
 - Detail kecil (badge OSIS, papan nama, kancing, logo) memakai bahan satu warna supaya tidak ikut diarsir.
+- Benda di punggung (bakul jamu, ukulele disandang) digambar di bagian `chest` supaya ikut badan. Talinya digambar di
+  permukaan depan dan belakang dada dengan `front`/`back` + 1.
+- Tulisan di punggung muat sekitar 17 voxel (y -8..8) dengan huruf 5 baris dan jarak 1. Kata yang terlalu panjang
+  (PARKIR) diganti simbol, misalnya rambu P putih di kotak biru.
+- Warna jilbab dan baju luar harus kontras. Jilbab marun di atas blazer marun menyatu dan terlihat seperti hoodie (Bu Wati).
+- Garis senyum (`s` di samping mulut) pada wajah dewasa kecil terlihat seperti jerawat atau jenggot. Lebih baik tidak dipakai.
 
 ## 5. Rok (wajib nyambung)
 

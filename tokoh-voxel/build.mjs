@@ -2,7 +2,7 @@
 // Tiap modul dibungkus fungsi & punya ruang nama sendiri (NS.<file>), import dipetakan ke ruang nama sumbernya.
 import fs from 'fs';
 let code = 'const NS = {};\n';
-for (const f of ['voxlib', 'npc_styles', 'vox', 'rig', 'model', 'rani', 'bimo', 'bram', 'nadia', 'dimas', 'rok', 'sekar', 'arga', 'laras', 'rizal', 'uti', 'tegar', 'sasha', 'kirana', 'jojo', 'andra', 'mei', 'gilang', 'wulan', 'darto', 'cici', 'fajar', 'kobar', 'jaka', 'narti', 'rtslamet', 'haris', 'gito', 'rio', 'kevin', 'hartini', 'ratna', 'hendro', 'wawan', 'sinta', 'anton', 'gunadi', 'melati', 'ujang', 'iyah', 'ama', 'karto', 'sum', 'darmin', 'rini', 'joko', 'euis', 'ahong', 'dodi', 'didi', 'rizki', 'hasan', 'bambang', 'veronika', 'yuni', 'raffi', 'willem', 'lita', 'chars', 'frame', 'anims', 'viewer']) {
+for (const f of ['voxlib', 'npc_styles', 'vox', 'rig', 'model', 'rani', 'bimo', 'bram', 'nadia', 'dimas', 'rok', 'sekar', 'arga', 'laras', 'rizal', 'uti', 'tegar', 'sasha', 'kirana', 'jojo', 'andra', 'mei', 'gilang', 'wulan', 'darto', 'cici', 'fajar', 'kobar', 'jaka', 'narti', 'rtslamet', 'haris', 'gito', 'rio', 'kevin', 'hartini', 'ratna', 'hendro', 'wawan', 'sinta', 'anton', 'gunadi', 'melati', 'ujang', 'iyah', 'ama', 'karto', 'sum', 'darmin', 'rini', 'joko', 'euis', 'ahong', 'dodi', 'didi', 'rizki', 'hasan', 'bambang', 'veronika', 'yuni', 'raffi', 'willem', 'lita', 'kurir', 'kevinkecil', 'sugeng', 'barista', 'lastri', 'tarno', 'dewi', 'dul', 'hendrik', 'wati', 'chars', 'frame', 'anims', 'viewer']) {
   let s = fs.readFileSync(`src/${f}.js`, 'utf8');
   const exports = [...s.matchAll(/^export (?:function|const|let|class) (\w+)/gm)].map(m => m[1]);
   for (const m of s.matchAll(/^export \{([^}]*)\};?$/gm)) exports.push(...m[1].split(',').map(x => x.trim()).filter(Boolean));
