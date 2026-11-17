@@ -76,8 +76,8 @@ function head(o) {
     v.each((x, y, z, c) => { if (z >= 13 && (c === 'uHair' || c === 'uHairT')) v.set(x, y, z, 'topiU'); });
     const ring = [];   // lis bawah topi 1 voxel menonjol keluar
     v.each((x, y, z, c) => { if (z === 13 && c === 'topiU') for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!v.has(x + dx, y + dy, z)) ring.push([x + dx, y + dy]); });
-    for (const [x, y] of ring) v.set(x, y, 13, 'marunS');
-    for (let y = -4; y <= 3; y++) { const xb = v.back(y, 13); for (let x = xb - 1; x >= xb - 6; x--) v.set(x, y, 13, 'topiU'); }   // pet di belakang
+    for (const [x, y] of ring) for (let z = 12; z <= 14; z++) v.set(x, y, z, 'marunS');   // lis 3 voxel: 1 ke bawah, 1 ke atas
+    for (let y = -6; y <= 5; y++) { const xb = v.back(y, 13), e = Math.abs(y + 0.5) > 4.5 ? 1 : 0; for (let x = xb - 1; x >= xb - 6 + e; x--) v.set(x, y, 13, 'topiU'); }   // pet di belakang
     for (let y = -2; y <= 1; y++) { const z = 14, x = v.front(y, z); if (x !== null) v.set(x, y, z, Math.abs(y + 0.5) < 1 ? 'uHair' : 'marunS'); }   // bukaan pengatur di depan
     const tz = Math.max(...[-1, 0].map(y => topZ(v, -1, y))); v.set(-1, 0, tz + 1, 'marunS');   // kancing atas topi
   }
