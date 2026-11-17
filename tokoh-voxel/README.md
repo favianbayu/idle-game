@@ -3,7 +3,8 @@
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
 Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya yang sama dengan Raka v3
-(yang sudah dipasang di game lewat PR #6). **Belum dimasukkan ke game** (`game3d/`), menunggu persetujuan.
+(yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sudah dipasang di game (`game3d/src/raka/`,
+peta `FINE` di `voxworker.js`) dengan baju `seragam`. Tokoh baru tetap pratinjau sampai disetujui.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
@@ -69,8 +70,8 @@ node build.mjs          # -> raka_voxel.html
 node shot.mjs shots     # -> shots/*.png dari sheets.json
 ```
 
-## Memasang ke game nanti
+## Memasang ke game
 
-Sama dengan Raka: salin file tokoh (`rani.js`, `bimo.js`, dst.) ke `game3d/src/raka/`, dan rig/frame versi berkerangka ini,
-lalu di `voxworker.js` tambahkan cabang per `sid` yang memanggil `voxelFrame(build({ outfit, expr }), pose)`.
+Salin file tokoh (`rani.js`, `bimo.js`, dst.) beserta `vox.js`, `rig.js`, `model.js`, `frame.js`, `rok.js` ke `game3d/src/raka/`,
+lalu di `voxworker.js` import `build` tokoh itu (urutan sama dengan `build.mjs`) dan tambahkan ke peta `FINE`.
 `frame.js` sudah membaca `skel` dan `tailPiv` dari hasil `build`, jadi tiap tokoh membawa kerangkanya sendiri.

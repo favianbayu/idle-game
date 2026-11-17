@@ -1,6 +1,6 @@
 // Andra Pamungkas: NPC romance cowok, anak STM Bangunan, pelukis mural, anggota Serigala Besi, jembatan damai dua geng.
 // Badan sedang, kulit cokelat, rambut ikal sebahu diikat setengah ke atas (beberapa helai jatuh), alis tebal, mata cokelat
-// hangat, senyum malas, tindik kecil di telinga kiri, tangan & lengan selalu kena cat, tato spidol di lengan.
+// hangat, senyum malas, tindik kecil di telinga kiri, tangan & baju kena cat waktu melukis mural, tato spidol di lengan.
 // Skala lama 1.32, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
@@ -107,12 +107,11 @@ function chest(o) {
     for (let y = -2; y <= 1; y++) v.pf(y, 54, 'maskerA');
     return v;
   }
-  // kemeja putih STM, lengan digulung, logo STM, beberapa noda cat
+  // kemeja putih STM, lengan digulung, logo STM (bersih: cat hanya di baju mural)
   for (let z = 34; z <= 55; z++) v.pf(0, z, 'whiteS');
   ['.X.', 'XYX', '.X.'].forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.') v.pf(c - 6, 50 - r, ch === 'X' ? 'stm' : 'stmS'); }));
   for (const [y, z] of [[-1, 55], [0, 55], [0, 54]]) v.pf(y, z, 'anSkin');
   for (let z = 56; z <= 57; z++) v.shell(z, -3, -4, 3, 3, 'white', 2);
-  splat(['catK', 'catB'], 37);
   return v;
 }
 function pelvis(o) {
@@ -123,7 +122,7 @@ function pelvis(o) {
   else if (o.top === 'rumah') { for (let z = 30; z <= 33; z++) v.shell(z, -5, -7, 4, 6, 'partai', 3); }
   else if (o.top === 'mural') { v.pfBox(-1, 30, 0, 31, 'overallS'); }
   else { v.rbox(-5, -7, 32, 4, 6, 33, 'belt', 3); v.pfBox(-1, 32, 0, 33, 'buckle'); }
-  if (c === 'pants' || c === 'overall') v.each((x, y, z, cc) => { if (cc === c && rnd(x, y, z) % 23 === 0) v.set(x, y, z, ['catK', 'catB', 'catM'][rnd(z, x, y) % 3]); });
+  if (c === 'overall') v.each((x, y, z, cc) => { if (cc === c && rnd(x, y, z) % 23 === 0) v.set(x, y, z, ['catK', 'catB', 'catM'][rnd(z, x, y) % 3]); });
   if (c === 'sarungA') v.each((x, y, z, cc) => { if (cc === 'sarungA' && (z % 5 === 0 || (y + 40) % 4 === 0)) v.set(x, y, z, 'sarungAS'); });
   return v;
 }
@@ -141,8 +140,8 @@ function fore(o, side) {
   const v = new Vox();
   v.rbox(-3, 7, 31, 2, 12, 42, 'anSkin', 2);
   v.rbox(-3, 7, 27, 3, 12, 30, 'anSkin', 2); v.rrect(26, -2, 8, 2, 11, 'anSkin', 2);
-  if (side > 0) for (const [x, y, z] of [[3, 8, 28], [3, 10, 29], [2, 11, 30], [1, 12, 33], [0, 12, 36], [3, 9, 26], [2, 12, 39]]) v.set(x, y, z, (x + z) % 2 ? 'catK' : 'catB');   // tangan kena cat
-  else for (const [x, y, z] of [[3, 8, 29], [2, 12, 34], [1, 12, 37]]) v.set(x, y, z, 'catK');
+  if (o.top === 'mural' && side > 0) for (const [x, y, z] of [[3, 8, 28], [3, 10, 29], [2, 11, 30], [1, 12, 33], [0, 12, 36], [3, 9, 26], [2, 12, 39]]) v.set(x, y, z, (x + z) % 2 ? 'catK' : 'catB');   // tangan kena cat
+  else if (o.top === 'mural') for (const [x, y, z] of [[3, 8, 29], [2, 12, 34], [1, 12, 37]]) v.set(x, y, z, 'catK');
   for (const [x, z] of [[2, 38], [2, 37], [1, 38], [2, 36]]) v.set(x, 12, z, 'tato');
   return v;
 }
@@ -152,7 +151,7 @@ function thigh(o) {
   v.rbox(-4, 2, 18, 3, 7, 31, c, 3); v.rrect(32, -3, 2, 2, 7, c, 3);
   if (W) v.rbox(-5, 1, 18, 4, 8, 28, c, 3);
   if (c === 'sarungA') v.each((x, y, z, cc) => { if (cc === 'sarungA' && (z % 5 === 0 || (y + 40) % 4 === 0)) v.set(x, y, z, 'sarungAS'); });
-  if (c === 'overall' || c === 'pants') v.each((x, y, z, cc) => { if (cc === c && rnd(x, y, z) % 19 === 0) v.set(x, y, z, ['catK', 'catB', 'catM'][rnd(z, x, y) % 3]); });
+  if (c === 'overall') v.each((x, y, z, cc) => { if (cc === c && rnd(x, y, z) % 19 === 0) v.set(x, y, z, ['catK', 'catB', 'catM'][rnd(z, x, y) % 3]); });
   return v;
 }
 function shin(o) {
@@ -163,7 +162,7 @@ function shin(o) {
   if (c === 'kulot') v.paint(-5, 1, 6, 4, 8, 7, 'kausA');
   if (c === 'sarungA') v.each((x, y, z, cc) => { if (cc === 'sarungA' && (z % 5 === 0 || (y + 40) % 4 === 0)) v.set(x, y, z, 'sarungAS'); });
   if (o.top === 'kemeja' || o.top === 'geng') v.rbox(-4, 2, 5, 3, 7, 9, 'bootsA', 3);   // leher boots
-  if (c === 'overall' || c === 'pants') v.each((x, y, z, cc) => { if (cc === c && rnd(x, y, z) % 19 === 0) v.set(x, y, z, ['catK', 'catB', 'catM'][rnd(z, x, y) % 3]); });
+  if (c === 'overall') v.each((x, y, z, cc) => { if (cc === c && rnd(x, y, z) % 19 === 0) v.set(x, y, z, ['catK', 'catB', 'catM'][rnd(z, x, y) % 3]); });
   return v;
 }
 function foot(o) {
@@ -180,7 +179,7 @@ function foot(o) {
 }
 
 export const OUTFITS = {
-  seragam: { name: 'Seragam STM lengan digulung + celana abu kena cat + boots', top: 'kemeja' },
+  seragam: { name: 'Seragam STM lengan digulung + celana abu + boots', top: 'kemeja' },
   mural: { name: 'Melukis mural: kaus penuh cat + overall + masker + topi terbalik', top: 'mural', cap: true, mask: true },
   geng: { name: 'Serigala Besi: rompi jeans patch serigala + kaus hitam', top: 'geng' },
   jalan: { name: 'Kemeja bunga oversize + kulot hitam + sandal gunung', top: 'bunga' },

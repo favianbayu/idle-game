@@ -11,6 +11,14 @@ import { build as nadiaBuild } from './raka/nadia.js';
 import { build as dimasBuild } from './raka/dimas.js';
 import { build as sekarBuild } from './raka/sekar.js';
 import { build as argaBuild } from './raka/arga.js';
+import { build as larasBuild } from './raka/laras.js';
+import { build as rizalBuild } from './raka/rizal.js';
+import { build as utiBuild } from './raka/uti.js';
+import { build as tegarBuild } from './raka/tegar.js';
+import { build as sashaBuild } from './raka/sasha.js';
+import { build as kiranaBuild } from './raka/kirana.js';
+import { build as jojoBuild } from './raka/jojo.js';
+import { build as andraBuild } from './raka/andra.js';
 import { voxelFrame } from './raka/frame.js';
 import { exprFor, helmFor } from './raka/expr.js';
 
@@ -63,7 +71,8 @@ function mesh(m, S = 1 / 32, cx = m.L / 2, cy = m.W / 2, cz = 0) {
 }
 
 // tokoh utama bermodel voxel halus (1/64 petak, digambar tangan, lihat src/raka/ dan tokoh-voxel/PANDUAN-TOKOH.md)
-const FINE = { raka: buildParts, rani: raniBuild, bimo: bimoBuild, bram: bramBuild, nadia: nadiaBuild, dimas: dimasBuild, sekar: sekarBuild, arga: argaBuild };
+const FINE = { raka: buildParts, rani: raniBuild, bimo: bimoBuild, bram: bramBuild, nadia: nadiaBuild, dimas: dimasBuild, sekar: sekarBuild, arga: argaBuild,
+  laras: larasBuild, rizal: rizalBuild, uti: utiBuild, tegar: tegarBuild, sasha: sashaBuild, kirana: kiranaBuild, jojo: jojoBuild, andra: andraBuild };
 const PARTS = new Map();
 const fineParts = (sid, outfit, expr, helm) => {
   const k = sid + '|' + outfit + '|' + expr + (helm ? '+h' : '');

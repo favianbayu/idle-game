@@ -23,17 +23,17 @@ addRamps({
    tepat di bawah hidung. */
 const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', s: 'kSkinS' };
 const F0 = '..............';
-const F = (brow, eyes, mouth) => [F0, F0, F0, ...brow, F0, ...eyes, F0, F0, F0, ...mouth, F0, F0];   // 15 baris, mulut mulai z 4
+const F = (brow, eyes, mouth) => [F0, F0, F0, ...brow, F0, ...eyes, F0, F0, ...mouth, F0, F0];   // 15 baris, mulut mulai z 4
 const BROW = ['.BBBB....BBBB.'];
-const EYE = ['.KKKK....KKKK.', '..KKW....WKK..'];
+const EYE = ['.KKKK....KKKK.', '..WKK....KKW..', '..WKK....KKW..'];   // mata model Rani: 3 baris, putih di sisi dalam
 export const FACES = {
   biasa: F(BROW, EYE, ['.....mmmm.....', F0, F0]),
-  kedip: F(BROW, [F0, '.KKKK....KKKK.'], ['.....mmmm.....', F0, F0]),
-  marah: F(['..BBB....BBB..'], ['.KKKK....KKKK.', '...KW....WK...'], ['....mmmmmm....', '....m....m....', F0]),
+  kedip: F(BROW, [F0, F0, '.KKKK....KKKK.'], ['.....mmmm.....', F0, F0]),
+  marah: F(['..BBB....BBB..'], EYE, ['....mmmmmm....', '....m....m....', F0]),
   teriak: F(['..BBB....BBB..'], EYE, ['....mmmmmm....', '....mTTTTm....', '.....mttm.....']),
   nyengir: F(BROW, EYE, ['...mTTTTTTm...', '....mmmmmm....', F0]),
-  ketawa: F(BROW, ['..KK......KK..', '.K..K....K..K.'], ['...mTTTTTTm...', '....mttttm....', F0]),
-  sakit: F(['.BB........BB.'], ['.KK........KK.', '...KK....KK...'], ['....mmmmmm....', '....TTTTTT....', F0]),
+  ketawa: F(BROW, [F0, '..KK......KK..', '.K..K....K..K.'], ['...mTTTTTTm...', '....mttttm....', F0]),
+  sakit: F(['.BB........BB.'], ['.KK........KK.', '...KK....KK...', '.KK........KK.'], ['....mmmmmm....', '....TTTTTT....', F0]),
 };
 export const EXPRS = Object.keys(FACES);
 
@@ -123,6 +123,7 @@ function chest(o) {
 function pelvis(o) {
   const c = legC(o), v = new Vox();
   v.rbox(-4, -6, 26, 4, 5, 33, c, 3); v.box(-3, -2, 24, 2, 1, 25, c);
+  if (c === 'kargoK') v.rbox(-5, -7, 25, 5, 6, 31, c, 3);   // kargo potongan lebar
   if (o.top === 'balap') for (let z = 30; z <= 33; z++) v.shell(z, -5, -7, 4, 6, z === 30 ? 'neon' : 'balapK', 3);
   else if (o.top !== 'wear') { v.rbox(-4, -6, 32, 4, 5, 33, 'belt', 3); v.pfBox(-1, 32, 0, 33, 'buckle'); }
   if (o.top === 'crop') for (const s of [-1, 1]) v.psBox(s, -2, 27, 1, 31, 'kargoK');
@@ -149,11 +150,11 @@ function fore(o, side) {
   if (o.top === 'wear') for (let z = 31; z <= 39; z += 4) v.pf(8, z, 'oli');
   return v;
 }
-function thigh(o) { const c = legC(o), v = new Vox(); v.rbox(-3, 1, 17, 2, 6, 30, c, 2); v.rrect(31, -2, 2, 1, 5, c, 2); if (o.top === 'balap') for (let z = 17; z <= 31; z++) v.set(0, 6, z, 'neon'); if (o.top === 'crop') v.rbox(-1, 6, 21, 2, 7, 25, 'kargoK', 1); return v; }
+function thigh(o) { const c = legC(o), v = new Vox(); v.rbox(-3, 1, 17, 2, 6, 30, c, 2); v.rrect(31, -2, 2, 1, 5, c, 2); if (c === 'kargoK') { v.rbox(-4, 1, 17, 3, 8, 30, c, 3); v.rrect(31, -3, 1, 2, 7, c, 3); } if (o.top === 'balap') for (let z = 17; z <= 31; z++) v.set(0, 6, z, 'neon'); if (o.top === 'crop') v.rbox(-1, 8, 20, 2, 9, 25, 'kargoK', 1); return v; }
 function shin(o) {
   const c = legC(o), v = new Vox(); v.rbox(-3, 1, 6, 2, 6, 17, c, 2); v.rrect(18, -2, 2, 1, 5, c, 2);
   if (o.top === 'balap') for (let z = 6; z <= 17; z++) v.set(0, 6, z, 'neon');
-  if (o.top === 'crop') v.rbox(-3, 1, 6, 2, 6, 9, 'kick', 2);   // sneakers tinggi putih menutup mata kaki
+  if (o.top === 'crop') { v.rbox(-4, 1, 9, 3, 8, 17, 'kargoK', 3); v.rrect(18, -3, 1, 2, 7, 'kargoK', 3); v.rbox(-3, 1, 6, 2, 6, 9, 'kick', 2); }   // kargo lebar menggantung di atas sneakers tinggi putih
   return v;
 }
 function foot(o) {
