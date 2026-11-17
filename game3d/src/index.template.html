@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Lonceng Pulang 3D - base game</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1e2430; font-family: 'Trebuchet MS', system-ui, sans-serif; color: #fff;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+  #game { position: fixed; inset: 0; width: 100vw; height: 100vh; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  .hud { position: fixed; pointer-events: none; text-shadow: 0 2px 0 #0008; }
+  #area { top: max(10px, env(safe-area-inset-top)); left: 12px; font-size: 18px; font-weight: bold; background: #0006; padding: 4px 10px; border-radius: 4px; }
+  #fps { bottom: 6px; left: 8px; font-size: 11px; opacity: .7; }
+  #prompt { bottom: 22%; left: 50%; transform: translateX(-50%); background: #fffbe8; color: #2a2014; font-weight: bold; padding: 6px 14px;
+    border: 3px solid #2a2014; border-radius: 6px; font-size: 16px; text-shadow: none; white-space: nowrap; }
+  #toast { top: 18%; left: 50%; transform: translateX(-50%); max-width: 80vw; text-align: center; background: #000a; padding: 8px 14px; border-radius: 6px; opacity: 0; transition: opacity .3s; }
+  #mapWrap { top: max(10px, env(safe-area-inset-top)); right: 12px; width: 132px; height: 132px; border: 3px solid #2a2014; border-radius: 50%; overflow: hidden; background: #9ab878; }
+  #bigmap { position: fixed; inset: 0; display: none; background: #1e2430; z-index: 20; touch-action: none; }
+  #bigmap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #bigmap .bm-top { position: absolute; top: max(8px, env(safe-area-inset-top)); left: 10px; right: 10px; display: flex; gap: 8px; align-items: center; }
+  #bigmap .bm-top b { font-size: 18px; text-shadow: 0 2px 0 #000; }
+  #bigmap .bm-hint { flex: 1; font-size: 12px; opacity: .8; }
+  #bigmap .bm-info { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: 86vw; background: #fffbe8; color: #2a2014;
+    border: 3px solid #2a2014; border-radius: 6px; padding: 8px 12px; font-size: 14px; display: none; }
+  #mapWrap { pointer-events: auto; cursor: pointer; }
+  #fishUI { position: fixed; left: 50%; top: 26%; transform: translateX(-50%); width: min(340px, 86vw); background: #000b; border-radius: 8px; padding: 8px 12px; display: none; font-size: 13px; z-index: 5; pointer-events: none; }
+  #fishUI span { opacity: .8; font-size: 12px; }
+  #fishUI .fu-bar { position: relative; height: 14px; background: #5a2a2a; border-radius: 4px; margin-top: 6px; }
+  #fishUI .fu-zone { position: absolute; top: 0; bottom: 0; background: #3a7a3a; border-radius: 4px; }
+  #fishUI .fu-mark { position: absolute; top: -3px; width: 6px; height: 20px; margin-left: -3px; background: #3aa84a; border: 2px solid #fff; border-radius: 3px; }
+  #fishUI .fu-prog { height: 8px; background: #333; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+  #fishUI .fu-prog i { display: block; height: 100%; width: 0; background: #ffd84a; }
+  #fade { position: fixed; inset: 0; background: #000; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  #bubbles div { position: fixed; left: 0; top: 0; pointer-events: none; white-space: nowrap; font-size: 13px; }
+  .tag.filler { color: #e8e8d8; font-weight: normal; }
+  .bubble.filler { background: #fffbe8; }
+  .tag { color: #fff; font-weight: bold; text-shadow: 0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000; }
+  .bubble { background: #fff; color: #222; padding: 5px 9px; border-radius: 8px; border: 2px solid #222; max-width: 220px; white-space: normal !important; text-shadow: none; }
+  #menu { position: fixed; top: max(150px, calc(env(safe-area-inset-top) + 150px)); right: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  button { font: bold 13px 'Trebuchet MS', system-ui, sans-serif; color: #2a2014; background: #fffbe8; border: 3px solid #2a2014; border-radius: 6px; padding: 5px 9px; cursor: pointer; touch-action: none; }
+  #menu.closed #menuItems > * { display: none !important; }
+  button.on { background: #ffd84a; }
+  #pad { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); display: none; gap: 10px; align-items: flex-end; }
+  #pad button { width: 64px; height: 64px; border-radius: 50%; font-size: 14px; padding: 0; }
+  #pad #btnAct { width: 84px; height: 84px; font-size: 16px; background: #ffd84a; }
+  #pad #btnEmote, #pad #btnRide, #pad #btnHit { width: 52px; height: 52px; font-size: 12px; }
+  #camPad { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 222px); display: none; gap: 8px; }
+  body.touch #prompt { bottom: calc(max(18px, env(safe-area-inset-bottom)) + 162px); }
+  @media (max-width: 640px) { #fightHud { top: calc(max(10px, env(safe-area-inset-top)) + 66px) !important; } }
+  #fpad { position: fixed; right: calc(max(16px, env(safe-area-inset-right)) + 94px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 96px); display: none; gap: 8px; }
+  #fpad button { width: 52px; height: 52px; border-radius: 50%; font-size: 11px; padding: 0; background: #ffe2c8; }
+  body.touch #fpad { display: flex; }
+  .bubble.warn { background: #e83a2a; color: #fff; font-size: 20px; font-weight: bold; padding: 0 10px; border-color: #fff; }
+  .bubble.dizzy { background: #ffd84a; color: #2a2014; }
+  .tag.lvHard { color: #ff8a7a; } .tag.lvEven { color: #ffd84a; } .tag.lvEasy { color: #9ae89a; }
+  #status { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(92vw, 380px); max-height: 86vh; overflow: auto; background: #fffbe8; color: #2a2014; border: 3px solid #2a2014; border-radius: 10px; padding: 12px 14px; display: none; font-size: 13px; line-height: 1.45; z-index: 20; }
+  #status h3 { margin: 0 0 6px; font-size: 16px; } #status .sr { display: flex; align-items: center; gap: 8px; margin: 4px 0; } #status .sr b { width: 82px; }
+  #status .sb { flex: 1; height: 10px; background: #d8d0b8; border-radius: 5px; overflow: hidden; } #status .sb i { display: block; height: 100%; background: #e8902a; }
+  #status table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; } #status td { padding: 2px 4px; border-bottom: 1px solid #e0d8c0; }
+  #status .x { position: absolute; right: 8px; top: 6px; }
+  #camPad button { width: 48px; height: 40px; font-size: 18px; padding: 0; }
+  body.touch #pad, body.touch #camPad { display: flex; }
+  body.touch #help { display: none; }
+  #joy { position: fixed; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; background: #fff3; border: 3px solid #fff8; display: none; pointer-events: none; }
+  #knob { position: absolute; left: 30px; top: 30px; width: 44px; height: 44px; border-radius: 50%; background: #fffbe8; border: 3px solid #2a2014; }
+  #help { bottom: 6px; right: 10px; font-size: 12px; opacity: .85; text-align: right; line-height: 1.5; }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #1e2430; font-size: 20px; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="area" class="hud"></div>
+<div id="mapWrap" class="hud"><canvas id="map" width="132" height="132"></canvas></div>
+<div id="menu"><button id="btnMenu">⚙ Menu</button><div id="menuItems" style="display:contents">
+  <button id="btnFollow" title="C">Kamera ikut</button>
+  <button id="btnPitch" title="V">Sudut</button>
+  <button id="btnStatus" title="U">Status diri</button>
+  <button id="btnReset" title="R">Reset posisi</button>
+  <button id="btnBigMap" title="M">Peta besar</button>
+  <button id="btnMap" title="N">Minimap</button>
+  <button id="btnQuality">Grafik</button>
+  <button id="btnPx">Pixel</button>
+  <div style="display:flex;gap:6px"><button id="btnZoomIn">+</button><button id="btnZoomOut">−</button></div>
+</div></div>
+<div id="prompt" class="hud" style="display:none"></div>
+<div id="toast" class="hud"></div>
+<div id="bubbles"></div>
+<div id="fps" class="hud"></div>
+<div id="help" class="hud">WASD/panah: jalan · Shift: lari · Spasi: aksi / naik-turun kendaraan · 1-9, 0: gaya · U: status · R: reset posisi<br>J/F: pukul · K: tendang · L: hindar (tahan = tangkis) · I: pegang · T: provokasi · Shift+J: jurus (Nyali penuh)<br>Q/E atau seret mouse: putar & miringkan kamera · V: sudut · roda: zoom · C: kamera ikut · M: peta besar · N: minimap</div>
+<div id="joy"><div id="knob"></div></div>
+<div id="camPad"><button id="btnL">⟲</button><button id="btnR">⟳</button></div>
+<div id="pad"><button id="btnEmote">Gaya</button><button id="btnRide">Peta</button><button id="btnRun">Lari</button><button id="btnHit">Pukul</button><button id="btnAct">Aksi</button></div>
+<div id="fpad"><button id="btnDodge">Hindar</button><button id="btnGrab">Pegang</button><button id="btnKick">Tendang</button></div>
+<div id="status"></div>
+<div id="fade"></div>
+<div id="loading">Memuat Wirabumi…</div>
+<script>/*GAME*/</script>
+</body>
+</html>
