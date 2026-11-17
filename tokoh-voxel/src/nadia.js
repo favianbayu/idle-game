@@ -23,7 +23,7 @@ addRamps({
 /* ---------- wajah: mata cokelat tajam yang lembut, alis rapi tipis, senyum kecil, pipi gampang merah */
 const FCH = { B: 'brow', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', r: 'nBlush', s: 'nSkinS' };
 const F0 = '..............';
-const F = (brow, eyes, mid, mouth) => [F0, F0, F0, ...brow, ...eyes, ...mid, ...mouth, F0];
+const F = (brow, eyes, mid, mouth) => [F0, F0, F0, ...brow, ...eyes, mid[0], ...mouth, F0, F0];   // mulut naik 1 baris (tepat di bawah hidung)
 const MID = ['..............', '..............'];
 const BL = ['.rr........rr.', '..............'];
 export const FACES = {
@@ -45,7 +45,7 @@ function head(o) {
   for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skull(z); v.rrect(z, a, b, c, d, 'nSkin', r); }
   for (const y of [-5, 4]) { v.set(5, y, 1, null); v.set(5, y, 2, null); }
   paintFace(v, o.face || FACES[o.expr] || FACES.biasa, FCH, 14, -7);
-  v.box(7, -1, 4, 7, 0, 5, 'nSkin'); v.set(7, -1, 3, 'nSkinS');                        // hidung kecil
+  v.box(7, -1, 5, 7, 0, 6, 'nSkin'); v.set(7, -1, 4, 'nSkinS');                        // hidung kecil
   // hijab: lapisan kain 1-2 voxel di luar kepala, kubah sedikit tinggi, membungkus leher di bawah dagu
   const h = new Vox();
   for (let z = 2; z <= 14; z++) h.rrect(z, -8, -8, 7, 7, 'hijab', z <= 11 ? 4 : 5);
@@ -163,7 +163,7 @@ export function build(opt = {}) {
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o);
   const top = o.top === 'alma' ? 'almamater' : o.top === 'gamis' ? 'mint' : 'cream';
   const leg = o.top === 'gamis' ? 'mint' : o.bottom === 'kulot' ? 'kulot' : 'nSkirt';
-  return assemble([
+  const P = assemble([
     ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
     ['head', head(o), [0, 0, 0]],
     ['chest', chest(o), PV.chest],
@@ -173,4 +173,6 @@ export function build(opt = {}) {
     ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
     ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
   ], { neck: 'hijab', shoulder: top, elbow: top, hip: leg, knee: leg }, SKEL, TAIL);
+  if (o.bottom !== 'kulot') { const c = o.top === 'gamis' ? 'mint' : 'nSkirt'; P.skirt = { mats: [P.mat(c), P.mat(c + 'S')], fill: P.mat(c), parts: ['pelvis', 'flapF', 'flapB', 'thighL', 'thighR', 'shinL', 'shinR'] }; }
+  return P;
 }

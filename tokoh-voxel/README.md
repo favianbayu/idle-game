@@ -1,4 +1,6 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga (gaya Raka v3)
+
+Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
 Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya yang sama dengan Raka v3
 (yang sudah dipasang di game lewat PR #6). **Belum dimasukkan ke game** (`game3d/`), menunggu persetujuan.
@@ -9,8 +11,10 @@ Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya ya
 | Rani | tokoh utama cewek | 1.24 | 81 | kuncir kuda + ikat merah, seragam berandal: kemeja keluar, dasi longgar, jaket jeans, rok abu + legging hitam, sneakers putih, plester di hidung |
 | Bimo | sahabat sebangku | 1.3 | 88 | badan gempal, perut menonjol, rambut keriting tebal, kacamata frame hitam tebal, pipi merah, kemeja sesak, HP di saku |
 | Bram | rival utama (anak elite) | 1.38 | 90 | tinggi tegap, muka V, rambut klimis belah samping, mata tajam, seragam permak dimasukkan, ikat pinggang kulit, jam perak, sepatu kulit |
-| Nadia | NPC romance cewek, calon ketua OSIS | 1.24 | 81 | hijab segi empat abu-biru + peniti mutiara, kemeja krem lengan panjang, rok abu panjang, badge OSIS, pulpen di saku, jam kulit kecil, pantofel |
-| Dimas | NPC romance cowok, kapten basket | 1.38 | 90 | bahu lebar, rambut cepak anak tentara, telinga kemerahan, seragam rapi dimasukkan, jam digital, deker lutut kiri (saat celana pendek) |
+| Nadia | NPC romance cewek, calon ketua OSIS | 1.24 | 79 | hijab segi empat abu-biru + peniti mutiara, kemeja krem lengan panjang, rok abu panjang, badge OSIS, pulpen di saku, jam kulit kecil, pantofel |
+| Dimas | NPC romance cowok, kapten basket | 1.38 | 89 | bahu lebar, rambut cepak anak tentara dengan samping & belakang bawah fade, telinga kemerahan, seragam rapi dimasukkan, jam digital, deker lutut kiri (saat celana pendek) |
+| Sekar | NPC romance cewek, gitaris band | 1.22 | 80 | kurus, kulit pucat, rambut hitam panjang kuncir dua rendah ikat ungu, poni menutupi alis, mata sayu, jaket jeans kebesaran, rok abu panjang, gitar di punggung |
+| Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
 (1 voxel = 1/64 petak), persis seperti Raka v3. Semua voxel tetap di satu kisi lurus dan diwarnai 4 tingkat per bahan.
@@ -21,6 +25,8 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Bimo**: seragam, kaus "Bakso Pak Pras" + celana pendek + sandal, celemek koki warkop.
 - **Bram**: seragam permak, bomber hitam geng + kacamata hitam, rumah (kaus hitam + training + sneakers).
 - **Nadia**: seragam + hijab, jas almamater (rapat OSIS), tunik + kulot + tas selempang, gamis rumahan.
+- **Sekar**: seragam + jaket jeans + gitar, latihan band (kaus band + kargo + gelang karet), flanel ungu + rok jeans, sweater lavender + piama.
+- **Arga**: seragam + jaket kulit, jaket Lampu Kota + sarung tangan tanpa jari, flanel abu + jeans hitam, kaus abu + celana kerja (bantu kakek).
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai
@@ -35,7 +41,8 @@ semua gerakan game (`ANIMS`) tanpa perubahan.
 - `src/`
   - `rig.js`: rig Raka yang kini memakai konfigurasi kerangka `K` (panjang ruas, lebar bahu, jarak pinggul) per tokoh.
   - `model.js`: Raka + registri bahan bersama (`addRamps`), `assemble`, `paintFace`.
-  - `rani.js`, `bimo.js`, `bram.js`, `nadia.js`, `dimas.js`: kerangka (`SKEL`), bahan, peta wajah 14x15, rambut, dan baju tiap tokoh.
+  - `rani.js`, `bimo.js`, `bram.js`, `nadia.js`, `dimas.js`, `sekar.js`, `arga.js`: kerangka (`SKEL`), bahan, peta wajah 14x15, rambut, dan baju tiap tokoh.
+  - `rok.js`: pembuat rok (pinggang, panel depan/belakang, tabung kaki) + data `P.skirt`; `frame.js` mengisi lambung cembung kain rok per lapis supaya rok tidak terbelah saat jalan/lari.
   - `chars.js`: daftar tokoh untuk penampil.
   - `frame.js`, `expr.js`, `vox.js`, `voxlib.js`, `npc_styles.js`, `anims.js`: sama dengan versi game.
 

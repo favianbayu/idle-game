@@ -4,6 +4,8 @@ import { build as raniBuild, OUTFITS as RANI_OUT, EXPRS as RANI_EX } from './ran
 import { build as bimoBuild, OUTFITS as BIMO_OUT, EXPRS as BIMO_EX } from './bimo.js';
 import { build as nadiaBuild, OUTFITS as NADIA_OUT, EXPRS as NADIA_EX } from './nadia.js';
 import { build as dimasBuild, OUTFITS as DIMAS_OUT, EXPRS as DIMAS_EX } from './dimas.js';
+import { build as sekarBuild, OUTFITS as SEKAR_OUT, EXPRS as SEKAR_EX } from './sekar.js';
+import { build as argaBuild, OUTFITS as ARGA_OUT, EXPRS as ARGA_EX } from './arga.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -11,5 +13,7 @@ export const CHARS = {
   bimo: { name: 'Bimo', build: bimoBuild, OUTFITS: BIMO_OUT, EXPRS: BIMO_EX },
   nadia: { name: 'Nadia', build: nadiaBuild, OUTFITS: NADIA_OUT, EXPRS: NADIA_EX },
   dimas: { name: 'Dimas', build: dimasBuild, OUTFITS: DIMAS_OUT, EXPRS: DIMAS_EX },
+  sekar: { name: 'Sekar', build: sekarBuild, OUTFITS: SEKAR_OUT, EXPRS: SEKAR_EX },
+  arga: { name: 'Arga', build: argaBuild, OUTFITS: ARGA_OUT, EXPRS: ARGA_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };

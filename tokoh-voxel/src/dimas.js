@@ -12,6 +12,7 @@ const TAIL = [-5, 0, 1];
 addRamps({
   dSkin: ['#94603d', '#b07650', '#c98e66', '#dca57c'], dSkinS: ['#b07650'], dEar: ['#9a5e42', '#b87050', '#d08868', '#e09c7c'],
   dHair: ['#080607', '#100c0d', '#1a1415', '#28201f'], dHairF: ['#3a2e2c'],
+  dFadeA: ['#1c1513', '#261c19', '#32251f', '#402f27'], dFadeB: ['#4e3324', '#603f2c', '#734c36', '#865a40'], dFadeC: ['#80553b', '#966446', '#ad7552', '#c0865f'],
   royal: ['#1c3a74', '#244a92', '#2f5fb3', '#4a7ad0'], royalW: ['#dfe6f2', '#eef2f8', '#fbfcfe', '#ffffff'], orange: ['#e07b39'],
   deker: ['#0e0d11', '#17161b', '#22212a', '#34333d'], digi: ['#0e0d11'], digiS: ['#7fd0a0'],
   loreng: ['#3a4a2a', '#4a5c34', '#5c7040', '#72874f'], lorengA: ['#2a3420'], lorengB: ['#7a7a52'],
@@ -45,12 +46,18 @@ function head(o) {
   for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 9, 'dEar'); v.box(-1, y, 6, -1, y, 8, 'dSkinS'); }   // telinga kemerahan
   // rambut cepak anak tentara: satu lapis tipis di atas, samping dan belakang dipangkas tipis; poni pendek rapi
   const hair = new Vox();
-  for (let z = 6; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'dHair', 4);
+  for (let z = 4; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'dHair', 4);
   hair.rrect(16, -7, -7, 6, 6, 'dHair', 4); hair.rrect(17, -5, -5, 4, 4, 'dHair', 3);
-  const zmin = (x, y) => x >= 5 ? 12 : Math.abs(y + 0.5) > 6.5 ? (x >= -3 ? 10 : 7) : x <= -5 ? 6 : 0;
+  // samping & belakang bawah: fade (makin ke bawah makin tipis sampai kulit), atas tetap tebal
+  const zmin = (x, y) => x >= 5 ? 12 : Math.abs(y + 0.5) > 6.5 && x >= 0 ? 9 : 4;
   hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= zmin(x, y)) v.set(x, y, z, c); });
-  // tepi pangkasan samping lebih terang (kulit kepala tembus)
-  for (let x = -7; x <= 4; x++) for (const y of [-8, 7]) for (const z of [7, 8, 10]) if (v.get(x, y, z) === 'dHair') v.set(x, y, z, 'dHairF');
+  const FADE = [[11.5, 'dHair'], [9.5, 'dFadeA'], [7.5, 'dFadeB'], [5.5, 'dFadeC']];
+  v.each((x, y, z, c) => {
+    if (c !== 'dHair' || z > 12 || x >= 5) return;
+    const t = z + ((x + y + z) & 1) * 0.9;   // dither di batas tiap tingkat supaya gradasinya halus
+    const f = FADE.find(([lim]) => t >= lim);
+    if (!f) v.set(x, y, z, null); else v.set(x, y, z, f[1]);
+  });
   for (const y of [-4, -3, 0, 1, 2]) v.set(8, y, 12, 'dHair');                                   // poni sedikit
   if (o.band) for (let z = 12; z <= 13; z++) for (let y = -9; y <= 8; y++) { const x = v.front(y, z); if (x !== null) v.set(x, y, z, 'royalW'); const b = v.back(y, z); if (b !== null) v.set(b, y, z, 'royalW'); }
   if (o.band) for (let x = -8; x <= 8; x++) for (let z = 12; z <= 13; z++) { const p = v.sideP(x, z), n = v.sideN(x, z); if (p !== null) v.set(x, p, z, 'royalW'); if (n !== null) v.set(x, n, z, 'royalW'); }

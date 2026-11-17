@@ -188,7 +188,7 @@ export function build(opt = {}) {
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), skirt = o.bottom === 'rok';
   const top = o.top === 'lampu' ? 'jk' : o.top === 'jeans' ? 'denim' : o.top === 'kaus' ? 'rTee' : 'white';
   const leg = o.bottom === 'jeans' ? 'jeans' : o.bottom === 'training' ? 'track' : 'legging';
-  return assemble([
+  const P = assemble([
     ['foreR', fore(o, 1), PV.foreR], ['foreL', fore(o, -1).mirrorY(), PV.foreL],
     ['head', head(o), [0, 0, 0]], ['tail', ponytail(), TAIL],
     ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
@@ -198,4 +198,6 @@ export function build(opt = {}) {
     ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
     ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
   ], { neck: 'rSkin', shoulder: top, elbow: o.top === 'lampu' ? 'jk' : 'rSkin', hip: leg, knee: leg }, SKEL, TAIL);
+  if (skirt) P.skirt = { mats: [P.mat('skirt'), P.mat('tie')], fill: P.mat('skirt'), parts: ['pelvis', 'flapF', 'flapB'] };
+  return P;
 }
