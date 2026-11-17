@@ -4,8 +4,8 @@
 |---|---|
 | Umur / kelas | 16, SMA 3 kelas X-3 |
 | Peran | Kapten basket, populer, ternyata pemalu dan takut gagal |
-| Tinggal | **Luar peta**: Asrama Batalyon di timur kota (ayahnya tentara). Terlihat di peta saat naik angkot dari gerbang timur |
-| Keluarga | Ayah sersan mayor (tegas), ibu guru TK, adik perempuan Dinda (10) |
+| Tinggal | **Peta daerah**: Asrama Batalyon 3 di timur kota (segmen 86), ayahnya tentara |
+| Keluarga | Ayah Serma Hadi Aditya (tegas, segmen 33), ibu guru TK, adik perempuan Dinda (10) |
 | Romance | Pemain cewek (sahabat untuk pemain cowok) |
 | Warna kunci | Biru royal `#2f5fb3`, putih, oranye bola `#e07b39` |
 | Gaya voxel | `short`, jersey basket biru nomor 11, sepatu tinggi |

@@ -4,8 +4,8 @@
 |---|---|
 | Umur / sekolah | 16, SMK Pariwisata Wirabumi kelas X (berangkat dari desa tiap hari) |
 | Peran | Pesilat juara provinsi, pemandu wisata kebun teh, guru silat dadakan pemain |
-| Tinggal | **Luar peta**: Desa Sukamekar, 40 menit naik bus ke utara. Rumah panggung kayu di tepi kebun teh |
-| Keluarga | Kakek (guru perguruan silat "Kembang Teh"), ibu pemetik teh, tiga adik |
+| Tinggal | **Peta daerah**: Desa Sukamekar (segmen 86), 40 menit naik bus lewat Jl. Raya Puncak. Rumah panggung kayu di tepi kebun teh |
+| Keluarga | Kakek Abah Karta (guru perguruan silat "Kembang Teh", segmen 33), ibu pemetik teh, tiga adik (yang sulung Neng Ayu) |
 | Romance | Pemain cowok |
 | Warna kunci | Hijau teh `#7aa35a`, cokelat kayu `#7a5233`, putih `#f3f1ea` |
 | Gaya voxel | `ponytail` dikepang, baju silat hitam, selendang hijau |

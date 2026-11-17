@@ -4,8 +4,8 @@
 |---|---|
 | Umur / sekolah | 16, STM Karya Bangsa jurusan Bangunan kelas X |
 | Peran | Pelukis mural, anggota Serigala Besi, jembatan damai dua geng |
-| Tinggal | **Dalam peta, pinggir selatan**: rumah nenek, rumah bata merah beratap genteng tua di tepi sawah |
-| Keluarga | Nenek (penjual jamu gendong). Ayah di penjara (pencurian), ibu kerja di pabrik kota lain |
+| Tinggal | **Peta daerah: Desa Pandansari** (tepat di selatan Jl. Lingkar, segmen 86): rumah nenek, rumah bata merah beratap genteng tua di tepi sawah |
+| Keluarga | Nek Sumi (penjual jamu gendong, segmen 33). Ayah di penjara (pencurian), ibu kerja di pabrik kota lain |
 | Romance | Pemain cewek |
 | Warna kunci | Cat semprot kuning `#f2c12e`, biru elektrik `#2d6cdf`, abu beton `#9a9a95` |
 | Gaya voxel | `curly` diikat, kaus penuh cat, kaleng semprot |

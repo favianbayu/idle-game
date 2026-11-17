@@ -59,7 +59,7 @@ sebagian acak, dan sebagian bagian dari cerita. Pemain diberi tahu lewat **HP** 
 | Sekali per tahun | **Kunjungan pengawas dinas** | Sekolah mendadak super rapi. Siswa nakal disembunyikan. Pemain bisa membantu atau mengacau. |
 | Kelas XII tiap bulan | **Try out** | Simulasi ujian akhir, peringkat diumumkan di mading. |
 | Kelas X | **Perkemahan pramuka** | Malam api unggun, jurit malam (horor-komedi), event romance. |
-| Kelas XI | **Study tour** | Lihat Bab 8 di cerita. |
+| Kelas XI | **Karyawisata Sangkala** (pengganti study tour) | Lihat Bab 8 di `guide/04-alur-cerita.md`. |
 | Akhir tahun ajaran | **Pensi (pentas seni)** | Panggung di aula, band, tari, drama kelas. Pemain bisa ikut tampil, jadi kru, atau jualan. |
 
 ## 4. Kalender tahunan (musiman)

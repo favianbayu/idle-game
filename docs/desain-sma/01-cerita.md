@@ -1,5 +1,7 @@
 # Cerita: "Lonceng Pulang"
 
+> Versi terbaru alur per bab ada di `guide/04-alur-cerita.md`. Segmen itu memasukkan semua wilayah peta daerah, mengganti study tour Sendangsari dengan karyawisata Sangkala (Bab 8), dan memindah liga balap ke sirkuit (Bab 9). Kalau beda, segmen 04 yang dipakai.
+
 ## Premis
 
 Di halaman belakang SMA Negeri 3 Wirabumi ada gedung tua yang terkunci. Konon di dalamnya tergantung lonceng sekolah

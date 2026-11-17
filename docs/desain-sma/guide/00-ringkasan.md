@@ -11,11 +11,13 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 | 01 | Tokoh utama (pemain) | Raka / Rani: penampilan, baju, statistik, gaya |
 | 02 | Gaya portrait & prompt | Aturan gaya portrait 480x480, prompt dasar, 12 ekspresi |
 | 03 | Sistem hati | Aturan 8 hati, kado, kencan, pacaran, cemburu |
+| 04 | Alur cerita per bab & wilayah | 15 bab disusun ulang supaya semua wilayah peta daerah masuk cerita, sekutu Bab 13, epilog & misi per wilayah |
 | 10-17 | NPC utama cewek (8) | Nadia, Sekar, Laras, Uti, Sasha, Kirana, Mei, Wulan |
 | 20-27 | NPC utama cowok (8) | Dimas, Arga, Rizal, Tegar, Jojo, Bram, Andra, Gilang |
 | 30 | NPC pendukung cerita | Keluarga, sahabat, guru, geng, antagonis: detail + 4 event hati persahabatan |
 | 31 | NPC pengisi dunia | 48 NPC latar dengan bubble chat |
 | 32 | Tempat tinggal | Semua tokoh dan wilayahnya, di dalam atau di luar peta |
+| 33 | NPC wilayah luar kota | 14 NPC pendukung baru + 3 antagonis kecil + NPC pengisi tiap wilayah luar kota |
 | 40 | Obrolan & reaksi | Sistem dialog, obrolan antar tokoh, reaksi NPC terhadap aksi pemain |
 | 41 | Feedback & konsekuensi | Akibat setiap tindakan pemain |
 | 50 | Pelajaran & mini game | Jadwal pelajaran, 12 mini game kelas, ujian, mini game luar sekolah |
@@ -75,5 +77,5 @@ warkop, masuk klub motor **Lampu Kota**, jatuh cinta, dan akhirnya ikut menyelam
 | Tegar Hutomo | 15 | SMA 3, X-2 | Ketua kelas, juara umum, tertekan | Perumahan Bukit Asri |
 | Jojo (Yohanes) | 15 | SMA 3, X-2 | Fotografer mading, tukang gosip | Pusat Kota (atas studio Foto Kilat) |
 | Bram Megantara | 17 | SMA 3, XI-1 lalu seangkatan | Rival, anak developer, jalur penebusan | Perumahan Bukit Asri |
-| Andra Pamungkas | 16 | STM Karya Bangsa, Bangunan | Pelukis mural, anggota Serigala Besi | Selatan (rumah nenek dekat sawah) |
+| Andra Pamungkas | 16 | STM Karya Bangsa, Bangunan | Pelukis mural, anggota Serigala Besi | **Peta daerah**: Desa Pandansari, tepat di selatan kota (rumah nenek tepi sawah) |
 | Gilang Ramadhan | 17 | Putus sekolah, ikut paket C | Pengantar galon, skater, jenaka | Kampung Bantaran (rumah panggung) |
