@@ -14,6 +14,8 @@ import { build as sashaBuild, OUTFITS as SASHA_OUT, EXPRS as SASHA_EX } from './
 import { build as kiranaBuild, OUTFITS as KIRANA_OUT, EXPRS as KIRANA_EX } from './kirana.js';
 import { build as jojoBuild, OUTFITS as JOJO_OUT, EXPRS as JOJO_EX } from './jojo.js';
 import { build as andraBuild, OUTFITS as ANDRA_OUT, EXPRS as ANDRA_EX } from './andra.js';
+import { build as meiBuild, OUTFITS as MEI_OUT, EXPRS as MEI_EX } from './mei.js';
+import { build as gilangBuild, OUTFITS as GILANG_OUT, EXPRS as GILANG_EX } from './gilang.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -31,5 +33,7 @@ export const CHARS = {
   kirana: { name: 'Kirana', build: kiranaBuild, OUTFITS: KIRANA_OUT, EXPRS: KIRANA_EX },
   jojo: { name: 'Jojo', build: jojoBuild, OUTFITS: JOJO_OUT, EXPRS: JOJO_EX },
   andra: { name: 'Andra', build: andraBuild, OUTFITS: ANDRA_OUT, EXPRS: ANDRA_EX },
+  mei: { name: 'Mei', build: meiBuild, OUTFITS: MEI_OUT, EXPRS: MEI_EX },
+  gilang: { name: 'Gilang', build: gilangBuild, OUTFITS: GILANG_OUT, EXPRS: GILANG_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };

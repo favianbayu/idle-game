@@ -1,10 +1,10 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
 Pratinjau mandiri untuk tokoh utama cewek dan NPC utama, digambar dengan gaya yang sama dengan Raka v3
-(yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sudah dipasang di game (`game3d/src/raka/`,
-peta `FINE` di `voxworker.js`) dengan baju `seragam`. Tokoh baru tetap pratinjau sampai disetujui.
+(yang sudah dipasang di game lewat PR #6). Semua tokoh di tabel ini sampai Andra sudah dipasang di game (`game3d/src/raka/`,
+peta `FINE` di `voxworker.js`) dengan baju `seragam`. Mei dan Gilang masih pratinjau, menunggu persetujuan.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
@@ -23,6 +23,8 @@ peta `FINE` di `voxworker.js`) dengan baju `seragam`. Tokoh baru tetap pratinjau
 | Kirana | NPC romance cewek, pembalap STM | 1.26 | 81 | kulit langsat gelap, rambut hitam lurus diikat rendah ujung toska, poni samping, mata tajam, satu tindik, plester di siku, seragam STM + sepatu safety |
 | Jojo | NPC romance cowok, fotografer mading | 1.3 | 90 (termasuk mohawk) | kurus jangkung, mohawk kecil bergel, mata besar, senyum lebar, tahi lalat di bawah mata kanan, rompi fotografer army + kamera DSLR di leher |
 | Andra | NPC romance cowok, pelukis mural STM | 1.32 | 85 | kulit cokelat, rambut ikal sebahu setengah diikat, alis tebal, senyum malas, tindik kiri, tangan & celana kena cat, tato spidol di lengan, boots |
+| Mei | NPC romance cewek, anak Toko Buku Pena, ilustrator | 1.18 | 80 | bob sebahu lurus + jepit pensil, kacamata bulat besar, pipi tembam merah, mata sipit, noda tinta di jari |
+| Gilang | NPC romance cowok, pengantar galon & skater, paket C | 1.34 | 86 | kulit cokelat gelap, rambut berantakan, topi terbalik biru-kuning, gigi depan renggang, alis jahil tak sejajar, plester di lutut & siku |
 | Arga | NPC romance cowok, Lampu Kota | 1.34 | 84 | ramping berotot, kulit sawo matang gelap, buzz cut, bekas luka memotong alis kanan, seragam dikeluarkan + jaket kulit cokelat, boots |
 
 Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambut sama), lalu dikali 2 kerapatannya
@@ -44,6 +46,8 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Kirana**: seragam STM, wearpack hitam lis oranye + handuk, jaket balap toska-hitam #21 + helm full-face (juga dipakai saat naik motor), crop hoodie + kargo + sneakers tinggi.
 - **Jojo**: seragam + rompi army + kamera, liputan (kupluk oranye + ransel kamera), kaus "HORAS!" + celana pendek, kemeja hawaii + kargo + sandal gunung.
 - **Andra**: seragam STM kena cat + boots, melukis mural (kaus penuh cat + overall + masker + topi terbalik), Serigala Besi (rompi jeans patch serigala), kemeja bunga + kulot, sarung (rok.js) + kaus partai.
+- **Mei**: seragam Bina Bangsa (rompi & rok kotak hijau + dasi pita, rok.js), jaga toko (kaus mustard + apron PENA + pensil di telinga), piama kucing + kaus kaki tidak sepasang, overall + kaus garis + baret + tas tote berpin.
+- **Gilang**: antar galon (kaus Depot Air Segar + handuk + galon di pundak + sandal jepit), skate (kaus kartun kebesaran + kargo sobek + papan di punggung + sepatu diikat karet), paket C (kemeja kotak dikancing sampai atas), di rumah (telanjang dada + sarung rok.js), windbreaker kuning-biru. Di game (`seragam`) ia memakai baju antar galon tanpa galon.
 - **Dimas**: seragam rapi, jersey basket #11 + headband, hoodie biru + chino, kaus loreng + celana pendek + sandal.
 
 Tiap tokoh punya 7 ekspresi yang sama dengan Raka (biasa, kedip, marah, teriak, nyengir, ketawa, sakit), dan memakai
