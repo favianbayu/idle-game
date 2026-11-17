@@ -17,6 +17,7 @@ import { makeJajan } from './jajan.js';
 import { makeAnimals } from './animals.js';
 import { makeRace } from './race.js';
 import { parked } from './parked.js';
+import { makeLuar } from './luar.js';
 
 /* ------------------------------------------------------------------ pengaturan */
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -99,7 +100,8 @@ let ride = 0;
 function placeParked() {
   for (const [i, R] of RIDES.entries()) if (R && i !== ride) {
     const sp = garage.spot[i]; R.holder.add(R.r.group);
-    R.holder.position.set(sp.x, sp.area === 'kota' ? kota.groundY(sp.x, sp.z) : 0, sp.z); R.holder.rotation.y = -sp.h; R.holder.visible = !!garage.owned[i] && sp.area === player.area;
+    R.holder.position.set(sp.x, sp.area === 'kota' ? kota.groundY(sp.x, sp.z) : sp.area === 'luar' ? luar.groundY(sp.x, sp.z) : 0, sp.z); R.holder.rotation.y = -sp.h;
+    R.holder.visible = !!garage.owned[i] && sp.area === player.area && (sp.area !== 'luar' || sp.zone === luar.cur?.id);
   }
 }
 function mount(i) {
@@ -114,7 +116,7 @@ function mount(i) {
 function dismount(quiet) {
   if (!ride) return;
   const i = ride, R = RIDES[i];
-  garage.spot[i] = { x: player.x, z: player.z, h: player.heading, area: player.area };
+  garage.spot[i] = { x: player.x, z: player.z, h: player.heading, area: player.area, zone: player.area === 'luar' ? player.zone : undefined };
   ride = 0; raka.seat = null; raka.blob.scale.setScalar(1); placeParked();
   // turun di samping kendaraan, bukan di joknya
   const sx = -Math.sin(player.heading), sz = Math.cos(player.heading);
@@ -132,7 +134,6 @@ function pushParked(p, r) {
   }
   return p;
 }
-placeParked();
 // gaya (emote) pemain: tombol 1-9, 0 atau tombol Gaya (HP). Berhenti saat bergerak.
 const EMOTES = ['wave', 'sitDown', 'squat', 'phone', 'dance', 'salute', 'raiseHand', 'read', 'lie', 'clap', 'laugh', 'think', 'carry', 'bow', 'stretch'];
 let emoteI = -1;
@@ -143,7 +144,7 @@ let fading = 0;
 // KO: pingsan, dibawa pulang Om Darto (layar gelap, bangun di depan rumah)
 function onKO() {
   fading = 1; ui.fade.style.opacity = 1;
-  setTimeout(() => { if (ride) dismount(true); Object.assign(player, { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, area: 'kota', swim: null }); cam.x = player.x; cam.z = player.z; placeParked(); ui.fade.style.opacity = 0; fading = 0; toast('Kamu pingsan... Om Darto bawa kamu pulang. Latihan dulu biar kuat!'); }, 600);
+  setTimeout(() => { if (ride) dismount(true); luar.unload(); player.zone = null; Object.assign(player, { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, area: 'kota', swim: null }); cam.x = player.x; cam.z = player.z; placeParked(); ui.fade.style.opacity = 0; fading = 0; toast('Kamu pingsan... Om Darto bawa kamu pulang. Latihan dulu biar kuat!'); }, 600);
 }
 const fight = makeFight({ player, raka, npcs, collision, riding: () => !!ride, toast, onKO: () => onKO(), save: () => { saveT = 99; } });
 const shop = makeShop({ player, toast, fight });
@@ -152,12 +153,17 @@ const interiors = makeInteriors({ scene, kota, collision, player, Character, npc
 interiors.locate();
 const jajan = makeJajan({ scene, kota, collision, player, Character, npcs, shop, acts, toast });
 const animals = makeAnimals({ scene, kota, collision, player, toast });
+// wilayah luar kota (guide 86): area terpisah, dimuat satu-satu lewat travel
+const luar = makeLuar({ scene, collision, player, Character, npcs });
+if (player.area === 'luar') { if (luar.ZONES.some(Z => Z.id === player.zone)) luar.load(player.zone); else Object.assign(player, { x: SPAWN.x, z: SPAWN.z, area: 'kota' }); }
+placeParked();
 if (player.area === 'dalam' && !interiors.cur) Object.assign(player, { x: SPAWN.x, z: SPAWN.z, area: 'kota' });
 // reset posisi (tombol menu / R): kalau nyangkut di air, tembok, atau peta berubah, balik ke depan rumah Om Darto
 function resetPos(msg = 'Balik ke depan rumah Om Darto') {
   if (race.active) return;
   if (ride) dismount(true);
   acts.cancel?.(); shop.close();
+  luar.unload(); player.zone = null;
   Object.assign(player, { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, area: 'kota', swim: null, gy: 0 }); interiors.locate();
   cam.x = player.x; cam.z = player.z; toast(msg); saveT = 99;
 }
@@ -339,6 +345,7 @@ tap(ui.quality, () => { opt.quality = (opt.quality + 1) % 3; applyQuality(); ui.
 tap($('btnPx'), () => { opt.px = opt.px >= 5 ? 0 : (opt.px || pxSize) + 1; resize(); $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto'); });
 ui.quality.textContent = 'Grafik: ' + QUALITY[opt.quality].name; $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto');
 const bigmap = makeBigMap({ kota, player, isTouch, parked: () => RIDES.flatMap((R, i) => R && R.holder.visible && player.area === 'kota' ? [{ x: garage.spot[i].x, z: garage.spot[i].z, icon: i === 1 ? 'S' : 'M' }] : []) });
+{ const bmOpen = bigmap.open; bigmap.open = () => player.area === 'luar' ? toast('Peta besar baru ada untuk kota. Di luar kota pakai minimap & halte.') : bmOpen(); }
 // panel status diri: Kekuatan / Kelincahan / Nyali, reputasi, dan peta kekuatan lawan (guide 70 "Upgrade diri")
 const statusEl = $('status');
 const NEEDXP = lv => 6 + lv * 6;
@@ -367,6 +374,7 @@ function findTarget() {
   if (ride || race.active) {
     const rt = race.target(ride); if (rt) return rt;
     if (player.area === 'kota' && Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Parkir & masuk SMA Negeri 3' };
+    if (!race.active && (player.area === 'kota' || player.area === 'luar')) { const lt = luar.target(player.area, player.x, player.z); if (lt && lt.kind === 'travel') return lt; }
     return { kind: 'park', label: 'Turun & parkir' };
   }
   const at = acts.target(), it = interiors.target() || jajan.target() || animals.target();
@@ -377,6 +385,10 @@ function findTarget() {
   for (const n of npcs) { const d = Math.hypot(n.x - player.x, n.z - player.z); if (d < 1.9 && d < bd) { bd = d; best = { kind: 'npc', n, label: 'Ngobrol: ' + n.name }; } }
   if (best) return best;
   if (at) return at;
+  if (player.area === 'kota' || player.area === 'luar') { const lt = luar.target(player.area, player.x, player.z); if (lt) return lt; }
+  if (player.area === 'kota') for (const [key, label] of [['terminal', 'Terminal: naik bus/angkot ke luar kota'], ['stasiun', 'Stasiun: naik kereta ke Pesisir Lintang']]) {
+    const b = kota.specials?.[key]; if (b && Math.hypot(b.x - player.x, b.y - player.z) < Math.max(b.w, b.h) / 2 + 3) return { kind: 'menu', from: key, label };
+  }
   if (player.area === 'kota') {
     if (Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Masuk SMA Negeri 3' };
     for (const m of kota.marks) if (Math.hypot(m.x - player.x, m.y - player.z) < 3.5) return { kind: 'info', label: m.name, desc: m.desc };
@@ -389,6 +401,9 @@ function act() {
   if (target.kind === 'warp') { const t = target; fading = 1; ui.fade.style.opacity = 1; setTimeout(() => { Object.assign(player, t.to, { vx: 0, vz: 0, swim: null }); t.after?.(); cam.x = player.x; cam.z = player.z; if (t.to.area === 'dalam') { cam.saveDist ??= cam.distT; cam.distT = cam.dist = Math.min(cam.distT, ZOOMS[1]); } else if (cam.saveDist) { cam.distT = cam.saveDist; cam.saveDist = null; } placeParked(); ui.fade.style.opacity = 0; fading = 0; }, 380); return; }
   if (target.kind === 'swim') { player.swim = 'air'; player.x = target.x; player.z = target.z; toast('Byur! Berenang (jalan ke tepi untuk naik)'); return; }
   if (target.kind === 'go2') { const to = target.to; fading = 1; ui.fade.style.opacity = 1; setTimeout(() => { Object.assign(player, { x: to.x, z: to.z, vx: 0, vz: 0 }); cam.x = player.x; cam.z = player.z; ui.fade.style.opacity = 0; fading = 0; toast('Sampai di seberang. Bayar 2 ribu ke tukang rakit.'); }, 450); return; }
+  if (target.kind === 'travel') { travel({ ...target.to, keepRide: true }); return; }
+  if (target.kind === 'halte') { travelMenu(target.zone.id); return; }
+  if (target.kind === 'menu') { travelMenu(target.from); return; }
   if (target.kind === 'ride') { mount(target.i); return; }
   if (target.kind === 'park') { dismount(); return; }
   if (target.kind === 'npc') {
@@ -409,19 +424,57 @@ function act() {
   } else toast(target.desc);
 }
 
+/* ------------------------------------------------------------------ travel ke wilayah luar */
+// t: { zone ('kota' | id wilayah), x, z (koordinat peta dunia), h, keepRide, cost, msg }
+function travel(t) {
+  if (fading) return;
+  if (t.cost) { if ((player.uang || 0) < t.cost) { toast('Uangnya kurang buat ongkos...'); return; } player.uang -= t.cost; shop.showMoney(); }
+  fading = 1; ui.fade.style.opacity = 1; if (t.zone !== 'kota') { ui.loading.textContent = 'Dalam perjalanan…'; ui.loading.style.display = ''; }
+  setTimeout(() => {
+    const keep = t.keepRide && ride;
+    if (ride && !keep) dismount(true);
+    acts.cancel?.();
+    if (t.zone === 'kota') { luar.unload(); player.zone = null; Object.assign(player, { area: 'kota', x: t.x, z: t.z }); }
+    else { luar.load(t.zone); Object.assign(player, { area: 'luar', zone: t.zone, x: t.x, z: t.z + luar.LZ }); }
+    Object.assign(player, { heading: t.h ?? player.heading, vx: 0, vz: 0, swim: null, gy: undefined });
+    const p = collision.resolve({ x: player.x, z: player.z }, 0.3); player.x = p.x; player.z = p.z;
+    cam.x = player.x; cam.z = player.z; placeParked(); ui.loading.style.display = 'none'; ui.fade.style.opacity = 0; fading = 0; saveT = 99;
+    toast(t.msg || 'Sampai: ' + (t.zone === 'kota' ? 'Kota Wirabumi' : luar.cur.name));
+  }, 450);
+}
+// titik turun di kota: depan terminal / stasiun
+function townStop(key) {
+  const b = kota.specials?.[key]; if (!b) return { x: SPAWN.x, z: SPAWN.z, h: 0 };
+  for (const d of [2.5, 3.5, 4.5]) { const [x, z] = L({ x: b.x, z: b.y, a: b.a }, 0, b.h / 2 + d), p = collision.resolve({ x, z }, 0.3); if (Math.hypot(p.x - x, p.z - z) < 0.3) return { x, z, h: b.a + Math.PI / 2 }; }
+  const [x, z] = L({ x: b.x, z: b.y, a: b.a }, 0, b.h / 2 + 2.5); return { x, z, h: 0 };
+}
+function travelMenu(from) {
+  const items = [], col = { Angkot: '#8ac8e0', Bus: '#e8a040', Ojek: '#3a9a5a', Kereta: '#c83a3a' };
+  if (from === 'kota' || from === 'terminal' || from === 'stasiun') {
+    for (const Z of luar.ZONES) { if ((from === 'stasiun') !== (Z.mode === 'Kereta')) continue;
+      items.push([Z.name, Z.fare, { desc: Z.mode + ' · turun di halte', btn: 'Naik', fn: () => travel({ zone: Z.id, x: Z.stop.x, z: Z.stop.z, h: Z.stop.h, cost: Z.fare, msg: `Naik ${Z.mode.toLowerCase()}... sampai di ${Z.name}` }) }, col[Z.mode]]); }
+    shop.open({ title: from === 'stasiun' ? 'Stasiun Wirabumi' : 'Terminal Wirabumi', sub: from === 'stasiun' ? 'Kereta lokal ke pesisir' : 'Bus, angkot & ojek pangkalan ke luar kota', items });
+  } else {
+    const Z = luar.ZONES.find(z => z.id === from), back = Z.mode === 'Kereta' ? 'stasiun' : 'terminal', s = townStop(back);
+    items.push(['Pulang ke kota (' + (back === 'stasiun' ? 'Stasiun' : 'Terminal') + ' Wirabumi)', Z.fare, { desc: Z.mode, btn: 'Naik', fn: () => travel({ zone: 'kota', x: s.x, z: s.z, h: s.h, cost: Z.fare, msg: 'Sampai lagi di Kota Wirabumi' }) }, col[Z.mode]]);
+    shop.open({ title: 'Halte ' + Z.name, sub: 'Angkutan pulang ke kota', items });
+  }
+}
+
 /* ------------------------------------------------------------------ minimap */
 const mctx = ui.map.getContext('2d');
 function drawMinimap() {
   const S = 132, sc = 3;   // 3 piksel per petak di minimap
   if (player.area === 'dalam') { mctx.fillStyle = '#2a2420'; mctx.fillRect(0, 0, S, S); mctx.fillStyle = '#fffbe8'; mctx.font = 'bold 13px Trebuchet MS'; mctx.textAlign = 'center'; mctx.fillText('di dalam', S / 2, S / 2 - 6); mctx.fillText(interiors.cur?.name || '', S / 2, S / 2 + 12); return; }
-  const inK = player.area === 'kota', img = inK ? kota.groundTex : sekolah.groundTex, ox = inK ? 0 : SCHOOL_OX + sekolah.gx0, oz = inK ? 0 : sekolah.gz0;
-  const k = img.width / (inK ? 260 : sekolah.gw);
+  const LM = player.area === 'luar' && luar.map, inK = player.area === 'kota', img = LM ? LM.img : inK ? kota.groundTex : sekolah.groundTex, ox = LM ? LM.ox : inK ? 0 : SCHOOL_OX + sekolah.gx0, oz = LM ? LM.oz : inK ? 0 : sekolah.gz0;
+  const k = LM ? LM.k : img.width / (inK ? 260 : sekolah.gw);
   mctx.save(); mctx.fillStyle = '#9ab878'; mctx.fillRect(0, 0, S, S);
   mctx.translate(S / 2, S / 2); mctx.rotate(cam.yaw);
   mctx.imageSmoothingEnabled = false;
   mctx.drawImage(img, (player.x - ox) * k - S / sc / 2 * k * 1.5, (player.z - oz) * k - S / sc / 2 * k * 1.5, S / sc * k * 1.5, S / sc * k * 1.5, -S * 0.75, -S * 0.75, S * 1.5, S * 1.5);
   mctx.fillStyle = '#ffd84a';
   for (const n of npcs) { const dx = (n.x - player.x) * sc, dz = (n.z - player.z) * sc; if (Math.abs(dx) < S && Math.abs(dz) < S) mctx.fillRect(dx - 1.5, dz - 1.5, 3, 3); }
+  if (player.area === 'luar') { mctx.fillStyle = '#e04040'; for (const m of luar.marks) { const dx = (m.x - player.x) * sc, dz = (m.z + luar.LZ - player.z) * sc; if (Math.abs(dx) < S && Math.abs(dz) < S) mctx.fillRect(dx - 2, dz - 2, 4, 4); } }
   if (player.area === 'kota') { mctx.fillStyle = '#e04040'; for (const m of kota.marks) { const dx = (m.x - player.x) * sc, dz = (m.y - player.z) * sc; if (Math.abs(dx) < S && Math.abs(dz) < S) mctx.fillRect(dx - 2, dz - 2, 4, 4); } }
   mctx.rotate(player.heading); mctx.fillStyle = '#fff'; mctx.strokeStyle = '#000'; mctx.lineWidth = 1;
   mctx.beginPath(); mctx.moveTo(6, 0); mctx.lineTo(-4, -4); mctx.lineTo(-2, 0); mctx.lineTo(-4, 4); mctx.closePath(); mctx.fill(); mctx.stroke();
@@ -478,6 +531,7 @@ function updatePlayer(dt) {
   }
   if (player.area === 'kota') { kota.traffic.push(np, ride ? 0.4 : 0.28); if (ride) { const hl = RIDES[ride].r.half || 0.45, cx = Math.cos(player.heading), cz = Math.sin(player.heading); for (const sd of [1, -1]) { const f = { x: np.x + cx * hl * sd, z: np.z + cz * hl * sd }, g = kota.traffic.push({ ...f }, 0.25); np.x += g.x - f.x; np.z += g.z - f.z; } } }
   pushParked(np, ride ? 0.4 : 0.28);
+  if (player.area === 'luar' && !luar.allowed(np.x, np.z)) np = luar.allowed(np.x, player.z) ? { x: np.x, z: player.z } : luar.allowed(player.x, np.z) ? { x: player.x, z: np.z } : { x: player.x, z: player.z };   // batas wilayah: keluar lewat jalan (Aksi)
   // kolam renang: masuk = langsung berenang, keluar = jalan lagi
   if (player.area === 'kota' && player.swim !== 'air') { const pool = !ride && acts.poolAt(np.x, np.z); if (pool && !player.swim) toast('Berenang di ' + pool.name.toLowerCase()); player.swim = pool ? 'kolam' : null; }
   // kecepatan nyata (supaya animasi berhenti saat menabrak dinding)
@@ -496,7 +550,7 @@ function updatePlayer(dt) {
   if (RD) { raka.play(RD.r.anim); RD.r.spin(v * dt); }
   else if (sw) raka.play(moveA ? 'swim' : 'tread');
   else raka.play(lock || ac.anim || player.emote || (v > 3.2 ? 'run' : v > 0.35 ? 'walk' : 'idle'));
-  { const gy = player.area === 'kota' && !player.swim ? kota.groundY(player.x, player.z) : 0; player.gy = (player.gy ?? gy) + (gy - (player.gy ?? gy)) * Math.min(1, dt * 18); }
+  { const gy = player.area === 'kota' && !player.swim ? kota.groundY(player.x, player.z) : player.area === 'luar' ? luar.groundY(player.x, player.z) : 0; player.gy = (player.gy ?? gy) + (gy - (player.gy ?? gy)) * Math.min(1, dt * 18); }
   raka.group.position.set(player.x, player.gy, player.z);
   raka.update(RD ? (RD.r.type === 'sepeda' ? dt * Math.min(1.6, v / 2.5) : dt) : dt);
   if (RD) RD.r.syncCrank(raka);
@@ -543,7 +597,7 @@ function updateNPC(n, dt) {
   // jangan tembus pemain
   const pd = Math.hypot(dx, dz); if (pd < 0.55 && pd > 1e-4) { n.x = player.x + dx / pd * 0.55; n.z = player.z + dz / pd * 0.55; }
   n.c.heading = n.heading; n.c.play(moving ? 'walk' : n.say && !n.filler ? 'talk' : n.idle || 'idle');
-  n.c.group.position.set(n.x, !n.area || n.area === 'kota' ? kota.groundY(n.x, n.z) : 0, n.z); n.c.update(dt);
+  n.c.group.position.set(n.x, !n.area || n.area === 'kota' ? kota.groundY(n.x, n.z) : n.area === 'luar' ? luar.groundY(n.x, n.z) : 0, n.z); n.c.update(dt);
   if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
   n.greetT -= dt;
   if (n.parkir && ride && !n.say && n.greetT <= 0 && Math.hypot(dx, dz) < 4) { n.say = { text: pick3(['Parkir sini, Mas! Aman!', 'Sini, sini, masih kosong!', 'Helmnya dititip sini aja, Mas.']), t: 3 }; n.greetT = 20; n.idle = 'wave'; n.wait = 3; }
@@ -618,7 +672,7 @@ function loop(now) {
   target = findTarget();
   ui.prompt.style.display = target ? '' : 'none';
   if (target) ui.prompt.textContent = (isTouch ? '' : '[Spasi] ') + target.label;
-  const an = player.area === 'kota' ? kota.regionAt(player.x, player.z) : player.area === 'dalam' ? (interiors.cur?.name || '') : sekolah.zoneAt(player.x, player.z);
+  const an = player.area === 'kota' ? kota.regionAt(player.x, player.z) : player.area === 'luar' ? luar.nameAt(player.x, player.z) : player.area === 'dalam' ? (interiors.cur?.name || '') : sekolah.zoneAt(player.x, player.z);
   if (an !== areaName) { areaName = an; ui.area.textContent = an; }
   drawBubbles();
   if (isTouch) { const sp = player.fx.nyali >= 100, b = $('btnHit'); if (b.classList.contains('on') !== sp) { b.classList.toggle('on', sp); b.textContent = sp ? 'JURUS' : 'Pukul'; } }
@@ -628,7 +682,7 @@ function loop(now) {
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { ui.fps.textContent = `${Math.round(fpsN / fpsAcc)} fps · ${renderer.info.render.calls} draw · ${renderer.domElement.width}x${renderer.domElement.height}`; fpsAcc = 0; fpsN = 0; }
   saveT += dt;
-  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area }, yaw: cam.yawT, opt, garage, stats: player.stats, uang: player.uang, inv: player.inv, flags: player.flags, upg: player.upg })); }
+  if (saveT > 4) { saveT = 0; localStorage.setItem(SAVE_KEY, JSON.stringify({ p: { x: player.x, z: player.z, heading: player.heading, area: player.area, zone: player.zone }, yaw: cam.yawT, opt, garage, stats: player.stats, uang: player.uang, inv: player.inv, flags: player.flags, upg: player.upg })); }
 }
 
 // kendaraan parkir kota & sekolah: jumlahnya ganti tiap hari (hari berganti saat Raka tidur)
@@ -641,4 +695,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

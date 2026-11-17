@@ -126,6 +126,16 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
   dengan lampu; titik loncat ke warung Mak Iyah. Masuk lewat gerbang SMA 3 di kota (Aksi).
 - Tokoh dari `karakter/npc_styles.js` (Om Darto, Cici, Bimo, Laras, Mas Fajar, Bram, Kobar, Tegar, Nadia, Sekar, Pak Ujang, dll.)
   berkeliaran di tempatnya masing-masing dan bisa diajak ngobrol.
+- **Wilayah luar kota** (`src/luar.js`, data `src/data/dunia.json` dari peta dunia): 9 wilayah terpisah yang dimuat satu per
+  satu, yaitu Gunung Sangkala, Waduk Sirnagalih (bendungan & PLTA), Desa Sukamekar & kebun teh, Desa Tegalsari (sawah),
+  Batalyon 3 & kawasan industri, Sirkuit, Muara & kampung nelayan (TPI panggung), Pantai (mercusuar, hotel, warung),
+  Pesisir Lintang (stasiun ujung rel). Cara pindah:
+  - jalan kaki / naik motor sampai batas kota di ujung jalan, lalu Aksi ("Ke …"); kendaraan ikut terbawa;
+  - **Terminal** kota: bus/angkot/ojek ke tiap wilayah (Rp4.000 sampai Rp15.000); **Stasiun**: kereta ke Pesisir Lintang;
+  - **Halte** kuning di tiap wilayah: naik angkutan pulang ke kota.
+  Tiap wilayah punya warga yang bisa diajak ngobrol. Posisi di luar kota ikut tersimpan.
+- **Kendaraan parkir** punya tabrakan, dan jumlahnya ganti tiap hari (sepi / jarang / sedang / penuh). Hari berganti saat tidur.
+- **Lapangan basket** umum di samping SMA punya garis lengkap; lapangan basket di dalam SMA 3 bisa dipakai main.
 
 ## Kembangkan
 

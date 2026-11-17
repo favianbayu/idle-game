@@ -44,8 +44,8 @@ export function makeShop({ player, toast, fight }) {
     const { title, sub, items, sellFish } = cur;
     let h = `<button class="x">✕</button><h3>${title}</h3><div class="sub">${sub || ''} · Uangmu: <b>${rp(player.uang)}</b> · Nyawa ${Math.ceil(player.fx?.hp ?? 0)}/${fight.maxHP()}</div>`;
     items.forEach(([nm, pr, ef, c], i) => {
-      const efs = [ef.hp && `+${ef.hp} nyawa`, ef.ny && `+${ef.ny} nyali`, ef.up && `level sekarang ${(player.upg || {})[ef.up] || 0}/5`].filter(Boolean).join(' · ') || 'biar awet';
-      h += `<div class="it"><span class="ic" style="background:${c}"></span><span class="nm">${nm}<br><span class="ef">${efs}</span></span><b>${pr ? rp(pr) : 'gratis'}</b><button data-i="${i}" ${player.uang < pr ? 'disabled' : ''}>Beli</button></div>`;
+      const efs = ef.desc || [ef.hp && `+${ef.hp} nyawa`, ef.ny && `+${ef.ny} nyali`, ef.up && `level sekarang ${(player.upg || {})[ef.up] || 0}/5`].filter(Boolean).join(' · ') || 'biar awet';
+      h += `<div class="it"><span class="ic" style="background:${c}"></span><span class="nm">${nm}<br><span class="ef">${efs}</span></span><b>${pr ? rp(pr) : 'gratis'}</b><button data-i="${i}" ${player.uang < pr ? 'disabled' : ''}>${ef.btn || 'Beli'}</button></div>`;
     });
     if (sellFish) {
       const inv = player.inv || {}, fish = Object.entries(inv).filter(([k, v]) => v > 0 && FISH_PRICE[k]);
@@ -58,6 +58,7 @@ export function makeShop({ player, toast, fight }) {
   }
   function buy(i) {
     const [nm, pr, ef] = cur.items[i]; if (player.uang < pr) { toast('Uangnya kurang...'); return; }
+    if (ef.fn) { close(); ef.fn(); return; }   // pilihan khusus (mis. tujuan travel): tindakannya sendiri yang bayar
     player.uang -= pr; apply(ef); showMoney(); toast(`${nm} ${pr ? 'dibeli' : 'dikasih Om'}. ${cur.thanks || 'Makasih ya!'}`); render();
   }
   function sell(k) { const inv = player.inv; if (!inv[k]) return; inv[k]--; player.uang += FISH_PRICE[k]; showMoney(); toast(`${k} terjual ${rp(FISH_PRICE[k])}`); render(); }

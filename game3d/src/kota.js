@@ -53,7 +53,7 @@ const REGION_KEY = ['bukit', 'kampung', 'pusat', 'sekolah', 'perum', 'bantaran',
 const SPECIAL = { '110,54': 'sma', '19,58': 'stasiun', '146,64': 'masjid', '114,98': 'pasar', '178,98': 'plaza', '50,131': 'gudang', '150,158': 'stm', '224,56': 'bram', '84,18': 'menara', '168,44': 'gor', '162,124': 'pabrik', '246,98': 'terminal', '64,164': 'kandang' };
 
 /* ------------------------------------------------------------------ geometri polyline */
-function resample(pts, step = 0.25) {
+export function resample(pts, step = 0.25) {
   const out = [];
   for (let i = 1; i < pts.length; i++) {
     const [x0, z0] = pts[i - 1], [x1, z1] = pts[i], l = Math.hypot(x1 - x0, z1 - z0); if (!l) continue;
@@ -63,7 +63,7 @@ function resample(pts, step = 0.25) {
   let acc = 0; out.forEach((p, i) => { if (i) acc += Math.hypot(p.x - out[i - 1].x, p.z - out[i - 1].z); p.s = acc; });
   return out;
 }
-function strokePath(g, pts, s) { g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x * s, y * s) : g.moveTo(x * s, y * s)); }
+export function strokePath(g, pts, s) { g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x * s, y * s) : g.moveTo(x * s, y * s)); }
 // sambungan ujung-ke-ujung dua jenis jalan beda lebar: ujung jalan yang lebih lebar menyempit pelan (tanpa ujung bulat)
 const TAPER = 3;
 function roadTapers(K) {
@@ -87,7 +87,7 @@ function strokeRoad(g, r, s, extra) {
   }
 }
 const nearTaper = (r, sAlong, L) => r.taper && ((r.taper[0] !== undefined && sAlong < TAPER + 0.3) || (r.taper[1] !== undefined && sAlong > L - TAPER - 0.3));
-function strokeOffset(g, pts, off, s) {   // garis sejajar polyline, bergeser off petak ke kiri
+export function strokeOffset(g, pts, off, s) {   // garis sejajar polyline, bergeser off petak ke kiri
   g.beginPath();
   pts.forEach(([x, y], i) => {
     const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
@@ -341,7 +341,7 @@ function fixAccess(houses, specials, M, occ, reserve, W, H) {
 
 /* ------------------------------------------------------------------ cat tanah */
 // variasi rumput skala besar: bercak kering kekuningan, hijau subur, rumput pendek, tanah gundul, semanggi & bunga kecil
-function grassVariety(g, W, H, s) {
+export function grassVariety(g, W, H, s) {
   const blot = (x, z, r, c, a) => { const gr = g.createRadialGradient(x * s, z * s, 0, x * s, z * s, r * s); gr.addColorStop(0, `rgba(${c},${a})`); gr.addColorStop(0.6, `rgba(${c},${a * 0.6})`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.beginPath(); g.ellipse(x * s, z * s, r * s, r * s * (0.6 + hash(x, z) * 0.5), hash(z, x) * 3, 0, 7); g.fill(); };
   const TONES = [['196,200,120', 0.35], ['120,160,80', 0.3], ['150,186,104', 0.3], ['176,196,116', 0.28], ['110,150,76', 0.25], ['186,170,120', 0.2]];
   const n = Math.round(W * H / 55);
@@ -359,7 +359,7 @@ function grassVariety(g, W, H, s) {
 }
 // aus & tambalan jalan: jejak ban lebih terang, garis oli di tengah lajur, tambalan aspal, retak, tutup gorong-gorong,
 // pasir di pinggir; gang conblock: bata kusam & lumut; setapak: batu kerikil
-function roadWear(g, K, s) {
+export function roadWear(g, K, s) {
   g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
   K.roads.forEach((r, ri) => {
     if (r.kind === 'raya' || r.kind === 'jalan') {

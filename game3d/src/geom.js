@@ -148,13 +148,15 @@ export class Merger {
     return g;
   }
 }
+// cos/sin disimpan di xf; dihitung ulang bila sudut berubah (mis. { ...xf, a: xf.a + PI } ikut menyalin cache lama)
+function cs(xf) { const a = xf.a || 0; if (xf._a !== a) { xf._a = a; xf.c = Math.cos(a); xf.s = Math.sin(a); } return xf.c; }
 function tf(xf, x, y, z) {
-  const c = xf.c ?? (xf.c = Math.cos(xf.a || 0)), s = xf.s ?? (xf.s = Math.sin(xf.a || 0));
+  const c = cs(xf), s = xf.s;
   const k = xf.k || 1; x *= k; y *= k; z *= k;   // xf.k: skala seragam (kendaraan dikecilkan supaya pas dengan tokoh)
   return [xf.x + x * c - z * s, (xf.y || 0) + y, xf.z + x * s + z * c];
 }
 function tn(xf, v) {
-  const c = xf.c ?? (xf.c = Math.cos(xf.a || 0)), s = xf.s ?? (xf.s = Math.sin(xf.a || 0));
+  const c = cs(xf), s = xf.s;
   return [v[0] * c - v[2] * s, v[1], v[0] * s + v[2] * c];
 }
 
