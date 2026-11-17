@@ -93,7 +93,7 @@ export const WARUNGS = [
   ['WARUNG PAK SLAMET', 'SEMBAKO • ES BATU', '#2a6a3a', '#ffffff', '#f2d23a', 'bapakPeci', 'Pak Slamet'],
   ['WARUNG MADURA', 'CAK MAMAT • BUKA 24 JAM', '#1a5a2a', '#ffffff', '#e8302a', 'pemuda', 'Cak Mamat'],
   ['WARUNG MBAK WULAN', 'JAJANAN • ES DINGIN', '#e88ab8', '#ffffff', '#7a1a4a', 'mbak', 'Mbak Wulan'],
-  ['TOKO SINAR JAYA', 'KOH LIEM • SEMBAKO', '#b8141e', '#f6d24a', '#f6d24a', 'kakek', 'Koh Liem'],
+  ['TOKO SINAR JAYA', 'KOH AHONG • SEMBAKO', '#b8141e', '#f6d24a', '#f6d24a', 'kohAhong', 'Koh Ahong'],
   ['WARUNG BU ROMLAH', 'BERAS • MINYAK • GULA', '#2a5aa8', '#ffffff', '#f2c230', 'ibuHijab', 'Bu Romlah'],
   ['WARUNG PAK KARDI', 'KOPI • GORENGAN', '#3a2418', '#f2d29a', '#e8823a', 'pakRT', 'Pak Kardi'],
   ['WARUNG BU DARSIH', 'NASI UDUK PAGI', '#f6f2e6', '#2a6a2a', '#d0282e', 'ibuHijab2', 'Bu Darsih'],

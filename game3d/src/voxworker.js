@@ -41,6 +41,16 @@ import { build as sintaBuild } from './raka/sinta.js';
 import { build as antonBuild } from './raka/anton.js';
 import { build as gunadiBuild } from './raka/gunadi.js';
 import { build as melatiBuild } from './raka/melati.js';
+import { build as ujangBuild } from './raka/ujang.js';
+import { build as iyahBuild } from './raka/iyah.js';
+import { build as amaBuild } from './raka/ama.js';
+import { build as kartoBuild } from './raka/karto.js';
+import { build as sumBuild } from './raka/sum.js';
+import { build as darminBuild } from './raka/darmin.js';
+import { build as riniBuild } from './raka/rini.js';
+import { build as jokoBuild } from './raka/joko.js';
+import { build as euisBuild } from './raka/euis.js';
+import { build as ahongBuild } from './raka/ahong.js';
 import { voxelFrame } from './raka/frame.js';
 import { exprFor, helmFor } from './raka/expr.js';
 
@@ -98,7 +108,8 @@ const FINE = { raka: buildParts, rani: raniBuild, bimo: bimoBuild, bram: bramBui
   mei: meiBuild, gilang: gilangBuild, wulan: wulanBuild, omDarto: dartoBuild, cici: ciciBuild, fajar: fajarBuild, kobar: kobarBuild,
   bangJaka: jakaBuild, buNarti: nartiBuild, rtSlamet: rtSlametBuild, pakHaris: harisBuild, pakGito: gitoBuild, rio: rioBuild, kevin: kevinBuild,
   buHartini: hartiniBuild, buRatna: ratnaBuild, pakHendro: hendroBuild, pakWawan: wawanBuild, buSinta: sintaBuild, mrAnton: antonBuild,
-  pakGunadi: gunadiBuild, buMelati: melatiBuild };
+  pakGunadi: gunadiBuild, buMelati: melatiBuild, pakUjang: ujangBuild, makIyah: iyahBuild, ama: amaBuild, mbahKarto: kartoBuild,
+  buSum: sumBuild, pakDarmin: darminBuild, mbakRini: riniBuild, pakJoko: jokoBuild, tehEuis: euisBuild, kohAhong: ahongBuild };
 const PARTS = new Map();
 const fineParts = (sid, outfit, expr, helm) => {
   const k = sid + '|' + outfit + '|' + expr + (helm ? '+h' : '');

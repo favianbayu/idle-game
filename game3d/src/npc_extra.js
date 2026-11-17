@@ -27,4 +27,12 @@ export const EXTRA_STYLES = {
   // tokoh voxel halus yang belum punya gaya lama sendiri (bentuknya dari src/raka/, gaya ini hanya cadangan)
   wulan:    { name: 'Wulan', scale: 1.26, skin: '#c99068', hair: '#141010', hairStyle: 'long', top: '#1e2a4a', sleeves: 'long', bottom: '#1e2a4a', bottomStyle: 'skirt', shoe: '#1a1a1a', shoeStyle: 'shoe' },
   rtSlamet: { name: 'Pak RT Slamet', scale: 1.32, skin: '#c48a5e', hair: '#1a1410', hairStyle: 'sidepart', top: '#7a4a24', top2: '#e8c070', topPattern: 'batik', sleeves: 'short', bottom: '#2a2a30', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe', belly: 0.5 },
+  ama:       { name: 'Ama', scale: 1.18, skin: '#e8c4a0', hair: '#c8c4bc', hairStyle: 'bun', top: '#7a3a5a', sleeves: 'long', bottom: '#2a2a30', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'sandal', glasses: 'round' },
+  mbahKarto: { name: 'Mbah Karto', scale: 1.24, skin: '#a8744a', hair: '#d8d4cc', hairStyle: 'peci', top: '#e8e2d4', sleeves: 'short', bottom: '#5a4a3a', bottomStyle: 'sarung', shoe: '#3a2a1a', shoeStyle: 'sandal', beard: 'stubble' },
+  buSum:     { name: 'Bu Sum', scale: 1.22, skin: '#b07a52', hair: '#1a1410', hairStyle: 'caping', cap: '#d8c48a', top: '#c86a3a', sleeves: 'long', bottom: '#5a3a2a', bottomStyle: 'skirt', shoe: '#3a2a1a', shoeStyle: 'sandal' },
+  pakDarmin: { name: 'Pak Darmin', scale: 1.3, skin: '#a8703e', hair: '#141010', hairStyle: 'crew', top: '#2a5a8a', sleeves: 'long', bottom: '#3a3a40', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'sandal', beard: 'mustache' },
+  mbakRini:  { name: 'Mbak Rini', scale: 1.22, skin: '#d9a27a', hair: '#141010', hairStyle: 'ponytail', top: '#e88aa8', sleeves: 'short', bottom: '#4a5a7a', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'sandal' },
+  pakJoko:   { name: 'Pak Joko', scale: 1.36, skin: '#9a6a42', hair: '#141010', hairStyle: 'buzz', top: '#4a4a52', sleeves: 'short', bottom: '#3a3a40', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe', beard: 'mustache', brow: 'thick' },
+  tehEuis:   { name: 'Teh Euis', scale: 1.2, skin: '#e0b090', hijab: '#2a8a7a', hairStyle: 'hijab', top: '#f2e8d0', sleeves: 'long', bottom: '#5a3a5a', bottomStyle: 'skirt', shoe: '#3a2a1a', shoeStyle: 'sandal' },
+  kohAhong:  { name: 'Koh Ahong', scale: 1.3, skin: '#ecc8a4', hair: '#2a2420', hairStyle: 'sidepart', top: '#f2f2ee', sleeves: 'short', bottom: '#3a3a40', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'sandal', glasses: true, belly: 0.5 },
 };
