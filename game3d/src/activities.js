@@ -316,7 +316,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
 
   /* ---------------- API untuk main.js */
   return {
-    balls, score, poolAt, spots, bags, addBag,
+    balls, score, poolAt, spots, bags, addBag, addPool: p => pools.push(p),
     // aksi umum dengan animasi & gerak terkunci (kerja, makan, dsb.)
     doAct(anim, dur, end) { actT = { anim, t: 0, dur, at: 99, fn: () => {}, end }; },
     setHold(v) { hold = v; },

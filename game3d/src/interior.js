@@ -29,7 +29,7 @@ function textPlane(lines, w, h, bg, fg, px = 64) {
   return mesh;
 }
 
-export function makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast }) {
+export function makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast, kolam }) {
   const rooms = {}, outDoors = [];
   let slot = 0, cur = null;
 
@@ -53,7 +53,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     // lis rendah tetap terlihat walau dinding disembunyikan
     for (const [lx, lz, sx, sz] of [[0, -d / 2 - t / 2, w + t * 2, t], [-w / 2 - t / 2, 0, t, d], [w / 2 + t / 2, 0, t, d], [(l0 + l1) / 2, d / 2 + t / 2, l1 - l0, t], [(r0 + r1) / 2, d / 2 + t / 2, r1 - r0, t]]) st.box(X, lx, 0, lz, sx, 0.3, sz, base);
     // lantai + alas gelap di bawahnya
-    st.box(X, 0, -0.4, 0, w + 3, 0.38, d + 3, C('#141418'));
+    if (!o.noUnder) st.box(X, 0, -0.4, 0, w + 3, 0.38, d + 3, C('#141418'));
     collision.box(ox, oz - d / 2 - t / 2, w / 2 + t, t / 2); collision.box(ox - w / 2 - t / 2, oz, t / 2, d / 2 + t); collision.box(ox + w / 2 + t / 2, oz, t / 2, d / 2 + t);
     collision.box(ox + (l0 + l1) / 2, oz + d / 2 + t / 2, (l1 - l0) / 2, t / 2); collision.box(ox + (r0 + r1) / 2, oz + d / 2 + t / 2, (r1 - r0) / 2, t / 2);
     if (!o.noDoor) collision.box(ox + doorX, oz + d / 2 + 0.3, dw / 2, 0.12);   // ambang: tidak bisa jalan keluar tembus, harus lewat Aksi
@@ -77,7 +77,8 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
   }
 
   /* ---------------- perabot (koordinat lokal p, depan = +z) */
-  const tiles = (R, c1, c2, s = 0.5) => { const a = C(c1), b = C(c2); for (let i = 0; i < Math.ceil(R.w / s); i++) for (let j = 0; j < Math.ceil(R.d / s); j++) { const x0 = -R.w / 2 + i * s, z0 = -R.d / 2 + j * s, sx = Math.min(s, R.w / 2 - x0), sz = Math.min(s, R.d / 2 - z0); R.st.box(R.X, x0 + sx / 2, -0.02, z0 + sz / 2, sx, 0.02, sz, (i + j) % 2 ? a : b); } };
+  // holes: [x, y, w, h] dalam koordinat denah (0..w, 0..d), lantai dikosongkan (kolam)
+  const tiles = (R, c1, c2, s = 0.5, holes = []) => { const a = C(c1), b = C(c2); for (let i = 0; i < Math.ceil(R.w / s); i++) for (let j = 0; j < Math.ceil(R.d / s); j++) { if (holes.some(([hx, hy, hw, hh]) => i * s >= hx - 1e-6 && i * s < hx + hw - 1e-6 && j * s >= hy - 1e-6 && j * s < hy + hh - 1e-6)) continue; const x0 = -R.w / 2 + i * s, z0 = -R.d / 2 + j * s, sx = Math.min(s, R.w / 2 - x0), sz = Math.min(s, R.d / 2 - z0); R.st.box(R.X, x0 + sx / 2, -0.02, z0 + sz / 2, sx, 0.02, sz, (i + j) % 2 ? a : b); } };
   const planks = (R, c, s = 0.3) => { const a = C(c); for (let i = 0; i < Math.ceil(R.w / s); i++) { const x0 = -R.w / 2 + i * s, sx = Math.min(s, R.w / 2 - x0); R.st.box(R.X, x0 + sx / 2, -0.02, 0, sx - 0.015, 0.02, R.d, shade(a, 0.85 + hash(i, 7) * 0.25)); } R.st.box(R.X, 0, -0.03, 0, R.w, 0.01, R.d, shade(a, 0.4)); };
   const flat = (R, c) => R.st.box(R.X, 0, -0.02, 0, R.w, 0.02, R.d, C(c));
   function table(m, p, w, d, h = 0.75, c = '#8a5a34', top) { const k = C(c); m.box(p, 0, h - 0.05, 0, w, 0.05, d, top ? C(top) : k); for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.box(p, sx * (w / 2 - 0.06), 0, sz * (d / 2 - 0.06), 0.06, h - 0.05, 0.06, shade(k, 0.8)); }
@@ -128,7 +129,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     npcs.push(n); return n;
   }
   const restOK = { t: -99 };
-  const sleep = () => acts.doAct('lie', 3.2, () => { player.fx.hp = fight.maxHP(); const f = player.flags || (player.flags = {}); f.gymN = 0; f.gymPaid = false; f.day = (f.day || 0) + 1; dispatchEvent(new CustomEvent('newday', { detail: f.day })); toast('Tidur... bangun, hari baru! Nyawa pulih penuh. (Tersimpan)'); fight.gain('nyali', 0.5); });   // tidur = ganti hari (jatah sesi gym)
+  const sleep = () => acts.doAct('lie', 3.2, () => { player.fx.hp = fight.maxHP(); const f = player.flags || (player.flags = {}); f.gymN = 0; f.gymPaid = false; f.poolPaid = false; f.day = (f.day || 0) + 1; dispatchEvent(new CustomEvent('newday', { detail: f.day })); toast('Tidur... bangun, hari baru! Nyawa pulih penuh. (Tersimpan)'); fight.gain('nyali', 0.5); });   // tidur = ganti hari (jatah sesi gym)
 
   // ruangan besar (GOR, bengkel STM) pakai koordinat denah guide: (x, y) petak dari pojok kiri atas, y ke bawah = ke arah pintu
   function plan(R) {
@@ -387,7 +388,73 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     npc('ibuHijab', 'Bu Kantin GOR', 38, 32.6, ['Es teh, es jeruk, nasi bungkus!', 'Habis main basket pasti haus.'], 0.4);
     npc('siswaA', 'Andi', 22, 12, ['Futsal yuk, kurang satu orang!', 'Lapangan disewa sampai jam lima.'], 2.5);
     npc('siswiA', 'Rina', 30, 19, ['Badminton yuk, raketnya bawa dua.', 'Liga basket bentar lagi, SMA 3 harus juara!'], 2.0);
+    R.spot(5.5 - 33, 37.5 - 22, 1.3, 'Ke kolam renang lomba (tiket Rp10.000)', null);
+    { const sp = R.spots.at(-1), fl = () => player.flags || (player.flags = {});
+      sp.warp = () => { const K = rooms.gor_kolam; return { x: K.ox + K.entry.x, z: K.oz + K.entry.z, heading: -Math.PI / 2, room: K }; };
+      sp.gate = { ok: () => fl().poolPaid || player.uang >= 10000, no: () => toast('Tiket berenang Rp10.000. Uangnya kurang...'),
+        pay: () => { const f = fl(); if (f.poolPaid) return; player.uang -= 10000; shop.showMoney(); f.poolPaid = true; toast('Bayar tiket kolam Rp10.000 (berlaku sampai tidur)'); } }; }
     finish(R); R.doorLabel = 'Masuk GOR';
+  }
+
+  /* ================= 5b. Kolam renang lomba GOR (guide 89, gor/denah_tapak_gor.png no. 4-8): kolam 8 lintasan 25 m dengan
+     balok start & tali merah-kuning, tribun beratap 4 baris, kolam loncat dalam + menara 1/3/5 m, papan skor, bilas & ganti.
+     Masuk dari ruang ganti GOR. Mini game: balap renang & loncat indah (kolam.js). */
+  { const R = room('gor_kolam', 'Kolam Renang Lomba GOR', 24, 42, { ox: OX + 95, oz: OZB, wall: '#e4ecf0', base: '#2a6a9a', h: 6.6, noDoor: true, noUnder: true });
+    tiles(R, '#e8eef0', '#d4dee2', 0.5, [[2, 4, 12, 25], [2, 32, 8, 8]]);
+    const { at, box, solid, label, spot, npc, plane, world, m } = plan(R), WY = -0.18;
+    // kolam: dinding & lantai keramik biru, air semi-bening (lantai ruangan di y 0)
+    const basin = (x, y, w, h, depth) => {
+      box(x - 0.3, y - 0.3, w + 0.6, 0.3, 0.06, '#f4f4f0'); box(x - 0.3, y + h, w + 0.6, 0.3, 0.06, '#f4f4f0'); box(x - 0.3, y, 0.3, h, 0.06, '#f4f4f0'); box(x + w, y, 0.3, h, 0.06, '#f4f4f0');   // bibir kolam
+      box(x, y, w, h, 0.02, '#2a78b8', { y: -depth }); for (const [bx, by, bw, bh] of [[x, y, w, 0.05], [x, y + h - 0.05, w, 0.05], [x, y, 0.05, h], [x + w - 0.05, y, 0.05, h]]) box(bx, by, bw, bh, depth, '#5ab0e0', { y: -depth });
+      const wm = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshLambertMaterial({ color: '#4ab8e8', transparent: true, opacity: 0.72 })); wm.rotation.x = -Math.PI / 2; const [wx, wz] = world(x + w / 2, y + h / 2); wm.position.set(wx, WY, wz); wm.renderOrder = 2; scene.add(wm);
+      acts.addPool({ x: wx, z: wz, w, d: h, a: 0, name: 'Kolam renang GOR' });
+    };
+    // kolam lomba 8 lintasan x 25 m: balok start di sisi utara (dekat papan skor)
+    const px = 2, py = 4, LW = 1.5, LEN = 25; basin(px, py, LW * 8, LEN, 1.4);
+    for (let i = 0; i < 8; i++) box(px + i * LW + LW / 2 - 0.05, py + 0.4, 0.1, LEN - 0.8, 0.003, '#1a3a6a', { y: -1.38 });   // garis dasar
+    for (let i = 1; i < 8; i++) for (let k = 0; k < LEN / 0.5; k++) box(px + i * LW - 0.06, py + k * 0.5, 0.12, 0.42, 0.07, k < 10 || k > 39 ? '#d83a2a' : '#f2c230', { y: WY - 0.03 });   // tali lintasan
+    for (let i = 0; i < 8; i++) { const bx = px + i * LW + LW / 2; box(bx - 0.3, py - 0.75, 0.6, 0.55, 0.5, '#f4f4f0', { top: '#3a8ac0', solid: true }); plane([String(i + 1)], bx, py - 0.47, 0.32, 0.3, 0.2, 0, '#2a6a9a', '#ffffff', 60); }
+    for (const yy of [py + 5, py + LEN - 5]) for (let k = 0; k < 8; k++) box(px + k * 1.5, yy, 0.6, 0.04, 0.04, k % 2 ? '#f4f4f0' : '#d83a2a', { y: 1.9 });   // bendera gaya punggung
+    // tribun kolam beratap 4 baris (di timur kolam), menghadap barat
+    for (let r = 0; r < 4; r++) { const xx = 16.5 + r * 1.2, hy = 0.4 * (r + 1); box(xx, py, 1.2, LEN, hy, r % 2 ? '#9aa0a8' : '#b8bec6'); for (let i = 0; i < 12; i++) box(xx + 0.1, py + 0.6 + i * 2, 0.5, 1.5, 0.12, pick(['#2f5a8a', '#f2c230', '#c83a3a'], hash(i, r + 9)), { y: hy }); }
+    solid(16.5, py, 4.8, LEN); for (const yy of [py, py + LEN / 2, py + LEN - 0.2]) box(21.2, yy, 0.2, 0.2, 3.6, '#5a6a78'); box(16.2, py, 5.4, LEN, 0.1, '#e8eef2', { y: 3.6 });
+    label(18.9, py - 0.5, 'Tribun kolam', 2.4);
+    // papan skor kolam di dinding utara
+    const board = R.sign('back', ['PAPAN SKOR KOLAM', 'Balap renang & loncat indah', '--', '--'], px + 6 - 12, 3.6, 7, 2.2, '#10161e', '#ffd84a', 44);
+    // kolam loncat (dalam) + menara 1/3/5 m di sisi timurnya, papan menjorok ke barat
+    const dx = 2, dy = 32, DW = 8; basin(dx, dy, DW, DW, 3.2);
+    const tx = dx + DW + 0.4, TOW = [[1, dy + 6.4, 2.6], [3, dy + 4, 3.2], [5, dy + 1.6, 3.8]];   // papan menjorok ke atas air
+    box(tx, dy + 0.6, 2.2, 7, 0.2, '#c8ccd0', { solid: true });
+    for (const [h, yy, len] of TOW) {
+      box(tx + 1.4, yy - 0.5, 0.25, 0.25, h, '#d8dce0', { solid: true }); box(tx + 1.4, yy + 0.25, 0.25, 0.25, h, '#d8dce0', { solid: true });
+      box(tx - len + 1.6, yy - 0.5, len, 1.0, 0.12, h === 1 ? '#3a8ac0' : '#e8e8ec', { y: h - 0.12 }); box(tx - len + 1.6, yy - 0.5, 0.06, 1.0, 0.03, '#c83a2a', { y: h });
+      for (let k = 0; k < Math.round(h * 3); k++) box(tx + 1.75, yy - 0.15, 0.25, 0.3, 0.04, '#9aa0a8', { y: k / 3 + 0.2 });   // anak tangga
+      plane([h + ' m'], tx + 1.8, yy + 0.7, h + 0.25, 0.5, 0.3, Math.PI / 2, '#2a6a9a', '#ffffff', 60);
+    }
+    label(dx + DW / 2, dy - 0.6, 'Kolam loncat (dalam)', 3); label(tx + 1.2, dy + 7.9, 'Menara 1/3/5 m', 2.4);
+    // bilas & ganti
+    box(15.5, 31.5, 0.12, 9.5, 2.1, '#9ab8c8', { solid: true }); box(15.6, 31.6, 7.6, 0.6, 1.9, '#8a9aa8', { solid: true });
+    for (let i = 1; i < 12; i++) box(15.6 + i * 0.62, 32.2, 0.02, 0.02, 1.8, '#5a6a78', { y: 0.05 });
+    for (let i = 0; i < 3; i++) { box(16.5 + i * 2.4, 38.8, 0.08, 2.4, 1.9, '#9ab8c8', { solid: true }); box(17.6 + i * 2.4, 40.9, 0.3, 0.1, 0.1, '#c8c8cc', { y: 2.0 }); }
+    box(18, 35, 3, 0.45, 0.45, '#8a5a34', { solid: true }); label(19.4, 31.1, 'Bilas & ganti', 2.4);
+    R.sign('back', ['KOLAM RENANG LOMBA', 'GOR KOTA WIRABUMI • 06.00-17.00'], 19 - 12, 4.6, 6, 0.9, '#2a6a9a', '#ffffff', 46);
+    // posisi lintasan (dunia) untuk kolam.js: berangkat dari balok start (utara) ke selatan
+    const lanes = Array.from({ length: 8 }, (_, i) => { const [x, z0] = world(px + i * LW + LW / 2, py + 0.4), [, z1] = world(0, py + LEN - 0.4); return { x, z0, z1 }; });
+    const towers = {}; for (const [h, yy, len] of TOW) { const [x, z] = world(tx - len + 1.9, yy); towers[h] = { x, z, y: h, h: Math.PI }; }
+    const [ex, ez] = world(px + 4 * LW, py - 1.6), [en, enz] = world(18, 37.5);
+    R.entry = { x: en - R.ox, z: enz - R.oz };
+    kolam?.setup({ lanes, len: LEN, waterY: WY, blockY: 0.5, towers, board, exitRace: { x: ex, z: ez, h: -Math.PI / 2 } });
+    // titik interaksi
+    spot(px + 4 * LW, py - 1.4, 1.5, 'Balap renang 50 m (4 perenang)', () => kolam?.race(4, 2));
+    spot(px + 2 * LW, py - 1.4, 1.3, 'Balap renang 100 m (8 perenang)', () => kolam?.race(8, 4));
+    for (const [h, yy] of TOW) spot(tx + 2.2, yy - 0.1, 0.8, `Loncat indah: menara ${h} m${h === 5 ? ' (uji nyali)' : ''}`, () => kolam?.dive(h));
+    spot(18, 37.5, 1.3, 'Kembali ke GOR', null); R.spots.at(-1).warp = () => { const G = rooms.gor; return { x: G.ox + 5.5 - 33, z: G.oz + 36.5 - 22, heading: Math.PI / 2, room: G }; };
+    // perenang latihan di lintasan, penonton di tribun, penjaga kolam
+    const lap = (lane, ph) => { const p = lanes[lane]; return (n, dt) => { n.t = (n.t ?? ph) + dt * 0.055; const u = n.t % 2, d = u < 1 ? u : 2 - u; n.x = p.x; n.z = p.z0 + (p.z1 - p.z0) * d; n.heading = u < 1 ? Math.PI / 2 : -Math.PI / 2; n.anim = 'swim'; }; };
+    [[0, 'siswiA', 'Fitri'], [6, 'pemuda', 'Kang Yusuf'], [7, 'remaja', 'Dewa']].forEach(([lane, sid, name], k) => { const n = addNPC(R, sid, name, 0, 0, ['Glup... halo!', 'Latihan buat lomba antar-sekolah.'], 0, { ext: lap(lane, k * 0.7), yAbs: WY, sink: 0.3 }); n.filler = true; });
+    for (let i = 0; i < 4; i++) { const r = i % 4, [wx, wz] = world(16.9 + r * 1.2, py + 3 + i * 5.5); const n = addNPC(R, pick(['siswiB', 'siswaA', 'ibuHijab2', 'bocah'], hash(i, 3)), 'Penonton', wx - R.ox, wz - R.oz, ['Ayo! Ayo!', 'Nunggu adikku lomba.'], 0, { ext: nn => { nn.heading = Math.PI; nn.anim = 'sitDown'; }, yAbs: 0.4 * (r + 1) }); }
+    npc('satpam', 'Pak Darma (penjaga kolam)', 13.3, 2.6, ['Jangan lari di pinggir kolam, licin!', 'Menara 5 meter cuma buat yang berani.', 'Balap renang? Naik ke balok start.'], 0.8);
+    finish(R);
   }
 
   /* ================= 6. Pabrik es tua: mesin berkarat, cetakan es, drum api, tempat nongkrong geng Kobar */
@@ -729,7 +796,8 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
       } else if (player.area === 'dalam' && cur) {
         if (cur.exit && Math.hypot(cur.exit.x - player.x, cur.exit.z - player.z) < 0.9) return { kind: 'warp', label: 'Keluar', to: { ...(back || { x: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[0] : 40, z: kota.darto ? L(kota.darto.xf, -0.6, kota.darto.d / 2 + 0.8)[1] : 90, heading: 0 }), area: 'kota' }, after: () => { cur = null; } };
         for (const s of cur.spots) if (Math.hypot(s.x - player.x, s.z - player.z) < s.r) {
-          if (s.warp) { const T = s.warp(); return { kind: 'warp', label: s.label, to: { x: T.x, z: T.z, heading: T.heading ?? -Math.PI / 2, area: 'dalam' }, after: () => { cur = T.room; } }; }
+          if (s.warp) { if (s.gate && !s.gate.ok()) return { kind: 'act', label: s.label, fn: s.gate.no };
+            const T = s.warp(); return { kind: 'warp', label: s.label, to: { x: T.x, z: T.z, heading: T.heading ?? -Math.PI / 2, area: 'dalam' }, after: () => { cur = T.room; s.gate?.pay(); } }; }
           return { kind: 'act', label: s.label, fn: s.fn };
         }
       }

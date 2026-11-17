@@ -16,6 +16,7 @@ import { makeInteriors } from './interior.js';
 import { makeJajan } from './jajan.js';
 import { makeAnimals } from './animals.js';
 import { makeRace } from './race.js';
+import { makeKolam } from './kolam.js';
 import { parked } from './parked.js';
 import { makeLuar } from './luar.js';
 
@@ -158,7 +159,8 @@ function onKO() {
 const fight = makeFight({ player, raka, npcs, collision, riding: () => !!ride, toast, onKO: () => onKO(), save: () => { saveT = 99; } });
 const shop = makeShop({ player, toast, fight });
 const acts = makeActivities({ scene, kota, collision, player, Character, toast, npcs, gain: (k, x) => fight.gain(k, x), say: (n, text) => { if (n) n.say = { text, t: 2.5 }; } });
-const interiors = makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast });
+const kolam = makeKolam({ scene, player, Character, fight, shop, toast, getCam: () => cam });   // kolam lomba GOR: balap renang & loncat indah
+const interiors = makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast, kolam });
 interiors.locate();
 const jajan = makeJajan({ scene, kota, collision, player, Character, npcs, shop, acts, toast });
 const animals = makeAnimals({ scene, kota, collision, player, toast });
@@ -384,6 +386,7 @@ const EXIT_SCHOOL = { x: SCHOOL_OX + 39, z: 58.2 };   // trotoar depan gerbang (
 let target = null;
 function findTarget() {
   let best = null, bd = 1e9;
+  if (kolam.active) return kolam.target();
   if (ride || race.active) {
     const rt = race.target(ride); if (rt) return rt;
     if (player.area === 'kota' && Math.hypot(player.x - ENTER_SCHOOL.x, player.z - ENTER_SCHOOL.z) < 3.2) return { kind: 'go', to: 'sekolah', label: 'Parkir & masuk SMA Negeri 3' };
@@ -516,6 +519,14 @@ function updatePlayer(dt) {
       return r.v;
     }
   }
+  if (kolam.active) {   // mini game kolam: posisi, putaran & animasi diatur kolam.js
+    const r = kolam.step(dt);
+    if (r) {
+      Object.assign(player, { x: r.x, z: r.z, heading: r.heading, vx: 0, vz: 0, gy: r.y, pitch: 0 }); raka.heading = r.heading; raka.play(r.anim); raka.sink = r.sink; raka.blob.visible = !r.sink && r.y < 0.6;
+      raka.group.position.set(r.x, r.y, r.z); raka.group.rotation.order = 'YXZ'; raka.group.rotation.z = r.rot || 0; raka.update(dt);
+      return r.speed || 0;
+    }
+  }
   const lock = player.area ? fight.updatePlayer(dt) : null;
   player.riding = !!ride;
   const inp = Math.hypot(ix, iy) > 0.15 && !bigmap.isOpen;
@@ -547,7 +558,7 @@ function updatePlayer(dt) {
   pushParked(np, ride ? 0.4 : 0.28);
   if (player.area === 'luar' && !luar.allowed(np.x, np.z)) np = luar.allowed(np.x, player.z) ? { x: np.x, z: player.z } : luar.allowed(player.x, np.z) ? { x: player.x, z: np.z } : { x: player.x, z: player.z };   // batas wilayah: keluar lewat jalan (Aksi)
   // kolam renang: masuk = langsung berenang, keluar = jalan lagi
-  if (player.area === 'kota' && player.swim !== 'air') { const pool = !ride && acts.poolAt(np.x, np.z); if (pool && !player.swim) toast('Berenang di ' + pool.name.toLowerCase()); player.swim = pool ? 'kolam' : null; }
+  if ((player.area === 'kota' || player.area === 'dalam') && player.swim !== 'air') { const pool = !ride && acts.poolAt(np.x, np.z); if (pool && !player.swim) toast('Berenang di ' + pool.name.toLowerCase()); player.swim = pool ? 'kolam' : null; }
   // kecepatan nyata (supaya animasi berhenti saat menabrak dinding)
   if (dt > 0) { player.vx = (np.x - player.x) / dt; player.vz = (np.z - player.z) / dt; }
   player.x = np.x; player.z = np.z;
@@ -684,7 +695,7 @@ function loop(now) {
     const sx = Math.round(cam.x / step) * step, sz = Math.round(cam.z / step) * step;
     sun.target.position.set(sx, 0, sz); sun.position.set(sx + 22, 45, sz + 14);
   }
-  jajan.update(dt); animals.update(dt); race.update(dt);
+  jajan.update(dt); animals.update(dt); race.update(dt); kolam.update(dt);
   const inside = player.area === 'dalam';
   if (inside !== wasInside) { wasInside = inside; scene.background = inside ? DARKBG : SKY; scene.fog.color.copy(inside ? DARKBG : SKY); }
   if (inside) { scene.fog.near = 60; scene.fog.far = 140; interiors.update(camera); }
@@ -716,4 +727,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { kolam, luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
