@@ -228,5 +228,15 @@ Orang tanpa nama (pejalan kaki, buruh, tentara, petani, siswa acak) **tidak** di
 - Noda kotor (`kotor`): gumpalan 2x2x3 yang jarang. Titik acak per voxel terbaca sebagai loreng atau taburan meses.
 - Bahan & properti baru gelombang 2: `helmMotor`, `celemek` (+ saku), `boks` ojol, `rompi` + `stripe` pantul, `ht` di
   pinggang, properti tangan `ht, senter, tongkatLL, sekop, ember, jaring, dayung, kunci, lap, sutil, ikan`.
+- Bahan & properti baru gelombang 3: `ikatKepala` (pita di z12-13 dibangun di luar rambut, rambut tidak dihapus;
+  `headPat` untuk motif iket, `headTulis` untuk tulisan suporter), baju `pangsi` (kerah V dangkal, lipatan silang),
+  `nomor` punggung kaus tim (font 3x5, dua lapis per baris), `syal` suporter, `sabuk` silat (simpul di kiri depan),
+  properti tangan `trekking, mug, peta, terompet, bendera, tasbih`.
+- Nomor punggung: kamera dari belakang membalik sumbu y. Digit pertama ditaruh di y positif dan kolom glyph dibalik
+  (`yo + 2 - q`), kalau tidak "23" terbaca "32" atau terbalik cermin. Selalu cek lembar `Cek` tampak belakang.
+- Properti yang menghadap depan (terompet) dibuat miring ke atas, kalau lurus ke depan dari sudut pratinjau hanya
+  terlihat ujungnya sebagai bola. Bendera dipasang di depan tiang (x positif), bukan di belakang lengan.
+- Pilihan yang harus merata antar seed (syal, terompet/bendera) boleh memakai rumus dari `v` langsung. Beberapa `r.p()`
+  setelah banyak `r.pick()` bisa berkorelasi sehingga 8 seed pratinjau semuanya jatuh ke sisi yang sama.
 - `chars.js` mendaftarkan tiap template 8 kali (`<sid>_0..7`) untuk pratinjau. Lembar `sp_<sid>` (8 seed x semua
   baju), `sp_<sid>Cek` (atas & belakang), dan `sp_semua` (10 template x 8 seed).

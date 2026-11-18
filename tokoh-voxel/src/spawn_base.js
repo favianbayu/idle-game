@@ -21,7 +21,7 @@ export const CLOTH = {
   tosca: '#2c8c8a', hijau: '#3c8c4c', hijauTua: '#2c5c3c', olive: '#6c6c3c', kuning: '#dcbc40', oranye: '#dc7a32', merah: '#c03c34', marun: '#7c2c34',
   pink: '#de8caa', ungu: '#6c4c8c', lilac: '#b29ad0', coklat: '#6c4c32', coklatMuda: '#a27c52', mocca: '#9c7c64', khaki: '#b2a272', jins: '#36486c',
   jinsMuda: '#5c7aa2', salem: '#e0a088', mint: '#9ccab2', kopi: '#4a3628',
-  coklatPol: '#6a5236', khakiPNS: '#a8946a', oranyeRompi: '#e86a1c', hijauOjol: '#2ca04c', karet: '#3a2c22',
+  pinkTua: '#b8607e', pinkPersit: '#e8a4ba', coklatPol: '#6a5236', khakiPNS: '#a8946a', oranyeRompi: '#e86a1c', hijauOjol: '#2ca04c', karet: '#3a2c22',
   lorDasar: '#5c6a44', lorTua: '#3a4630', lorCoklat: '#6e5c3e', lorHitam: '#22261e', stabilo: '#c8e030', safety: '#e8e8e0',
 };
 const R = {};
@@ -33,7 +33,7 @@ Object.assign(R, {
   spKaca: ['#18161c'], spKacaL: ['#cfe3f0'], spHP: ['#24262e'], spLayar: ['#4a6a9a'], spKayu: ['#6e4a2a', '#7e5632', '#8e623a', '#a07244'], spBesi: ['#6a6e76', '#7c8088', '#8e929a', '#a2a6ae'],
   spAnyam: ['#a8884e', '#bc9a5c', '#ceac6a', '#dcbc7c'], spAnyamS: ['#8a6c3a'], spKaret: ['#1e1e22', '#28282e', '#323238', '#3e3e46'],
   spKresekP: ['#e4e4e2', '#eeeeec', '#f6f6f4', '#fcfcfa'], spKresekH: ['#26262a', '#303034', '#3a3a3e', '#46464a'], spKresekM: ['#b8302c', '#c83a34', '#d6443c', '#e05048'],
-  spIsi: ['#7ab84a'], spOli: ['#2a2622'], spIkan: ['#9aa8b4', '#aab8c4', '#bcc8d2', '#ccd6de'], spSemen: ['#8a8a86', '#9a9a96', '#aaaaa6', '#bababa'], spJaring: ['#3a6a7a'], spMerahLL: ['#e8342c'], spTali: ['#2a2a30'], spLogo: ['#e8e4d8'], spMerahP: ['#c83a34'], spPutihP: ['#f4f4f0'],
+  spIsi: ['#7ab84a'], spOli: ['#2a2622'], spKopi: ['#3a2418'], spIkan: ['#9aa8b4', '#aab8c4', '#bcc8d2', '#ccd6de'], spSemen: ['#8a8a86', '#9a9a96', '#aaaaa6', '#bababa'], spJaring: ['#3a6a7a'], spMerahLL: ['#e8342c'], spTali: ['#2a2a30'], spLogo: ['#e8e4d8'], spMerahP: ['#c83a34'], spPutihP: ['#f4f4f0'],
 });
 addRamps(R);
 
@@ -206,6 +206,14 @@ function capOf(v, d) {   // penutup kepala; rambut di bawahnya dibuang
     for (let z = 2; z <= 7; z++) for (const y of [-9, 8]) if (!v.has(2, y, z)) v.set(2, y, z, 'spTali');
     return;
   }
+  if (t === 'ikatKepala') {   // ikat kepala/iket: pita melingkar di atas alis, simpul & dua ekor di belakang; rambut tetap
+    const band = []; for (const z of [12, 13]) v.each((x, y, zz) => { if (zz !== z) return; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!v.has(x + dx, y + dy, z)) band.push([x + dx, y + dy, z]); });
+    for (const [x, y, z] of band) v.set(x, y, z, d.headPat && (x + y + 40) % 3 === 0 ? 'spC_' + d.headPat : z === 12 ? c + 'S' : c);
+    const xb = Math.min(...band.map(b => b[0])) - 1;
+    v.box(xb, -2, 11, xb, 1, 14, c); for (let z = 5; z <= 11; z++) { v.set(xb - (z < 8 ? 1 : 0), -3 + (z < 8 ? 0 : 1), z, c + 'S'); v.set(xb, 1 + (z < 9 ? 1 : 0), z - 1, c); }
+    if (d.headTulis) for (let y = -3; y <= 2; y++) if (y % 2 === 0) { const x = v.front(y, 13); if (x !== null) v.set(x, y, 13, 'spC_' + d.headTulis); }
+    return;
+  }
   if (t === 'topiRimba') {
     clear(13);
     for (let z = 13; z <= 19; z++) for (let x = -12; x <= 11; x++) for (let y = -12; y <= 11; y++) { const brim = z === 13, rr = brim ? 11.6 : 8.8, q = ((x + 0.5) / rr) ** 2 + ((y + 0.5) / rr) ** 2 + (brim ? 0 : (Math.max(0, z - 16) / 3.4) ** 2); if (q <= 1 && (q > 0.6 || z >= 19 || brim)) v.set(x, y, z, z === 14 ? c + 'S' : c); }
@@ -317,6 +325,12 @@ function chest(d, G) {
     if (T.tali) for (const y of [-2, 1]) for (let z = nz - 6; z <= nz - 1; z++) v.pf(y, z, 'spPutihP');
   }
   if (k === 'blus' || k === 'daster' || k === 'gamis') { for (let y = -2; y <= 1; y++) { v.pf(y, nz, K); if (k !== 'gamis') v.pf(y, nz - 1, K); } for (let y = -3; y <= 2; y++) v.pf(y, nz - (k === 'gamis' ? 1 : 2), cS); }
+  if (k === 'pangsi') {   // pangsi: kerah V tanpa kancing, lipatan silang ke kiri
+    for (let z = nz - 3; z <= nz; z++) { const w = Math.floor((z - nz + 4) / 2); for (let y = -w - 1; y <= w; y++) v.pf(y, z, K); }
+    for (let z = z0 + 1; z <= nz - 4; z++) v.pf(-1 - Math.floor((nz - 4 - z) / 3), z, cS);
+  }
+  if (T.nomor != null) { const DG = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001001001001', '111101111101111', '111101111001111'];
+    const ds = String(T.nomor).split('').map(Number), zt = nz - 6; ds.forEach((dg, i) => { const yo = ds.length === 1 ? -2 : i === 0 ? 0 : -4; for (let r = 0; r < 5; r++) for (let q = 0; q < 3; q++) if (DG[dg][r * 3 + q] === '1') v.pb(yo + 2 - q, zt - r * 2, cm(T.lis || 'putih')), v.pb(yo + 2 - q, zt - r * 2 - 1, cm(T.lis || 'putih')); }); }
   if (T.logo) for (let z = nz - 8; z <= nz - 6; z++) for (let y = y1 - 5; y <= y1 - 3; y++) v.pf(y, z, cm(T.logo));
   if (T.badge) v.pfBox(y1 - 4, nz - 9, y1 - 2, nz - 8, 'spEmas');
   if (T.rompi) { for (let z = z0; z <= nz - 1; z++) for (let y = y0; y <= y1; y++) { const ay = Math.abs(y + 0.5); if (ay < 2.5 && z > nz - 7) continue; const x = v.front(y, z), xb = v.back(y, z); if (x !== null) v.set(x + 1, y, z, cm(T.rompi)); if (xb !== null) v.set(xb - 1, y, z, cm(T.rompi)); } }
@@ -357,6 +371,11 @@ function accChest(v, d, G) {
   if (A.includes('idcard')) { for (let z = z1 - 10; z <= z1; z++) { const yy = Math.round((z1 - z) * 0.3); for (const y of [-2 - yy, 1 + yy]) if (z > z1 - 8) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, cm(d.idCol || 'biru')); } } v.pfBox(-2, z1 - 13, 1, z1 - 9, 'spPutihP'); v.pfBox(-1, z1 - 11, 0, z1 - 10, 'spLayar'); }
   if (A.includes('kamera')) { for (let z = z1 - 9; z <= z1; z++) for (const y of [y0 + 2, y1 - 3]) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'spTali'); } const x = v.front(0, z1 - 11); v.box(x + 1, -3, z1 - 13, x + 3, 2, z1 - 9, 'spHP'); v.box(x + 4, -1, z1 - 12, x + 5, 0, z1 - 10, 'spBesi'); }
   if (A.includes('kacu')) { const nz = z1; for (let z = nz - 1; z <= nz + 1; z++) v.shell(z, x0 + 1, -4, x1, 3, z === nz ? 'spPutihP' : 'spMerahP', 2); for (let z = nz - 6; z <= nz - 2; z++) for (const y of [-1, 0]) v.pf(y, z, z === nz - 4 ? 'spC_coklat' : z % 2 ? 'spMerahP' : 'spPutihP'); for (let z = nz - 8; z <= nz - 1; z++) { const w = Math.floor((z - nz + 9) / 2); for (let y = -w; y <= w - 1; y++) v.pb(y, z, z % 2 ? 'spMerahP' : 'spPutihP'); } }
+  if (A.includes('syal')) {   // syal suporter: lingkar leher + dua ujung menjuntai di dada, belang warna tim, rumbai putih
+    const a = cm(d.syalCol || 'biru'), b = cm(d.syalCol2 || 'putih'), nz = z1;
+    for (let z = nz - 1; z <= nz + 2; z++) v.shell(z, x0, -5, x1 + 1, 4, z % 2 ? a : b, 2);
+    for (const [ya, yb, len] of [[-4, -2, 14], [1, 3, 11]]) for (let z = nz - len; z <= nz; z++) for (let y = ya; y <= yb; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === nz - len ? 'spPutihP' : Math.floor((z + 40) / 3) % 2 ? a : b); }
+  }
   if (A.includes('peluit')) { for (let z = z1 - 9; z <= z1; z++) { const yy = Math.round((z1 - z) * 0.3); for (const y of [-2 - yy, 1 + yy]) if (z > z1 - 8) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'spMerahP'); } } v.pfBox(-1, z1 - 11, 0, z1 - 10, 'spPerak'); }
 }
 function pelvis(d, G) {
@@ -382,6 +401,12 @@ function accPelvis(v, d, G) {
   if (d.acc.includes('celemek')) { const c = cm(d.apronCol || 'putih'), [p0, p1] = G.pel; for (let z = p0 - 2; z <= p1; z++) for (let y = G.pw[1] + 1; y <= G.pw[3] - 1; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === p0 - 2 ? c + 'S' : c); } }
   if (d.acc.includes('ht')) { const [p0] = G.pel, y = G.pw[3] + 1; v.rbox(-1, y, p0 + 1, 2, y + 1, p0 + 6, 'spHP', 0); for (let z = p0 + 7; z <= p0 + 10; z++) v.set(1, y + 1, z, 'spHP'); }
   if (d.acc.includes('selempang')) { const [p0, p1] = G.pel, y = G.pw[1] - 2; v.rbox(-3, y - 2, p0, 3, y, p0 + 6, cm(d.accCol || 'coklat'), 1); v.set(3, y - 1, p0 + 4, 'spEmas'); }
+  if (d.acc.includes('sabuk')) {   // sabuk silat: lilitan + simpul di kiri depan, dua ujung menjuntai
+    const [, p1] = G.pel, c = cm(d.sabukCol || 'putih'), [x0, y0, x1, y1] = G.pw, kid = d.age === 'anak';
+    for (let z = p1 - 2; z <= p1; z++) v.shell(z, x0 - 1, y0 - 1, x1 + 1, y1 + 1, z === p1 - 2 ? c + 'S' : c, 3);
+    const yk = y0 + 1, xk = x1 + 2; v.box(xk, yk, p1 - 2, xk, yk + 1, p1, c);
+    for (let z = p1 - (kid ? 7 : 10); z <= p1 - 3; z++) { v.set(xk, yk - 1 + (z % 4 === 0 ? 0 : 0), z, c); v.set(xk, yk + 2, z + 1, c + 'S'); }
+  }
   if (d.acc.includes('pinggang')) { const [, p1] = G.pel; for (let z = p1 - 3; z <= p1 - 1; z++) v.shell(z, G.pw[0] - 2, G.pw[1] - 2, G.pw[2] + 2, G.pw[3] + 2, cm(d.accCol || 'hitam'), 3); }
 }
 function sleeveCol(d) { return d.top.kind === 'singlet' ? null : cm(d.top.c || 'putih'); }
@@ -440,6 +465,12 @@ function prop(v, d, G, p) {
   if (p === 'lap') { for (let z = hz - 7; z <= hz - 1; z++) for (let y = hy - 1; y <= hy + 1; y++) v.set(1 + ((z + y) % 2), y, z, (z + y) % 3 ? cm(d.propCol || 'merah') : 'spOli'); }
   if (p === 'sutil') { for (let z = hz - 3; z <= hz + 6; z++) v.set(2, hy, z, z < hz + 1 ? 'spKayu' : 'spBesi'); v.box(1, hy - 1, hz + 7, 3, hy + 1, hz + 9, 'spBesi'); }
   if (p === 'ikan') { for (let z = hz - 9; z <= hz - 1; z++) for (let x = -1; x <= 1; x++) if (Math.abs(x) <= (z > hz - 3 || z < hz - 7 ? 0 : 1)) v.set(x + 1, hy, z, 'spIkan'); v.set(1, hy, hz - 10, 'spIkan'); v.set(0, hy, hz - 10, 'spIkan'); v.set(2, hy, hz - 10, 'spIkan'); v.set(1, hy, hz, 'spTali'); }
+  if (p === 'trekking') { for (let z = 1; z <= hz + 4; z++) v.set(3, hy, z, z > hz - 2 ? 'spKaret' : z < 3 ? 'spKaret' : 'spBesi'); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) v.set(3 + dx, hy + dy, 4, 'spKaret'); v.set(2, hy, hz + 3, 'spTali'); }
+  if (p === 'mug') { for (let z = hz - 1; z <= hz + 3; z++) v.shell(z, 1, hy - 2, 4, hy + 1, cm(d.propCol || 'putih'), 1); v.rrect(hz + 2, 2, hy - 1, 3, hy, 'spKopi', 0); v.set(1, hy + 2, hz + 1, cm(d.propCol || 'putih')); v.set(1, hy + 2, hz + 2, cm(d.propCol || 'putih')); }
+  if (p === 'peta') { for (let x = 1; x <= 9; x++) for (let z = hz - 3; z <= hz + 7; z++) { const riv = Math.abs(z - hz - 2 - Math.round(Math.sin(x * 0.8) * 2)) < 1, hut = (x - 7) ** 2 + (z - hz - 5) ** 2 < 4; v.set(x, hy, z, x === 5 || x === 1 || x === 9 || z === hz - 3 || z === hz + 7 ? 'spC_kremS' : riv ? 'spC_biruMuda' : hut ? 'spC_hijau' : 'spC_krem'); } v.set(3, hy, hz + 4, 'spMerahP'); v.set(7, hy, hz, 'spMerahP'); }
+  if (p === 'terompet') { for (let k = 0; k <= 15; k++) { const rr = 0.6 + Math.max(0, k - 5) * 0.3, cx = 1 + k * 0.55, cz = hz + 1 + k * 0.85; for (let y = -4; y <= 4; y++) for (let dx = -4; dx <= 4; dx++) { const q = Math.hypot(y, dx); if (q <= rr) v.set(Math.round(cx + dx * 0.85), hy + y, Math.round(cz - dx * 0.55), k >= 14 ? 'spPutihP' : k % 5 === 4 ? cm(d.propCol || 'merah') + 'S' : cm(d.propCol || 'merah')); } } }
+  if (p === 'bendera') { const top = hz + Math.round(30 * s); for (let z = hz - 3; z <= top; z++) v.set(2, hy, z, 'spKayu'); for (let x = 3; x <= 3 + Math.round(13 * s); x++) for (let z = top - Math.round(10 * s); z <= top; z++) v.set(x, hy, z, z > top - Math.round(5 * s) ? cm(d.propCol || 'merah') : cm(d.propCol2 || 'putih')); }
+  if (p === 'tasbih') { const cz = hz - Math.round(5 * s), rr = Math.round(4 * s); for (let a = 0; a < 24; a++) { const t = a / 24 * Math.PI * 2, x = Math.round(1 + Math.sin(t) * rr * 0.6), z = Math.round(cz + Math.cos(t) * rr); v.set(x, hy, z, a % 6 === 0 ? 'spEmas' : 'spKayu'); } for (let z = cz - rr - 3; z < cz - rr; z++) v.set(1, hy, z, 'spEmas'); }
   if (p === 'keranjang') { for (let z = hz - 12; z <= hz - 3; z++) v.shell(z, -4, hy - 4, 4, hy + 4, (z + hy) % 3 ? 'spAnyam' : 'spAnyamS', 2); v.rrect(hz - 12, -3, hy - 3, 3, hy + 3, 'spAnyam', 2); for (let x = -3; x <= 3; x++) v.set(x, hy, hz - 1 - (Math.abs(x) > 1 ? 1 : 0), 'spAnyamS'); v.set(-2, hy - 2, hz - 3, 'spIsi'); v.set(1, hy + 1, hz - 3, cm('merah')); }
 }
 const a1 = G => G.ay[1];

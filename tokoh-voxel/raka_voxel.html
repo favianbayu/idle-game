@@ -15240,7 +15240,7 @@ const CLOTH = {
   tosca: '#2c8c8a', hijau: '#3c8c4c', hijauTua: '#2c5c3c', olive: '#6c6c3c', kuning: '#dcbc40', oranye: '#dc7a32', merah: '#c03c34', marun: '#7c2c34',
   pink: '#de8caa', ungu: '#6c4c8c', lilac: '#b29ad0', coklat: '#6c4c32', coklatMuda: '#a27c52', mocca: '#9c7c64', khaki: '#b2a272', jins: '#36486c',
   jinsMuda: '#5c7aa2', salem: '#e0a088', mint: '#9ccab2', kopi: '#4a3628',
-  coklatPol: '#6a5236', khakiPNS: '#a8946a', oranyeRompi: '#e86a1c', hijauOjol: '#2ca04c', karet: '#3a2c22',
+  pinkTua: '#b8607e', pinkPersit: '#e8a4ba', coklatPol: '#6a5236', khakiPNS: '#a8946a', oranyeRompi: '#e86a1c', hijauOjol: '#2ca04c', karet: '#3a2c22',
   lorDasar: '#5c6a44', lorTua: '#3a4630', lorCoklat: '#6e5c3e', lorHitam: '#22261e', stabilo: '#c8e030', safety: '#e8e8e0',
 };
 const R = {};
@@ -15252,7 +15252,7 @@ Object.assign(R, {
   spKaca: ['#18161c'], spKacaL: ['#cfe3f0'], spHP: ['#24262e'], spLayar: ['#4a6a9a'], spKayu: ['#6e4a2a', '#7e5632', '#8e623a', '#a07244'], spBesi: ['#6a6e76', '#7c8088', '#8e929a', '#a2a6ae'],
   spAnyam: ['#a8884e', '#bc9a5c', '#ceac6a', '#dcbc7c'], spAnyamS: ['#8a6c3a'], spKaret: ['#1e1e22', '#28282e', '#323238', '#3e3e46'],
   spKresekP: ['#e4e4e2', '#eeeeec', '#f6f6f4', '#fcfcfa'], spKresekH: ['#26262a', '#303034', '#3a3a3e', '#46464a'], spKresekM: ['#b8302c', '#c83a34', '#d6443c', '#e05048'],
-  spIsi: ['#7ab84a'], spOli: ['#2a2622'], spIkan: ['#9aa8b4', '#aab8c4', '#bcc8d2', '#ccd6de'], spSemen: ['#8a8a86', '#9a9a96', '#aaaaa6', '#bababa'], spJaring: ['#3a6a7a'], spMerahLL: ['#e8342c'], spTali: ['#2a2a30'], spLogo: ['#e8e4d8'], spMerahP: ['#c83a34'], spPutihP: ['#f4f4f0'],
+  spIsi: ['#7ab84a'], spOli: ['#2a2622'], spKopi: ['#3a2418'], spIkan: ['#9aa8b4', '#aab8c4', '#bcc8d2', '#ccd6de'], spSemen: ['#8a8a86', '#9a9a96', '#aaaaa6', '#bababa'], spJaring: ['#3a6a7a'], spMerahLL: ['#e8342c'], spTali: ['#2a2a30'], spLogo: ['#e8e4d8'], spMerahP: ['#c83a34'], spPutihP: ['#f4f4f0'],
 });
 addRamps(R);
 
@@ -15425,6 +15425,14 @@ function capOf(v, d) {   // penutup kepala; rambut di bawahnya dibuang
     for (let z = 2; z <= 7; z++) for (const y of [-9, 8]) if (!v.has(2, y, z)) v.set(2, y, z, 'spTali');
     return;
   }
+  if (t === 'ikatKepala') {   // ikat kepala/iket: pita melingkar di atas alis, simpul & dua ekor di belakang; rambut tetap
+    const band = []; for (const z of [12, 13]) v.each((x, y, zz) => { if (zz !== z) return; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!v.has(x + dx, y + dy, z)) band.push([x + dx, y + dy, z]); });
+    for (const [x, y, z] of band) v.set(x, y, z, d.headPat && (x + y + 40) % 3 === 0 ? 'spC_' + d.headPat : z === 12 ? c + 'S' : c);
+    const xb = Math.min(...band.map(b => b[0])) - 1;
+    v.box(xb, -2, 11, xb, 1, 14, c); for (let z = 5; z <= 11; z++) { v.set(xb - (z < 8 ? 1 : 0), -3 + (z < 8 ? 0 : 1), z, c + 'S'); v.set(xb, 1 + (z < 9 ? 1 : 0), z - 1, c); }
+    if (d.headTulis) for (let y = -3; y <= 2; y++) if (y % 2 === 0) { const x = v.front(y, 13); if (x !== null) v.set(x, y, 13, 'spC_' + d.headTulis); }
+    return;
+  }
   if (t === 'topiRimba') {
     clear(13);
     for (let z = 13; z <= 19; z++) for (let x = -12; x <= 11; x++) for (let y = -12; y <= 11; y++) { const brim = z === 13, rr = brim ? 11.6 : 8.8, q = ((x + 0.5) / rr) ** 2 + ((y + 0.5) / rr) ** 2 + (brim ? 0 : (Math.max(0, z - 16) / 3.4) ** 2); if (q <= 1 && (q > 0.6 || z >= 19 || brim)) v.set(x, y, z, z === 14 ? c + 'S' : c); }
@@ -15536,6 +15544,12 @@ function chest(d, G) {
     if (T.tali) for (const y of [-2, 1]) for (let z = nz - 6; z <= nz - 1; z++) v.pf(y, z, 'spPutihP');
   }
   if (k === 'blus' || k === 'daster' || k === 'gamis') { for (let y = -2; y <= 1; y++) { v.pf(y, nz, K); if (k !== 'gamis') v.pf(y, nz - 1, K); } for (let y = -3; y <= 2; y++) v.pf(y, nz - (k === 'gamis' ? 1 : 2), cS); }
+  if (k === 'pangsi') {   // pangsi: kerah V tanpa kancing, lipatan silang ke kiri
+    for (let z = nz - 3; z <= nz; z++) { const w = Math.floor((z - nz + 4) / 2); for (let y = -w - 1; y <= w; y++) v.pf(y, z, K); }
+    for (let z = z0 + 1; z <= nz - 4; z++) v.pf(-1 - Math.floor((nz - 4 - z) / 3), z, cS);
+  }
+  if (T.nomor != null) { const DG = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001001001001', '111101111101111', '111101111001111'];
+    const ds = String(T.nomor).split('').map(Number), zt = nz - 6; ds.forEach((dg, i) => { const yo = ds.length === 1 ? -2 : i === 0 ? 0 : -4; for (let r = 0; r < 5; r++) for (let q = 0; q < 3; q++) if (DG[dg][r * 3 + q] === '1') v.pb(yo + 2 - q, zt - r * 2, cm(T.lis || 'putih')), v.pb(yo + 2 - q, zt - r * 2 - 1, cm(T.lis || 'putih')); }); }
   if (T.logo) for (let z = nz - 8; z <= nz - 6; z++) for (let y = y1 - 5; y <= y1 - 3; y++) v.pf(y, z, cm(T.logo));
   if (T.badge) v.pfBox(y1 - 4, nz - 9, y1 - 2, nz - 8, 'spEmas');
   if (T.rompi) { for (let z = z0; z <= nz - 1; z++) for (let y = y0; y <= y1; y++) { const ay = Math.abs(y + 0.5); if (ay < 2.5 && z > nz - 7) continue; const x = v.front(y, z), xb = v.back(y, z); if (x !== null) v.set(x + 1, y, z, cm(T.rompi)); if (xb !== null) v.set(xb - 1, y, z, cm(T.rompi)); } }
@@ -15576,6 +15590,11 @@ function accChest(v, d, G) {
   if (A.includes('idcard')) { for (let z = z1 - 10; z <= z1; z++) { const yy = Math.round((z1 - z) * 0.3); for (const y of [-2 - yy, 1 + yy]) if (z > z1 - 8) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, cm(d.idCol || 'biru')); } } v.pfBox(-2, z1 - 13, 1, z1 - 9, 'spPutihP'); v.pfBox(-1, z1 - 11, 0, z1 - 10, 'spLayar'); }
   if (A.includes('kamera')) { for (let z = z1 - 9; z <= z1; z++) for (const y of [y0 + 2, y1 - 3]) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'spTali'); } const x = v.front(0, z1 - 11); v.box(x + 1, -3, z1 - 13, x + 3, 2, z1 - 9, 'spHP'); v.box(x + 4, -1, z1 - 12, x + 5, 0, z1 - 10, 'spBesi'); }
   if (A.includes('kacu')) { const nz = z1; for (let z = nz - 1; z <= nz + 1; z++) v.shell(z, x0 + 1, -4, x1, 3, z === nz ? 'spPutihP' : 'spMerahP', 2); for (let z = nz - 6; z <= nz - 2; z++) for (const y of [-1, 0]) v.pf(y, z, z === nz - 4 ? 'spC_coklat' : z % 2 ? 'spMerahP' : 'spPutihP'); for (let z = nz - 8; z <= nz - 1; z++) { const w = Math.floor((z - nz + 9) / 2); for (let y = -w; y <= w - 1; y++) v.pb(y, z, z % 2 ? 'spMerahP' : 'spPutihP'); } }
+  if (A.includes('syal')) {   // syal suporter: lingkar leher + dua ujung menjuntai di dada, belang warna tim, rumbai putih
+    const a = cm(d.syalCol || 'biru'), b = cm(d.syalCol2 || 'putih'), nz = z1;
+    for (let z = nz - 1; z <= nz + 2; z++) v.shell(z, x0, -5, x1 + 1, 4, z % 2 ? a : b, 2);
+    for (const [ya, yb, len] of [[-4, -2, 14], [1, 3, 11]]) for (let z = nz - len; z <= nz; z++) for (let y = ya; y <= yb; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === nz - len ? 'spPutihP' : Math.floor((z + 40) / 3) % 2 ? a : b); }
+  }
   if (A.includes('peluit')) { for (let z = z1 - 9; z <= z1; z++) { const yy = Math.round((z1 - z) * 0.3); for (const y of [-2 - yy, 1 + yy]) if (z > z1 - 8) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'spMerahP'); } } v.pfBox(-1, z1 - 11, 0, z1 - 10, 'spPerak'); }
 }
 function pelvis(d, G) {
@@ -15601,6 +15620,12 @@ function accPelvis(v, d, G) {
   if (d.acc.includes('celemek')) { const c = cm(d.apronCol || 'putih'), [p0, p1] = G.pel; for (let z = p0 - 2; z <= p1; z++) for (let y = G.pw[1] + 1; y <= G.pw[3] - 1; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === p0 - 2 ? c + 'S' : c); } }
   if (d.acc.includes('ht')) { const [p0] = G.pel, y = G.pw[3] + 1; v.rbox(-1, y, p0 + 1, 2, y + 1, p0 + 6, 'spHP', 0); for (let z = p0 + 7; z <= p0 + 10; z++) v.set(1, y + 1, z, 'spHP'); }
   if (d.acc.includes('selempang')) { const [p0, p1] = G.pel, y = G.pw[1] - 2; v.rbox(-3, y - 2, p0, 3, y, p0 + 6, cm(d.accCol || 'coklat'), 1); v.set(3, y - 1, p0 + 4, 'spEmas'); }
+  if (d.acc.includes('sabuk')) {   // sabuk silat: lilitan + simpul di kiri depan, dua ujung menjuntai
+    const [, p1] = G.pel, c = cm(d.sabukCol || 'putih'), [x0, y0, x1, y1] = G.pw, kid = d.age === 'anak';
+    for (let z = p1 - 2; z <= p1; z++) v.shell(z, x0 - 1, y0 - 1, x1 + 1, y1 + 1, z === p1 - 2 ? c + 'S' : c, 3);
+    const yk = y0 + 1, xk = x1 + 2; v.box(xk, yk, p1 - 2, xk, yk + 1, p1, c);
+    for (let z = p1 - (kid ? 7 : 10); z <= p1 - 3; z++) { v.set(xk, yk - 1 + (z % 4 === 0 ? 0 : 0), z, c); v.set(xk, yk + 2, z + 1, c + 'S'); }
+  }
   if (d.acc.includes('pinggang')) { const [, p1] = G.pel; for (let z = p1 - 3; z <= p1 - 1; z++) v.shell(z, G.pw[0] - 2, G.pw[1] - 2, G.pw[2] + 2, G.pw[3] + 2, cm(d.accCol || 'hitam'), 3); }
 }
 function sleeveCol(d) { return d.top.kind === 'singlet' ? null : cm(d.top.c || 'putih'); }
@@ -15659,6 +15684,12 @@ function prop(v, d, G, p) {
   if (p === 'lap') { for (let z = hz - 7; z <= hz - 1; z++) for (let y = hy - 1; y <= hy + 1; y++) v.set(1 + ((z + y) % 2), y, z, (z + y) % 3 ? cm(d.propCol || 'merah') : 'spOli'); }
   if (p === 'sutil') { for (let z = hz - 3; z <= hz + 6; z++) v.set(2, hy, z, z < hz + 1 ? 'spKayu' : 'spBesi'); v.box(1, hy - 1, hz + 7, 3, hy + 1, hz + 9, 'spBesi'); }
   if (p === 'ikan') { for (let z = hz - 9; z <= hz - 1; z++) for (let x = -1; x <= 1; x++) if (Math.abs(x) <= (z > hz - 3 || z < hz - 7 ? 0 : 1)) v.set(x + 1, hy, z, 'spIkan'); v.set(1, hy, hz - 10, 'spIkan'); v.set(0, hy, hz - 10, 'spIkan'); v.set(2, hy, hz - 10, 'spIkan'); v.set(1, hy, hz, 'spTali'); }
+  if (p === 'trekking') { for (let z = 1; z <= hz + 4; z++) v.set(3, hy, z, z > hz - 2 ? 'spKaret' : z < 3 ? 'spKaret' : 'spBesi'); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) v.set(3 + dx, hy + dy, 4, 'spKaret'); v.set(2, hy, hz + 3, 'spTali'); }
+  if (p === 'mug') { for (let z = hz - 1; z <= hz + 3; z++) v.shell(z, 1, hy - 2, 4, hy + 1, cm(d.propCol || 'putih'), 1); v.rrect(hz + 2, 2, hy - 1, 3, hy, 'spKopi', 0); v.set(1, hy + 2, hz + 1, cm(d.propCol || 'putih')); v.set(1, hy + 2, hz + 2, cm(d.propCol || 'putih')); }
+  if (p === 'peta') { for (let x = 1; x <= 9; x++) for (let z = hz - 3; z <= hz + 7; z++) { const riv = Math.abs(z - hz - 2 - Math.round(Math.sin(x * 0.8) * 2)) < 1, hut = (x - 7) ** 2 + (z - hz - 5) ** 2 < 4; v.set(x, hy, z, x === 5 || x === 1 || x === 9 || z === hz - 3 || z === hz + 7 ? 'spC_kremS' : riv ? 'spC_biruMuda' : hut ? 'spC_hijau' : 'spC_krem'); } v.set(3, hy, hz + 4, 'spMerahP'); v.set(7, hy, hz, 'spMerahP'); }
+  if (p === 'terompet') { for (let k = 0; k <= 15; k++) { const rr = 0.6 + Math.max(0, k - 5) * 0.3, cx = 1 + k * 0.55, cz = hz + 1 + k * 0.85; for (let y = -4; y <= 4; y++) for (let dx = -4; dx <= 4; dx++) { const q = Math.hypot(y, dx); if (q <= rr) v.set(Math.round(cx + dx * 0.85), hy + y, Math.round(cz - dx * 0.55), k >= 14 ? 'spPutihP' : k % 5 === 4 ? cm(d.propCol || 'merah') + 'S' : cm(d.propCol || 'merah')); } } }
+  if (p === 'bendera') { const top = hz + Math.round(30 * s); for (let z = hz - 3; z <= top; z++) v.set(2, hy, z, 'spKayu'); for (let x = 3; x <= 3 + Math.round(13 * s); x++) for (let z = top - Math.round(10 * s); z <= top; z++) v.set(x, hy, z, z > top - Math.round(5 * s) ? cm(d.propCol || 'merah') : cm(d.propCol2 || 'putih')); }
+  if (p === 'tasbih') { const cz = hz - Math.round(5 * s), rr = Math.round(4 * s); for (let a = 0; a < 24; a++) { const t = a / 24 * Math.PI * 2, x = Math.round(1 + Math.sin(t) * rr * 0.6), z = Math.round(cz + Math.cos(t) * rr); v.set(x, hy, z, a % 6 === 0 ? 'spEmas' : 'spKayu'); } for (let z = cz - rr - 3; z < cz - rr; z++) v.set(1, hy, z, 'spEmas'); }
   if (p === 'keranjang') { for (let z = hz - 12; z <= hz - 3; z++) v.shell(z, -4, hy - 4, 4, hy + 4, (z + hy) % 3 ? 'spAnyam' : 'spAnyamS', 2); v.rrect(hz - 12, -3, hy - 3, 3, hy + 3, 'spAnyam', 2); for (let x = -3; x <= 3; x++) v.set(x, hy, hz - 1 - (Math.abs(x) > 1 ? 1 : 0), 'spAnyamS'); v.set(-2, hy - 2, hz - 3, 'spIsi'); v.set(1, hy + 1, hz - 3, cm('merah')); }
 }
 const a1 = G => G.ay[1];
@@ -16308,6 +16339,173 @@ const build = template(SPAWN, OUTFITS, (v, o) => {
 
 return { SPAWN, OUTFITS, EXPRS, build };
 })();
+// ===== sp_pendaki.js
+NS.sp_pendaki = (() => {
+// Template spawn: pendaki gunung & berkemah (jalur bukit, camping ground). Guide segmen 34.
+const {  gen, template, EXPRS: EX  } = NS.spawn_base;
+const SPAWN = { sid: 'pendaki', name: 'Pendaki', seragam: 'naik', varian: 64 };
+const OUTFITS = {
+  naik: { name: 'Naik: jaket warna-warni + carrier besar & matras + kupluk + celana kargo + sepatu gunung, trekking pole' },
+  camp: { name: 'Camp: fleece/hoodie + celana pendek atau panjang + sandal gunung, mug atau trekking pole' },
+};
+const EXPRS = EX;
+const JAKET = ['merah', 'oranye', 'kuning', 'biru', 'tosca', 'hijau', 'ungu', 'biruMuda', 'stabilo'];
+const build = template(SPAWN, OUTFITS, (v, o) => {
+  const d = gen(v, { sex: 'LP', pP: 0.35, age: ['muda', 'muda', 'dewasa'], skinW: { 1: 3, 2: 4, 3: 3, 0: 1 }, kumisP: 0.15, kacamataP: 0.12, salt: 211 }), r = d.r, L = d.sex === 'L';
+  if (!L && r.p(0.3)) d.hijab = r.pick(['hitam', 'navy', 'abu', 'marun', 'hijauTua']);
+  if (!L && !d.hijab && ['sebahu', 'bob'].includes(d.hairStyle)) d.hairStyle = 'kuncir';
+  const kaus = r.pick(['hitam', 'abu', 'navy', 'putih']);
+  if (o === 'camp') {
+    d.top = { kind: r.pick(['jaket', 'hoodie']), c: r.pick(['abu', 'navy', 'hijauTua', 'marun', 'coklatMuda', 'olive', 'oranye']), c2: kaus, sleeve: 'panjang', tali: r.p(0.4) };
+    d.bot = { kind: r.pick(['celana', 'pendek']), c: r.pick(['hitam', 'abu', 'khaki', 'olive', 'navy']) };
+    d.feet = { kind: 'sandal', c: r.pick(['hitam', 'hijauTua', 'merah', 'biru']) };
+    if (!d.hijab && r.p(0.5)) { d.head = 'kupluk'; d.headCol = r.pick(['merah', 'kuning', 'abu', 'hitam', 'oranye']); }
+    d.handR = r.pick(['mug', 'mug', 'trekking', null]); d.propCol = r.pick(['putih', 'hijau', 'biru']);
+    return d;
+  }
+  d.top = { kind: 'jaket', c: r.pick(JAKET), c2: kaus, sleeve: 'panjang' };
+  d.bot = { kind: 'celana', c: r.pick(['hitam', 'abu', 'khaki', 'olive', 'navy']), stripe: r.p(0.3) ? 'abuMuda' : null };
+  d.feet = { kind: 'bot', c: r.pick(['coklat', 'abu', 'hitam', 'coklatMuda']) };
+  d.acc.push('carrier'); d.accCol = r.pick(['merah', 'oranye', 'biru', 'hijauTua', 'abu', 'hitam', 'kuning', 'tosca']);
+  if (!d.hijab) { d.head = r.pick(['kupluk', 'kupluk', 'topiRimba', 'topi']); d.headCol = r.pick(['merah', 'kuning', 'abu', 'hitam', 'oranye', 'biru', 'khaki']); }
+  d.handR = 'trekking'; if (r.p(0.5)) d.handL = 'trekking';
+  return d;
+});
+
+return { SPAWN, OUTFITS, EXPRS, build };
+})();
+// ===== sp_turis.js
+NS.sp_turis = (() => {
+// Template spawn: turis asing jalan-jalan (pantai, alun-alun, candi; gerombolan turis segmen 31). Guide segmen 34.
+const {  gen, template, EXPRS: EX  } = NS.spawn_base;
+const SPAWN = { sid: 'turis', name: 'Turis', seragam: 'jalan', varian: 64 };
+const OUTFITS = {
+  jalan: { name: 'Jalan: kaus atau tank top + celana pendek + topi + sandal, kamera/peta/ransel, kulit bule & wajah merah kepanasan' },
+};
+const EXPRS = EX;
+const build = template(SPAWN, OUTFITS, (v, o) => {
+  const d = gen(v, { sex: 'LP', age: ['dewasa', 'muda', 'dewasa', 'lansia'], skin: 5, hairCol: 'x', jenggotP: 0.25, kumisP: 0.15, kacamataP: 0.1, salt: 223 }), r = d.r, L = d.sex === 'L';
+  d.hairCol = d.age === 'lansia' ? r.pick(['putih', 'abu', 'pirang']) : r.pick(['pirang', 'pirang', 'coklat', 'merah', 'coklatTua']);
+  if (L) d.hairStyle = r.pick(['cepak', 'belah', 'ikal', 'gondrong', d.age === 'lansia' ? 'botakTengah' : 'cepak']);
+  else d.hairStyle = r.pick(['kuncir', 'sebahu', 'bob', 'kepang', 'sebahu']);
+  d.face.blush = true; d.face.kacamata = (v * 5 + 2) % 8 < 3 ? 'hitam' : null;
+  d.top = { kind: r.pick(L ? ['kaus', 'kaus', 'singlet', 'kemeja'] : ['kaus', 'singlet', 'singlet', 'blus']), c: r.pick(['putih', 'biruMuda', 'kuning', 'salem', 'mint', 'krem', 'abuMuda', 'tosca', 'merah', 'navy']) };
+  if (d.top.kind === 'singlet') d.top.sleeve = 'tanpa';
+  if (d.top.kind === 'kemeja') { d.top.pat = r.pick(['bunga', 'kotak']); d.top.pc = r.pick(['putih', 'kuning', 'merah']); d.top.c = r.pick(['biru', 'tosca', 'merah', 'hijau']); }
+  d.bot = { kind: 'pendek', c: r.pick(['khaki', 'krem', 'jinsMuda', 'olive', 'putih', 'navy', 'abu']) };
+  d.feet = { kind: r.pick(['sandal', 'sandal', 'sneaker', 'jepit']), c: r.pick(['coklat', 'hitam', 'putih', 'abu']) };
+  if (r.p(0.65)) { d.head = r.pick(['topi', 'topiRimba', 'topiRimba']); d.headCol = r.pick(['krem', 'putih', 'khaki', 'navy', 'merah']); }
+  const bawa = r.pick(['ransel', 'kamera', 'kamera', 'keduanya']);
+  if (bawa !== 'kamera') { d.acc.push('ransel'); d.accCol = r.pick(['hitam', 'abu', 'merah', 'navy', 'oranye']); }
+  if (bawa !== 'ransel') d.acc.push('kamera');
+  d.handR = r.pick(['peta', 'botol', 'hp', null]);
+  return d;
+});
+
+return { SPAWN, OUTFITS, EXPRS, build };
+})();
+// ===== sp_penonton.js
+NS.sp_penonton = (() => {
+// Template spawn: penonton sirkuit, futsal, pensi (tribun & pinggir lapangan). Guide segmen 34.
+const {  gen, template, EXPRS: EX  } = NS.spawn_base;
+const SPAWN = { sid: 'penonton', name: 'Penonton', seragam: 'suporter', varian: 64 };
+const OUTFITS = {
+  suporter: { name: 'Suporter: kaus tim bernomor + ikat kepala + syal, terompet atau bendera kecil' },
+};
+const EXPRS = EX;
+const TIM = [['biru', 'putih'], ['merah', 'putih'], ['hijau', 'putih'], ['oranye', 'hitam'], ['kuning', 'hijau'], ['biruMuda', 'navy'], ['ungu', 'kuning'], ['hitam', 'kuning'], ['marun', 'kuning']];
+const build = template(SPAWN, OUTFITS, (v, o) => {
+  const d = gen(v, { sex: 'LP', pP: 0.3, age: ['muda', 'muda', 'dewasa', 'dewasa', 'anak'], salt: 227 }), r = d.r, L = d.sex === 'L', kid = d.age === 'anak';
+  const [a, b] = r.pick(TIM);
+  if (!L && r.p(0.4)) d.hijab = r.p(0.5) ? a : 'hitam';
+  d.top = { kind: 'kaus', c: a, lis: b, logo: b, nomor: kid ? null : r.pick([7, 10, 9, 23, 17, 4, 11, 99, 8, 1]) };
+  if (d.hijab) d.top.sleeve = 'panjang';
+  d.bot = { kind: r.pick(['celana', 'pendek', 'celana']), c: r.pick(['hitam', 'jins', 'jinsMuda', 'abu', 'navy']) };
+  if (kid && d.bot.kind === 'celana') d.bot.kind = 'panjang';
+  d.feet = { kind: r.pick(['sneaker', 'sandal', 'jepit', 'sneaker']), c: r.pick(['hitam', 'putih', a, 'abu']) };
+  if (!d.hijab && r.p(0.6)) { d.head = 'ikatKepala'; d.headCol = r.pick([b, a, 'putih']); d.headTulis = d.headCol === a ? b : a; }
+  if (!kid && (v * 7 + 3) % 5 < 3) { d.acc.push('syal'); d.syalCol = a; d.syalCol2 = b; }
+  d.handR = ['terompet', 'bendera', null, 'bendera', 'terompet'][(v * 3 + 1) % 5]; d.propCol = a; d.propCol2 = b;
+  if (r.p(0.2)) d.handL = r.pick(['botol', 'hp']);
+  return d;
+});
+
+return { SPAWN, OUTFITS, EXPRS, build };
+})();
+// ===== sp_santri.js
+NS.sp_santri = (() => {
+// Template spawn: santri pesantren (Fikri & Zaki dan santri lain): halaman pondok, masjid, jalan ke sekolah. Guide segmen 34.
+const {  gen, template, EXPRS: EX  } = NS.spawn_base;
+const SPAWN = { sid: 'santri', name: 'Santri', seragam: 'santri', varian: 64 };
+const OUTFITS = {
+  santri: { name: 'Santri: koko + sarung + peci (putra), gamis + kerudung lebar (putri), kitab atau tasbih' },
+};
+const EXPRS = EX;
+const build = template(SPAWN, OUTFITS, (v, o) => {
+  const d = gen(v, { sex: 'LP', pP: 0.45, age: ['muda', 'muda', 'muda', 'anak'], kumisP: 0, jenggotP: 0, salt: 229 }), r = d.r, L = d.sex === 'L', kid = d.age === 'anak';
+  if (L) {
+    if (!['cepak', 'plontos', 'belah'].includes(d.hairStyle)) d.hairStyle = r.pick(['cepak', 'belah', 'cepak']);
+    d.top = { kind: 'koko', c: r.pick(['putih', 'putih', 'krem', 'biruMuda', 'abuMuda', 'mint', 'hijauTua', 'coklatMuda']), sleeve: r.p(0.5) ? 'panjang' : 'pendek' };
+    d.bot = kid ? { kind: 'panjang', c: r.pick(['hitam', 'navy', 'abu']) }
+      : { kind: 'sarung', c: r.pick(['hijauTua', 'marun', 'navy', 'coklat', 'hitam', 'biru', 'ungu']), pat: r.pick(['kotak', 'kotak', 'batik', 'garis']), pc: r.pick(['kuning', 'putih', 'krem', 'merah']) };
+    d.head = 'peci'; if (r.p(0.15)) { d.acc.push('handuk'); }
+  } else {
+    d.hijab = r.pick(['putih', 'putih', 'hitam', 'krem', 'navy', 'hijauTua', 'coklat']);
+    const c = r.pick(['hitam', 'navy', 'hijauTua', 'coklat', 'abu', 'marun', 'putih', 'mocca']);
+    d.top = { kind: 'gamis', c, sleeve: 'panjang' }; d.bot = kid ? { kind: 'panjang', c } : { kind: 'rok', c, hem: 4 };
+    if (d.hijab === c) d.hijab = c === 'putih' ? 'hitam' : 'putih';
+  }
+  d.feet = { kind: r.pick(['jepit', 'sandal', 'sandal']), c: r.pick(['hitam', 'coklat', 'biru', 'hijau']) };
+  d.handR = r.pick(['buku', 'buku', 'tasbih', null]); d.propCol = r.pick(['hijau', 'coklat', 'kuning', 'marun']);
+  return d;
+});
+
+return { SPAWN, OUTFITS, EXPRS, build };
+})();
+// ===== sp_silat.js
+NS.sp_silat = (() => {
+// Template spawn: murid silat cilik (padepokan, halaman masjid, lapangan sore; segmen 33). Rangka anak. Guide segmen 34.
+const {  gen, template, EXPRS: EX  } = NS.spawn_base;
+const SPAWN = { sid: 'muridSilat', name: 'Murid silat', seragam: 'pangsi', varian: 64 };
+const OUTFITS = {
+  pangsi: { name: 'Pangsi: baju & celana pangsi hitam kebesaran + sabuk tingkatan + nyeker, kadang iket di kepala' },
+};
+const EXPRS = EX;
+const build = template(SPAWN, OUTFITS, (v, o) => {
+  const d = gen(v, { sex: 'LP', pP: 0.35, age: 'anak', salt: 233 }), r = d.r, L = d.sex === 'L';
+  if (!L && r.p(0.45)) d.hijab = r.pick(['hitam', 'putih']);
+  d.top = { kind: 'pangsi', c: r.p(0.85) ? 'hitam' : 'putih', sleeve: 'panjang', tuck: true };
+  d.bot = { kind: 'panjang', c: d.top.c };
+  d.feet = { kind: 'nyeker' };
+  d.acc.push('sabuk'); d.sabukCol = r.pick(['putih', 'putih', 'kuning', 'hijau', 'biru', 'merah', 'coklat']);
+  if (d.top.c === 'putih' && d.sabukCol === 'putih') d.sabukCol = 'hitam';
+  if (!d.hijab && r.p(L ? 0.5 : 0.2)) { d.head = 'ikatKepala'; d.headCol = r.pick(['coklat', 'hitam', 'marun']); d.headPat = r.pick(['kuning', 'krem', null]); }
+  return d;
+});
+
+return { SPAWN, OUTFITS, EXPRS, build };
+})();
+// ===== sp_persit.js
+NS.sp_persit = (() => {
+// Template spawn: ibu-ibu Persit (asrama tentara, acara kompleks; segmen 33). Selalu berhijab. Guide segmen 34.
+const {  gen, template, EXPRS: EX  } = NS.spawn_base;
+const SPAWN = { sid: 'persit', name: 'Ibu Persit', seragam: 'seragam', varian: 64 };
+const OUTFITS = {
+  seragam: { name: 'Seragam: blus pink berkerah + rok pink panjang + jilbab + pantofel hitam + lencana, tas tangan' },
+};
+const EXPRS = EX;
+const build = template(SPAWN, OUTFITS, (v, o) => {
+  const d = gen(v, { sex: 'P', age: ['dewasa', 'dewasa', 'dewasa', 'lansia'], build: ['sedang', 'sedang', 'gempal', 'kurus'], kacamataP: 0.2, salt: 239 }), r = d.r;
+  d.hijab = r.pick(['pinkTua', 'pinkTua', 'pinkPersit', 'marun', 'putih']); d.hijabPin = r.p(0.6);
+  d.top = { kind: 'seragam', c: 'pinkPersit', sleeve: 'panjang', badge: true, tuck: false };
+  d.bot = { kind: 'rok', c: 'pinkPersit', hem: 4 };
+  d.feet = { kind: 'sepatu', c: 'hitam' };
+  d.handR = r.pick(['tasTangan', 'tasTangan', 'map', null]); d.propCol = r.pick(['hitam', 'coklat', 'marun']);
+  return d;
+});
+
+return { SPAWN, OUTFITS, EXPRS, build };
+})();
 // ===== chars.js
 NS.chars = (() => {
 // Daftar tokoh voxel halus (1/64 petak). Tiap tokoh: build({ outfit, expr, helm }) -> data untuk voxelFrame.
@@ -16419,6 +16617,12 @@ const {  SPAWN: SATPAM_SP, OUTFITS: SATPAM_SO, EXPRS: SATPAM_SE, build: SATPAM_S
 const {  SPAWN: NELAYAN_SP, OUTFITS: NELAYAN_SO, EXPRS: NELAYAN_SE, build: NELAYAN_SB  } = NS.sp_nelayan;
 const {  SPAWN: MEKANIK_SP, OUTFITS: MEKANIK_SO, EXPRS: MEKANIK_SE, build: MEKANIK_SB  } = NS.sp_mekanik;
 const {  SPAWN: PEDAGANG_SP, OUTFITS: PEDAGANG_SO, EXPRS: PEDAGANG_SE, build: PEDAGANG_SB  } = NS.sp_pedagang;
+const {  SPAWN: PENDAKI_SP, OUTFITS: PENDAKI_SO, EXPRS: PENDAKI_SE, build: PENDAKI_SB  } = NS.sp_pendaki;
+const {  SPAWN: TURIS_SP, OUTFITS: TURIS_SO, EXPRS: TURIS_SE, build: TURIS_SB  } = NS.sp_turis;
+const {  SPAWN: PENONTON_SP, OUTFITS: PENONTON_SO, EXPRS: PENONTON_SE, build: PENONTON_SB  } = NS.sp_penonton;
+const {  SPAWN: SANTRI_SP, OUTFITS: SANTRI_SO, EXPRS: SANTRI_SE, build: SANTRI_SB  } = NS.sp_santri;
+const {  SPAWN: SILAT_SP, OUTFITS: SILAT_SO, EXPRS: SILAT_SE, build: SILAT_SB  } = NS.sp_silat;
+const {  SPAWN: PERSIT_SP, OUTFITS: PERSIT_SO, EXPRS: PERSIT_SE, build: PERSIT_SB  } = NS.sp_persit;
 const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
   rani: { name: 'Rani', build: raniBuild, OUTFITS: RANI_OUT, EXPRS: RANI_EX },
@@ -16510,7 +16714,7 @@ const CHARS = {
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };
 // NPC spawn (guide segmen 34): tiap template didaftarkan 8 kali (seed 0..7) sebagai <sid>_<v> untuk pratinjau
-const SPAWNS = [{ SPAWN: PEDAGANG_SP, OUTFITS: PEDAGANG_SO, EXPRS: PEDAGANG_SE, build: PEDAGANG_SB }, { SPAWN: MEKANIK_SP, OUTFITS: MEKANIK_SO, EXPRS: MEKANIK_SE, build: MEKANIK_SB }, { SPAWN: NELAYAN_SP, OUTFITS: NELAYAN_SO, EXPRS: NELAYAN_SE, build: NELAYAN_SB }, { SPAWN: SATPAM_SP, OUTFITS: SATPAM_SO, EXPRS: SATPAM_SE, build: SATPAM_SB }, { SPAWN: POLISI_SP, OUTFITS: POLISI_SO, EXPRS: POLISI_SE, build: POLISI_SB }, { SPAWN: PARKIR_SP, OUTFITS: PARKIR_SO, EXPRS: PARKIR_SE, build: PARKIR_SB }, { SPAWN: KULI_SP, OUTFITS: KULI_SO, EXPRS: KULI_SE, build: KULI_SB }, { SPAWN: OJOL_SP, OUTFITS: OJOL_SO, EXPRS: OJOL_SE, build: OJOL_SB }, { SPAWN: GURU_SP, OUTFITS: GURU_SO, EXPRS: GURU_SE, build: GURU_SB }, { SPAWN: SISWI_SP, OUTFITS: SISWI_SO, EXPRS: SISWI_SE, build: SISWI_SB }, { SPAWN: PRIA_SP, OUTFITS: PRIA_SO, EXPRS: PRIA_SE, build: PRIA_SB }, { SPAWN: WANITA_SP, OUTFITS: WANITA_SO, EXPRS: WANITA_SE, build: WANITA_SB }, { SPAWN: HIJAB_SP, OUTFITS: HIJAB_SO, EXPRS: HIJAB_SE, build: HIJAB_SB }, { SPAWN: LANSIA_SP, OUTFITS: LANSIA_SO, EXPRS: LANSIA_SE, build: LANSIA_SB }, { SPAWN: MUDA_SP, OUTFITS: MUDA_SO, EXPRS: MUDA_SE, build: MUDA_SB }, { SPAWN: ANAK_SP, OUTFITS: ANAK_SO, EXPRS: ANAK_SE, build: ANAK_SB }, { SPAWN: TENTARA_SP, OUTFITS: TENTARA_SO, EXPRS: TENTARA_SE, build: TENTARA_SB }, { SPAWN: BURUH_SP, OUTFITS: BURUH_SO, EXPRS: BURUH_SE, build: BURUH_SB }, { SPAWN: PETANI_SP, OUTFITS: PETANI_SO, EXPRS: PETANI_SE, build: PETANI_SB }, { SPAWN: SISWA_SP, OUTFITS: SISWA_SO, EXPRS: SISWA_SE, build: SISWA_SB }];
+const SPAWNS = [{ SPAWN: PENDAKI_SP, OUTFITS: PENDAKI_SO, EXPRS: PENDAKI_SE, build: PENDAKI_SB }, { SPAWN: TURIS_SP, OUTFITS: TURIS_SO, EXPRS: TURIS_SE, build: TURIS_SB }, { SPAWN: PENONTON_SP, OUTFITS: PENONTON_SO, EXPRS: PENONTON_SE, build: PENONTON_SB }, { SPAWN: SANTRI_SP, OUTFITS: SANTRI_SO, EXPRS: SANTRI_SE, build: SANTRI_SB }, { SPAWN: SILAT_SP, OUTFITS: SILAT_SO, EXPRS: SILAT_SE, build: SILAT_SB }, { SPAWN: PERSIT_SP, OUTFITS: PERSIT_SO, EXPRS: PERSIT_SE, build: PERSIT_SB }, { SPAWN: PEDAGANG_SP, OUTFITS: PEDAGANG_SO, EXPRS: PEDAGANG_SE, build: PEDAGANG_SB }, { SPAWN: MEKANIK_SP, OUTFITS: MEKANIK_SO, EXPRS: MEKANIK_SE, build: MEKANIK_SB }, { SPAWN: NELAYAN_SP, OUTFITS: NELAYAN_SO, EXPRS: NELAYAN_SE, build: NELAYAN_SB }, { SPAWN: SATPAM_SP, OUTFITS: SATPAM_SO, EXPRS: SATPAM_SE, build: SATPAM_SB }, { SPAWN: POLISI_SP, OUTFITS: POLISI_SO, EXPRS: POLISI_SE, build: POLISI_SB }, { SPAWN: PARKIR_SP, OUTFITS: PARKIR_SO, EXPRS: PARKIR_SE, build: PARKIR_SB }, { SPAWN: KULI_SP, OUTFITS: KULI_SO, EXPRS: KULI_SE, build: KULI_SB }, { SPAWN: OJOL_SP, OUTFITS: OJOL_SO, EXPRS: OJOL_SE, build: OJOL_SB }, { SPAWN: GURU_SP, OUTFITS: GURU_SO, EXPRS: GURU_SE, build: GURU_SB }, { SPAWN: SISWI_SP, OUTFITS: SISWI_SO, EXPRS: SISWI_SE, build: SISWI_SB }, { SPAWN: PRIA_SP, OUTFITS: PRIA_SO, EXPRS: PRIA_SE, build: PRIA_SB }, { SPAWN: WANITA_SP, OUTFITS: WANITA_SO, EXPRS: WANITA_SE, build: WANITA_SB }, { SPAWN: HIJAB_SP, OUTFITS: HIJAB_SO, EXPRS: HIJAB_SE, build: HIJAB_SB }, { SPAWN: LANSIA_SP, OUTFITS: LANSIA_SO, EXPRS: LANSIA_SE, build: LANSIA_SB }, { SPAWN: MUDA_SP, OUTFITS: MUDA_SO, EXPRS: MUDA_SE, build: MUDA_SB }, { SPAWN: ANAK_SP, OUTFITS: ANAK_SO, EXPRS: ANAK_SE, build: ANAK_SB }, { SPAWN: TENTARA_SP, OUTFITS: TENTARA_SO, EXPRS: TENTARA_SE, build: TENTARA_SB }, { SPAWN: BURUH_SP, OUTFITS: BURUH_SO, EXPRS: BURUH_SE, build: BURUH_SB }, { SPAWN: PETANI_SP, OUTFITS: PETANI_SO, EXPRS: PETANI_SE, build: PETANI_SB }, { SPAWN: SISWA_SP, OUTFITS: SISWA_SO, EXPRS: SISWA_SE, build: SISWA_SB }];
 for (const T of SPAWNS) for (let v = 0; v < 8; v++) CHARS[T.SPAWN.sid + '_' + v] = { name: T.SPAWN.name + ' #' + v, build: o => T.build({ ...o, v }), OUTFITS: T.OUTFITS, EXPRS: T.EXPRS };
 
 return { CHARS, SPAWNS };

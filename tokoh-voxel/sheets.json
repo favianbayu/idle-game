@@ -36023,5 +36023,1021 @@
     "label": "#7"
    }
   ]
+ },
+ "sp_pendaki": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "pendaki_0",
+    "outfit": "naik",
+    "label": "naik #0"
+   },
+   {
+    "char": "pendaki_1",
+    "outfit": "naik",
+    "label": "naik #1"
+   },
+   {
+    "char": "pendaki_2",
+    "outfit": "naik",
+    "label": "naik #2"
+   },
+   {
+    "char": "pendaki_3",
+    "outfit": "naik",
+    "label": "naik #3"
+   },
+   {
+    "char": "pendaki_4",
+    "outfit": "naik",
+    "label": "naik #4"
+   },
+   {
+    "char": "pendaki_5",
+    "outfit": "naik",
+    "label": "naik #5"
+   },
+   {
+    "char": "pendaki_6",
+    "outfit": "naik",
+    "label": "naik #6"
+   },
+   {
+    "char": "pendaki_7",
+    "outfit": "naik",
+    "label": "naik #7"
+   },
+   {
+    "char": "pendaki_0",
+    "outfit": "camp",
+    "label": "camp #0"
+   },
+   {
+    "char": "pendaki_1",
+    "outfit": "camp",
+    "label": "camp #1"
+   },
+   {
+    "char": "pendaki_2",
+    "outfit": "camp",
+    "label": "camp #2"
+   },
+   {
+    "char": "pendaki_3",
+    "outfit": "camp",
+    "label": "camp #3"
+   },
+   {
+    "char": "pendaki_4",
+    "outfit": "camp",
+    "label": "camp #4"
+   },
+   {
+    "char": "pendaki_5",
+    "outfit": "camp",
+    "label": "camp #5"
+   },
+   {
+    "char": "pendaki_6",
+    "outfit": "camp",
+    "label": "camp #6"
+   },
+   {
+    "char": "pendaki_7",
+    "outfit": "camp",
+    "label": "camp #7"
+   }
+  ]
+ },
+ "sp_pendakiCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "pendaki_0",
+    "outfit": "naik",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "pendaki_1",
+    "outfit": "naik",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "pendaki_2",
+    "outfit": "naik",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "pendaki_3",
+    "outfit": "naik",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "pendaki_0",
+    "outfit": "naik",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "pendaki_1",
+    "outfit": "naik",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "pendaki_2",
+    "outfit": "naik",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "pendaki_3",
+    "outfit": "naik",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_turis": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "turis_0",
+    "outfit": "jalan",
+    "label": "jalan #0"
+   },
+   {
+    "char": "turis_1",
+    "outfit": "jalan",
+    "label": "jalan #1"
+   },
+   {
+    "char": "turis_2",
+    "outfit": "jalan",
+    "label": "jalan #2"
+   },
+   {
+    "char": "turis_3",
+    "outfit": "jalan",
+    "label": "jalan #3"
+   },
+   {
+    "char": "turis_4",
+    "outfit": "jalan",
+    "label": "jalan #4"
+   },
+   {
+    "char": "turis_5",
+    "outfit": "jalan",
+    "label": "jalan #5"
+   },
+   {
+    "char": "turis_6",
+    "outfit": "jalan",
+    "label": "jalan #6"
+   },
+   {
+    "char": "turis_7",
+    "outfit": "jalan",
+    "label": "jalan #7"
+   }
+  ]
+ },
+ "sp_turisCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "turis_0",
+    "outfit": "jalan",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "turis_1",
+    "outfit": "jalan",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "turis_2",
+    "outfit": "jalan",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "turis_3",
+    "outfit": "jalan",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "turis_0",
+    "outfit": "jalan",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "turis_1",
+    "outfit": "jalan",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "turis_2",
+    "outfit": "jalan",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "turis_3",
+    "outfit": "jalan",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_penonton": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "penonton_0",
+    "outfit": "suporter",
+    "label": "suporter #0"
+   },
+   {
+    "char": "penonton_1",
+    "outfit": "suporter",
+    "label": "suporter #1"
+   },
+   {
+    "char": "penonton_2",
+    "outfit": "suporter",
+    "label": "suporter #2"
+   },
+   {
+    "char": "penonton_3",
+    "outfit": "suporter",
+    "label": "suporter #3"
+   },
+   {
+    "char": "penonton_4",
+    "outfit": "suporter",
+    "label": "suporter #4"
+   },
+   {
+    "char": "penonton_5",
+    "outfit": "suporter",
+    "label": "suporter #5"
+   },
+   {
+    "char": "penonton_6",
+    "outfit": "suporter",
+    "label": "suporter #6"
+   },
+   {
+    "char": "penonton_7",
+    "outfit": "suporter",
+    "label": "suporter #7"
+   }
+  ]
+ },
+ "sp_penontonCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "penonton_0",
+    "outfit": "suporter",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "penonton_1",
+    "outfit": "suporter",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "penonton_2",
+    "outfit": "suporter",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "penonton_3",
+    "outfit": "suporter",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "penonton_0",
+    "outfit": "suporter",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "penonton_1",
+    "outfit": "suporter",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "penonton_2",
+    "outfit": "suporter",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "penonton_3",
+    "outfit": "suporter",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_santri": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "santri_0",
+    "outfit": "santri",
+    "label": "santri #0"
+   },
+   {
+    "char": "santri_1",
+    "outfit": "santri",
+    "label": "santri #1"
+   },
+   {
+    "char": "santri_2",
+    "outfit": "santri",
+    "label": "santri #2"
+   },
+   {
+    "char": "santri_3",
+    "outfit": "santri",
+    "label": "santri #3"
+   },
+   {
+    "char": "santri_4",
+    "outfit": "santri",
+    "label": "santri #4"
+   },
+   {
+    "char": "santri_5",
+    "outfit": "santri",
+    "label": "santri #5"
+   },
+   {
+    "char": "santri_6",
+    "outfit": "santri",
+    "label": "santri #6"
+   },
+   {
+    "char": "santri_7",
+    "outfit": "santri",
+    "label": "santri #7"
+   }
+  ]
+ },
+ "sp_santriCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "santri_0",
+    "outfit": "santri",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "santri_1",
+    "outfit": "santri",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "santri_2",
+    "outfit": "santri",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "santri_3",
+    "outfit": "santri",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "santri_0",
+    "outfit": "santri",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "santri_1",
+    "outfit": "santri",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "santri_2",
+    "outfit": "santri",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "santri_3",
+    "outfit": "santri",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_muridSilat": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "muridSilat_0",
+    "outfit": "pangsi",
+    "label": "pangsi #0"
+   },
+   {
+    "char": "muridSilat_1",
+    "outfit": "pangsi",
+    "label": "pangsi #1"
+   },
+   {
+    "char": "muridSilat_2",
+    "outfit": "pangsi",
+    "label": "pangsi #2"
+   },
+   {
+    "char": "muridSilat_3",
+    "outfit": "pangsi",
+    "label": "pangsi #3"
+   },
+   {
+    "char": "muridSilat_4",
+    "outfit": "pangsi",
+    "label": "pangsi #4"
+   },
+   {
+    "char": "muridSilat_5",
+    "outfit": "pangsi",
+    "label": "pangsi #5"
+   },
+   {
+    "char": "muridSilat_6",
+    "outfit": "pangsi",
+    "label": "pangsi #6"
+   },
+   {
+    "char": "muridSilat_7",
+    "outfit": "pangsi",
+    "label": "pangsi #7"
+   }
+  ]
+ },
+ "sp_muridSilatCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "muridSilat_0",
+    "outfit": "pangsi",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "muridSilat_1",
+    "outfit": "pangsi",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "muridSilat_2",
+    "outfit": "pangsi",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "muridSilat_3",
+    "outfit": "pangsi",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "muridSilat_0",
+    "outfit": "pangsi",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "muridSilat_1",
+    "outfit": "pangsi",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "muridSilat_2",
+    "outfit": "pangsi",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "muridSilat_3",
+    "outfit": "pangsi",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_persit": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "persit_0",
+    "outfit": "seragam",
+    "label": "seragam #0"
+   },
+   {
+    "char": "persit_1",
+    "outfit": "seragam",
+    "label": "seragam #1"
+   },
+   {
+    "char": "persit_2",
+    "outfit": "seragam",
+    "label": "seragam #2"
+   },
+   {
+    "char": "persit_3",
+    "outfit": "seragam",
+    "label": "seragam #3"
+   },
+   {
+    "char": "persit_4",
+    "outfit": "seragam",
+    "label": "seragam #4"
+   },
+   {
+    "char": "persit_5",
+    "outfit": "seragam",
+    "label": "seragam #5"
+   },
+   {
+    "char": "persit_6",
+    "outfit": "seragam",
+    "label": "seragam #6"
+   },
+   {
+    "char": "persit_7",
+    "outfit": "seragam",
+    "label": "seragam #7"
+   }
+  ]
+ },
+ "sp_persitCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "persit_0",
+    "outfit": "seragam",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "persit_1",
+    "outfit": "seragam",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "persit_2",
+    "outfit": "seragam",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "persit_3",
+    "outfit": "seragam",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "persit_0",
+    "outfit": "seragam",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "persit_1",
+    "outfit": "seragam",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "persit_2",
+    "outfit": "seragam",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "persit_3",
+    "outfit": "seragam",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_semua3": {
+  "cols": 16,
+  "cell": [
+   160,
+   290
+  ],
+  "base": {
+   "scale": 6,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 268
+  },
+  "items": [
+   {
+    "char": "pendaki_0",
+    "outfit": "naik",
+    "label": "pendaki #0"
+   },
+   {
+    "char": "pendaki_1",
+    "outfit": "naik",
+    "label": "#1"
+   },
+   {
+    "char": "pendaki_2",
+    "outfit": "naik",
+    "label": "#2"
+   },
+   {
+    "char": "pendaki_3",
+    "outfit": "naik",
+    "label": "#3"
+   },
+   {
+    "char": "pendaki_4",
+    "outfit": "naik",
+    "label": "#4"
+   },
+   {
+    "char": "pendaki_5",
+    "outfit": "camp",
+    "label": "#5"
+   },
+   {
+    "char": "pendaki_6",
+    "outfit": "naik",
+    "label": "#6"
+   },
+   {
+    "char": "pendaki_7",
+    "outfit": "camp",
+    "label": "#7"
+   },
+   {
+    "char": "turis_0",
+    "outfit": "jalan",
+    "label": "turis #0"
+   },
+   {
+    "char": "turis_1",
+    "outfit": "jalan",
+    "label": "#1"
+   },
+   {
+    "char": "turis_2",
+    "outfit": "jalan",
+    "label": "#2"
+   },
+   {
+    "char": "turis_3",
+    "outfit": "jalan",
+    "label": "#3"
+   },
+   {
+    "char": "turis_4",
+    "outfit": "jalan",
+    "label": "#4"
+   },
+   {
+    "char": "turis_5",
+    "outfit": "jalan",
+    "label": "#5"
+   },
+   {
+    "char": "turis_6",
+    "outfit": "jalan",
+    "label": "#6"
+   },
+   {
+    "char": "turis_7",
+    "outfit": "jalan",
+    "label": "#7"
+   },
+   {
+    "char": "penonton_0",
+    "outfit": "suporter",
+    "label": "penonton #0"
+   },
+   {
+    "char": "penonton_1",
+    "outfit": "suporter",
+    "label": "#1"
+   },
+   {
+    "char": "penonton_2",
+    "outfit": "suporter",
+    "label": "#2"
+   },
+   {
+    "char": "penonton_3",
+    "outfit": "suporter",
+    "label": "#3"
+   },
+   {
+    "char": "penonton_4",
+    "outfit": "suporter",
+    "label": "#4"
+   },
+   {
+    "char": "penonton_5",
+    "outfit": "suporter",
+    "label": "#5"
+   },
+   {
+    "char": "penonton_6",
+    "outfit": "suporter",
+    "label": "#6"
+   },
+   {
+    "char": "penonton_7",
+    "outfit": "suporter",
+    "label": "#7"
+   },
+   {
+    "char": "santri_0",
+    "outfit": "santri",
+    "label": "santri #0"
+   },
+   {
+    "char": "santri_1",
+    "outfit": "santri",
+    "label": "#1"
+   },
+   {
+    "char": "santri_2",
+    "outfit": "santri",
+    "label": "#2"
+   },
+   {
+    "char": "santri_3",
+    "outfit": "santri",
+    "label": "#3"
+   },
+   {
+    "char": "santri_4",
+    "outfit": "santri",
+    "label": "#4"
+   },
+   {
+    "char": "santri_5",
+    "outfit": "santri",
+    "label": "#5"
+   },
+   {
+    "char": "santri_6",
+    "outfit": "santri",
+    "label": "#6"
+   },
+   {
+    "char": "santri_7",
+    "outfit": "santri",
+    "label": "#7"
+   },
+   {
+    "char": "muridSilat_0",
+    "outfit": "pangsi",
+    "label": "muridSilat #0"
+   },
+   {
+    "char": "muridSilat_1",
+    "outfit": "pangsi",
+    "label": "#1"
+   },
+   {
+    "char": "muridSilat_2",
+    "outfit": "pangsi",
+    "label": "#2"
+   },
+   {
+    "char": "muridSilat_3",
+    "outfit": "pangsi",
+    "label": "#3"
+   },
+   {
+    "char": "muridSilat_4",
+    "outfit": "pangsi",
+    "label": "#4"
+   },
+   {
+    "char": "muridSilat_5",
+    "outfit": "pangsi",
+    "label": "#5"
+   },
+   {
+    "char": "muridSilat_6",
+    "outfit": "pangsi",
+    "label": "#6"
+   },
+   {
+    "char": "muridSilat_7",
+    "outfit": "pangsi",
+    "label": "#7"
+   },
+   {
+    "char": "persit_0",
+    "outfit": "seragam",
+    "label": "persit #0"
+   },
+   {
+    "char": "persit_1",
+    "outfit": "seragam",
+    "label": "#1"
+   },
+   {
+    "char": "persit_2",
+    "outfit": "seragam",
+    "label": "#2"
+   },
+   {
+    "char": "persit_3",
+    "outfit": "seragam",
+    "label": "#3"
+   },
+   {
+    "char": "persit_4",
+    "outfit": "seragam",
+    "label": "#4"
+   },
+   {
+    "char": "persit_5",
+    "outfit": "seragam",
+    "label": "#5"
+   },
+   {
+    "char": "persit_6",
+    "outfit": "seragam",
+    "label": "#6"
+   },
+   {
+    "char": "persit_7",
+    "outfit": "seragam",
+    "label": "#7"
+   }
+  ]
  }
 }
