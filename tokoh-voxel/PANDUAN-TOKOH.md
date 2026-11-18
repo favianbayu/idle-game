@@ -158,6 +158,17 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
 - Gamis atau sarung di rangka cowok (Ustaz Hasan): `rok.js` diukur untuk rangka cewek, jadi buat tabung kain sendiri di pelvis,
   paha, dan betis, lalu isi `P.skirt = { mats, fill, parts: ['pelvis', 'thighL', 'thighR', 'shinL', 'shinR'] }` tanpa panel.
 - Kulit dan rambut mengikuti warna `NPC_STYLES` lama, atau warna kunci di guide desain tokoh (`docs/desain-sma/guide`).
+- Peta wajah wajib tepat 15 baris (alis z 11, mulut z 4). Kalau menambah baris kumis atau jenggot, hitung ulang barisnya;
+  14 baris menggeser seluruh wajah satu voxel.
+- Kumis putih di kulit gelap terbaca sebagai gigi. Pakai abu-abu (Pak Darsono, Wak Udin). Tali atau ujung putih di dagu juga
+  terbaca sebagai gigi (tali serut tudung Mas Tejo dibuang).
+- Rambut bergelombang atau keriting di bawah topi/helm: buat tonjolan rambut hanya saat kepala tidak tertutup, kalau tidak
+  menembus topi (Bang Ucok). Sanggul juga dilewati saat selendang dipakai di kepala (Mak Ijah).
+- Benda pegangan berbentuk L terbaca sebagai pistol. Pemindai kasir dibuat badan kuning tebal dengan gagang pendek gelap.
+- Pikulan, karung, dan bakul di punggung masuk ke bagian `chest`, supaya ikut badan saat berantem (pikulan Pak Darsono
+  membentang x -26..25 dan tetap aman).
+- Benda kecil yang menggantung di tengah dada (HT di saku) terbaca sebagai dasi. Jepit di pinggang samping saja.
+- Motif bunga rapat di daster atau blus membuat baju terlihat berbintik; beri jarak kisi antarbunga.
 
 ## 7. Mendaftarkan tokoh
 

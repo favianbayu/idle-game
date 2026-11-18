@@ -66,6 +66,16 @@ import { build as dewiBuild, OUTFITS as DEWI_OUT, EXPRS as DEWI_EX } from './dew
 import { build as dulBuild, OUTFITS as DUL_OUT, EXPRS as DUL_EX } from './dul.js';
 import { build as hendrikBuild, OUTFITS as HENDRIK_OUT, EXPRS as HENDRIK_EX } from './hendrik.js';
 import { build as watiBuild, OUTFITS as WATI_OUT, EXPRS as WATI_EX } from './wati.js';
+import { build as ilhamBuild, OUTFITS as ILHAM_OUT, EXPRS as ILHAM_EX } from './ilham.js';
+import { build as nanaBuild, OUTFITS as NANA_OUT, EXPRS as NANA_EX } from './nana.js';
+import { build as darsonoBuild, OUTFITS as DARSONO_OUT, EXPRS as DARSONO_EX } from './darsono.js';
+import { build as udinBuild, OUTFITS as UDIN_OUT, EXPRS as UDIN_EX } from './udin.js';
+import { build as inahBuild, OUTFITS as INAH_OUT, EXPRS as INAH_EX } from './inah.js';
+import { build as ucokBuild, OUTFITS as UCOK_OUT, EXPRS as UCOK_EX } from './ucok.js';
+import { build as ijahBuild, OUTFITS as IJAH_OUT, EXPRS as IJAH_EX } from './ijah.js';
+import { build as roniBuild, OUTFITS as RONI_OUT, EXPRS as RONI_EX } from './roni.js';
+import { build as lilisBuild, OUTFITS as LILIS_OUT, EXPRS as LILIS_EX } from './lilis.js';
+import { build as tejoBuild, OUTFITS as TEJO_OUT, EXPRS as TEJO_EX } from './tejo.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -135,5 +145,15 @@ export const CHARS = {
   pengamenDul: { name: 'Pengamen Dul', build: dulBuild, OUTFITS: DUL_OUT, EXPRS: DUL_EX },
   omHendrik: { name: 'Om Hendrik', build: hendrikBuild, OUTFITS: HENDRIK_OUT, EXPRS: HENDRIK_EX },
   buWati: { name: 'Bu Wati', build: watiBuild, OUTFITS: WATI_OUT, EXPRS: WATI_EX },
+  masIlham: { name: 'Mas Ilham', build: ilhamBuild, OUTFITS: ILHAM_OUT, EXPRS: ILHAM_EX },
+  kakNana: { name: 'Kak Nana', build: nanaBuild, OUTFITS: NANA_OUT, EXPRS: NANA_EX },
+  pakDarsono: { name: 'Pak Darsono', build: darsonoBuild, OUTFITS: DARSONO_OUT, EXPRS: DARSONO_EX },
+  wakUdin: { name: 'Wak Udin', build: udinBuild, OUTFITS: UDIN_OUT, EXPRS: UDIN_EX },
+  buInah: { name: 'Bu Inah', build: inahBuild, OUTFITS: INAH_OUT, EXPRS: INAH_EX },
+  bangUcok: { name: 'Bang Ucok', build: ucokBuild, OUTFITS: UCOK_OUT, EXPRS: UCOK_EX },
+  makIjah: { name: 'Mak Ijah', build: ijahBuild, OUTFITS: IJAH_OUT, EXPRS: IJAH_EX },
+  pakRoni: { name: 'Pak Roni', build: roniBuild, OUTFITS: RONI_OUT, EXPRS: RONI_EX },
+  tehLilis: { name: 'Teh Lilis', build: lilisBuild, OUTFITS: LILIS_OUT, EXPRS: LILIS_EX },
+  masTejo: { name: 'Mas Tejo', build: tejoBuild, OUTFITS: TEJO_OUT, EXPRS: TEJO_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };
