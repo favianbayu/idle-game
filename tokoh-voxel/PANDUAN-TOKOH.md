@@ -169,6 +169,18 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
   membentang x -26..25 dan tetap aman).
 - Benda kecil yang menggantung di tengah dada (HT di saku) terbaca sebagai dasi. Jepit di pinggang samping saja.
 - Motif bunga rapat di daster atau blus membuat baju terlihat berbintik; beri jarak kisi antarbunga.
+- Celemek di atas rok panjang: cat juga panel depan rok (`flapF`), bukan hanya pelvis, karena panel itu menutupi pelvis
+  dari depan. Batasi ke 10 lapis teratas panel supaya celemek tidak sampai mata kaki (Bu Ningsih).
+- Undercut: warnai permukaan kulit kepala di sisi dan belakang dengan warna rambut tipis. Kalau dibuat sebagai lapisan baru
+  di luar tengkorak, terbaca sebagai pinggiran topi (Bejo).
+- Helm proyek atau helm cangkang berongga: buang voxel rambut di z >= 12 dulu, kalau tidak rambut tembus lewat celah cangkang
+  dan terlihat sebagai kotak hitam di pinggir helm (Mandor Sutris).
+- Logo kecil 5x5: pola silang penuh terbaca sebagai tanda plus atau tagar. Roda gigi dibuat dari gigi di pojok + lingkar
+  bolong (`L.L.L / .LLL. / LLYLL`).
+- Rambut jabrik: buat gumpalan 3x3 yang menyempit ke atas. Helai 1-2 voxel terbaca sebagai antena.
+- Siswi berambut licin tanpa poni terlihat seperti cowok dari depan: tambah bulu mata di sudut luar, warna bibir, rona pipi,
+  dan anting kecil (Maya).
+- Kilau rambut panjang lurus: dua garis putus-putus saja. Banyak garis rapat terbaca sebagai kisi-kisi.
 
 ## 7. Mendaftarkan tokoh
 

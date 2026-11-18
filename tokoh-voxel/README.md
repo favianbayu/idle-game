@@ -1,4 +1,4 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong, Dodi, Didi, Uda Rizki, Ustaz Hasan, Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita, Kurir Bayu, Kevin kecil, Pak Polisi Sugeng, Mas Barista Kevin, Bu Lastri, Pak Tarno, Mbak SPG Dewi, Pengamen Dul, Om Hendrik, Bu Wati, Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis, Mas Tejo (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong, Dodi, Didi, Uda Rizki, Ustaz Hasan, Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita, Kurir Bayu, Kevin kecil, Pak Polisi Sugeng, Mas Barista Kevin, Bu Lastri, Pak Tarno, Mbak SPG Dewi, Pengamen Dul, Om Hendrik, Bu Wati, Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis, Mas Tejo, Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat", Maya, Bejo, Mandor Sutris (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
@@ -10,8 +10,9 @@ dan galonnya ditaruh saat berantem. Pak Ujang, Mak Iyah, Ama, dan warga Kenanga 
 Pak Joko, Teh Euis, Koh Ahong) juga sudah di game (PR #8), begitu juga Dodi & Didi, Uda Rizki, Ustaz Hasan, dan warga
 Bukit Asri (Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita) lewat PR #9, dan Kurir Bayu,
 Kevin kecil, Pak Polisi Sugeng, Mas Barista Kevin, Bu Lastri, Pak Tarno, Mbak SPG Dewi, Pengamen Dul, Om Hendrik, Bu Wati
-lewat PR #10. Batch baru (Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis,
-Mas Tejo) masih pratinjau, menunggu persetujuan (`shots/barisan10baru5.png`).
+lewat PR #10, dan Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis, Mas Tejo
+lewat PR #11. Batch baru pengisi sekolah (Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat",
+Maya, Bejo, Mandor Sutris) masih pratinjau, menunggu persetujuan (`shots/barisan10baru6.png`).
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
@@ -82,6 +83,16 @@ Mas Tejo) masih pratinjau, menunggu persetujuan (`shots/barisan10baru5.png`).
 | Pengamen Dul | pengamen ukulele (pengisi) | 1.3 | 84 | gondrong sebahu, bandana merah, jenggot tipis, rompi jins tambalan, kaus matahari, ukulele, jins robek |
 | Om Hendrik | penjual koran (pengisi) | 1.3 | 85 (termasuk topi) | botak tengah, rambut & kumis putih, kacamata baca, topi pet flat, kemeja kotak, pensil di telinga, tumpukan koran |
 | Bu Wati | pegawai bank (pengisi) | 1.22 | 79 | jilbab marun bros emas, blazer dongker lis emas, kartu pegawai, rok span hitam panjang, buku tabungan + brosur |
+| Pak Satpam Udin | satpam sekolah (pengisi) | 1.3 | 86 (termasuk baret) | kumis tebal, baret dongker berlencana, kemeja putih berpangkat bahu, emblem lengan, tali peluit, kopel & pentungan, PDH |
+| Bu Kantin Ningsih | penjual soto kantin (pengisi) | 1.22 | 78 | montok, bergo hijau tosca, celemek kotak merah bernoda kuah, rok batik, sendok sayur & mangkuk soto |
+| Mas Cilok | penjual cilok (pengisi) | 1.3 | 89 (termasuk topi) | topi kuning terbalik, kaus kuning sablon cilok, handuk di bahu, tas pinggang, panci cilok mengepul |
+| Andi | siswa kutu buku (pengisi) | 1.3 | 85 | rambut klimis belah pinggir, kacamata bulat tebal, gigi kelinci, kemeja dikancing sampai atas, saku penuh pulpen, tumpukan buku |
+| Fitri | siswi duo gosip (pengisi) | 1.22 | 79 | jilbab putih, alis tebal, kemeja lengan panjang, rok abu panjang, HP pink |
+| Rina | siswi duo gosip (pengisi) | 1.22 | 81 | rambut lurus panjang berponi rata, bando merah, kemeja lengan pendek, rok abu panjang, keripik pedas |
+| Bayu "Si Telat" | siswa langganan telat (pengisi) | 1.3 | 88 | rambut jabrik, plester di pipi, kemeja dikeluarkan + kaus hitam, dasi miring, ransel satu bahu, tali sepatu lepas, roti tawar |
+| Maya | anggota Paskibra (pengisi) | 1.22 | 80 | rambut licin dicepol berjaring, alis tegas, lencana paskibra, emblem merah putih, rok abu panjang, PDH mengilap |
+| Bejo | anak STM Serigala Besi (pengisi) | 1.3 | 87 | undercut + jambul, alis dicukur satu garis, kemeja STM logo roda gigi, celana pensil, sepatu safety, kunci inggris |
+| Mandor Sutris | mandor proyek (pengisi) | 1.34 | 90 (termasuk helm) | perut buncit, kumis tebal beruban, helm proyek kuning, rompi oranye reflektor GRAHA, kemeja biru, papan jepit |
 | Mas Ilham | ojek online (pengisi) | 1.3 | 89 (termasuk helm) | rambut ikal, kumis-jenggot tipis, helm hijau berkaca, jaket hijau OJEK KITA logo panah di punggung, jins, HP |
 | Kak Nana | kasir minimarket (pengisi) | 1.22 | 80 | bob berponi rata + jepit kuning, kemeja biru muda, rompi merah SERBAMART huruf S di punggung, name tag, pemindai kuning |
 | Pak Darsono | tukang sol sepatu keliling (pengisi) | 1.3 | 87 (termasuk topi) | topi kain, kumis abu, kemeja digulung, celana komprang, pikulan bambu dengan dua kotak kayu |
@@ -164,6 +175,16 @@ Ukuran tiap tokoh diturunkan dari `NPC_STYLES` lama (skala dan warna kulit/rambu
 - **Pengamen Dul**: ngamen (bandana + kaus matahari + rompi jins tambalan + ukulele + kantong permen), nongkrong (jaket parka hijau + ukulele di punggung).
 - **Om Hendrik**: jaga kios (topi pet + kacamata baca + kemeja kotak + pensil di telinga + koran), antar pagi (jaket parasut dongker + tas kanvas penuh koran).
 - **Bu Wati**: kantor bank (jilbab marun + blazer dongker + blus putih + kartu pegawai + rok span + buku tabungan & brosur), akhir pekan (jilbab peach + tunik mint + kulot krem + tas selempang).
+- **Pak Satpam Udin**: jaga gerbang (baret + kemeja putih berpangkat + tali peluit + kopel & pentungan + celana dongker + PDH), ronda malam (kupluk + jaket dongker lis putih + senter).
+- **Bu Kantin Ningsih**: kantin (bergo tosca + blus krem + celemek kotak merah + rok batik + sendok sayur & mangkuk soto), ke pasar (bergo cokelat + gamis biru bunga + keranjang belanja).
+- **Mas Cilok**: jualan (topi kuning terbalik + kaus sablon cilok + handuk + tas pinggang + jins selutut + sandal + panci & plastik cilok), pulang (hoodie abu + jins + kets).
+- **Andi**: seragam (kemeja dikancing sampai atas + dasi + saku penuh pulpen + celana abu + tumpukan buku), rumah (kaus planet + celana pendek + sandal + satu buku).
+- **Fitri**: seragam (jilbab putih + kemeja lengan panjang + rok abu panjang + HP pink), jalan (pashmina lilac + kardigan krem + rok plisket mocca + tas mini + sneakers).
+- **Rina**: seragam (bando merah + kemeja lengan pendek + rok abu panjang + kaus kaki putih + keripik pedas), jalan (jaket jins crop + kaus kuning + kulot hitam + sneakers + HP).
+- **Bayu "Si Telat"**: seragam berantakan (kemeja dikeluarkan + kaus hitam + dasi miring + ransel satu bahu + tali sepatu lepas + roti tawar), futsal (jersey oranye #7 + celana pendek + kaus kaki panjang).
+- **Maya**: seragam (cepol berjaring + kemeja licin + dasi + lencana paskibra + emblem merah putih + rok abu + PDH), latihan (topi putih + kaus lis merah + peluit + training dongker + kets).
+- **Bejo**: seragam STM (kemeja logo roda gigi dikeluarkan + lengan digulung + celana pensil + sepatu safety + kunci inggris), nongkrong (jaket hitam patch serigala + kaus merah + jins robek + rantai dompet).
+- **Mandor Sutris**: proyek (helm kuning + rompi oranye GRAHA + kemeja biru + celana kain + sepatu safety + papan jepit), santai (kemeja batik + celana bahan + pantofel + HP & kunci mobil).
 - **Mas Ilham**: narik (helm hijau berkaca + jaket OJEK KITA + jins + kets + HP), ngetem (helm ditenteng + jaket dibuka di atas kaus hitam + es teh plastik).
 - **Kak Nana**: kasir (rompi merah SERBAMART + kemeja biru muda + name tag + celana hitam + pemindai kuning), pulang (hoodie abu + jogger + kets + kantong belanja).
 - **Pak Darsono**: keliling (topi kain + kemeja digulung + komprang + pikulan dua kotak kayu), menjahit sol (celemek kulit + sepatu yang disol + jarum).

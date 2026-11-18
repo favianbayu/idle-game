@@ -76,6 +76,16 @@ import { build as ijahBuild, OUTFITS as IJAH_OUT, EXPRS as IJAH_EX } from './ija
 import { build as roniBuild, OUTFITS as RONI_OUT, EXPRS as RONI_EX } from './roni.js';
 import { build as lilisBuild, OUTFITS as LILIS_OUT, EXPRS as LILIS_EX } from './lilis.js';
 import { build as tejoBuild, OUTFITS as TEJO_OUT, EXPRS as TEJO_EX } from './tejo.js';
+import { build as satpamudinBuild, OUTFITS as SATPAMUDIN_OUT, EXPRS as SATPAMUDIN_EX } from './satpamudin.js';
+import { build as ningsihBuild, OUTFITS as NINGSIH_OUT, EXPRS as NINGSIH_EX } from './ningsih.js';
+import { build as cilokBuild, OUTFITS as CILOK_OUT, EXPRS as CILOK_EX } from './cilok.js';
+import { build as andiBuild, OUTFITS as ANDI_OUT, EXPRS as ANDI_EX } from './andi.js';
+import { build as fitriBuild, OUTFITS as FITRI_OUT, EXPRS as FITRI_EX } from './fitri.js';
+import { build as rinaBuild, OUTFITS as RINA_OUT, EXPRS as RINA_EX } from './rina.js';
+import { build as bayuBuild, OUTFITS as BAYU_OUT, EXPRS as BAYU_EX } from './bayu.js';
+import { build as mayaBuild, OUTFITS as MAYA_OUT, EXPRS as MAYA_EX } from './maya.js';
+import { build as bejoBuild, OUTFITS as BEJO_OUT, EXPRS as BEJO_EX } from './bejo.js';
+import { build as sutrisBuild, OUTFITS as SUTRIS_OUT, EXPRS as SUTRIS_EX } from './sutris.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
@@ -155,5 +165,15 @@ export const CHARS = {
   pakRoni: { name: 'Pak Roni', build: roniBuild, OUTFITS: RONI_OUT, EXPRS: RONI_EX },
   tehLilis: { name: 'Teh Lilis', build: lilisBuild, OUTFITS: LILIS_OUT, EXPRS: LILIS_EX },
   masTejo: { name: 'Mas Tejo', build: tejoBuild, OUTFITS: TEJO_OUT, EXPRS: TEJO_EX },
+  satpamUdin: { name: 'Pak Satpam Udin', build: satpamudinBuild, OUTFITS: SATPAMUDIN_OUT, EXPRS: SATPAMUDIN_EX },
+  buNingsih: { name: 'Bu Kantin Ningsih', build: ningsihBuild, OUTFITS: NINGSIH_OUT, EXPRS: NINGSIH_EX },
+  masCilok: { name: 'Mas Cilok', build: cilokBuild, OUTFITS: CILOK_OUT, EXPRS: CILOK_EX },
+  siswaAndi: { name: 'Andi', build: andiBuild, OUTFITS: ANDI_OUT, EXPRS: ANDI_EX },
+  siswiFitri: { name: 'Fitri', build: fitriBuild, OUTFITS: FITRI_OUT, EXPRS: FITRI_EX },
+  siswiRina: { name: 'Rina', build: rinaBuild, OUTFITS: RINA_OUT, EXPRS: RINA_EX },
+  siswaBayu: { name: 'Bayu "Si Telat"', build: bayuBuild, OUTFITS: BAYU_OUT, EXPRS: BAYU_EX },
+  siswiMaya: { name: 'Maya', build: mayaBuild, OUTFITS: MAYA_OUT, EXPRS: MAYA_EX },
+  stmBejo: { name: 'Bejo', build: bejoBuild, OUTFITS: BEJO_OUT, EXPRS: BEJO_EX },
+  mandorSutris: { name: 'Mandor Sutris', build: sutrisBuild, OUTFITS: SUTRIS_OUT, EXPRS: SUTRIS_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };
