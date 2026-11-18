@@ -8,21 +8,41 @@ const listeners = [];
 export const onCharsReady = fn => ready ? fn(META) : listeners.push(fn);
 
 export function initChars(src) {
-  worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
-  worker.onmessage = e => {
-    const d = e.data;
-    if (d.ready) { ready = true; META = d; listeners.forEach(f => f(d)); pump(); return; }
-    busy--;
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(d.pos, 3));
-    g.setAttribute('normal', new THREE.BufferAttribute(d.nor, 3, true));
-    g.setAttribute('color', new THREE.BufferAttribute(d.col, 3));
-    g.setIndex(new THREE.BufferAttribute(d.idx, 1));
-    g.computeBoundingSphere();
-    g.userData.lift = d.lift; g.userData.butt = d.butt; g.userData.buttX = d.buttX;
-    CACHE.set(d.key, g); PENDING.delete(d.key);
-    pump();
+  // Worker dari Blob kadang diblok (preview di HP, iframe sandbox, file://). Kalau gagal / tidak "ready" dalam 6 detik,
+  // kode worker yang sama dijalankan di thread utama (lebih lambat sedikit, tapi tokoh tetap muncul).
+  let fellBack = false;
+  const fallback = why => {
+    if (fellBack || ready) return; fellBack = true;
+    console.warn('[chars] worker gagal (' + why + '), bangun tokoh di thread utama');
+    try { worker && worker.terminate(); } catch (_) {}
+    worker = mainThreadWorker(src, onMsg);
   };
+  try {
+    worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+    worker.onmessage = onMsg;
+    worker.onerror = e => fallback('error: ' + (e && e.message));
+    setTimeout(() => fallback("timeout"), 6000);
+  } catch (e) { fallback(e && e.message); }
+}
+// Tiruan Worker: jalankan kode worker dengan `self` palsu; satu pekerjaan per tick supaya layar tidak macet.
+function mainThreadWorker(src, onMsg) {
+  const fake = { onmessage: null, postMessage: d => setTimeout(() => onMsg({ data: d }), 0) };
+  new Function('self', src)(fake);
+  return { postMessage: j => setTimeout(() => fake.onmessage({ data: j }), 0), terminate() {} };
+}
+function onMsg(e) {
+  const d = e.data;
+  if (d.ready) { if (ready) return; ready = true; META = d; listeners.forEach(f => f(d)); pump(); return; }
+  busy--;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(d.pos, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(d.nor, 3, true));
+  g.setAttribute('color', new THREE.BufferAttribute(d.col, 3));
+  g.setIndex(new THREE.BufferAttribute(d.idx, 1));
+  g.computeBoundingSphere();
+  g.userData.lift = d.lift; g.userData.butt = d.butt; g.userData.buttX = d.buttX;
+  CACHE.set(d.key, g); PENDING.delete(d.key);
+  pump();
 }
 function pump() {
   while (ready && busy < 2 && QUEUE.length) {
