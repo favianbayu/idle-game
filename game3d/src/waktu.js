@@ -1,30 +1,30 @@
 // Jam, siang-malam, dan kalender tahun ajaran.
 // 1 jam di game = 40 detik nyata. Hari mulai 06.00; tidur = hari baru jam 06.00; lewat 02.00 belum tidur = ketiduran.
-// Kalender: 3 tahun ajaran (kelas X, XI, XII). Setahun = 7 bulan x 28 hari = 196 hari: 6 bulan sekolah (tiap bulan game
-// = 2 bulan asli, Juli-Juni) + 1 bulan Libur Panjang (kenaikan kelas / kelulusan) di antara dua tahun ajaran. Minggu 7 hari,
-// hari ke-0 = Senin awal MPLS. Event guide ditulis dengan bulan & tanggal asli lalu dipetakan ke kalender game.
+// Kalender: 3 tahun ajaran (kelas X, XI, XII). Setahun = 6 bulan x 28 hari = 168 hari. Libur Panjang 4 minggu nyambung:
+// 2 minggu terakhir bulan 6 + 2 minggu pertama bulan 1. Sisanya 20 minggu sekolah (semester 1: bulan 1 minggu 3 - bulan 3,
+// semester 2: bulan 4 - bulan 6 minggu 2). Game mulai di hari MPLS (bulan 1 tanggal 15, Senin). Minggu 7 hari.
 import * as THREE from 'three';
 
 export const HARI_PER_BULAN = 28;
-export const BULAN = ['Kemarau', 'Pancaroba', 'Hujan Awal', 'Hujan Deras', 'Hujan Akhir', 'Kemarau Muda', 'Libur Panjang'];
-export const BULAN_ASLI = ['Juli-Agustus', 'September-Oktober', 'November-Desember', 'Januari-Februari', 'Maret-April', 'Mei-Juni', 'libur kenaikan/kelulusan'];
+export const BULAN = ['Kemarau Awal', 'Kemarau', 'Pancaroba', 'Hujan', 'Hujan Akhir', 'Kemarau Muda'];
+export const BULAN_ASLI = ['Juli', 'Agustus-September', 'Oktober-Desember', 'Januari-Februari', 'Maret-April', 'Mei-Juni'];
+const MULAI = 14;   // hari ke-0 game = bulan 1 tanggal 15 (MPLS)
 export const HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 const KELAS = ['X', 'XI', 'XII'];
 const DETIK_PER_JAM = 40;
 
-// event kalender dari guide: [kelas (0/1/2, null = tiap tahun), bulan asli (0 = Juli ... 11 = Juni, 12 = Libur Panjang), tanggal asli 1-30, nama, bab]
+// event kalender dari guide 04: [kelas (0/1/2, null = tiap tahun), bulan (0-5), tanggal 1-28, nama, bab]
 export const EVENTS = [
-  [0, 0, 1, 'MPLS hari pertama', 1], [0, 0, 22, 'Malam pertama: dicegat Serigala Besi', 3],
+  [0, 0, 15, 'MPLS hari pertama', 1], [0, 1, 8, 'Malam pertama: dicegat Serigala Besi', 3],
   [null, 1, 17, 'Upacara & lomba 17 Agustus, malamnya pasar malam', 4], [0, 1, 17, 'Lomba perahu hias Waduk Sirnagalih', 4],
-  [null, 5, 20, 'Rapor semester 1', null], [null, 5, 24, 'Libur semester mulai', null],
-  [0, 8, 15, 'HUT Asrama Batalyon 3: hari terbuka', 5], [0, 10, 25, 'Pak Gito menagih: lunas atau warkop turun', 5],
-  [null, 11, 20, 'Rapor kenaikan kelas / pengumuman kelulusan', null], [null, 12, 1, 'Libur Panjang mulai', null], [2, 12, 7, 'Perjalanan terakhir: mercusuar Tanjung Karang', 15], [2, 12, 28, 'Kereta pulang ke Lereng Wangi', 15],
-  [1, 1, 28, 'Pemilihan OSIS', 6], [1, 2, 20, 'Final basket antar-SMA di GOR', 6], [1, 3, 15, 'Warkop dirusak', 7],
-  [1, 4, 10, 'Karyawisata Sangkala (3 hari)', 8], [1, 6, 18, 'Seri pertama liga resmi sirkuit', 9],
-  [1, 8, 10, 'Surat relokasi diumumkan', 10], [1, 9, 5, 'Banjir Kali Cendana', 10], [1, 11, 15, 'Pensi akhir tahun', 10],
-  [2, 0, 15, 'Try out pertama', 11], [2, 2, 10, 'Patok proyek di Pandansari & Sukamekar', 11],
-  [2, 5, 5, 'Kemah puncak angkatan', 12], [2, 6, 20, 'Sidang & pengantaran akta', 13], [2, 9, 6, 'Ujian akhir (seminggu)', 14],
-  [2, 10, 20, 'Malam perpisahan & wisuda', 15],
+  [null, 2, 26, 'Rapor semester 1', null], [0, 4, 10, 'HUT Asrama Batalyon 3: hari terbuka', 5], [0, 5, 8, 'Pak Gito menagih: lunas atau warkop turun', 5],
+  [null, 5, 12, 'Rapor kenaikan kelas / pengumuman kelulusan', null], [null, 5, 15, 'Libur Panjang mulai', null], [null, 0, 14, 'Libur Panjang hari terakhir', null],
+  [1, 1, 5, 'Pemilihan OSIS', 6], [1, 1, 24, 'Final basket antar-SMA di GOR', 6], [1, 2, 8, 'Warkop dirusak', 7],
+  [1, 2, 20, 'Karyawisata Sangkala (3 hari)', 8], [1, 3, 15, 'Seri pertama liga resmi sirkuit', 9],
+  [1, 4, 5, 'Surat relokasi diumumkan', 10], [1, 4, 20, 'Banjir Kali Cendana', 10], [1, 5, 10, 'Pensi akhir tahun', 10],
+  [2, 0, 22, 'Try out pertama', 11], [2, 1, 15, 'Patok proyek di Pandansari & Sukamekar', 11],
+  [2, 2, 15, 'Kemah puncak angkatan', 12], [2, 3, 20, 'Sidang & pengantaran akta', 13], [2, 4, 22, 'Ujian akhir (seminggu)', 14],
+  [2, 5, 12, 'Malam perpisahan & wisuda', 15], [2, 5, 20, 'Perjalanan terakhir: mercusuar Tanjung Karang', 15], [2, 5, 28, 'Kereta pulang ke Lereng Wangi', 15],
 ];
 const WEEKLY = { 2: 'Pasar hewan Tegalsari rame', 4: 'Pak Gito nagih cicilan', 5: 'Ekskul & latihan pensi', 6: 'Sekolah libur' };
 
@@ -42,14 +42,13 @@ export function makeWaktu({ player, toast }) {
   const day = () => f().day || 0;
   const perTahun = HARI_PER_BULAN * BULAN.length;
   const cal = (d = day()) => {
-    const th = Math.min(2, Math.floor(d / perTahun)), r = d - th * perTahun;
+    const abs = d + MULAI, th = Math.min(2, Math.floor(abs / perTahun)), r = abs - th * perTahun;
     const bl = Math.min(BULAN.length - 1, Math.floor(r / HARI_PER_BULAN)), tg = r - bl * HARI_PER_BULAN + 1;
-    return { tahun: th, kelas: KELAS[th], bulan: bl, namaBulan: BULAN[bl], asli: BULAN_ASLI[bl], tanggal: tg, hari: HARI[d % 7], wd: d % 7, libur: bl === 6 || d % 7 === 6, lewat: d >= perTahun * 3 };
+    const libur = (bl === 0 && tg <= 14) || (bl === 5 && tg >= 15);
+    return { tahun: th, kelas: KELAS[th], bulan: bl, namaBulan: BULAN[bl], asli: libur ? 'Libur Panjang' : BULAN_ASLI[bl], tanggal: tg, hari: HARI[d % 7], wd: d % 7, liburPanjang: libur, libur: libur || d % 7 === 6, lewat: abs >= perTahun * 3 };
   };
-  // bulan & tanggal asli -> [bulan game, tanggal 1-28]
-  const peta = (rm, tg) => rm === 12 ? [6, tg] : [Math.floor(rm / 2), Math.max(1, Math.min(HARI_PER_BULAN, (rm % 2) * 14 + Math.round(tg / 30 * 14)))];
-  const hit = (e, c) => { const [k, rm, tg] = e, [b, t] = peta(rm, tg); return (k == null || k === c.tahun) && b === c.bulan && t === c.tanggal; };
-  const eventsOn = (d = day()) => { const c = cal(d), out = EVENTS.filter(e => hit(e, c)).map(e => e[3]); if (c.bulan < 6 && WEEKLY[c.wd]) out.push(WEEKLY[c.wd]); return out; };
+  const hit = (e, c) => { const [k, b, t] = e; return (k == null || k === c.tahun) && b === c.bulan && t === c.tanggal; };
+  const eventsOn = (d = day()) => { const c = cal(d), out = EVENTS.filter(e => hit(e, c)).map(e => e[3]); if (!c.liburPanjang && WEEKLY[c.wd]) out.push(WEEKLY[c.wd]); return out; };
   const upcoming = (n = 5) => { const out = []; for (let d = day(); d < day() + perTahun && out.length < n; d++) { const c = cal(d); for (const e of EVENTS) if (hit(e, c)) out.push({ d, label: `${c.hari}, ${c.tanggal} ${c.namaBulan}`, name: e[3], inDays: d - day() }); } return out; };
 
   /* ---------------- HUD jam */

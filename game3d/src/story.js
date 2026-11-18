@@ -31,7 +31,7 @@ export const BAB = [
 ];
 // wilayah luar (id zona luar.js) terbuka mulai bab berapa (mode Cerita)
 // kapan bab terjadi di kalender (guide 04)
-const KAPAN = ['', 'Kelas X · Kemarau, minggu 1 (MPLS)', 'Kelas X · Kemarau, minggu 2-3', 'Kelas X · Kemarau, minggu 4', 'Kelas X · Kemarau, 17-an (tgl 22)', 'Kelas X · semester 2 (Hujan Deras - Kemarau Muda)', 'Kelas XI · Kemarau - Pancaroba', 'Kelas XI · Pancaroba', 'Kelas XI · Hujan Awal', 'Kelas XI · Hujan Deras', 'Kelas XI · Hujan Akhir - Kemarau Muda', 'Kelas XII · Kemarau - Pancaroba', 'Kelas XII · Hujan Awal', 'Kelas XII · Hujan Deras', 'Kelas XII · Hujan Akhir', 'Kelas XII · Kemarau Muda - Libur Panjang'];
+const KAPAN = ['', 'Kelas X · Kemarau Awal, tgl 15 (MPLS)', 'Kelas X · Kemarau Awal minggu 4 - Kemarau minggu 1', 'Kelas X · Kemarau minggu 2', 'Kelas X · Kemarau, 17 Agustus', 'Kelas X · semester 2 (Hujan - Kemarau Muda)', 'Kelas XI · Kemarau Awal - Kemarau', 'Kelas XI · Pancaroba', 'Kelas XI · Pancaroba (akhir)', 'Kelas XI · Hujan', 'Kelas XI · Hujan Akhir - Kemarau Muda', 'Kelas XII · Kemarau Awal - Kemarau', 'Kelas XII · Pancaroba', 'Kelas XII · Hujan', 'Kelas XII · Hujan Akhir', 'Kelas XII · Kemarau Muda + Libur Panjang'];
 export const ZONE_BAB = { pesisir: 2, pantai: 2, tegalsari: 2, sukamekar: 2, muara: 2, timur: 3, waduk: 4, sirkuit: 5, gunung: 8 };
 
 /* ---------------- pekerjaan & misi kecil di wilayah: ditawarkan NPC setelah ngobrol hari itu.
