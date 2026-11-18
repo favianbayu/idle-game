@@ -1,4 +1,4 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong, Dodi, Didi, Uda Rizki, Ustaz Hasan, Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita, Kurir Bayu, Kevin kecil, Pak Polisi Sugeng, Mas Barista Kevin, Bu Lastri, Pak Tarno, Mbak SPG Dewi, Pengamen Dul, Om Hendrik, Bu Wati, Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis, Mas Tejo, Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat", Maya, Bejo, Mandor Sutris, Pak Pras, Bang Sarip, Abah Karta (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong, Dodi, Didi, Uda Rizki, Ustaz Hasan, Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita, Kurir Bayu, Kevin kecil, Pak Polisi Sugeng, Mas Barista Kevin, Bu Lastri, Pak Tarno, Mbak SPG Dewi, Pengamen Dul, Om Hendrik, Bu Wati, Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis, Mas Tejo, Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat", Maya, Bejo, Mandor Sutris, Pak Pras, Bang Sarip, Abah Karta, Kyai Mahfud, Serma Hadi, Pak Sudarmaji, Wak Kodir, Bu Romlah, Kang Ujo, Mandor Sabar, Pak Yusuf, Mbak Sri, Mbah Darmo, Nek Sumi, Tito, Neng Ayu, Pak Rusdi, Ir. Lukman (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
@@ -14,12 +14,16 @@ lewat PR #10, dan Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok
 lewat PR #11. Pengisi sekolah (Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat",
 Maya, Bejo, Mandor Sutris) dan tiga tokoh terakhir guide (Pak Pras ayah Bimo, Bang Sarip bos kecil, Abah Karta guru silat;
 `src/pras.js`, `src/sarip.js`, `src/karta.js`, dibangun di atas `spawn_base.js`) sudah masuk game (`shots/game_13tokoh.png`).
+Lima belas tokoh wilayah luar kota (segmen 33: Kyai Mahfud, Serma Hadi, Pak Sudarmaji, Wak Kodir, Bu Romlah, Kang Ujo,
+Mandor Sabar, Pak Yusuf, Mbak Sri, Mbah Darmo, Nek Sumi, Tito, Neng Ayu, Pak Rusdi, Ir. Lukman) juga dibangun di atas
+`spawn_base.js` dan sudah di game dengan kebiasaan masing-masing (`shots/game_wilayah15.png`; posisi dan kebiasaan di guide
+segmen 34).
 
 **NPC spawn (warga generik, guide segmen 34)**: template untuk orang tanpa nama, satu file per peran, banyak variasi dari
-seed `v`. Semua 26 template sudah masuk game (`shots/game_spawn24.png`). Gelombang 1: `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`,
+seed `v`. Semua 28 template sudah masuk game (`shots/game_spawn24.png`). Gelombang 1: `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`,
 `wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak`. Gelombang 2: `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`,
 `satpamAcak`, `nelayan`, `mekanik`, `pedagang`. Gelombang 3: `pendaki`, `turis`, `penonton`, `santri`,
-`muridSilat`, `persit`. Ringkasan: `shots/sp_semua.png` (gelombang 1), `shots/sp_semua2.png` (gelombang 2) dan
+`muridSilat`, `persit`. Gelombang 4: `siswaSTM`, `siswaSMK`. Ringkasan: `shots/sp_semua.png` (gelombang 1), `shots/sp_semua2.png` (gelombang 2) dan
 `shots/sp_semua3.png` (gelombang 3); per template `shots/sp_<sid>.png`.
 Kode: `src/spawn_base.js` + `src/sp_*.js`. Cara membuat template baru: PANDUAN bagian 9.
 

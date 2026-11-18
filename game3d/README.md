@@ -159,5 +159,9 @@ NPC tanpa nama memakai template spawn (guide segmen 34, `src/raka/spawn_base.js`
 mendaftarkan tiap template sebagai `<peran>_0..7`, dan `chars.js` memetakan sid generik lama (`ibuHijab`, `pemuda`,
 `satpam`, `tentara`, dll.) ke template lewat `SPAWN_OF` dengan seed bergiliran per peran. NPC bernama yang masih memakai
 sid generik (Andi, Fitri, Mas Cilok, Bejo, dll.) dikenali dari namanya (`NAME_VIS`). Sid logika tidak berubah.
+Tokoh wilayah luar kota (segmen 33: Kyai Mahfud, Abah Karta, Serma Hadi, Mbak Sri, Mbah Darmo, dll.) dipasang di
+`warga.js` dengan rencana langkah (posisi + animasi + bubble) per wilayah; `spot()` mencari tanah datar yang tidak menempel
+bangunan dekat koordinat peta. Anak STM berdiri di depan STM kota (`npcs.js`, sid `anakSTM*`), anak SMK di Sukamekar
+(`anakSMK*`). Tabel posisi & kebiasaan: guide segmen 34.
 Kisi `vox.js`/`frame.js` memakai `Uint16Array` karena jumlah bahan sudah lewat 255. Urutan import di worker
 mengikuti urutan `tokoh-voxel/build.mjs`, karena beberapa tokoh memakai bahan milik tokoh sebelumnya.

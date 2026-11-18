@@ -342,7 +342,7 @@ export function spawnWarga(A) {
       plan('mbakSri', 'Mbak Sri', ['Absen dulu, baru ngeluh.', 'Shift dua masuk jam dua, jangan telat.', 'Mandor gudang itu bukan orang pabrik.'], [
         at(SR, 'raiseHand', 3, { h: face(SR, SR[0], SR[1] + 2.2), say: ['Absen dulu, baru ngeluh!', 'Shift dua, baris sini!'], p: 0.6 }), at(SR, 'read', 5, { h: face(SR, SR[0], SR[1] + 2.2) }), at(SR, 'talk', 3, { h: face(SR, SR[0], SR[1] + 2.2) }), at(SR, 'look', 3)], { si: 0 }); }
     // Pak Rusdi: mandor gudang subkontraktor, pegang daftar tenaga harian
-    const RD = spot(360, 118, 6, (x, z) => okLand(x, z) && nearB(x, z, 2.5));
+    const RD = spot(360, 118, 7, (x, z) => clear(x, z) && nearB(x, z, 2.4));
     if (RD) plan('pakRusdi', 'Pak Rusdi', ['Cari kerja harian? Nama masuk daftar dulu.', 'Gudang ini bukan tempat main, Dek.', 'Jangan banyak tanya.'], [
       at(RD, 'read', 6), at(RD, 'raiseHand', 2, { say: ['Yang namanya nggak ada di daftar, pulang!', 'Tenaga harian, kumpul sini!'], p: 0.5 }), at(RD, 'phone', 4, { say: ['Iya, Bang Sarip. Besok truknya masuk.'], p: 0.4 }), at(RD, 'think', 3)], { si: 0 });
   }

@@ -241,6 +241,11 @@ Orang tanpa nama (pejalan kaki, buruh, tentara, petani, siswa acak) **tidak** di
 - Tokoh bernama boleh dibangun di atas `spawn_base.js` (contoh `pras.js`, `sarip.js`, `karta.js`): isi deskripsi `d` secara
   tetap (bukan dari seed), lalu tambah detail khusus lewat kait `d.fx.head(v, d)`, `d.fx.chest(v, d, G)`,
   `d.fx.fore(v, d, G, side)` (bekas luka, kalung, uban, telapak tebal). `d.tegak` mematikan punggung bungkuk lansia.
+- Fitur dasar tambahan untuk tokoh wilayah: kacamata `emas` dan `tebal`, topi `koboi` (anyaman) dan `topiKoki`, bawaan
+  `gendong` (selendang + buntelan botol jamu) dan `radio` (dada kiri), properti `lampu` (teplok, kaca tengah menyala) dan
+  `papan` (papan jepit), `d.maskerDagu`, motif celemek `d.apronPat`, pola kain `lurik`, dan kait `d.fx.shin` (lutut luka).
+- Ramp warna harus 4 tingkat (atau 1). Ramp 2 tingkat membuat `voxelFrame` gagal (`c[0]` undefined) saat sisi permukaan
+  memilih tingkat 3-4.
 - Di game: worker mendaftarkan tiap template sebagai `<sid>_0..7`; sid tampilan boleh membawa baju (`tentara_3~jaga`).
   `chars.js` game memetakan sid generik lama ke template (`SPAWN_OF`) dan NPC bernama ke modelnya lewat nama (`NAME_VIS`).
   Sid logika tidak berubah, jadi stat berantem, kebiasaan, dan dialog tetap jalan.

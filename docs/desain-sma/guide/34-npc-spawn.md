@@ -64,6 +64,8 @@ mencolok dari NPC bernama** di dekatnya.
 | `siswaAcak` | `siswaA`, `siswaB`, siswa generik segmen 84 | `seragam` (putih abu), `olahraga` (kaus olahraga sekolah), `pramuka` (Rabu-Kamis) | Rambut cowok sekolah selalu rapi pendek (aturan sekolah). Tas punggung 6 warna. |
 | `siswiAcak` | `siswiA`, `siswiB` | `seragam` (rok panjang abu), `olahraga`, `pramuka` | Sekitar 60% berhijab putih. Rok tidak boleh terbelah. |
 | `guruAcak` | 12 guru tanpa nama | `pns` (seragam cokelat Senin-Selasa), `batik` (Kamis-Jumat), `bebas` | Map, buku, kacamata lebih sering (40%). |
+| `siswaSTM` | anak STM Karya Bangsa (segmen 88), `anakSTM*` | `seragam` (kemeja putih logo STM, sering dikeluarkan, lengan digulung, celana abu kena oli, sepatu safety/boots), `praktek` (wearpack biru dongker), `nongkrong` (jaket/hoodie gelap) | Sekitar 15% putri, separuhnya berhijab. Rambut lebih bebas (jabrik boleh). |
+| `siswaSMK` | siswa SMK Pariwisata Sukamekar, `anakSMK*` | `seragam` (putih + hitam), `hotel` (rompi hitam), `tataBoga` (topi koki + celemek), `pemandu` (polo hijau tua + papan jepit) | Sekitar 60% putri; rambut putri selalu diikat rapi atau berhijab. |
 
 ### C. Pekerja
 
@@ -141,6 +143,43 @@ Template hanya mengisi pakaian dan barang bawaan.
 | 1 | `spawn_base.js`, `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`, `wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak` | Paling sering terlihat: pejalan kaki kota, asrama Batalyon, Kawasan Industri, sawah, sekolah. | Di game (`shots/sp_semua.png`) |
 | 2 | `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`, `satpamAcak`, `nelayan`, `mekanik`, `pedagang` | Melengkapi kota, sekolah, dan pantai. | Di game (`shots/sp_semua2.png`) |
 | 3 | `pendaki`, `turis`, `penonton`, `santri`, `muridSilat`, `persit` | Wilayah luar dan acara. | Di game (`shots/sp_semua3.png`) |
+| 4 | `siswaSTM`, `siswaSMK` | Sekolah lain: STM di kota, SMK di Sukamekar. | Di game (`shots/sp_stm.png`, `shots/sp_smk.png`) |
 
 Tiap gelombang dipratinjau dulu sebagai lembar "satu template x 8 seed" sebelum masuk game. Aturan "jangan dicemplungin
 dulu" tetap berlaku.
+
+## Tokoh wilayah (segmen 33) di game: posisi dan kebiasaan
+
+Ke-15 tokoh wilayah dibangun di atas `spawn_base.js` (satu file per tokoh di `tokoh-voxel/src`) dan ditempatkan oleh
+`game3d/src/warga.js` dengan rencana langkah: jalan ke titik, mainkan animasi beberapa detik, lalu lanjut. Karena game
+belum punya jam, jadwal harian segmen 33 dipadatkan menjadi satu putaran yang berulang. Titik dicari dekat koordinat peta
+(petak) di tanah datar yang tidak menempel bangunan.
+
+| Tokoh | Wilayah | Titik | Kebiasaan (urutan putaran) |
+|---|---|---|---|
+| Kyai Mahfud | Tegalsari | Halaman pesantren (-116, 90) | Mengajar 3 santri duduk, angkat tangan, baca kitab, ke perpustakaan, jalan ke pasar hewan (-94, 113) menyapa warga, kembali |
+| Abah Karta | Sukamekar | Pendopo silat (274, -49) | Memberi aba-aba ke 3 murid (latihan jab, pukulan, tendangan serempak), contoh jurus, ke kebun (jongkok, angkat), duduk di teras |
+| Neng Ayu | Sukamekar | Pinggir jalan dekat halte (263, -40) dan pendopo | Lihat motor lewat, melambai minta dibonceng, main HP, nonton latihan silat sambil tepuk tangan |
+| Mandor Sabar | Sukamekar | Kebun teh, pabrik teh (280, -31) | Keliling di antara pemetik teh, tiup peluit, ngobrol, lalu catat timbangan di pabrik |
+| Ir. Lukman | Sukamekar | Villa (205, -57), patok (214, -51) | Baca gambar proyek, telepon, jongkok pasang patok merah-putih, melihat lahan |
+| Kang Ujo | Gunung Sangkala | Basecamp (119, -52) | Cek daftar pendaki, briefing rombongan, pungut sampah di sekitar pos |
+| Pak Sudarmaji | Waduk | Dekat pintu air bendungan (-74, 40) | Lihat bendungan, catat debit, terima telepon, garuk kepala, cek lagi |
+| Serma Hadi | Timur (Batalyon 3) | Lapangan apel (349.5, 40.5), gerbang asrama (318, 63) | Mengawasi apel, hormat, "Ulangi. Yang benar.", lalu ke gerbang |
+| Tito | Timur (Batalyon 3) | Lapangan kecil asrama (306, 52) | Tendang bola, lari mengejar, sorak gol, ditemani 2 bocah |
+| Mbak Sri | Timur (Kawasan Industri) | Gerbang pabrik (346, 110) | Absen 4 buruh yang berbaris ("Hadir!"), baca papan absen, ngobrol |
+| Pak Rusdi | Timur (Kawasan Industri) | Depan gudang (360, 118) | Baca daftar tenaga harian, membentak, telepon Bang Sarip |
+| Pak Yusuf | Sirkuit | Pit lane (368, 214.6) dan (352.5, 214.8) | Bicara di radio race control, angkat tangan, menyusuri pit, menegur mekanik |
+| Wak Kodir | Muara | Kampung nelayan (309, 262.5), dekat dermaga | Jongkok membetulkan jaring, menatap laut, tertawa, memanggil anak buah di dermaga |
+| Bu Romlah | Pantai Lintang | Deret warung seafood (134, 258) | Jongkok membakar ikan, teriak ke pelayan, antar pesanan, ngobrol |
+| Mbah Darmo | Pantai Lintang | Mercusuar Tanjung Karang (236, 284) | Jalan sangat pelan membawa lampu minyak, menatap laut, duduk lama, melamun |
+| Nek Sumi | Pandansari | Jalan desa dekat (210, 195) | Jamu gendong keliling bolak-balik, berhenti menawarkan jamu |
+
+Anak sekolah lain:
+
+- **STM Karya Bangsa (kota)**: 6 anak di depan STM (sekitar 141..157, 162..165): 2 ngobrol di gerbang (`anakSTM`),
+  2 main HP dengan jaket (`anakSTMgaul`), 2 jongkok di apron bengkel dengan wearpack (`anakSTMbengkel`). Masuk daftar
+  siswa (idle siswa) dan bisa diajak berantem (lv 2-3).
+- **SMK Pariwisata (Sukamekar)**: pejalan di gang desa sekarang `anakSMK`, 3 anak ngobrol di gerbang SMK (252, -47.5),
+  2 siswa tata boga mengangkat nampan di samping sekolah, 1 siswa pemandu menjelaskan kebun teh ke 2 wisatawan dekat halte.
+
+Nama "Mbah Darmo" sebelumnya dipakai kakek pengisi di halaman desa. Kakek itu sekarang bernama Mbah Saleh.
