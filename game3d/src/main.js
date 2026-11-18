@@ -193,6 +193,7 @@ onCharsReady(() => {
     let home;
     const H = n.home;
     if (H === 'darto' && kota.darto) { const ct = kota.darto.cart, [x, z] = n.sid === 'omDarto' && ct ? L(kota.darto.xf, ct.lx - 0.2, ct.lz - 0.9) : L(kota.darto.xf, n.dx, n.dz); home = { x, z }; }
+    else if (H === 'minimarket') { const h = kota.houses.find(h => h.type === 'MM' && h.region === 'pusat') || kota.houses.find(h => h.type === 'MM'); if (h) { const [x, z] = L(h.xf, 0.6, h.d / 2 + 1.2); home = { x, z }; } }
     else if (H === 'musala') { const h = kota.houses.find(h => h.special === 'musala'); if (h) { const [x, z] = L(h.xf, 1.5, 3.6); home = { x, z }; } }
     else if (H.house) { const arr = byRegion[H.house] || []; const h = arr[H.n % Math.max(1, arr.length)]; if (h) { const [x, z] = L(h.xf, 0.6, h.d / 2 + (h.yard ? 1.6 : 0.7)); home = { x, z }; } }
     else if (H.school) home = { x: SCHOOL_OX + H.x, z: H.z };

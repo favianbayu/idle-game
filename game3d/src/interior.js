@@ -291,7 +291,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     m.box(P(0.8, 2.6), 0, 0, 0, 0.6, 0.9, 0.6, C('#4a5a6a')); m.box(P(0.8, 2.6), 0, 0.9, 0, 0.5, 0.3, 0.4, C('#5a3a2a')); R.solid(P(0.8, 2.6), 0.6, 0.6);   // drum + radio
     acts.addBag(R.ox + 0.6, R.oz + 0.2, 0, 'Samsak markas');
     R.spot(-3.0, -1.8, 0.9, 'Duduk di sofa', () => { player.emote = 'sitDown'; });
-    addNPC(R, 'pemuda', 'Bang Ucok', -2.6, -0.6, ['Raka! Latihan samsak dulu sana.', 'Bang Jaka bilang, berantem itu buat jagain orang.', 'Kobar makin sering nongol di pasar.'], 0.6);
+    addNPC(R, 'bangUcok', 'Bang Ucok', -2.6, -0.6, ['Raka! Latihan samsak dulu sana.', 'Bang Jaka bilang, berantem itu buat jagain orang.', 'Kobar makin sering nongol di pasar.'], 0.6);
     addNPC(R, 'anakPunk', 'Bejo', 2.4, -1.1, ['Ini motor Bang Jaka, jangan disenggol.', 'Mau ikut patroli malam?'], 0.4);
     finish(R); R.doorLabel = 'Masuk markas Lampu Kota';
   }
