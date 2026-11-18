@@ -18,6 +18,7 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 | 31 | NPC pengisi dunia | 48 NPC latar dengan bubble chat |
 | 32 | Tempat tinggal | Semua tokoh dan wilayahnya, di dalam atau di luar peta |
 | 33 | NPC wilayah luar kota | 14 NPC pendukung baru + 3 antagonis kecil + NPC pengisi tiap wilayah luar kota |
+| 34 | Template NPC spawn | Warga generik: satu template voxel per peran, banyak variasi dari satu seed |
 | 40 | Obrolan & reaksi | Sistem dialog, obrolan antar tokoh, reaksi NPC terhadap aksi pemain |
 | 41 | Feedback & konsekuensi | Akibat setiap tindakan pemain |
 | 50 | Pelajaran & mini game | Jadwal pelajaran, 12 mini game kelas, ujian, mini game luar sekolah |
