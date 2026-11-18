@@ -61,6 +61,16 @@ import { build as yuniBuild } from './raka/yuni.js';
 import { build as raffiBuild } from './raka/raffi.js';
 import { build as willemBuild } from './raka/willem.js';
 import { build as litaBuild } from './raka/lita.js';
+import { build as kurirBuild } from './raka/kurir.js';
+import { build as kevinkecilBuild } from './raka/kevinkecil.js';
+import { build as sugengBuild } from './raka/sugeng.js';
+import { build as baristaBuild } from './raka/barista.js';
+import { build as lastriBuild } from './raka/lastri.js';
+import { build as tarnoBuild } from './raka/tarno.js';
+import { build as dewiBuild } from './raka/dewi.js';
+import { build as dulBuild } from './raka/dul.js';
+import { build as hendrikBuild } from './raka/hendrik.js';
+import { build as watiBuild } from './raka/wati.js';
 import { voxelFrame } from './raka/frame.js';
 import { exprFor, helmFor } from './raka/expr.js';
 
@@ -121,7 +131,9 @@ const FINE = { raka: buildParts, rani: raniBuild, bimo: bimoBuild, bram: bramBui
   pakGunadi: gunadiBuild, buMelati: melatiBuild, pakUjang: ujangBuild, makIyah: iyahBuild, ama: amaBuild, mbahKarto: kartoBuild,
   buSum: sumBuild, pakDarmin: darminBuild, mbakRini: riniBuild, pakJoko: jokoBuild, tehEuis: euisBuild, kohAhong: ahongBuild,
   dodi: dodiBuild, didi: didiBuild, udaRizki: rizkiBuild, ustazHasan: hasanBuild, satpamBambang: bambangBuild, buVeronika: veronikaBuild,
-  mbakYuni: yuniBuild, kakRaffi: raffiBuild, opaWillem: willemBuild, nyonyaLita: litaBuild };
+  mbakYuni: yuniBuild, kakRaffi: raffiBuild, opaWillem: willemBuild, nyonyaLita: litaBuild,
+  kurirBayu: kurirBuild, kevinKecil: kevinkecilBuild, polisiSugeng: sugengBuild, masBarista: baristaBuild, buLastri: lastriBuild,
+  pakTarno: tarnoBuild, mbakDewi: dewiBuild, pengamenDul: dulBuild, omHendrik: hendrikBuild, buWati: watiBuild };
 const PARTS = new Map();
 const fineParts = (sid, outfit, expr, helm) => {
   const k = sid + '|' + outfit + '|' + expr + (helm ? '+h' : '');
