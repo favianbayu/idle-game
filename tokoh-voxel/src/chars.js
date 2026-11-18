@@ -87,6 +87,16 @@ import { build as mayaBuild, OUTFITS as MAYA_OUT, EXPRS as MAYA_EX } from './may
 import { build as bejoBuild, OUTFITS as BEJO_OUT, EXPRS as BEJO_EX } from './bejo.js';
 import { build as sutrisBuild, OUTFITS as SUTRIS_OUT, EXPRS as SUTRIS_EX } from './sutris.js';
 import { build as bramBuild, OUTFITS as BRAM_OUT, EXPRS as BRAM_EX } from './bram.js';
+import { SPAWN as PRIA_SP, OUTFITS as PRIA_SO, EXPRS as PRIA_SE, build as PRIA_SB } from './sp_pria.js';
+import { SPAWN as WANITA_SP, OUTFITS as WANITA_SO, EXPRS as WANITA_SE, build as WANITA_SB } from './sp_wanita.js';
+import { SPAWN as HIJAB_SP, OUTFITS as HIJAB_SO, EXPRS as HIJAB_SE, build as HIJAB_SB } from './sp_hijab.js';
+import { SPAWN as LANSIA_SP, OUTFITS as LANSIA_SO, EXPRS as LANSIA_SE, build as LANSIA_SB } from './sp_lansia.js';
+import { SPAWN as MUDA_SP, OUTFITS as MUDA_SO, EXPRS as MUDA_SE, build as MUDA_SB } from './sp_muda.js';
+import { SPAWN as ANAK_SP, OUTFITS as ANAK_SO, EXPRS as ANAK_SE, build as ANAK_SB } from './sp_anak.js';
+import { SPAWN as TENTARA_SP, OUTFITS as TENTARA_SO, EXPRS as TENTARA_SE, build as TENTARA_SB } from './sp_tentara.js';
+import { SPAWN as BURUH_SP, OUTFITS as BURUH_SO, EXPRS as BURUH_SE, build as BURUH_SB } from './sp_buruh.js';
+import { SPAWN as PETANI_SP, OUTFITS as PETANI_SO, EXPRS as PETANI_SE, build as PETANI_SB } from './sp_petani.js';
+import { SPAWN as SISWA_SP, OUTFITS as SISWA_SO, EXPRS as SISWA_SE, build as SISWA_SB } from './sp_siswa.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
   rani: { name: 'Rani', build: raniBuild, OUTFITS: RANI_OUT, EXPRS: RANI_EX },
@@ -177,3 +187,6 @@ export const CHARS = {
   mandorSutris: { name: 'Mandor Sutris', build: sutrisBuild, OUTFITS: SUTRIS_OUT, EXPRS: SUTRIS_EX },
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };
+// NPC spawn (guide segmen 34): tiap template didaftarkan 8 kali (seed 0..7) sebagai <sid>_<v> untuk pratinjau
+export const SPAWNS = [{ SPAWN: PRIA_SP, OUTFITS: PRIA_SO, EXPRS: PRIA_SE, build: PRIA_SB }, { SPAWN: WANITA_SP, OUTFITS: WANITA_SO, EXPRS: WANITA_SE, build: WANITA_SB }, { SPAWN: HIJAB_SP, OUTFITS: HIJAB_SO, EXPRS: HIJAB_SE, build: HIJAB_SB }, { SPAWN: LANSIA_SP, OUTFITS: LANSIA_SO, EXPRS: LANSIA_SE, build: LANSIA_SB }, { SPAWN: MUDA_SP, OUTFITS: MUDA_SO, EXPRS: MUDA_SE, build: MUDA_SB }, { SPAWN: ANAK_SP, OUTFITS: ANAK_SO, EXPRS: ANAK_SE, build: ANAK_SB }, { SPAWN: TENTARA_SP, OUTFITS: TENTARA_SO, EXPRS: TENTARA_SE, build: TENTARA_SB }, { SPAWN: BURUH_SP, OUTFITS: BURUH_SO, EXPRS: BURUH_SE, build: BURUH_SB }, { SPAWN: PETANI_SP, OUTFITS: PETANI_SO, EXPRS: PETANI_SE, build: PETANI_SB }, { SPAWN: SISWA_SP, OUTFITS: SISWA_SO, EXPRS: SISWA_SE, build: SISWA_SB }];
+for (const T of SPAWNS) for (let v = 0; v < 8; v++) CHARS[T.SPAWN.sid + '_' + v] = { name: T.SPAWN.name + ' #' + v, build: o => T.build({ ...o, v }), OUTFITS: T.OUTFITS, EXPRS: T.EXPRS };

@@ -204,3 +204,24 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
 - [ ] Pose berantem (`Pose`): tangan, siku, dan lutut tidak berlubang. Properti tidak menembus wajah.
 - [ ] Semua baju di `Baju` memakai bola sendi dengan warna yang benar.
 - [ ] Tidak ada error di konsol saat `raka_voxel.html` dibuka.
+
+## 9. NPC spawn (warga generik, guide segmen 34)
+
+Orang tanpa nama (pejalan kaki, buruh, tentara, petani, siswa acak) **tidak** dibuat satu file per orang.
+
+- `src/spawn_base.js` berisi `gen(v, aturan)` (orang dari seed: kulit, tubuh, wajah, rambut, kumis, kacamata) dan
+  `orang(d)` (merakit kepala, badan, baju, dan bawaan dari deskripsi). Ramp dibuat otomatis dari satu warna dasar
+  (`CLOTH`, `SKIN`, `HAIR`). Kain spawn sedikit lebih kusam (saturasi 86%) daripada tokoh bernama.
+- Satu template = satu peran: `src/sp_<peran>.js` mengekspor `SPAWN, OUTFITS, EXPRS, build` dan hanya mengisi
+  deskripsi (`d.top`, `d.bot`, `d.feet`, `d.head`, `d.hijab`, `d.acc`, `d.handR/handL`). `build({ outfit, expr, v })`.
+- Rangka: tiga set geometri yang sudah teruji (`GEO.L` dari Pak Roni/Om Darto, `GEO.P` dari Fitri/Maya/Bu Inah,
+  `GEO.A` dari Dodi). Tubuh `kurus/sedang/gempal` mengubah SKEL dan lebar dada; jangan ubah panjang kaki tanpa
+  mengubah geometri.
+- Pola kain: `polos, garis, garisTipis, kotak, batik (parang miring), bunga, loreng`. Batik model kotak-titik terbaca
+  sebagai konfeti; pakai pita miring.
+- Rambut perempuan: gaya ikat (`kuncir, kepang, sanggul`) memakai cangkang tipis dengan telinga kelihatan dan belahan
+  tengah. Kalau semua memakai cangkang tebal, semuanya terlihat berhelm dari depan.
+- Rona pipi hanya untuk anak dan sebagian perempuan, dengan warna lembut. Merah tua terbaca sebagai jerawat.
+- Tali ransel cukup sampai ketiak (10 lapis). Tali panjang terbaca sebagai bretel.
+- `chars.js` mendaftarkan tiap template 8 kali (`<sid>_0..7`) untuk pratinjau. Lembar `sp_<sid>` (8 seed x semua
+  baju), `sp_<sid>Cek` (atas & belakang), dan `sp_semua` (10 template x 8 seed).

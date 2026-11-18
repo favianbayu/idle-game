@@ -14,6 +14,11 @@ lewat PR #10, dan Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok
 lewat PR #11. Batch baru pengisi sekolah (Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat",
 Maya, Bejo, Mandor Sutris) masih pratinjau, menunggu persetujuan (`shots/barisan10baru6.png`).
 
+**NPC spawn (warga generik, guide segmen 34)**: template untuk orang tanpa nama, satu file per peran, banyak variasi dari
+seed `v`. Gelombang 1 (pratinjau, belum di game): `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`,
+`wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak`. Ringkasan: `shots/sp_semua.png`; per template `shots/sp_<sid>.png`.
+Kode: `src/spawn_base.js` + `src/sp_*.js`. Cara membuat template baru: PANDUAN bagian 9.
+
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
 |---|---|---|---|---|
 | Raka | tokoh utama cowok | 1.3 | 86 | mullet modern, seragam berandal (pembanding) |
