@@ -33967,5 +33967,2061 @@
     "label": "#7"
    }
   ]
+ },
+ "sp_siswiAcak": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "siswiAcak_0",
+    "outfit": "seragam",
+    "label": "seragam #0"
+   },
+   {
+    "char": "siswiAcak_1",
+    "outfit": "seragam",
+    "label": "seragam #1"
+   },
+   {
+    "char": "siswiAcak_2",
+    "outfit": "seragam",
+    "label": "seragam #2"
+   },
+   {
+    "char": "siswiAcak_3",
+    "outfit": "seragam",
+    "label": "seragam #3"
+   },
+   {
+    "char": "siswiAcak_4",
+    "outfit": "seragam",
+    "label": "seragam #4"
+   },
+   {
+    "char": "siswiAcak_5",
+    "outfit": "seragam",
+    "label": "seragam #5"
+   },
+   {
+    "char": "siswiAcak_6",
+    "outfit": "seragam",
+    "label": "seragam #6"
+   },
+   {
+    "char": "siswiAcak_7",
+    "outfit": "seragam",
+    "label": "seragam #7"
+   },
+   {
+    "char": "siswiAcak_0",
+    "outfit": "olahraga",
+    "label": "olahraga #0"
+   },
+   {
+    "char": "siswiAcak_1",
+    "outfit": "olahraga",
+    "label": "olahraga #1"
+   },
+   {
+    "char": "siswiAcak_2",
+    "outfit": "olahraga",
+    "label": "olahraga #2"
+   },
+   {
+    "char": "siswiAcak_3",
+    "outfit": "olahraga",
+    "label": "olahraga #3"
+   },
+   {
+    "char": "siswiAcak_4",
+    "outfit": "olahraga",
+    "label": "olahraga #4"
+   },
+   {
+    "char": "siswiAcak_5",
+    "outfit": "olahraga",
+    "label": "olahraga #5"
+   },
+   {
+    "char": "siswiAcak_6",
+    "outfit": "olahraga",
+    "label": "olahraga #6"
+   },
+   {
+    "char": "siswiAcak_7",
+    "outfit": "olahraga",
+    "label": "olahraga #7"
+   },
+   {
+    "char": "siswiAcak_0",
+    "outfit": "pramuka",
+    "label": "pramuka #0"
+   },
+   {
+    "char": "siswiAcak_1",
+    "outfit": "pramuka",
+    "label": "pramuka #1"
+   },
+   {
+    "char": "siswiAcak_2",
+    "outfit": "pramuka",
+    "label": "pramuka #2"
+   },
+   {
+    "char": "siswiAcak_3",
+    "outfit": "pramuka",
+    "label": "pramuka #3"
+   },
+   {
+    "char": "siswiAcak_4",
+    "outfit": "pramuka",
+    "label": "pramuka #4"
+   },
+   {
+    "char": "siswiAcak_5",
+    "outfit": "pramuka",
+    "label": "pramuka #5"
+   },
+   {
+    "char": "siswiAcak_6",
+    "outfit": "pramuka",
+    "label": "pramuka #6"
+   },
+   {
+    "char": "siswiAcak_7",
+    "outfit": "pramuka",
+    "label": "pramuka #7"
+   }
+  ]
+ },
+ "sp_siswiAcakCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "siswiAcak_0",
+    "outfit": "seragam",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "siswiAcak_1",
+    "outfit": "seragam",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "siswiAcak_2",
+    "outfit": "seragam",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "siswiAcak_3",
+    "outfit": "seragam",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "siswiAcak_0",
+    "outfit": "pramuka",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "siswiAcak_1",
+    "outfit": "pramuka",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "siswiAcak_2",
+    "outfit": "pramuka",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "siswiAcak_3",
+    "outfit": "pramuka",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_guruAcak": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "guruAcak_0",
+    "outfit": "pns",
+    "label": "pns #0"
+   },
+   {
+    "char": "guruAcak_1",
+    "outfit": "pns",
+    "label": "pns #1"
+   },
+   {
+    "char": "guruAcak_2",
+    "outfit": "pns",
+    "label": "pns #2"
+   },
+   {
+    "char": "guruAcak_3",
+    "outfit": "pns",
+    "label": "pns #3"
+   },
+   {
+    "char": "guruAcak_4",
+    "outfit": "pns",
+    "label": "pns #4"
+   },
+   {
+    "char": "guruAcak_5",
+    "outfit": "pns",
+    "label": "pns #5"
+   },
+   {
+    "char": "guruAcak_6",
+    "outfit": "pns",
+    "label": "pns #6"
+   },
+   {
+    "char": "guruAcak_7",
+    "outfit": "pns",
+    "label": "pns #7"
+   },
+   {
+    "char": "guruAcak_0",
+    "outfit": "batik",
+    "label": "batik #0"
+   },
+   {
+    "char": "guruAcak_1",
+    "outfit": "batik",
+    "label": "batik #1"
+   },
+   {
+    "char": "guruAcak_2",
+    "outfit": "batik",
+    "label": "batik #2"
+   },
+   {
+    "char": "guruAcak_3",
+    "outfit": "batik",
+    "label": "batik #3"
+   },
+   {
+    "char": "guruAcak_4",
+    "outfit": "batik",
+    "label": "batik #4"
+   },
+   {
+    "char": "guruAcak_5",
+    "outfit": "batik",
+    "label": "batik #5"
+   },
+   {
+    "char": "guruAcak_6",
+    "outfit": "batik",
+    "label": "batik #6"
+   },
+   {
+    "char": "guruAcak_7",
+    "outfit": "batik",
+    "label": "batik #7"
+   },
+   {
+    "char": "guruAcak_0",
+    "outfit": "bebas",
+    "label": "bebas #0"
+   },
+   {
+    "char": "guruAcak_1",
+    "outfit": "bebas",
+    "label": "bebas #1"
+   },
+   {
+    "char": "guruAcak_2",
+    "outfit": "bebas",
+    "label": "bebas #2"
+   },
+   {
+    "char": "guruAcak_3",
+    "outfit": "bebas",
+    "label": "bebas #3"
+   },
+   {
+    "char": "guruAcak_4",
+    "outfit": "bebas",
+    "label": "bebas #4"
+   },
+   {
+    "char": "guruAcak_5",
+    "outfit": "bebas",
+    "label": "bebas #5"
+   },
+   {
+    "char": "guruAcak_6",
+    "outfit": "bebas",
+    "label": "bebas #6"
+   },
+   {
+    "char": "guruAcak_7",
+    "outfit": "bebas",
+    "label": "bebas #7"
+   }
+  ]
+ },
+ "sp_guruAcakCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "guruAcak_0",
+    "outfit": "pns",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "guruAcak_1",
+    "outfit": "pns",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "guruAcak_2",
+    "outfit": "pns",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "guruAcak_3",
+    "outfit": "pns",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "guruAcak_0",
+    "outfit": "bebas",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "guruAcak_1",
+    "outfit": "bebas",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "guruAcak_2",
+    "outfit": "bebas",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "guruAcak_3",
+    "outfit": "bebas",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_ojolLewat": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "ojolLewat_0",
+    "outfit": "jaket",
+    "label": "jaket #0"
+   },
+   {
+    "char": "ojolLewat_1",
+    "outfit": "jaket",
+    "label": "jaket #1"
+   },
+   {
+    "char": "ojolLewat_2",
+    "outfit": "jaket",
+    "label": "jaket #2"
+   },
+   {
+    "char": "ojolLewat_3",
+    "outfit": "jaket",
+    "label": "jaket #3"
+   },
+   {
+    "char": "ojolLewat_4",
+    "outfit": "jaket",
+    "label": "jaket #4"
+   },
+   {
+    "char": "ojolLewat_5",
+    "outfit": "jaket",
+    "label": "jaket #5"
+   },
+   {
+    "char": "ojolLewat_6",
+    "outfit": "jaket",
+    "label": "jaket #6"
+   },
+   {
+    "char": "ojolLewat_7",
+    "outfit": "jaket",
+    "label": "jaket #7"
+   },
+   {
+    "char": "ojolLewat_0",
+    "outfit": "antar",
+    "label": "antar #0"
+   },
+   {
+    "char": "ojolLewat_1",
+    "outfit": "antar",
+    "label": "antar #1"
+   },
+   {
+    "char": "ojolLewat_2",
+    "outfit": "antar",
+    "label": "antar #2"
+   },
+   {
+    "char": "ojolLewat_3",
+    "outfit": "antar",
+    "label": "antar #3"
+   },
+   {
+    "char": "ojolLewat_4",
+    "outfit": "antar",
+    "label": "antar #4"
+   },
+   {
+    "char": "ojolLewat_5",
+    "outfit": "antar",
+    "label": "antar #5"
+   },
+   {
+    "char": "ojolLewat_6",
+    "outfit": "antar",
+    "label": "antar #6"
+   },
+   {
+    "char": "ojolLewat_7",
+    "outfit": "antar",
+    "label": "antar #7"
+   }
+  ]
+ },
+ "sp_ojolLewatCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "ojolLewat_0",
+    "outfit": "jaket",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "ojolLewat_1",
+    "outfit": "jaket",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "ojolLewat_2",
+    "outfit": "jaket",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "ojolLewat_3",
+    "outfit": "jaket",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "ojolLewat_0",
+    "outfit": "antar",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "ojolLewat_1",
+    "outfit": "antar",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "ojolLewat_2",
+    "outfit": "antar",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "ojolLewat_3",
+    "outfit": "antar",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_kuli": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "kuli_0",
+    "outfit": "proyek",
+    "label": "proyek #0"
+   },
+   {
+    "char": "kuli_1",
+    "outfit": "proyek",
+    "label": "proyek #1"
+   },
+   {
+    "char": "kuli_2",
+    "outfit": "proyek",
+    "label": "proyek #2"
+   },
+   {
+    "char": "kuli_3",
+    "outfit": "proyek",
+    "label": "proyek #3"
+   },
+   {
+    "char": "kuli_4",
+    "outfit": "proyek",
+    "label": "proyek #4"
+   },
+   {
+    "char": "kuli_5",
+    "outfit": "proyek",
+    "label": "proyek #5"
+   },
+   {
+    "char": "kuli_6",
+    "outfit": "proyek",
+    "label": "proyek #6"
+   },
+   {
+    "char": "kuli_7",
+    "outfit": "proyek",
+    "label": "proyek #7"
+   },
+   {
+    "char": "kuli_0",
+    "outfit": "istirahat",
+    "label": "istirahat #0"
+   },
+   {
+    "char": "kuli_1",
+    "outfit": "istirahat",
+    "label": "istirahat #1"
+   },
+   {
+    "char": "kuli_2",
+    "outfit": "istirahat",
+    "label": "istirahat #2"
+   },
+   {
+    "char": "kuli_3",
+    "outfit": "istirahat",
+    "label": "istirahat #3"
+   },
+   {
+    "char": "kuli_4",
+    "outfit": "istirahat",
+    "label": "istirahat #4"
+   },
+   {
+    "char": "kuli_5",
+    "outfit": "istirahat",
+    "label": "istirahat #5"
+   },
+   {
+    "char": "kuli_6",
+    "outfit": "istirahat",
+    "label": "istirahat #6"
+   },
+   {
+    "char": "kuli_7",
+    "outfit": "istirahat",
+    "label": "istirahat #7"
+   }
+  ]
+ },
+ "sp_kuliCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "kuli_0",
+    "outfit": "proyek",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "kuli_1",
+    "outfit": "proyek",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "kuli_2",
+    "outfit": "proyek",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "kuli_3",
+    "outfit": "proyek",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "kuli_0",
+    "outfit": "istirahat",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "kuli_1",
+    "outfit": "istirahat",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "kuli_2",
+    "outfit": "istirahat",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "kuli_3",
+    "outfit": "istirahat",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_tukangParkir": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "tukangParkir_0",
+    "outfit": "rompi",
+    "label": "rompi #0"
+   },
+   {
+    "char": "tukangParkir_1",
+    "outfit": "rompi",
+    "label": "rompi #1"
+   },
+   {
+    "char": "tukangParkir_2",
+    "outfit": "rompi",
+    "label": "rompi #2"
+   },
+   {
+    "char": "tukangParkir_3",
+    "outfit": "rompi",
+    "label": "rompi #3"
+   },
+   {
+    "char": "tukangParkir_4",
+    "outfit": "rompi",
+    "label": "rompi #4"
+   },
+   {
+    "char": "tukangParkir_5",
+    "outfit": "rompi",
+    "label": "rompi #5"
+   },
+   {
+    "char": "tukangParkir_6",
+    "outfit": "rompi",
+    "label": "rompi #6"
+   },
+   {
+    "char": "tukangParkir_7",
+    "outfit": "rompi",
+    "label": "rompi #7"
+   }
+  ]
+ },
+ "sp_tukangParkirCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "tukangParkir_0",
+    "outfit": "rompi",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "tukangParkir_1",
+    "outfit": "rompi",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "tukangParkir_2",
+    "outfit": "rompi",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "tukangParkir_3",
+    "outfit": "rompi",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "tukangParkir_0",
+    "outfit": "rompi",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "tukangParkir_1",
+    "outfit": "rompi",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "tukangParkir_2",
+    "outfit": "rompi",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "tukangParkir_3",
+    "outfit": "rompi",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_polisi": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "polisi_0",
+    "outfit": "polantas",
+    "label": "polantas #0"
+   },
+   {
+    "char": "polisi_1",
+    "outfit": "polantas",
+    "label": "polantas #1"
+   },
+   {
+    "char": "polisi_2",
+    "outfit": "polantas",
+    "label": "polantas #2"
+   },
+   {
+    "char": "polisi_3",
+    "outfit": "polantas",
+    "label": "polantas #3"
+   },
+   {
+    "char": "polisi_4",
+    "outfit": "polantas",
+    "label": "polantas #4"
+   },
+   {
+    "char": "polisi_5",
+    "outfit": "polantas",
+    "label": "polantas #5"
+   },
+   {
+    "char": "polisi_6",
+    "outfit": "polantas",
+    "label": "polantas #6"
+   },
+   {
+    "char": "polisi_7",
+    "outfit": "polantas",
+    "label": "polantas #7"
+   },
+   {
+    "char": "polisi_0",
+    "outfit": "sabhara",
+    "label": "sabhara #0"
+   },
+   {
+    "char": "polisi_1",
+    "outfit": "sabhara",
+    "label": "sabhara #1"
+   },
+   {
+    "char": "polisi_2",
+    "outfit": "sabhara",
+    "label": "sabhara #2"
+   },
+   {
+    "char": "polisi_3",
+    "outfit": "sabhara",
+    "label": "sabhara #3"
+   },
+   {
+    "char": "polisi_4",
+    "outfit": "sabhara",
+    "label": "sabhara #4"
+   },
+   {
+    "char": "polisi_5",
+    "outfit": "sabhara",
+    "label": "sabhara #5"
+   },
+   {
+    "char": "polisi_6",
+    "outfit": "sabhara",
+    "label": "sabhara #6"
+   },
+   {
+    "char": "polisi_7",
+    "outfit": "sabhara",
+    "label": "sabhara #7"
+   }
+  ]
+ },
+ "sp_polisiCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "polisi_0",
+    "outfit": "polantas",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "polisi_1",
+    "outfit": "polantas",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "polisi_2",
+    "outfit": "polantas",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "polisi_3",
+    "outfit": "polantas",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "polisi_0",
+    "outfit": "sabhara",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "polisi_1",
+    "outfit": "sabhara",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "polisi_2",
+    "outfit": "sabhara",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "polisi_3",
+    "outfit": "sabhara",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_satpamAcak": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "satpamAcak_0",
+    "outfit": "jaga",
+    "label": "jaga #0"
+   },
+   {
+    "char": "satpamAcak_1",
+    "outfit": "jaga",
+    "label": "jaga #1"
+   },
+   {
+    "char": "satpamAcak_2",
+    "outfit": "jaga",
+    "label": "jaga #2"
+   },
+   {
+    "char": "satpamAcak_3",
+    "outfit": "jaga",
+    "label": "jaga #3"
+   },
+   {
+    "char": "satpamAcak_4",
+    "outfit": "jaga",
+    "label": "jaga #4"
+   },
+   {
+    "char": "satpamAcak_5",
+    "outfit": "jaga",
+    "label": "jaga #5"
+   },
+   {
+    "char": "satpamAcak_6",
+    "outfit": "jaga",
+    "label": "jaga #6"
+   },
+   {
+    "char": "satpamAcak_7",
+    "outfit": "jaga",
+    "label": "jaga #7"
+   },
+   {
+    "char": "satpamAcak_0",
+    "outfit": "malam",
+    "label": "malam #0"
+   },
+   {
+    "char": "satpamAcak_1",
+    "outfit": "malam",
+    "label": "malam #1"
+   },
+   {
+    "char": "satpamAcak_2",
+    "outfit": "malam",
+    "label": "malam #2"
+   },
+   {
+    "char": "satpamAcak_3",
+    "outfit": "malam",
+    "label": "malam #3"
+   },
+   {
+    "char": "satpamAcak_4",
+    "outfit": "malam",
+    "label": "malam #4"
+   },
+   {
+    "char": "satpamAcak_5",
+    "outfit": "malam",
+    "label": "malam #5"
+   },
+   {
+    "char": "satpamAcak_6",
+    "outfit": "malam",
+    "label": "malam #6"
+   },
+   {
+    "char": "satpamAcak_7",
+    "outfit": "malam",
+    "label": "malam #7"
+   }
+  ]
+ },
+ "sp_satpamAcakCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "satpamAcak_0",
+    "outfit": "jaga",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "satpamAcak_1",
+    "outfit": "jaga",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "satpamAcak_2",
+    "outfit": "jaga",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "satpamAcak_3",
+    "outfit": "jaga",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "satpamAcak_0",
+    "outfit": "malam",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "satpamAcak_1",
+    "outfit": "malam",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "satpamAcak_2",
+    "outfit": "malam",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "satpamAcak_3",
+    "outfit": "malam",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_nelayan": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "nelayan_0",
+    "outfit": "melaut",
+    "label": "melaut #0"
+   },
+   {
+    "char": "nelayan_1",
+    "outfit": "melaut",
+    "label": "melaut #1"
+   },
+   {
+    "char": "nelayan_2",
+    "outfit": "melaut",
+    "label": "melaut #2"
+   },
+   {
+    "char": "nelayan_3",
+    "outfit": "melaut",
+    "label": "melaut #3"
+   },
+   {
+    "char": "nelayan_4",
+    "outfit": "melaut",
+    "label": "melaut #4"
+   },
+   {
+    "char": "nelayan_5",
+    "outfit": "melaut",
+    "label": "melaut #5"
+   },
+   {
+    "char": "nelayan_6",
+    "outfit": "melaut",
+    "label": "melaut #6"
+   },
+   {
+    "char": "nelayan_7",
+    "outfit": "melaut",
+    "label": "melaut #7"
+   },
+   {
+    "char": "nelayan_0",
+    "outfit": "tpi",
+    "label": "tpi #0"
+   },
+   {
+    "char": "nelayan_1",
+    "outfit": "tpi",
+    "label": "tpi #1"
+   },
+   {
+    "char": "nelayan_2",
+    "outfit": "tpi",
+    "label": "tpi #2"
+   },
+   {
+    "char": "nelayan_3",
+    "outfit": "tpi",
+    "label": "tpi #3"
+   },
+   {
+    "char": "nelayan_4",
+    "outfit": "tpi",
+    "label": "tpi #4"
+   },
+   {
+    "char": "nelayan_5",
+    "outfit": "tpi",
+    "label": "tpi #5"
+   },
+   {
+    "char": "nelayan_6",
+    "outfit": "tpi",
+    "label": "tpi #6"
+   },
+   {
+    "char": "nelayan_7",
+    "outfit": "tpi",
+    "label": "tpi #7"
+   }
+  ]
+ },
+ "sp_nelayanCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "nelayan_0",
+    "outfit": "melaut",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "nelayan_1",
+    "outfit": "melaut",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "nelayan_2",
+    "outfit": "melaut",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "nelayan_3",
+    "outfit": "melaut",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "nelayan_0",
+    "outfit": "tpi",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "nelayan_1",
+    "outfit": "tpi",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "nelayan_2",
+    "outfit": "tpi",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "nelayan_3",
+    "outfit": "tpi",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_mekanik": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "mekanik_0",
+    "outfit": "wearpack",
+    "label": "wearpack #0"
+   },
+   {
+    "char": "mekanik_1",
+    "outfit": "wearpack",
+    "label": "wearpack #1"
+   },
+   {
+    "char": "mekanik_2",
+    "outfit": "wearpack",
+    "label": "wearpack #2"
+   },
+   {
+    "char": "mekanik_3",
+    "outfit": "wearpack",
+    "label": "wearpack #3"
+   },
+   {
+    "char": "mekanik_4",
+    "outfit": "wearpack",
+    "label": "wearpack #4"
+   },
+   {
+    "char": "mekanik_5",
+    "outfit": "wearpack",
+    "label": "wearpack #5"
+   },
+   {
+    "char": "mekanik_6",
+    "outfit": "wearpack",
+    "label": "wearpack #6"
+   },
+   {
+    "char": "mekanik_7",
+    "outfit": "wearpack",
+    "label": "wearpack #7"
+   },
+   {
+    "char": "mekanik_0",
+    "outfit": "bengkel",
+    "label": "bengkel #0"
+   },
+   {
+    "char": "mekanik_1",
+    "outfit": "bengkel",
+    "label": "bengkel #1"
+   },
+   {
+    "char": "mekanik_2",
+    "outfit": "bengkel",
+    "label": "bengkel #2"
+   },
+   {
+    "char": "mekanik_3",
+    "outfit": "bengkel",
+    "label": "bengkel #3"
+   },
+   {
+    "char": "mekanik_4",
+    "outfit": "bengkel",
+    "label": "bengkel #4"
+   },
+   {
+    "char": "mekanik_5",
+    "outfit": "bengkel",
+    "label": "bengkel #5"
+   },
+   {
+    "char": "mekanik_6",
+    "outfit": "bengkel",
+    "label": "bengkel #6"
+   },
+   {
+    "char": "mekanik_7",
+    "outfit": "bengkel",
+    "label": "bengkel #7"
+   }
+  ]
+ },
+ "sp_mekanikCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "mekanik_0",
+    "outfit": "wearpack",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "mekanik_1",
+    "outfit": "wearpack",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "mekanik_2",
+    "outfit": "wearpack",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "mekanik_3",
+    "outfit": "wearpack",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "mekanik_0",
+    "outfit": "bengkel",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "mekanik_1",
+    "outfit": "bengkel",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "mekanik_2",
+    "outfit": "bengkel",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "mekanik_3",
+    "outfit": "bengkel",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_pedagang": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "pedagang_0",
+    "outfit": "jualan",
+    "label": "jualan #0"
+   },
+   {
+    "char": "pedagang_1",
+    "outfit": "jualan",
+    "label": "jualan #1"
+   },
+   {
+    "char": "pedagang_2",
+    "outfit": "jualan",
+    "label": "jualan #2"
+   },
+   {
+    "char": "pedagang_3",
+    "outfit": "jualan",
+    "label": "jualan #3"
+   },
+   {
+    "char": "pedagang_4",
+    "outfit": "jualan",
+    "label": "jualan #4"
+   },
+   {
+    "char": "pedagang_5",
+    "outfit": "jualan",
+    "label": "jualan #5"
+   },
+   {
+    "char": "pedagang_6",
+    "outfit": "jualan",
+    "label": "jualan #6"
+   },
+   {
+    "char": "pedagang_7",
+    "outfit": "jualan",
+    "label": "jualan #7"
+   },
+   {
+    "char": "pedagang_0",
+    "outfit": "pasar",
+    "label": "pasar #0"
+   },
+   {
+    "char": "pedagang_1",
+    "outfit": "pasar",
+    "label": "pasar #1"
+   },
+   {
+    "char": "pedagang_2",
+    "outfit": "pasar",
+    "label": "pasar #2"
+   },
+   {
+    "char": "pedagang_3",
+    "outfit": "pasar",
+    "label": "pasar #3"
+   },
+   {
+    "char": "pedagang_4",
+    "outfit": "pasar",
+    "label": "pasar #4"
+   },
+   {
+    "char": "pedagang_5",
+    "outfit": "pasar",
+    "label": "pasar #5"
+   },
+   {
+    "char": "pedagang_6",
+    "outfit": "pasar",
+    "label": "pasar #6"
+   },
+   {
+    "char": "pedagang_7",
+    "outfit": "pasar",
+    "label": "pasar #7"
+   }
+  ]
+ },
+ "sp_pedagangCek": {
+  "cols": 8,
+  "cell": [
+   220,
+   400
+  ],
+  "base": {
+   "scale": 8.2,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 372
+  },
+  "items": [
+   {
+    "char": "pedagang_0",
+    "outfit": "jualan",
+    "label": "atas #0",
+    "pitch": 1.45
+   },
+   {
+    "char": "pedagang_1",
+    "outfit": "jualan",
+    "label": "atas #1",
+    "pitch": 1.45
+   },
+   {
+    "char": "pedagang_2",
+    "outfit": "jualan",
+    "label": "atas #2",
+    "pitch": 1.45
+   },
+   {
+    "char": "pedagang_3",
+    "outfit": "jualan",
+    "label": "atas #3",
+    "pitch": 1.45
+   },
+   {
+    "char": "pedagang_0",
+    "outfit": "pasar",
+    "label": "belakang #0",
+    "yaw": 3.1416
+   },
+   {
+    "char": "pedagang_1",
+    "outfit": "pasar",
+    "label": "belakang #1",
+    "yaw": 3.1416
+   },
+   {
+    "char": "pedagang_2",
+    "outfit": "pasar",
+    "label": "belakang #2",
+    "yaw": 3.1416
+   },
+   {
+    "char": "pedagang_3",
+    "outfit": "pasar",
+    "label": "belakang #3",
+    "yaw": 3.1416
+   }
+  ]
+ },
+ "sp_semua2": {
+  "cols": 16,
+  "cell": [
+   160,
+   290
+  ],
+  "base": {
+   "scale": 6,
+   "pitch": 0.22,
+   "anim": "stand",
+   "yaw": 0.6,
+   "cy": 268
+  },
+  "items": [
+   {
+    "char": "siswiAcak_0",
+    "outfit": "seragam",
+    "label": "siswiAcak #0"
+   },
+   {
+    "char": "siswiAcak_1",
+    "outfit": "seragam",
+    "label": "#1"
+   },
+   {
+    "char": "siswiAcak_2",
+    "outfit": "seragam",
+    "label": "#2"
+   },
+   {
+    "char": "siswiAcak_3",
+    "outfit": "seragam",
+    "label": "#3"
+   },
+   {
+    "char": "siswiAcak_4",
+    "outfit": "seragam",
+    "label": "#4"
+   },
+   {
+    "char": "siswiAcak_5",
+    "outfit": "seragam",
+    "label": "#5"
+   },
+   {
+    "char": "siswiAcak_6",
+    "outfit": "seragam",
+    "label": "#6"
+   },
+   {
+    "char": "siswiAcak_7",
+    "outfit": "seragam",
+    "label": "#7"
+   },
+   {
+    "char": "guruAcak_0",
+    "outfit": "pns",
+    "label": "guruAcak #0"
+   },
+   {
+    "char": "guruAcak_1",
+    "outfit": "pns",
+    "label": "#1"
+   },
+   {
+    "char": "guruAcak_2",
+    "outfit": "pns",
+    "label": "#2"
+   },
+   {
+    "char": "guruAcak_3",
+    "outfit": "pns",
+    "label": "#3"
+   },
+   {
+    "char": "guruAcak_4",
+    "outfit": "pns",
+    "label": "#4"
+   },
+   {
+    "char": "guruAcak_5",
+    "outfit": "pns",
+    "label": "#5"
+   },
+   {
+    "char": "guruAcak_6",
+    "outfit": "pns",
+    "label": "#6"
+   },
+   {
+    "char": "guruAcak_7",
+    "outfit": "pns",
+    "label": "#7"
+   },
+   {
+    "char": "ojolLewat_0",
+    "outfit": "jaket",
+    "label": "ojolLewat #0"
+   },
+   {
+    "char": "ojolLewat_1",
+    "outfit": "jaket",
+    "label": "#1"
+   },
+   {
+    "char": "ojolLewat_2",
+    "outfit": "jaket",
+    "label": "#2"
+   },
+   {
+    "char": "ojolLewat_3",
+    "outfit": "jaket",
+    "label": "#3"
+   },
+   {
+    "char": "ojolLewat_4",
+    "outfit": "jaket",
+    "label": "#4"
+   },
+   {
+    "char": "ojolLewat_5",
+    "outfit": "jaket",
+    "label": "#5"
+   },
+   {
+    "char": "ojolLewat_6",
+    "outfit": "jaket",
+    "label": "#6"
+   },
+   {
+    "char": "ojolLewat_7",
+    "outfit": "jaket",
+    "label": "#7"
+   },
+   {
+    "char": "kuli_0",
+    "outfit": "proyek",
+    "label": "kuli #0"
+   },
+   {
+    "char": "kuli_1",
+    "outfit": "proyek",
+    "label": "#1"
+   },
+   {
+    "char": "kuli_2",
+    "outfit": "proyek",
+    "label": "#2"
+   },
+   {
+    "char": "kuli_3",
+    "outfit": "proyek",
+    "label": "#3"
+   },
+   {
+    "char": "kuli_4",
+    "outfit": "proyek",
+    "label": "#4"
+   },
+   {
+    "char": "kuli_5",
+    "outfit": "proyek",
+    "label": "#5"
+   },
+   {
+    "char": "kuli_6",
+    "outfit": "proyek",
+    "label": "#6"
+   },
+   {
+    "char": "kuli_7",
+    "outfit": "proyek",
+    "label": "#7"
+   },
+   {
+    "char": "tukangParkir_0",
+    "outfit": "rompi",
+    "label": "tukangParkir #0"
+   },
+   {
+    "char": "tukangParkir_1",
+    "outfit": "rompi",
+    "label": "#1"
+   },
+   {
+    "char": "tukangParkir_2",
+    "outfit": "rompi",
+    "label": "#2"
+   },
+   {
+    "char": "tukangParkir_3",
+    "outfit": "rompi",
+    "label": "#3"
+   },
+   {
+    "char": "tukangParkir_4",
+    "outfit": "rompi",
+    "label": "#4"
+   },
+   {
+    "char": "tukangParkir_5",
+    "outfit": "rompi",
+    "label": "#5"
+   },
+   {
+    "char": "tukangParkir_6",
+    "outfit": "rompi",
+    "label": "#6"
+   },
+   {
+    "char": "tukangParkir_7",
+    "outfit": "rompi",
+    "label": "#7"
+   },
+   {
+    "char": "polisi_0",
+    "outfit": "polantas",
+    "label": "polisi #0"
+   },
+   {
+    "char": "polisi_1",
+    "outfit": "polantas",
+    "label": "#1"
+   },
+   {
+    "char": "polisi_2",
+    "outfit": "polantas",
+    "label": "#2"
+   },
+   {
+    "char": "polisi_3",
+    "outfit": "polantas",
+    "label": "#3"
+   },
+   {
+    "char": "polisi_4",
+    "outfit": "polantas",
+    "label": "#4"
+   },
+   {
+    "char": "polisi_5",
+    "outfit": "polantas",
+    "label": "#5"
+   },
+   {
+    "char": "polisi_6",
+    "outfit": "polantas",
+    "label": "#6"
+   },
+   {
+    "char": "polisi_7",
+    "outfit": "polantas",
+    "label": "#7"
+   },
+   {
+    "char": "satpamAcak_0",
+    "outfit": "jaga",
+    "label": "satpamAcak #0"
+   },
+   {
+    "char": "satpamAcak_1",
+    "outfit": "jaga",
+    "label": "#1"
+   },
+   {
+    "char": "satpamAcak_2",
+    "outfit": "jaga",
+    "label": "#2"
+   },
+   {
+    "char": "satpamAcak_3",
+    "outfit": "jaga",
+    "label": "#3"
+   },
+   {
+    "char": "satpamAcak_4",
+    "outfit": "jaga",
+    "label": "#4"
+   },
+   {
+    "char": "satpamAcak_5",
+    "outfit": "jaga",
+    "label": "#5"
+   },
+   {
+    "char": "satpamAcak_6",
+    "outfit": "jaga",
+    "label": "#6"
+   },
+   {
+    "char": "satpamAcak_7",
+    "outfit": "jaga",
+    "label": "#7"
+   },
+   {
+    "char": "nelayan_0",
+    "outfit": "melaut",
+    "label": "nelayan #0"
+   },
+   {
+    "char": "nelayan_1",
+    "outfit": "melaut",
+    "label": "#1"
+   },
+   {
+    "char": "nelayan_2",
+    "outfit": "melaut",
+    "label": "#2"
+   },
+   {
+    "char": "nelayan_3",
+    "outfit": "melaut",
+    "label": "#3"
+   },
+   {
+    "char": "nelayan_4",
+    "outfit": "melaut",
+    "label": "#4"
+   },
+   {
+    "char": "nelayan_5",
+    "outfit": "melaut",
+    "label": "#5"
+   },
+   {
+    "char": "nelayan_6",
+    "outfit": "melaut",
+    "label": "#6"
+   },
+   {
+    "char": "nelayan_7",
+    "outfit": "melaut",
+    "label": "#7"
+   },
+   {
+    "char": "mekanik_0",
+    "outfit": "wearpack",
+    "label": "mekanik #0"
+   },
+   {
+    "char": "mekanik_1",
+    "outfit": "wearpack",
+    "label": "#1"
+   },
+   {
+    "char": "mekanik_2",
+    "outfit": "wearpack",
+    "label": "#2"
+   },
+   {
+    "char": "mekanik_3",
+    "outfit": "wearpack",
+    "label": "#3"
+   },
+   {
+    "char": "mekanik_4",
+    "outfit": "wearpack",
+    "label": "#4"
+   },
+   {
+    "char": "mekanik_5",
+    "outfit": "wearpack",
+    "label": "#5"
+   },
+   {
+    "char": "mekanik_6",
+    "outfit": "wearpack",
+    "label": "#6"
+   },
+   {
+    "char": "mekanik_7",
+    "outfit": "wearpack",
+    "label": "#7"
+   },
+   {
+    "char": "pedagang_0",
+    "outfit": "jualan",
+    "label": "pedagang #0"
+   },
+   {
+    "char": "pedagang_1",
+    "outfit": "jualan",
+    "label": "#1"
+   },
+   {
+    "char": "pedagang_2",
+    "outfit": "jualan",
+    "label": "#2"
+   },
+   {
+    "char": "pedagang_3",
+    "outfit": "jualan",
+    "label": "#3"
+   },
+   {
+    "char": "pedagang_4",
+    "outfit": "jualan",
+    "label": "#4"
+   },
+   {
+    "char": "pedagang_5",
+    "outfit": "jualan",
+    "label": "#5"
+   },
+   {
+    "char": "pedagang_6",
+    "outfit": "jualan",
+    "label": "#6"
+   },
+   {
+    "char": "pedagang_7",
+    "outfit": "jualan",
+    "label": "#7"
+   }
+  ]
  }
 }

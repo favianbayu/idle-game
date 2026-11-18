@@ -134,11 +134,11 @@ Template hanya mengisi pakaian dan barang bawaan.
 
 ## Urutan pembuatan
 
-| Gelombang | Template | Alasan |
-|---|---|---|
-| 1 | `spawn_base.js`, `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`, `wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak` | Paling sering terlihat: pejalan kaki kota, asrama Batalyon, Kawasan Industri, sawah, sekolah. |
-| 2 | `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`, `satpamAcak`, `nelayan`, `mekanik`, `pedagang` | Melengkapi kota, sekolah, dan pantai. |
-| 3 | `pendaki`, `turis`, `penonton`, `santri`, `muridSilat`, `persit` | Wilayah luar dan acara. |
+| Gelombang | Template | Alasan | Status |
+|---|---|---|---|
+| 1 | `spawn_base.js`, `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`, `wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak` | Paling sering terlihat: pejalan kaki kota, asrama Batalyon, Kawasan Industri, sawah, sekolah. | Pratinjau selesai (`shots/sp_semua.png`) |
+| 2 | `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`, `satpamAcak`, `nelayan`, `mekanik`, `pedagang` | Melengkapi kota, sekolah, dan pantai. | Pratinjau selesai (`shots/sp_semua2.png`) |
+| 3 | `pendaki`, `turis`, `penonton`, `santri`, `muridSilat`, `persit` | Wilayah luar dan acara. | Belum |
 
 Tiap gelombang dipratinjau dulu sebagai lembar "satu template x 8 seed" sebelum masuk game. Aturan "jangan dicemplungin
 dulu" tetap berlaku.

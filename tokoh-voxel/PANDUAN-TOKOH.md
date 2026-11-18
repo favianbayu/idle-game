@@ -223,5 +223,10 @@ Orang tanpa nama (pejalan kaki, buruh, tentara, petani, siswa acak) **tidak** di
   tengah. Kalau semua memakai cangkang tebal, semuanya terlihat berhelm dari depan.
 - Rona pipi hanya untuk anak dan sebagian perempuan, dengan warna lembut. Merah tua terbaca sebagai jerawat.
 - Tali ransel cukup sampai ketiak (10 lapis). Tali panjang terbaca sebagai bretel.
+- Helm motor menutup semua rambut: hapus seluruh voxel `spRmb_*`, bukan hanya di atas dahi, kalau tidak rambut mencuat
+  di samping helm.
+- Noda kotor (`kotor`): gumpalan 2x2x3 yang jarang. Titik acak per voxel terbaca sebagai loreng atau taburan meses.
+- Bahan & properti baru gelombang 2: `helmMotor`, `celemek` (+ saku), `boks` ojol, `rompi` + `stripe` pantul, `ht` di
+  pinggang, properti tangan `ht, senter, tongkatLL, sekop, ember, jaring, dayung, kunci, lap, sutil, ikan`.
 - `chars.js` mendaftarkan tiap template 8 kali (`<sid>_0..7`) untuk pratinjau. Lembar `sp_<sid>` (8 seed x semua
   baju), `sp_<sid>Cek` (atas & belakang), dan `sp_semua` (10 template x 8 seed).

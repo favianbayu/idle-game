@@ -16,7 +16,9 @@ Maya, Bejo, Mandor Sutris) masih pratinjau, menunggu persetujuan (`shots/barisan
 
 **NPC spawn (warga generik, guide segmen 34)**: template untuk orang tanpa nama, satu file per peran, banyak variasi dari
 seed `v`. Gelombang 1 (pratinjau, belum di game): `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`,
-`wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak`. Ringkasan: `shots/sp_semua.png`; per template `shots/sp_<sid>.png`.
+`wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak`. Gelombang 2 (pratinjau): `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`,
+`satpamAcak`, `nelayan`, `mekanik`, `pedagang`. Ringkasan: `shots/sp_semua.png` (gelombang 1) dan `shots/sp_semua2.png`
+(gelombang 2); per template `shots/sp_<sid>.png`.
 Kode: `src/spawn_base.js` + `src/sp_*.js`. Cara membuat template baru: PANDUAN bagian 9.
 
 | Tokoh | Peran | Skala lama | Tinggi kisi (voxel halus, termasuk rambut) | Ciri |
