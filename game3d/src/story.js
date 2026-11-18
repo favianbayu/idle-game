@@ -136,7 +136,7 @@ export function makeStory({ player, toast, shop, fight, acts }) {
   const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   function render() {
     const s = st(), b = BAB[Math.min(s.bab, 15) - 1];
-    let h = `<button class="x">✕</button><h3>Jurnal Raka</h3><div class="tabs">${[['bab', 'Cerita'], ['misi', 'Misi wilayah'], ['hati', 'Hati']].map(([k, l]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    let h = `<button class="x">✕</button><h3>Jurnal Raka</h3><div class="tabs">${[['bab', 'Cerita'], ['misi', 'Misi wilayah'], ['hati', 'Hati'], ...(RT ? [['orang', 'Cari orang']] : [])].map(([k, l]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
     if (tab === 'bab') {
       if (W) { const c = W.cal(), up = W.upcoming(4); h += `<div><b>Hari ini:</b> ${c.hari}, ${c.tanggal} ${c.namaBulan} <span style="opacity:.7">(${c.asli})</span> · Kelas ${c.kelas} · jam ${W.hhmm(W.jam * 60)}</div>${up.length ? `<div style="font-size:12px;margin-top:2px"><b>Kalender:</b> ${up.map(e => `${esc(e.label)}: ${esc(e.name)}${e.inDays ? '' : ' (hari ini)'}`).join(' · ')}</div>` : ''}`; }
       h += s.bab > 15 ? '<h4>Tamat! Semua bab selesai.</h4>' : `<h4>Kelas ${b.kelas} · Bab ${b.n}: ${esc(b.judul)}</h4><div style="font-size:11px;opacity:.75">${KAPAN[b.n]}</div><ul>${b.tujuan.map(o => o.soon ? `<li class="soon">○ ${esc(o.t)} <i>(segera)</i></li>` : `<li class="${s.done[o.id] ? 'ok' : ''}">${s.done[o.id] ? '✓' : '○'} ${esc(o.t)}${o.cnt ? ` (${Math.min(o.cnt[1], s.cnt[o.cnt[0]] || 0)}/${o.cnt[1]})` : ''}</li>`).join('')}</ul>`;
@@ -148,9 +148,11 @@ export function makeStory({ player, toast, shop, fight, acts }) {
         const c = s.cnt, all = list.every(([, k, n]) => (c[k] || 0) >= n);
         h += `<h4>${esc(reg)} <span style="font-weight:normal;font-size:11px">· ${esc(who)}</span></h4><ul>${list.map(([t, k, n], i) => { const v = Math.min(n, c[k] || 0), ok = v >= n, open = i === 0 || (c[list[i - 1][1]] || 0) >= list[i - 1][2]; return `<li class="${ok ? 'ok' : open ? '' : 'soon'}">${ok ? '✓' : '○'} ${esc(t)}${n > 1 ? ` (${v}/${n})` : ''}</li>`; }).join('')}</ul>${all ? `<div class="ok">Epilog baik: ${esc(good)}</div>` : ''}`;
       }
+    } else if (tab === 'orang' && RT) {
+      h += RT.findHtml();
     } else {
       const rows = Object.entries(st().pts).filter(([, p]) => p > 0).sort((a, b) => b[1] - a[1]);
-      h += rows.length ? `<table>${rows.map(([k, p]) => { const hv = Math.min(8, Math.floor(p / 100)), E2 = EVENTS[k]; return `<tr><td><b>${esc(k)}</b></td><td>${'♥'.repeat(hv)}${'♡'.repeat(8 - hv)}<br><span class="bar"><i style="width:${hv >= 8 ? 100 : p % 100}%"></i></span></td><td style="font-size:11px">${E2 ? [2, 4, 6, 8].map(n => `${s.ev[k + n] ? '✓' : n <= hv ? '!' : '·'} ${n}: ${esc(E2[n][0])}`).join('<br>') : ''}</td></tr>`; }).join('')}</table>` : '<p>Belum kenal siapa-siapa. Ngobrol tiap hari (+10), bantu kerjaan (+60 sampai +150). 100 poin = 1 hati, event di hati 2/4/6/8.</p>';
+      h += rows.length ? `<table>${rows.map(([k, p]) => { const hv = Math.min(8, Math.floor(p / 100)), E2 = EVENTS[k]; return `<tr><td><b>${esc(k)}</b></td><td>${'♥'.repeat(hv)}${'♡'.repeat(8 - hv)}<br><span class="bar"><i style="width:${hv >= 8 ? 100 : p % 100}%"></i></span></td><td style="font-size:11px">${RT && RT.evRows(k) || ''}${!(RT && RT.evRows(k)) && E2 ? [2, 4, 6, 8].map(n => `${s.ev[k + n] ? '✓' : n <= hv ? '!' : '·'} ${n}: ${esc(E2[n][0])}`).join('<br>') : ''}</td></tr>`; }).join('')}</table>` : '<p>Belum kenal siapa-siapa. Ngobrol tiap hari (+10), bantu kerjaan (+60 sampai +150), kasih kado (tombol Kado / G). 100 poin = 1 hati, event di hati 2/4/6/8.</p>';
     }
     J.innerHTML = h;
     J.querySelector('.x').onclick = () => toggle(false);
@@ -165,8 +167,10 @@ export function makeStory({ player, toast, shop, fight, acts }) {
   const ZNAME = { pesisir: 'Pesisir Lintang (kereta)', pantai: 'Pantai Lintang & Pandansari', tegalsari: 'Desa Tegalsari', sukamekar: 'Desa Sukamekar & kebun teh', muara: 'Muara & TPI', timur: 'Batalyon 3 & Kawasan Industri', waduk: 'Waduk Sirnagalih & Batu Tulis', sirkuit: 'Sirkuit Tanjung Pradana', gunung: 'Gunung Sangkala' };
   const zoneOk = z => st().mode !== 'cerita' || !ZONE_BAB[z] || st().bab >= ZONE_BAB[z];
   function addPts(name, p) {
-    const k = keyOf(name), s = st(), before = hati(k); s.pts[k] = Math.max(0, (s.pts[k] || 0) + p); const after = hati(k);
-    if (after > before) toast(`♥ ${k}: ${after} hati${after % 2 === 0 && EVENTS[k] ? ' (ada event, ngobrol lagi!)' : ''}`);
+    const k = keyOf(name), s = st(), before = hati(k), c = RT ? RT.capOf(k) : Infinity, old = s.pts[k] || 0;
+    s.pts[k] = Math.max(0, Math.min(Math.max(old, c), old + p)); const after = hati(k);
+    if (after > before) toast(`♥ ${k}: ${after} hati${after % 2 === 0 && (EVENTS[k] || RT?.hasEv(k)) ? ' (ada event, ngobrol lagi!)' : ''}`);
+    else if (p > 0 && s.pts[k] === c && old < c) toast(`♥ ${k}: hati tertahan, selesaikan event-nya dulu (Jurnal > Hati).`);
   }
   function mark(id, t) {
     const s = st(); if (s.done[id]) return; s.done[id] = true; toast('✓ ' + t); checkBab();
@@ -227,9 +231,11 @@ export function makeStory({ player, toast, shop, fight, acts }) {
   }
   const rp = v => 'Rp' + v.toLocaleString('id-ID');
 
-  let pollT = 0;
+  function evFx(k, nn) { const fx = EVENTS[k]?.[nn]?.[2]; if (fx) { fl()[fx] = true; if (fx === 'bukuSaksi' && st().bab === 12) mark('b12kyai', 'Buku saksi hibah dari Kyai Mahfud'); } }
+  let pollT = 0, RT = null;
   return {
     BAB, ZONE_BAB, toggle, hati, ev, addPts, setWaktu(w) { W = w; },
+    setRutin(r) { RT = r; r.bind({ st, hati, addPts, keyOf, onEvent: evFx }); },
     get bab() { return st().bab; },
     // target Aksi untuk NPC: tawaran kerja/misi (kalau sudah ngobrol hari ini)
     npcTarget(n) { const j = n && !n.mood && jobFor(n); return j ? { kind: 'act', label: `${j.t} · ${keyOf(n.name)}`, fn: () => doJob(n, j) } : null; },
@@ -238,9 +244,10 @@ export function makeStory({ player, toast, shop, fight, acts }) {
       const s = st(), k = keyOf(n.name); if (!k) return null;
       if (s.talk[k] !== day()) { s.talk[k] = day(); if (!n.filler || REGION.has(k)) addPts(k, 10); }
       ev('talk', k);
+      if (RT) { const r = RT.heart(n, k); if (r !== undefined) return r; }
       const E2 = EVENTS[k]; if (!E2) return null;
       for (const nn of [2, 4, 6, 8]) if (hati(k) >= nn && !s.ev[k + nn]) {
-        s.ev[k + nn] = true; addPts(k, 50); const fx = E2[nn][2]; if (fx) { fl()[fx] = true; if (fx === 'bukuSaksi' && s.bab === 12) mark('b12kyai', 'Buku saksi hibah dari Kyai Mahfud'); }
+        s.ev[k + nn] = true; addPts(k, 50); evFx(k, nn);
         if (E.style.display === 'block') evQ.push([k, nn, E2[nn]]); else showEvent(k, nn, E2[nn]);
         return '♥ ' + E2[nn][0];
       }

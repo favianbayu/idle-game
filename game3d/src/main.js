@@ -19,6 +19,7 @@ import { makeRace } from './race.js';
 import { makeKolam } from './kolam.js';
 import { makeStory } from './story.js';
 import { makeWaktu } from './waktu.js';
+import { makeRutin } from './rutin.js';
 import { parked } from './parked.js';
 import { makeLuar } from './luar.js';
 
@@ -166,6 +167,7 @@ const story = makeStory({ player, toast: (...a) => toast(...a), shop, fight, act
 const waktu = makeWaktu({ player, toast: (...a) => toast(...a) }); story.setWaktu(waktu);   // jam, siang-malam, kalender tahun ajaran
 const kolam = makeKolam({ scene, player, Character, fight, shop, toast, getCam: () => cam });   // kolam lomba GOR: balap renang & loncat indah
 const interiors = makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast, kolam });
+const rutin = makeRutin({ scene, collision, player, Character, npcs, interiors, shop, toast: (...a) => toast(...a), waktu }); story.setRutin(rutin);   // jadwal NPC, kado, event hati (guide 35-37)
 interiors.locate();
 const jajan = makeJajan({ scene, kota, collision, player, Character, npcs, shop, acts, toast });
 const animals = makeAnimals({ scene, kota, collision, player, toast });
@@ -247,6 +249,7 @@ onCharsReady(() => {
     }
   }
 });
+onCharsReady(() => rutin.init());   // setelah semua tokoh kota dibuat
 
 /* ------------------------------------------------------------------ input */
 const keys = new Set();
@@ -262,6 +265,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyT') fight.taunt();
   if (e.code === 'KeyU') toggleStatus();
   if (e.code === 'KeyB') story.toggle();
+  if (e.code === 'KeyG') rutin.toggleKado();
   if (e.code === 'KeyQ') rotateCam(-1);
   if (e.code === 'KeyE') rotateCam(1);
   if (e.code === 'KeyC') toggleFollow();
@@ -352,7 +356,7 @@ document.body.classList.toggle('touch', isTouch);
 ui.follow.classList.toggle('on', opt.follow);
 ui.mapWrap.style.display = opt.minimap ? '' : 'none';
 const tap = (el, fn) => el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); fn(); });
-tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack('A', player.fx.nyali >= 100); }); tap($('btnKick'), () => fight.attack('B')); tap($('btnGrab'), () => fight.grab()); tap($('btnDodge'), () => fight.dodge(true)); for (const ev of ['pointerup', 'pointercancel']) $('btnDodge').addEventListener(ev, () => fight.dodge(false)); tap($('btnStatus'), () => toggleStatus()); tap($('btnJurnal'), () => story.toggle()); tap($('btnReset'), () => resetPos()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
+tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack('A', player.fx.nyali >= 100); }); tap($('btnKick'), () => fight.attack('B')); tap($('btnGrab'), () => fight.grab()); tap($('btnDodge'), () => fight.dodge(true)); for (const ev of ['pointerup', 'pointercancel']) $('btnDodge').addEventListener(ev, () => fight.dodge(false)); tap($('btnStatus'), () => toggleStatus()); tap($('btnJurnal'), () => story.toggle()); tap($('btnKado'), () => rutin.toggleKado()); tap($('btnReset'), () => resetPos()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
 const menu = $('menu'); menu.classList.toggle('closed', isTouch);
 tap($('btnMenu'), () => menu.classList.toggle('closed'));
 tap(ui.run, () => { ui.run.classList.toggle('on'); player.run = ui.run.classList.contains('on'); });
@@ -601,12 +605,13 @@ const HABIT = { pakUjang: 'sweep', mei: 'read', rizal: 'read', jojo: 'phone', se
 const IDLES = { student: ['idle', 'idle', 'phone', 'talk', 'look', 'think', 'laugh', 'read', 'clap'], adult: ['idle', 'idle', 'look', 'phone', 'talk', 'squat', 'stretch', 'scratch'], kid: ['idle', 'look', 'dance', 'squat', 'wave', 'clap'] };
 const pick3 = a => a[Math.floor(Math.random() * a.length)];
 function pickIdle(n) {
+  if (n.rtAnim) return n.rtAnim;   // jadwal guide 35: kegiatan sesuai jam
   if (HABIT[n.sid] && Math.random() < 0.45) return HABIT[n.sid];
   const set = STUDENTS.has(n.sid) ? IDLES.student : KIDS.has(n.sid) ? IDLES.kid : IDLES.adult;
   return set[Math.floor(Math.random() * set.length)];
 }
 function updateNPC(n, dt) {
-  const dx = n.x - player.x, dz = n.z - player.z, far = n.away || dx * dx + dz * dz > 70 * 70;   // away: tokohnya sedang dipakai di tempat lain (mis. balapan)
+  const dx = n.x - player.x, dz = n.z - player.z, far = n.away || n.rtAway || dx * dx + dz * dz > 70 * 70;   // away: tokohnya sedang dipakai di tempat lain (mis. balapan)
   n.c.group.visible = !far;
   if (far) return;
   if (fight.updateNPC(n, dt)) { n.galon = false; return; }   // berantem: galon Gilang ditaruh dulu
@@ -662,7 +667,7 @@ function drawBubbles() {
     if (!n.c.group.visible) continue;
     const d = Math.hypot(n.x - player.x, n.z - player.z);
     if (n.say) show(n.key, n.x, 2.0, n.z, n.say.text, n.say.cls ? 'bubble ' + n.say.cls : n.filler ? 'bubble filler' : 'bubble');
-    else if (d < 6) { const p = fight.STRENGTH[n.sid]; if (p && !n.ext) { const [, c] = verdict(p.lv); show(n.key, n.x, 1.85, n.z, `${n.name} · lv ${p.lv}`, 'tag ' + c); } else show(n.key, n.x, 1.85, n.z, n.name, n.filler ? 'tag filler' : 'tag'); }
+    else if (d < 6) { const p = fight.STRENGTH[n.sid]; if (p && !n.ext) { const [, c] = verdict(p.lv); show(n.key, n.x, 1.85, n.z, `${n.name} · lv ${p.lv}`, 'tag ' + c); } else { const kg = rutin.tag(n); show(n.key, n.x, 1.85, n.z, kg ? `${n.name} · ${kg}` : n.name, n.filler ? 'tag filler' : 'tag'); } }
   }
   for (const b of animals.bubbles()) show(b.key, b.x, b.y, b.z, b.text, 'bubble filler');
   for (const [k, el] of bubbleEls) if (!seen.has(k)) { el.remove(); bubbleEls.delete(k); }
@@ -707,7 +712,7 @@ function loop(now) {
     const sx = Math.round(cam.x / step) * step, sz = Math.round(cam.z / step) * step;
     sun.target.position.set(sx, 0, sz); sun.position.set(sx + sunOff.dx, sunOff.dy, sz + sunOff.dz);
   }
-  jajan.update(dt); animals.update(dt); race.update(dt); kolam.update(dt); story.update(dt);
+  jajan.update(dt); animals.update(dt); race.update(dt); kolam.update(dt); story.update(dt); rutin.update(dt);
   const inside = player.area === 'dalam';
   if (inside !== wasInside) { wasInside = inside; if (inside) { scene.background = DARKBG; scene.fog.color.copy(DARKBG); hemi.intensity = 1.9; hemi.color.set('#e6efff'); sun.intensity = 2.1; sun.color.set('#fff1d6'); } }
   if (inside) { scene.fog.near = 60; scene.fog.far = 140; interiors.update(camera); }
@@ -739,4 +744,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { kolam, story, waktu, luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { kolam, story, waktu, rutin, luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
