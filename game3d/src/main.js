@@ -200,11 +200,11 @@ onCharsReady(() => {
     else if (n.name === 'Pak Satpam Bambang' && kota.posSatpam) home = { ...kota.posSatpam };
     else home = { x: H.x, z: H.z };
     if (!home) return;
-    const c = new Character(n.sid); scene.add(c.group);
+    const c = new Character(n.sid, { name: n.name }); scene.add(c.group);
     const p = collision.resolve({ x: home.x, z: home.z }, 0.3);
     home = { x: p.x, z: p.z };
     npcs.push({ ...n, key: 'n' + idx, name: n.name || styleName(n.sid), c, home, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: Math.random() * 3, heading: Math.random() * 6, say: null, greetT: 0 });
-    preload(n.sid, ['idle'], 1);
+    preload(c.vsid, ['idle'], 1);
   });
   // tukang parkir di minimarket, lahan parkir, dan parkir liar depan ruko: mondar-mandir sepanjang deretan motor, memberi aba-aba
   const PNAMES = ['Bang Jalu', 'Pak Darno', 'Mas Tejo', 'Bang Ipul', 'Pak Somad', 'Mang Udin', 'Kang Asep', 'Bang Mamat', 'Pak Ogah', 'Mas Bowo', 'Bang Romli', 'Pak Kumis'];

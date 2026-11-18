@@ -1,4 +1,4 @@
-# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong, Dodi, Didi, Uda Rizki, Ustaz Hasan, Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita, Kurir Bayu, Kevin kecil, Pak Polisi Sugeng, Mas Barista Kevin, Bu Lastri, Pak Tarno, Mbak SPG Dewi, Pengamen Dul, Om Hendrik, Bu Wati, Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis, Mas Tejo, Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat", Maya, Bejo, Mandor Sutris (gaya Raka v3)
+# Tokoh voxel · Rani, Bimo, Bram, Nadia, Dimas, Sekar, Arga, Laras, Rizal, Uti, Tegar, Sasha, Kirana, Jojo, Andra, Mei, Gilang, Wulan, Om Darto, Cici, Mas Fajar, Kobar, Bang Jaka, Bu Narti, Pak RT Slamet, Pak Haris, Pak Gito, Rio, Kevin, Bu Hartini, Bu Ratna, Pak Hendro, Pak Wawan, Bu Sinta, Mr. Anton, Pak Gunadi, Bu Melati, Pak Ujang, Mak Iyah, Ama, Mbah Karto, Bu Sum, Pak Darmin, Mbak Rini, Pak Joko, Teh Euis, Koh Ahong, Dodi, Didi, Uda Rizki, Ustaz Hasan, Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita, Kurir Bayu, Kevin kecil, Pak Polisi Sugeng, Mas Barista Kevin, Bu Lastri, Pak Tarno, Mbak SPG Dewi, Pengamen Dul, Om Hendrik, Bu Wati, Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis, Mas Tejo, Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat", Maya, Bejo, Mandor Sutris, Pak Pras, Bang Sarip, Abah Karta (gaya Raka v3)
 
 Cara membuat tokoh baru: lihat [PANDUAN-TOKOH.md](PANDUAN-TOKOH.md).
 
@@ -11,13 +11,14 @@ Pak Joko, Teh Euis, Koh Ahong) juga sudah di game (PR #8), begitu juga Dodi & Di
 Bukit Asri (Pak Satpam Bambang, Bu Veronika, Mbak Yuni, Kak Raffi, Opa Willem, Nyonya Lita) lewat PR #9, dan Kurir Bayu,
 Kevin kecil, Pak Polisi Sugeng, Mas Barista Kevin, Bu Lastri, Pak Tarno, Mbak SPG Dewi, Pengamen Dul, Om Hendrik, Bu Wati
 lewat PR #10, dan Mas Ilham, Kak Nana, Pak Darsono, Wak Udin, Bu Inah, Bang Ucok, Mak Ijah, Pak Roni, Teh Lilis, Mas Tejo
-lewat PR #11. Batch baru pengisi sekolah (Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat",
-Maya, Bejo, Mandor Sutris) masih pratinjau, menunggu persetujuan (`shots/barisan10baru6.png`).
+lewat PR #11. Pengisi sekolah (Pak Satpam Udin, Bu Kantin Ningsih, Mas Cilok, Andi, Fitri, Rina, Bayu "Si Telat",
+Maya, Bejo, Mandor Sutris) dan tiga tokoh terakhir guide (Pak Pras ayah Bimo, Bang Sarip bos kecil, Abah Karta guru silat;
+`src/pras.js`, `src/sarip.js`, `src/karta.js`, dibangun di atas `spawn_base.js`) sudah masuk game (`shots/game_13tokoh.png`).
 
 **NPC spawn (warga generik, guide segmen 34)**: template untuk orang tanpa nama, satu file per peran, banyak variasi dari
-seed `v`. Gelombang 1 (pratinjau, belum di game): `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`,
-`wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak`. Gelombang 2 (pratinjau): `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`,
-`satpamAcak`, `nelayan`, `mekanik`, `pedagang`. Gelombang 3 (pratinjau): `pendaki`, `turis`, `penonton`, `santri`,
+seed `v`. Semua 26 template sudah masuk game (`shots/game_spawn24.png`). Gelombang 1: `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`,
+`wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak`. Gelombang 2: `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`,
+`satpamAcak`, `nelayan`, `mekanik`, `pedagang`. Gelombang 3: `pendaki`, `turis`, `penonton`, `santri`,
 `muridSilat`, `persit`. Ringkasan: `shots/sp_semua.png` (gelombang 1), `shots/sp_semua2.png` (gelombang 2) dan
 `shots/sp_semua3.png` (gelombang 3); per template `shots/sp_<sid>.png`.
 Kode: `src/spawn_base.js` + `src/sp_*.js`. Cara membuat template baru: PANDUAN bagian 9.

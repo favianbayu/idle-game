@@ -125,6 +125,8 @@ Template hanya mengisi pakaian dan barang bawaan.
 2. **Batas variasi di layar**: tiap peran memakai paling banyak **8 seed aktif** sekaligus, dengan cache bentuk voxel per
    `sid#v`. Barisan tentara 12 orang cukup 6 seed yang diulang dan diacak posisinya. Ini menjaga memori worker.
 3. **Kunci worker**: `FINE[sid]` menerima `{ outfit, expr, helm, v }`. Cache memakai kunci `sid#v#outfit#expr`.
+   Di game3d versi sekarang seed dan baju dibawa di nama sid tampilan: `FINE['tentara_3']`, baju lewat akhiran
+   (`tentara_3~jaga`). Sid generik lama dipetakan di `SPAWN_OF` (`game3d/src/chars.js`), seed 0..7 dibagi bergiliran per peran.
 4. **LOD**: NPC lebih jauh dari 40 petak memakai seed yang sama dengan tetangga terdekatnya, sehingga tidak ada build
    baru.
 5. **Kolam nama dan baris**: `SPAWN_NAMES[role][wilayah]` dan `SPAWN_LINES[role]`. Baris diambil dari segmen 31 dan 33,
@@ -136,9 +138,9 @@ Template hanya mengisi pakaian dan barang bawaan.
 
 | Gelombang | Template | Alasan | Status |
 |---|---|---|---|
-| 1 | `spawn_base.js`, `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`, `wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak` | Paling sering terlihat: pejalan kaki kota, asrama Batalyon, Kawasan Industri, sawah, sekolah. | Pratinjau selesai (`shots/sp_semua.png`) |
-| 2 | `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`, `satpamAcak`, `nelayan`, `mekanik`, `pedagang` | Melengkapi kota, sekolah, dan pantai. | Pratinjau selesai (`shots/sp_semua2.png`) |
-| 3 | `pendaki`, `turis`, `penonton`, `santri`, `muridSilat`, `persit` | Wilayah luar dan acara. | Pratinjau selesai (`shots/sp_semua3.png`) |
+| 1 | `spawn_base.js`, `wargaPria`, `wargaWanita`, `wargaHijab`, `wargaLansia`, `wargaMuda`, `wargaAnak`, `tentara`, `buruh`, `petani`, `siswaAcak` | Paling sering terlihat: pejalan kaki kota, asrama Batalyon, Kawasan Industri, sawah, sekolah. | Di game (`shots/sp_semua.png`) |
+| 2 | `siswiAcak`, `guruAcak`, `ojolLewat`, `kuli`, `tukangParkir`, `polisi`, `satpamAcak`, `nelayan`, `mekanik`, `pedagang` | Melengkapi kota, sekolah, dan pantai. | Di game (`shots/sp_semua2.png`) |
+| 3 | `pendaki`, `turis`, `penonton`, `santri`, `muridSilat`, `persit` | Wilayah luar dan acara. | Di game (`shots/sp_semua3.png`) |
 
 Tiap gelombang dipratinjau dulu sebagai lembar "satu template x 8 seed" sebelum masuk game. Aturan "jangan dicemplungin
 dulu" tetap berlaku.

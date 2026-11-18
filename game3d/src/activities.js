@@ -129,7 +129,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
   // dua anak SD main bola: mengejar bola dan menendang ke gawang lawannya
   const kids = [];
   [['Dodi', 'anakSD', -1], ['Didi', 'anakSDcw', 1]].forEach(([name, sid, goal], i) => {
-    const c = new Character(sid); scene.add(c.group);
+    const c = new Character(sid, { name }); scene.add(c.group);
     const k = { sid, name, filler: true, key: 'kid' + i, c, goal, x: FB.x - goal * 2, z: FB.z + (i ? 1 : -1), home: { x: FB.x - goal * 2, z: FB.z }, heading: 0, cd: 0, cheer: 0, anim: 'idle', say: null, greetT: 0, linesKey: 'bocahBola',
       ext: (n, dt) => kidAI(n, dt) };
     npcs.push(k); kids.push(k);

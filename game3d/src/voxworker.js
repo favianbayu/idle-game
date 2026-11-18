@@ -81,6 +81,45 @@ import { build as ijahBuild } from './raka/ijah.js';
 import { build as roniBuild } from './raka/roni.js';
 import { build as lilisBuild } from './raka/lilis.js';
 import { build as tejoBuild } from './raka/tejo.js';
+import { build as satpamudinBuild } from './raka/satpamudin.js';
+import { build as ningsihBuild } from './raka/ningsih.js';
+import { build as cilokBuild } from './raka/cilok.js';
+import { build as andiBuild } from './raka/andi.js';
+import { build as fitriBuild } from './raka/fitri.js';
+import { build as rinaBuild } from './raka/rina.js';
+import { build as bayuBuild } from './raka/bayu.js';
+import { build as mayaBuild } from './raka/maya.js';
+import { build as bejoBuild } from './raka/bejo.js';
+import { build as sutrisBuild } from './raka/sutris.js';
+import { build as prasBuild } from './raka/pras.js';
+import { build as saripBuild } from './raka/sarip.js';
+import { build as kartaBuild } from './raka/karta.js';
+import { SPAWN as sp_priaS, build as sp_priaB } from './raka/sp_pria.js';
+import { SPAWN as sp_wanitaS, build as sp_wanitaB } from './raka/sp_wanita.js';
+import { SPAWN as sp_hijabS, build as sp_hijabB } from './raka/sp_hijab.js';
+import { SPAWN as sp_lansiaS, build as sp_lansiaB } from './raka/sp_lansia.js';
+import { SPAWN as sp_mudaS, build as sp_mudaB } from './raka/sp_muda.js';
+import { SPAWN as sp_anakS, build as sp_anakB } from './raka/sp_anak.js';
+import { SPAWN as sp_tentaraS, build as sp_tentaraB } from './raka/sp_tentara.js';
+import { SPAWN as sp_buruhS, build as sp_buruhB } from './raka/sp_buruh.js';
+import { SPAWN as sp_petaniS, build as sp_petaniB } from './raka/sp_petani.js';
+import { SPAWN as sp_siswaS, build as sp_siswaB } from './raka/sp_siswa.js';
+import { SPAWN as sp_siswiS, build as sp_siswiB } from './raka/sp_siswi.js';
+import { SPAWN as sp_guruS, build as sp_guruB } from './raka/sp_guru.js';
+import { SPAWN as sp_ojolS, build as sp_ojolB } from './raka/sp_ojol.js';
+import { SPAWN as sp_kuliS, build as sp_kuliB } from './raka/sp_kuli.js';
+import { SPAWN as sp_parkirS, build as sp_parkirB } from './raka/sp_parkir.js';
+import { SPAWN as sp_polisiS, build as sp_polisiB } from './raka/sp_polisi.js';
+import { SPAWN as sp_satpamS, build as sp_satpamB } from './raka/sp_satpam.js';
+import { SPAWN as sp_nelayanS, build as sp_nelayanB } from './raka/sp_nelayan.js';
+import { SPAWN as sp_mekanikS, build as sp_mekanikB } from './raka/sp_mekanik.js';
+import { SPAWN as sp_pedagangS, build as sp_pedagangB } from './raka/sp_pedagang.js';
+import { SPAWN as sp_pendakiS, build as sp_pendakiB } from './raka/sp_pendaki.js';
+import { SPAWN as sp_turisS, build as sp_turisB } from './raka/sp_turis.js';
+import { SPAWN as sp_penontonS, build as sp_penontonB } from './raka/sp_penonton.js';
+import { SPAWN as sp_santriS, build as sp_santriB } from './raka/sp_santri.js';
+import { SPAWN as sp_silatS, build as sp_silatB } from './raka/sp_silat.js';
+import { SPAWN as sp_persitS, build as sp_persitB } from './raka/sp_persit.js';
 import { voxelFrame } from './raka/frame.js';
 import { exprFor, helmFor } from './raka/expr.js';
 
@@ -145,11 +184,15 @@ const FINE = { raka: buildParts, rani: raniBuild, bimo: bimoBuild, bram: bramBui
   kurirBayu: kurirBuild, kevinKecil: kevinkecilBuild, polisiSugeng: sugengBuild, masBarista: baristaBuild, buLastri: lastriBuild,
   pakTarno: tarnoBuild, mbakDewi: dewiBuild, pengamenDul: dulBuild, omHendrik: hendrikBuild, buWati: watiBuild,
   masIlham: ilhamBuild, kakNana: nanaBuild, pakDarsono: darsonoBuild, wakUdin: udinBuild, buInah: inahBuild,
-  bangUcok: ucokBuild, makIjah: ijahBuild, pakRoni: roniBuild, tehLilis: lilisBuild, masTejo: tejoBuild };
+  bangUcok: ucokBuild, makIjah: ijahBuild, pakRoni: roniBuild, tehLilis: lilisBuild, masTejo: tejoBuild,
+  satpamUdin: satpamudinBuild, buNingsih: ningsihBuild, masCilok: cilokBuild, siswaAndi: andiBuild, siswiFitri: fitriBuild, siswiRina: rinaBuild, siswaBayu: bayuBuild, siswiMaya: mayaBuild, stmBejo: bejoBuild, mandorSutris: sutrisBuild, pakPras: prasBuild, bangSarip: saripBuild, abahKarta: kartaBuild };
+// NPC tanpa nama (guide segmen 34): tiap template spawn didaftarkan 8 kali sebagai <sid>_0..7 (seed v). Sid tampilan boleh
+// membawa baju lewat akhiran '~', misal 'tentara_3~jaga'; tanpa akhiran template memakai baju bawaannya.
+for (const [S, B] of [[sp_priaS, sp_priaB], [sp_wanitaS, sp_wanitaB], [sp_hijabS, sp_hijabB], [sp_lansiaS, sp_lansiaB], [sp_mudaS, sp_mudaB], [sp_anakS, sp_anakB], [sp_tentaraS, sp_tentaraB], [sp_buruhS, sp_buruhB], [sp_petaniS, sp_petaniB], [sp_siswaS, sp_siswaB], [sp_siswiS, sp_siswiB], [sp_guruS, sp_guruB], [sp_ojolS, sp_ojolB], [sp_kuliS, sp_kuliB], [sp_parkirS, sp_parkirB], [sp_polisiS, sp_polisiB], [sp_satpamS, sp_satpamB], [sp_nelayanS, sp_nelayanB], [sp_mekanikS, sp_mekanikB], [sp_pedagangS, sp_pedagangB], [sp_pendakiS, sp_pendakiB], [sp_turisS, sp_turisB], [sp_penontonS, sp_penontonB], [sp_santriS, sp_santriB], [sp_silatS, sp_silatB], [sp_persitS, sp_persitB]]) for (let v = 0; v < 8; v++) FINE[S.sid + '_' + v] = o => B({ ...o, v });
 const PARTS = new Map();
 const fineParts = (sid, outfit, expr, helm) => {
   const k = sid + '|' + outfit + '|' + expr + (helm ? '+h' : '');
-  if (!PARTS.has(k)) PARTS.set(k, FINE[sid]({ outfit, expr, helm }));
+  if (!PARTS.has(k)) { const [base, of] = sid.split('~'); PARTS.set(k, FINE[base]({ outfit: of || outfit, expr, helm })); }
   return PARTS.get(k);
 };
 
@@ -157,7 +200,7 @@ self.onmessage = e => {
   const { key, sid, anim, i } = e.data;
   const A = ANIMS[anim], st = STYLES[sid];
   const t = A.loop ? i / A.n : i / Math.max(1, A.n - 1);
-  if (FINE[sid]) {
+  if (FINE[sid.split('~')[0]]) {
     const f = voxelFrame(fineParts(sid, 'seragam', exprFor(anim, i, A.n), helmFor(anim)), A.pose(t)), H = 1 / 64;
     const g = mesh(f, H, -f.org[0], -f.org[1], f.org[2]);
     g.lift = f.lift * H; g.butt = f.buttZ * H; g.buttX = f.buttX * H;

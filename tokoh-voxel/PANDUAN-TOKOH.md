@@ -238,5 +238,11 @@ Orang tanpa nama (pejalan kaki, buruh, tentara, petani, siswa acak) **tidak** di
   terlihat ujungnya sebagai bola. Bendera dipasang di depan tiang (x positif), bukan di belakang lengan.
 - Pilihan yang harus merata antar seed (syal, terompet/bendera) boleh memakai rumus dari `v` langsung. Beberapa `r.p()`
   setelah banyak `r.pick()` bisa berkorelasi sehingga 8 seed pratinjau semuanya jatuh ke sisi yang sama.
+- Tokoh bernama boleh dibangun di atas `spawn_base.js` (contoh `pras.js`, `sarip.js`, `karta.js`): isi deskripsi `d` secara
+  tetap (bukan dari seed), lalu tambah detail khusus lewat kait `d.fx.head(v, d)`, `d.fx.chest(v, d, G)`,
+  `d.fx.fore(v, d, G, side)` (bekas luka, kalung, uban, telapak tebal). `d.tegak` mematikan punggung bungkuk lansia.
+- Di game: worker mendaftarkan tiap template sebagai `<sid>_0..7`; sid tampilan boleh membawa baju (`tentara_3~jaga`).
+  `chars.js` game memetakan sid generik lama ke template (`SPAWN_OF`) dan NPC bernama ke modelnya lewat nama (`NAME_VIS`).
+  Sid logika tidak berubah, jadi stat berantem, kebiasaan, dan dialog tetap jalan.
 - `chars.js` mendaftarkan tiap template 8 kali (`<sid>_0..7`) untuk pratinjau. Lembar `sp_<sid>` (8 seed x semua
   baju), `sp_<sid>Cek` (atas & belakang), dan `sp_semua` (10 template x 8 seed).

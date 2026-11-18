@@ -72,6 +72,7 @@ export const NPCS = [
   { sid: 'kobar', home: { x: 150, z: 163.5 }, roam: 3 },
   { sid: 'anakPunk', name: 'Bejo', filler: true, home: { x: 117, z: 132 }, roam: 2 },
   { sid: 'mandor', name: 'Mandor Sutris', filler: true, home: { x: 211, z: 145.5 }, roam: 2 },
+  { sid: 'bangSarip', name: 'Bang Sarip', filler: true, home: { x: 214, z: 147.5 }, roam: 1.5 },
   // ---- Sekolah
   { sid: 'tegar', home: { school: true, x: 30, z: 14.2 }, roam: 3 },
   { sid: 'nadia', home: { school: true, x: 24.5, z: 13.2 }, roam: 3 },
@@ -86,6 +87,7 @@ export const NPCS = [
   { sid: 'satpam', name: 'Pak Satpam Udin', filler: true, home: { school: true, x: 45, z: 50.6 }, roam: 1 },
   { sid: 'ibuHijab', name: 'Bu Kantin Ningsih', filler: true, home: { school: true, x: 60.5, z: 37.8 }, roam: 1 },
   { sid: 'tukangBakso', name: 'Mas Cilok', filler: true, home: { school: true, x: 46, z: 56.3 }, roam: 1 },
+  { sid: 'pakPras', name: 'Pak Pras', filler: true, home: { school: true, x: 49.5, z: 56.3 }, roam: 1 },
   { sid: 'siswaA', name: 'Andi', filler: true, home: { school: true, x: 23.5, z: 11 }, roam: 1 },
   { sid: 'siswiA', name: 'Fitri', filler: true, home: { school: true, x: 39.5, z: 13.2 }, roam: 2 },
   { sid: 'siswiB', name: 'Rina', filler: true, home: { school: true, x: 40.6, z: 13.4 }, roam: 2 },
@@ -151,7 +153,8 @@ export const LINES = {
   'Mak Ijah': ['Kue lupis, kue lapis!', 'Klepon masih anget, Nak.'], 'Pak Roni': ['Ada botol bekas, Dek?', 'Botol bekasnya buat saya ya.'], 'Teh Lilis': ['Celanamu robek, mau dijahit?', 'Seragamnya kegedean? Sini Teteh kecilin.'],
   'Mas Tejo': ['Kalau hujan deras, jangan ke sini!', 'Airnya lagi naik, jauh-jauh dari kali.'],
   'Wak Udin': ['Ikannya lagi malas.'], 'Bu Inah': ['Jangan lewat jemuran!'], 'Bang Ucok': ['Becak, Dek? Murah, sambil curhat.'],
-  'Bejo': ['Ngapain anak SMA ke sini?'], 'Mandor Sutris': ['Dilarang masuk! Proyek!'],
+  'Bejo': ['Ngapain anak SMA ke sini?'], 'Mandor Sutris': ['Dilarang masuk! Proyek!'], 'Bang Sarip': ['Bocah. Pulang sana, belajar.'],
+  'Pak Pras': ['Bakso! Temennya Bimo gratis kuahnya.', 'Bimo udah pulang belum, Dek?'],
   'Pak Satpam Udin': ['Tiga, dua, satu... tutup!'], 'Bu Kantin Ningsih': ['Soto lagi? Pakai nasi atau lontong?'], 'Mas Cilok': ['Cilok! Cilok bumbu kacang!'],
   'Andi': ['Ssst.'], 'Fitri': ['Eh, tahu nggak sih...'], 'Rina': ['Eh, tahu nggak sih...'], 'Bayu "Si Telat"': ['Bantuin naik pagar, cepet!'], 'Maya': ['Kiri, kanan, kiri!'],
 };

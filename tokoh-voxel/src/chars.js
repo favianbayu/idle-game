@@ -78,6 +78,9 @@ import { build as lilisBuild, OUTFITS as LILIS_OUT, EXPRS as LILIS_EX } from './
 import { build as tejoBuild, OUTFITS as TEJO_OUT, EXPRS as TEJO_EX } from './tejo.js';
 import { build as satpamudinBuild, OUTFITS as SATPAMUDIN_OUT, EXPRS as SATPAMUDIN_EX } from './satpamudin.js';
 import { build as ningsihBuild, OUTFITS as NINGSIH_OUT, EXPRS as NINGSIH_EX } from './ningsih.js';
+import { build as prasBuild, OUTFITS as PRAS_OUT, EXPRS as PRAS_EX } from './pras.js';
+import { build as saripBuild, OUTFITS as SARIP_OUT, EXPRS as SARIP_EX } from './sarip.js';
+import { build as kartaBuild, OUTFITS as KARTA_OUT, EXPRS as KARTA_EX } from './karta.js';
 import { build as cilokBuild, OUTFITS as CILOK_OUT, EXPRS as CILOK_EX } from './cilok.js';
 import { build as andiBuild, OUTFITS as ANDI_OUT, EXPRS as ANDI_EX } from './andi.js';
 import { build as fitriBuild, OUTFITS as FITRI_OUT, EXPRS as FITRI_EX } from './fitri.js';
@@ -194,6 +197,9 @@ export const CHARS = {
   satpamUdin: { name: 'Pak Satpam Udin', build: satpamudinBuild, OUTFITS: SATPAMUDIN_OUT, EXPRS: SATPAMUDIN_EX },
   buNingsih: { name: 'Bu Kantin Ningsih', build: ningsihBuild, OUTFITS: NINGSIH_OUT, EXPRS: NINGSIH_EX },
   masCilok: { name: 'Mas Cilok', build: cilokBuild, OUTFITS: CILOK_OUT, EXPRS: CILOK_EX },
+  pakPras: { name: 'Pak Pras', build: prasBuild, OUTFITS: PRAS_OUT, EXPRS: PRAS_EX },
+  bangSarip: { name: 'Bang Sarip', build: saripBuild, OUTFITS: SARIP_OUT, EXPRS: SARIP_EX },
+  abahKarta: { name: 'Abah Karta', build: kartaBuild, OUTFITS: KARTA_OUT, EXPRS: KARTA_EX },
   siswaAndi: { name: 'Andi', build: andiBuild, OUTFITS: ANDI_OUT, EXPRS: ANDI_EX },
   siswiFitri: { name: 'Fitri', build: fitriBuild, OUTFITS: FITRI_OUT, EXPRS: FITRI_EX },
   siswiRina: { name: 'Rina', build: rinaBuild, OUTFITS: RINA_OUT, EXPRS: RINA_EX },

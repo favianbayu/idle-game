@@ -18,7 +18,7 @@ export function spawnWarga(A) {
 
   /* ---------------- pembuat NPC */
   function mk(sid, name, x, z, lines, ext, o = {}) {
-    const c = new Character(sid); scene.add(c.group);
+    const c = new Character(sid, { name }); scene.add(c.group);
     const n = { sid, name, lines, filler: !!lines, area: 'luar', key: 'W' + id + list.length, c, home: { x, z: z + LZ }, x, z: z + LZ, tx: x, tz: z + LZ, wait: 0,
       heading: R() * 6.28, say: null, greetT: 4 + R() * 20, ext, anim: 'idle', ...o };
     npcs.push(n); list.push(n); return n;
@@ -174,7 +174,7 @@ export function spawnWarga(A) {
         [{ x, z, a: 'talk', t: 4, h, say: ['Dua juta setengah, deal?', 'Waduh, mahal amat!', 'Lihat dulu giginya.', 'Udah, salaman!'], p: 0.4 }, { x, z, a: rpick(['think', 'raiseHand', 'laugh']), t: 3, h }, { x, z, a: 'idle', t: 3, h }], { shuffle: true }); });
     // santri berjalan dari pondok lewat Gg. Melati
     const gg = roads.find(r => r.name === 'Gg. Melati');
-    if (gg) for (let i = 0; i < 3; i++) walker(i === 2 ? 'bapakPeci' : 'siswaA', i === 2 ? 'Ustadz Rohim' : ['Santri Hamid', 'Santri Ilham'][i], ['Assalamualaikum.', 'Mau ngaji, Kang.', 'Kitab kuning tebel banget.'], line(gg.pts, i % 2 ? 0.55 : -0.55), { spd: 0.8 });
+    if (gg) for (let i = 0; i < 3; i++) walker(i === 2 ? 'bapakPeci' : 'santri', i === 2 ? 'Ustadz Rohim' : ['Santri Hamid', 'Santri Ilham'][i], ['Assalamualaikum.', 'Mau ngaji, Kang.', 'Kitab kuning tebel banget.'], line(gg.pts, i % 2 ? 0.55 : -0.55), { spd: 0.8 });
     kids(-79, 96, 4); kids(-60, 112, 3);
     // penyadap karet di kebun karet selatan
     const KR = spots((x, z) => okLand(x, z) && inA(x, z, [20]), 3, bboxOf([20]), 8);
@@ -330,7 +330,7 @@ export function spawnWarga(A) {
     walker('bapakPeci', 'Mang Es Kelapa', ['Es kelapa muda, Dek! Lima ribu!', 'Segerrr!'], line([[110, 259.5], [200, 260]], 0, 1), { spd: 0.6, idles: ['wave', 'idle'], chat: ['Es kelapaaa! Es kelapa mudaaa!', 'Seger, seger!'] });
     // pengunjung duduk di pasir menghadap laut, berjemur, foto
     const DS = spots((x, z) => okLand(x, z) && z > 258.5 && isW(x, z + 5), 6, [125, 255, 225, 270], 3);
-    DS.forEach(([x, z], i) => plan(['mbak', 'ibuHijab2', 'remaja', 'pemuda', 'siswiB', 'kakek'][i], ['Wisatawan', 'Bu Wisatawan', 'Dewi kecil', 'Mas Turis', 'Lia', 'Opa Hans'][i], ['Sunsetnya bentar lagi.', 'Pantainya bersih ya.'],
+    DS.forEach(([x, z], i) => plan(['turis', 'ibuHijab2', 'remaja', 'turis', 'siswiB', 'turis'][i], ['Wisatawan', 'Bu Wisatawan', 'Dewi kecil', 'Mas Turis', 'Lia', 'Opa Hans'][i], ['Sunsetnya bentar lagi.', 'Pantainya bersih ya.'],
       i % 3 === 2 ? [{ x, z, a: 'phone', t: 5, h: Math.PI / 2 }, { x, z, a: 'wave', t: 2, h: Math.PI / 2 }] : [{ x, z, a: 'sitDown', t: 9, h: Math.PI / 2 }, { x, z, a: 'laugh', t: 2, h: Math.PI / 2 + 1.2 }]));
     // pengunjung warung seafood ngobrol di depan deret warung
     chat(131, 261, ['pakRT', 'ibuHijab', 'ojol'], ['Pak Wisnu', 'Bu Wisnu', 'Bang Jek'], ['Cumi bakarnya mantap.', 'Pesen kelapa muda dua!', 'Ini enak banget, sumpah.']);

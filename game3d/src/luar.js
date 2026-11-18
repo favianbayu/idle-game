@@ -38,12 +38,16 @@ const FOLK = [
   ['gunung', 'ibuHijab', 'Teh Neneng', 168, -50, ['Jagung bakar, Dek! Malam di sini lampu kotanya cakep.', 'Bukit Bintang paling rame malam Minggu.']],
   ['gunung', 'kakek', 'Abah Oyo', 60, -45, ['Air panas Sangkala bikin pegel ilang.', 'Dulu Abah tiap subuh berendam di sini.']],
   ['sukamekar', 'wulan', 'Wulan', 268, -42, ['Aku sekolah di SMK Pariwisata sini.', 'Kebun teh paling bagus pas kabut turun.']],
+  ['sukamekar', 'abahKarta', 'Abah Karta', 274, -47, ['Jurus itu bukan buat pamer. Buat pulang dengan selamat.', 'Mau latihan? Pikul air dari pancuran dulu, sepuluh kali.', 'Orang kota datang cuma mau foto.']],
+  ['sukamekar', 'muridSilat', 'Neng Ayu', 271, -51, ['Hiaat! Abah lagi ngawasin.', 'Sabukku masih kuning, Kak.']],
+  ['sukamekar', 'muridSilat', 'Ujang (murid silat)', 277, -51, ['Kuda-kuda dulu, kata Abah.', 'Kaki pegel, tapi seru!']],
   ['sukamekar', 'bapakPeci', 'Pak Mandor Teh', 280, -28, ['Pabrik teh ini udah dari zaman Belanda.', 'Butuh tenaga petik? Datang pagi-pagi.']],
   ['waduk', 'ibuDaster', 'Bu Atun', -58, -14, ['Ikan bakar nila, sambel dadak. Mau?', 'Perahu ke tengah waduk 10 ribu.']],
   ['waduk', 'kakek', 'Ki Sarpan', -92, -72, ['Batu Tulis itu jangan diinjak, Nak.', 'Tulisannya belum ada yang bisa baca.']],
   ['tegalsari', 'pakRT', 'Pak Lurah Darsa', -90, 110, ['Selamat datang di Tegalsari.', 'Pasar hewan rame tiap Rabu.']],
-  ['tegalsari', 'siswaA', 'Santri Fikri', -108, 96, ['Assalamualaikum, Kang.', 'Pondok Darul Falah, ngaji tiap ba\'da magrib.']],
+  ['tegalsari', 'santri', 'Santri Fikri', -108, 96, ['Assalamualaikum, Kang.', 'Pondok Darul Falah, ngaji tiap ba\'da magrib.']],
   ['timur', 'satpam', 'Prajurit Jaga', 318, 74, ['Area militer. Tamu lapor di pos jaga.', 'Rumah Dimas di blok C asrama.']],
+  ['timur', 'persit', 'Bu Ratih (Persit)', 322, 80, ['Arisan Persit tiap Kamis, Dek.', 'Cari Dimas? Rumahnya blok C.']],
   ['timur', 'ojol', 'Mas Andi (buruh)', 330, 116, ['Shift malam di pabrik, lumayan buat tambahan.', 'Bus karyawan lewat tiap jam enam.']],
   ['sirkuit', 'satpam', 'Marshal Rudi', 318, 188, ['Peserta lewat gerbang paddock.', 'Track day tiap akhir bulan, Dek.']],
   ['sirkuit', 'pemuda', 'Mekanik Bayu', 360, 206, ['Ban slick dipanasin dulu baru ngebut.', 'Sirkuit ini 2,1 kilo, 9 tikungan.']],
@@ -730,7 +734,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     const folk = [];
     for (const [zid, sid, name, x, z, lines] of FOLK) {
       if (zid !== id) continue;
-      const c = new Character(sid); scene.add(c.group);
+      const c = new Character(sid, { name }); scene.add(c.group);
       const p = collision.resolve({ x, z: z + LZ }, 0.3);
       const n = { sid, name, lines, filler: true, area: 'luar', key: 'L' + name, c, home: { x: p.x, z: p.z }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: Math.random() * 3, heading: Math.random() * 6, say: null, greetT: 5, roam: 2 };
       npcs.push(n); folk.push(n);

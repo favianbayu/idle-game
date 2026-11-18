@@ -15,6 +15,7 @@ export const STRENGTH = {
   dimas: T(6, 17, 1.7, 0.35, 0.95, 'petarung'), rio: T(6, 20, 2.0, 0.4, 1.1, 'petarung', 'Rio'), mandor: T(6, 22, 2.2, 0.25, 1.3, 'preman', 'Pak Bondan'),
   arga: T(7, 19, 1.9, 0.45, 0.9, 'petarung'), bram: T(7, 24, 2.0, 0.45, 0.85, 'licik', 'Bram'), kobar: T(8, 28, 2.6, 0.4, 0.95, 'pembalap', 'Kobar'),
   bangJaka: T(9, 32, 2.8, 0.55, 0.85, 'petarung', 'Bang Jaka'),
+  pakPras: T(3, 12, 1.2, 0.1, 1.5, 'preman'), bangSarip: T(8, 30, 2.6, 0.35, 1.3, 'preman', 'Bang Sarip'), abahKarta: T(10, 34, 2.4, 0.7, 0.8, 'petarung', 'Abah Karta'),
 };
 export const FIGHTERS = new Set(Object.keys(STRENGTH));
 const LAW = new Set(['satpam', 'polisi']);

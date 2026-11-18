@@ -8,7 +8,7 @@ const RIVALS = [['siswaB', 'Bayu'], ['pemuda', 'Kang Yusuf'], ['siswaA', 'Andi']
 
 export function makeKolam({ scene, player, Character, fight, shop, toast, getCam }) {
   let cfg = null, S = null, D = null, board = null, hideT = 0, msgT = 0;
-  const racers = RIVALS.map(([sid, name]) => { const c = new Character(sid); c.group.visible = false; c.blob.visible = false; scene.add(c.group); return { sid, name, c }; });
+  const racers = RIVALS.map(([sid, name]) => { const c = new Character(sid, { name }); c.group.visible = false; c.blob.visible = false; scene.add(c.group); return { sid, name, c }; });
   const splash = new THREE.Group(); scene.add(splash);
   const drops = Array.from({ length: 14 }, () => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), new THREE.MeshBasicMaterial({ color: '#eaf6ff' })); m.visible = false; splash.add(m); return { m, vx: 0, vy: 0, vz: 0 }; });
 

@@ -40,7 +40,7 @@ export function frame(sid, anim, i, prio = 0) {
 }
 export const animInfo = name => META && META.anims[name];
 export const styleName = sid => (META && META.names[sid]) || sid;
-export function preload(sid, anims, prio = 0) { if (!META) return; for (const a of anims) for (let i = 0; i < META.anims[a].n; i++) frame(sid, a, i, prio); }
+export function preload(sid, anims, prio = 0) { if (!META || SPAWN_OF[sid]) return; for (const a of anims) for (let i = 0; i < META.anims[a].n; i++) frame(sid, a, i, prio); }
 
 // warna voxel tokoh sudah membawa cahaya (organicColor), jadi pakai bahan tanpa lampu: sama persis dengan sprite lama
 export const CHAR_MAT = new THREE.MeshBasicMaterial({ vertexColors: true });
@@ -49,9 +49,27 @@ const CHAR_MAT_TOP = new THREE.MeshBasicMaterial({ vertexColors: true, transpare
 // siluet tokoh saat tertutup bangunan (digambar hanya di bagian yang terhalang)
 export const XRAY_MAT = new THREE.MeshBasicMaterial({ color: 0x2a3a6a, transparent: true, opacity: 0.45, depthFunc: THREE.GreaterDepth, depthWrite: false });
 
+// Tampilan NPC (guide segmen 34). Sid logika tetap dipakai untuk stat, kebiasaan, dan dialog; yang berubah hanya modelnya.
+// 1) NPC bernama yang sudah punya model voxel halus sendiri, dikenali dari namanya.
+const NAME_VIS = { 'Pak Satpam Udin': 'satpamUdin', 'Bu Kantin Ningsih': 'buNingsih', 'Mas Cilok': 'masCilok', Andi: 'siswaAndi', Fitri: 'siswiFitri',
+  Rina: 'siswiRina', 'Bayu "Si Telat"': 'siswaBayu', Bayu: 'siswaBayu', Maya: 'siswiMaya', Bejo: 'stmBejo', 'Mandor Sutris': 'mandorSutris', Dodi: 'dodi', Didi: 'didi' };
+// 2) sid generik lama -> template spawn ('peran~baju'); seed 0..7 dibagi bergiliran per peran supaya orang di layar beda-beda.
+export const SPAWN_OF = { ibuHijab: 'wargaHijab', ibuHijab2: 'wargaHijab', ibuDaster: 'wargaWanita~daster', mbak: 'wargaWanita', bapakPeci: 'wargaPria~jumatan',
+  pemuda: 'wargaPria', pakRT: 'wargaPria~kantor', kakek: 'wargaLansia', remaja: 'wargaMuda', anakPunk: 'wargaMuda~nongkrong', anakSD: 'wargaAnak~sd',
+  anakSDcw: 'wargaAnak~sd', bocah: 'wargaAnak~main', ojol: 'ojolLewat', tukangBakso: 'pedagang', tukangParkir: 'tukangParkir', tukangParkir2: 'tukangParkir',
+  satpam: 'satpamAcak', polisi: 'polisi', mandor: 'kuli', siswaA: 'siswaAcak', siswaB: 'siswaAcak', siswiA: 'siswiAcak', siswiB: 'siswiAcak',
+  tentara: 'tentara', tentaraJaga: 'tentara~jaga', petani: 'petani', petaniW: 'petani~kebunTeh', nelayan: 'nelayan', mekanik: 'mekanik', pendaki: 'pendaki',
+  buruh: 'buruh', guru: 'guruAcak', turis: 'turis', penonton: 'penonton', santri: 'santri', muridSilat: 'muridSilat', persit: 'persit' };
+const SEED_NEXT = {};
+export function visualSid(sid, name) {
+  if (name && NAME_VIS[name]) return NAME_VIS[name];
+  const t = SPAWN_OF[sid]; if (!t) return sid;
+  const [role, outfit] = t.split('~'), v = SEED_NEXT[role] = ((SEED_NEXT[role] ?? (role.length * 3) % 8) + 1) % 8;
+  return role + '_' + v + (outfit ? '~' + outfit : '');
+}
 export class Character {
   constructor(sid, o = {}) {
-    this.sid = sid; this.anim = 'idle'; this.t = 0; this.prio = o.prio || 0;
+    this.sid = sid; this.vsid = o.vsid || visualSid(sid, o.name); this.anim = 'idle'; this.t = 0; this.prio = o.prio || 0;
     this.group = new THREE.Group();
     this.mesh = new THREE.Mesh(undefined, CHAR_MAT); this.mesh.castShadow = true; this.mesh.visible = false;
     this.group.add(this.mesh);
@@ -67,8 +85,8 @@ export class Character {
     const info = animInfo(this.anim); if (!info) return;
     let i = Math.floor(this.t * info.fps);
     i = info.loop ? i % info.n : Math.min(info.n - 1, i);
-    let g = frame(this.sid, this.anim, i, this.prio);
-    if (!g) g = frame(this.sid, 'idle', 0, this.prio + 1);   // fallback saat frame belum jadi
+    let g = frame(this.vsid, this.anim, i, this.prio);
+    if (!g) g = frame(this.vsid, 'idle', 0, this.prio + 1);   // fallback saat frame belum jadi
     if (g) {
       this.mesh.geometry = g; this.mesh.visible = true; // duduk di kendaraan: pantat tokoh ditaruh tepat di titik jok (seat.y tinggi, seat.x maju), dihitung per frame dari bentuk voxel
       if (this.seat) { this.mesh.position.y = this.seat.y - (g.userData.butt || 0); this.mesh.position.x = this.seat.x - (g.userData.buttX || 0); }

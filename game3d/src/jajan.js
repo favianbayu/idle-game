@@ -86,7 +86,7 @@ export function makeJajan({ scene, kota, collision, player, Character, npcs, sho
   ANCHORS.forEach(([ax, az, sk], i) => {
     const K0 = KINDS[carts.length % KINDS.length], K = sk ? SPECIAL[sk] : carts.length >= KINDS.length ? { ...K0, ...ALT[K0.id] } : K0, s = spotNear(ax, az); if (!s) return;
     carts.push({ ...s, K }); used.push(K.id); cart(K, s);
-    const c = new Character(K.sid); scene.add(c.group);
+    const c = new Character(K.sid, { name: K.name }); scene.add(c.group);
     npcs.push({ sid: K.sid, name: K.name, filler: true, lines: K.lines, c, home: { x: s.bx, z: s.bz }, x: s.bx, z: s.bz, tx: s.bx, tz: s.bz, wait: 3, heading: s.fa, say: null, greetT: Math.random() * 10, roam: 0.2, key: 'jj' + i, vendor: true });
   });
   const mesh = new THREE.Mesh(mg.build(), MAT.world); kota.lift(mesh); mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh);

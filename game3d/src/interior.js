@@ -124,7 +124,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
 
   /* ---------------- NPC di dalam ruangan */
   function addNPC(R, sid, name, lx, lz, lines, roam = 0.4, extra = {}) {
-    const c = new Character(sid); scene.add(c.group); const x = R.ox + lx, z = R.oz + lz;
+    const c = new Character(sid, { name }); scene.add(c.group); const x = R.ox + lx, z = R.oz + lz;
     const n = { sid, name, filler: true, lines, c, home: { x, z }, x, z, tx: x, tz: z, wait: Math.random() * 3, heading: Math.PI / 2, say: null, greetT: Math.random() * 6, roam, key: 'in' + R.id + npcs.length, area: 'dalam', ...extra };
     npcs.push(n); return n;
   }
@@ -452,7 +452,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     // perenang latihan di lintasan, penonton di tribun, penjaga kolam
     const lap = (lane, ph) => { const p = lanes[lane]; return (n, dt) => { n.t = (n.t ?? ph) + dt * 0.055; const u = n.t % 2, d = u < 1 ? u : 2 - u; n.x = p.x; n.z = p.z0 + (p.z1 - p.z0) * d; n.heading = u < 1 ? Math.PI / 2 : -Math.PI / 2; n.anim = 'swim'; }; };
     [[0, 'siswiA', 'Fitri'], [6, 'pemuda', 'Kang Yusuf'], [7, 'remaja', 'Dewa']].forEach(([lane, sid, name], k) => { const n = addNPC(R, sid, name, 0, 0, ['Glup... halo!', 'Latihan buat lomba antar-sekolah.'], 0, { ext: lap(lane, k * 0.7), yAbs: WY, sink: 0.3 }); n.filler = true; });
-    for (let i = 0; i < 4; i++) { const r = i % 4, [wx, wz] = world(16.9 + r * 1.2, py + 3 + i * 5.5); const n = addNPC(R, pick(['siswiB', 'siswaA', 'ibuHijab2', 'bocah'], hash(i, 3)), 'Penonton', wx - R.ox, wz - R.oz, ['Ayo! Ayo!', 'Nunggu adikku lomba.'], 0, { ext: nn => { nn.heading = Math.PI; nn.anim = 'sitDown'; }, yAbs: 0.4 * (r + 1) }); }
+    for (let i = 0; i < 4; i++) { const r = i % 4, [wx, wz] = world(16.9 + r * 1.2, py + 3 + i * 5.5); const n = addNPC(R, pick(['penonton', 'penonton', 'siswiB', 'bocah'], hash(i, 3)), 'Penonton', wx - R.ox, wz - R.oz, ['Ayo! Ayo!', 'Nunggu adikku lomba.'], 0, { ext: nn => { nn.heading = Math.PI; nn.anim = 'sitDown'; }, yAbs: 0.4 * (r + 1) }); }
     npc('satpam', 'Pak Darma (penjaga kolam)', 13.3, 2.6, ['Jangan lari di pinggir kolam, licin!', 'Menara 5 meter cuma buat yang berani.', 'Balap renang? Naik ke balok start.'], 0.8);
     finish(R);
   }

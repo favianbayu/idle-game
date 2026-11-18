@@ -34,7 +34,7 @@ export function makeRace({ scene, kota, collision, player, Character, makeRide, 
   // ---- titik kumpul: joki + penonton di trotoar utara garis start, dekat gerobak nasi goreng
   const nas = jajan.carts.find(c => c.K.id === 'nasgor');
   const js = free(X0 + 0.6, laneZ(X0) - 2.35);
-  const mk = (sid, name, p, lines, roam = 0.4) => { const c = new Character(sid); scene.add(c.group); const n = { sid, name, filler: true, lines, c, home: { ...p }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: 2, heading: Math.PI / 2, say: null, greetT: Math.random() * 10, roam, key: 'race' + npcs.length }; npcs.push(n); return n; };
+  const mk = (sid, name, p, lines, roam = 0.4) => { const c = new Character(sid, { name }); scene.add(c.group); const n = { sid, name, filler: true, lines, c, home: { ...p }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: 2, heading: Math.PI / 2, say: null, greetT: Math.random() * 10, roam, key: 'race' + npcs.length }; npcs.push(n); return n; };
   const joki = mk('remaja', 'Bang Ocid (joki)', js, ['Mau adu drag? Bawa motor, siapin taruhan.', 'Start dari senter gue. Gas pas lampu nyala!', 'Polisi suka razia di lingkar. Siap kabur.'], 0.3);
   [['pemuda', 'Penonton', -2.2, -0.2], ['mbak', 'Penonton', 3.2, 0.1], ['ojol', 'Penonton', -3.6, 0.3]].forEach(([sid, name, dx, dz]) =>
     mk(sid, name, free(X0 + dx, laneZ(X0 + dx) - 2.4 + dz), ['Gas, gas, gaaas!', 'Taruhan gue di lajur kiri.', 'Knalpotnya berisik amat.'], 0.5));
