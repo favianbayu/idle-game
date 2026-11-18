@@ -58,7 +58,7 @@ sedikit. Wajah ramah, telinga gampang merah. Selalu memakai deker lutut hitam di
 
 | Waktu | Hari sekolah | Akhir pekan |
 |---|---|---|
-| 05.00-06.00 | Lari pagi di asrama (luar peta) | Basket 3x3 Liga Minggu |
+| 05.00-06.00 | Lari pagi di asrama (peta daerah) | Basket 3x3 Liga Minggu |
 | 06.30-14.00 | Kelas X-3, istirahat di lapangan basket | Melatih anak asrama |
 | 15.00-17.30 | Latihan basket (Senin, Selasa, Kamis) | GOR kota |
 | 17.30 | Angkot ke timur, menghilang dari peta | |
@@ -100,7 +100,7 @@ kelas X-3 naksir dia, termasuk teman Sekar.
 - **Hasil**: Dimas absen sebulan. Selama itu dia mengajari anak SD, menyadari cita-citanya. Cemburu aktif.
 
 ### 8 hati: "Lapangan Asrama Subuh" (romance) / "Pelatih & Asisten" (sahabat)
-- **Syarat**: 8 hati, Gelang Benang, Minggu subuh, lapangan asrama (luar peta, scene khusus).
+- **Syarat**: 8 hati, Gelang Benang, Minggu subuh, lapangan apel Asrama Batalyon 3 (peta daerah).
 - **Adegan (romance)**: Dimas sudah bisa berlari lagi. Dia menembak bola, masuk, lalu berbalik sangat gugup: "Kalau
   masuk, aku mau bilang sesuatu. Udah masuk. Jadi... aku suka kamu. Siap ditolak!"
 - **Pilihan**: Ikat gelang (pacaran) / Jadi asisten pelatih di sekolah bola anak-anaknya (sahabat).

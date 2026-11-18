@@ -19,6 +19,9 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 | 32 | Tempat tinggal | Semua tokoh dan wilayahnya, di dalam atau di luar peta |
 | 33 | NPC wilayah luar kota | 14 NPC pendukung baru + 3 antagonis kecil + NPC pengisi tiap wilayah luar kota |
 | 34 | Template NPC spawn | Warga generik: satu template voxel per peran, banyak variasi dari satu seed |
+| 35 | Rutinitas harian NPC | Jadwal per jam 51 NPC: tempat + koordinat, kegiatan, animasi, outfit, rute & moda; JSON untuk game |
+| 36 | Kado | Katalog 93 item (harga, toko) + favorit/suka/biasa/benci tiap NPC |
+| 37 | Event hati: pemicu | 124 event hati dalam satu tabel: tempat, hari, jam, bab, syarat |
 | 40 | Obrolan & reaksi | Sistem dialog, obrolan antar tokoh, reaksi NPC terhadap aksi pemain |
 | 41 | Feedback & konsekuensi | Akibat setiap tindakan pemain |
 | 50 | Pelajaran & mini game | Jadwal pelajaran, 12 mini game kelas, ujian, mini game luar sekolah |

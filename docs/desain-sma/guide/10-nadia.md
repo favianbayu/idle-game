@@ -98,7 +98,7 @@ diam-diam akrab dengan **Mei** karena komik. Menghormati **Bu Hartini**.
 - **Hasil**: kencan "Toko Buku Pena" terbuka. Nadia mulai menunjukkan halaman komik baru tiap minggu.
 
 ### 6 hati: "Pemilihan Ketua OSIS"
-- **Syarat**: 6 hati, Bab 4-5, hari debat calon di aula.
+- **Syarat**: 6 hati, Bab 6, hari debat calon di aula.
 - **Adegan**: Bram menyebar gosip Nadia "menyontek". Sebelum debat Nadia gemetar di belakang panggung.
 - **Pilihan**: Kumpulkan bukti dengan Jojo dulu (misi 1 hari, +100, gosip dibalik) / Temani dan latih jawaban
   (+80) / Hadapi Bram langsung (berantem; menang +50 tapi Nadia kecewa soal kekerasan, kalah +30).

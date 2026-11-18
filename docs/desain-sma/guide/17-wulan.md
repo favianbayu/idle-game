@@ -60,7 +60,7 @@ Senyum tenang seperti orang yang tidak pernah terburu-buru.
 
 | Waktu | Hari sekolah | Akhir pekan |
 |---|---|---|
-| 04.30-06.00 | Latihan silat subuh di desa (luar peta) | Memandu turis di kebun teh (luar peta) |
+| 04.30-06.00 | Latihan silat subuh di pendopo desa | Memandu turis di kebun teh |
 | 06.00-13.00 | Bus ke kota, SMK Pariwisata (luar sekolah pemain) | |
 | 13.30-16.00 | **Terminal bus & alun-alun** (terlihat di peta) menunggu bus pulang | Turnamen silat (sesekali, GOR kota) |
 | 16.00-17.00 | Melatih silat anak-anak di GOR kota (Selasa, Kamis) | |
@@ -73,7 +73,7 @@ Kebiasaan: berdiri dengan kuda-kuda tanpa sadar, membungkuk sopan, membawa termo
 - Bertemu di Bab 3: Wulan menolong pemain yang dikeroyok preman terminal (tutorial jurus kuncian).
 - Jadi **guru silat**: latihan bareng di GOR menaikkan Kekuatan/Kelincahan dan membuka jurus spesial berantem
   ("Sapuan Kabut", "Kunci Daun Teh").
-- Kencan terbatas oleh jadwal bus. Kencan spesial: perjalanan ke Desa Sukamekar (hari Minggu, luar peta, scene khusus).
+- Kencan terbatas oleh jadwal bus. Kencan spesial: perjalanan ke Desa Sukamekar (hari Minggu, naik bus ke peta daerah).
 - Bantuan misi: di Bab 13 membawa murid perguruan menjaga sekolah saat penggusuran paksa.
 
 ## Hubungan dengan tokoh lain
@@ -91,7 +91,7 @@ Kenal **Kirana** dari turnamen (saling menghormati), murid-murid kecilnya termas
 - **Hasil**: Wulan memberi tahu jadwal latihannya. Membuka "Latihan silat bareng".
 
 ### 4 hati: "Kabut Kebun Teh"
-- **Syarat**: 4 hati, Minggu pagi, Desa Sukamekar (luar peta, scene perjalanan bus).
+- **Syarat**: 4 hati, Minggu pagi, Desa Sukamekar (peta daerah, naik bus lewat Jl. Raya Puncak).
 - **Adegan**: Wulan mengajak pemain memetik teh lalu naik ke bukit saat kabut. Dia menunjuk jalan raya jauh di bawah.
   "Jalan itu ke mana aja, ya?"
 - **Pilihan**: "Ke mana pun kamu mau" (+100) / "Ke kota, ke tempatku" (+80) / "Ke kota yang berisik. Di sini lebih
