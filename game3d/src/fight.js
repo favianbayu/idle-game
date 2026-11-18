@@ -148,7 +148,7 @@ export function makeFight({ player, raka, npcs, collision, riding, toast, onKO, 
     restart(n.c, 'hurt');
     if (n.hp <= 0 || M.down) {
       n.mood = 'down'; n.downT = n.hp <= 0 ? 4.5 : M.down; n.up = false; restart(n.c, 'fall');
-      if (n.hp <= 0) { say(n, L.ko, 2.5); if (isFighter(n)) { gain('kekuatan', 2 + p.lv * 1.5); gain('nyali', 1 + p.lv); st.rep += p.lv; if (p.boss) toast(`${p.boss} tumbang!`); } }
+      if (n.hp <= 0) { say(n, L.ko, 2.5); if (isFighter(n)) { dispatchEvent(new CustomEvent('ko', { detail: n.name || p.boss || '' })); gain('kekuatan', 2 + p.lv * 1.5); gain('nyali', 1 + p.lv); st.rep += p.lv; if (p.boss) toast(`${p.boss} tumbang!`); } }
       return;
     }
     if (n.dz >= 100) { n.dz = 0; n.dizzyT = 2.5; restart(n.c, 'dizzy'); n.say = { text: '★ pusing ★', t: 2.5, cls: 'dizzy' }; }

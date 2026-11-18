@@ -445,6 +445,10 @@ export function spawnWarga(A) {
       const P = best && bd < 20 ? line(best.pts, 0.6).filter(q => Math.hypot(q.x - 210, q.z - 195) < 26) : [];
       if (P.length >= 4) walker('nekSumi', 'Nek Sumi', ['Kunyit asam, Nak? Biar nggak gampang marah kayak cucu Nenek.', 'Beras kencur, sepuluh ribu.', 'Andra itu cucu Nenek. Bandel, tapi baik.'], P, { spd: 0.5, idles: ['talk', 'wave', 'idle', 'look'], chat: ['Jamuuu! Jamu gendooong!', 'Kunyit asam, beras kencur!'] });
       else { const NS = spot(210, 192, 6); if (NS) plan('nekSumi', 'Nek Sumi', ['Kunyit asam, Nak? Biar nggak gampang marah kayak cucu Nenek.'], [at(NS, 'idle', 5), at(NS, 'talk', 3), at(NS, 'wave', 2)]); } }
+    // Andra (guide 04/26): tinggal bareng Nek Sumi di tepi sawah Pandansari, melukis papan pos ronda / dinding lumbung
+    { const AP = spot(213, 197, 7), AQ = spot(215.5, 198, 7);
+      if (AP && AQ) plan('andra', 'Andra', ['Ini rumah nenek gue. Sawahnya paling ujung.', 'Lagi bikin papan nama pos ronda. Hurufnya harus miring dikit, biar hidup.', 'Dinding lumbung itu kanvas paling gede di desa ini.'], [
+        at(AP, 'raiseHand', 6, { say: ['Catnya kurang merah...', 'Dikit lagi jadi.'], p: 0.3 }), at(AP, 'think', 3), at(AQ, 'squat', 5), at(AQ, 'look', 3)], { si: 0, spd: 0.7 }); }
   }
 
   if (id === 'pesisir') {

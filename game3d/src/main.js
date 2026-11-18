@@ -17,6 +17,8 @@ import { makeJajan } from './jajan.js';
 import { makeAnimals } from './animals.js';
 import { makeRace } from './race.js';
 import { makeKolam } from './kolam.js';
+import { makeStory } from './story.js';
+import { makeWaktu } from './waktu.js';
 import { parked } from './parked.js';
 import { makeLuar } from './luar.js';
 
@@ -36,7 +38,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPrefer
 renderer.setPixelRatio(1);
 renderer.shadowMap.type = THREE.PCFShadowMap;
 const scene = new THREE.Scene();
-const SKY = new THREE.Color('#bcd8ec'), DARKBG = new THREE.Color('#16141a');
+const SKY = new THREE.Color('#bcd8ec'), DARKBG = new THREE.Color('#16141a'), SKYNOW = SKY.clone();
 let wasInside = false;
 scene.background = SKY; scene.fog = new THREE.Fog(SKY, 35, 85);
 const camera = new THREE.PerspectiveCamera(32, 1, 0.5, 160);
@@ -160,6 +162,8 @@ function onKO() {
 const fight = makeFight({ player, raka, npcs, collision, riding: () => !!ride, toast, onKO: () => onKO(), save: () => { saveT = 99; } });
 const shop = makeShop({ player, toast, fight });
 const acts = makeActivities({ scene, kota, collision, player, Character, toast, npcs, gain: (k, x) => fight.gain(k, x), say: (n, text) => { if (n) n.say = { text, t: 2.5 }; } });
+const story = makeStory({ player, toast: (...a) => toast(...a), shop, fight, acts });   // alur bab, misi wilayah, hati (guide 04 & 33)
+const waktu = makeWaktu({ player, toast: (...a) => toast(...a) }); story.setWaktu(waktu);   // jam, siang-malam, kalender tahun ajaran
 const kolam = makeKolam({ scene, player, Character, fight, shop, toast, getCam: () => cam });   // kolam lomba GOR: balap renang & loncat indah
 const interiors = makeInteriors({ scene, kota, collision, player, Character, npcs, shop, acts, fight, toast, kolam });
 interiors.locate();
@@ -257,6 +261,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyI') fight.grab();
   if (e.code === 'KeyT') fight.taunt();
   if (e.code === 'KeyU') toggleStatus();
+  if (e.code === 'KeyB') story.toggle();
   if (e.code === 'KeyQ') rotateCam(-1);
   if (e.code === 'KeyE') rotateCam(1);
   if (e.code === 'KeyC') toggleFollow();
@@ -347,7 +352,7 @@ document.body.classList.toggle('touch', isTouch);
 ui.follow.classList.toggle('on', opt.follow);
 ui.mapWrap.style.display = opt.minimap ? '' : 'none';
 const tap = (el, fn) => el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); fn(); });
-tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack('A', player.fx.nyali >= 100); }); tap($('btnKick'), () => fight.attack('B')); tap($('btnGrab'), () => fight.grab()); tap($('btnDodge'), () => fight.dodge(true)); for (const ev of ['pointerup', 'pointercancel']) $('btnDodge').addEventListener(ev, () => fight.dodge(false)); tap($('btnStatus'), () => toggleStatus()); tap($('btnReset'), () => resetPos()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
+tap($('btnAct'), () => { acts.setHold(true); act(); }); $('btnAct').addEventListener('pointerup', () => acts.setHold(false)); $('btnAct').addEventListener('pointercancel', () => acts.setHold(false)); tap($('btnHit'), () => { if (!acts.action()) fight.attack('A', player.fx.nyali >= 100); }); tap($('btnKick'), () => fight.attack('B')); tap($('btnGrab'), () => fight.grab()); tap($('btnDodge'), () => fight.dodge(true)); for (const ev of ['pointerup', 'pointercancel']) $('btnDodge').addEventListener(ev, () => fight.dodge(false)); tap($('btnStatus'), () => toggleStatus()); tap($('btnJurnal'), () => story.toggle()); tap($('btnReset'), () => resetPos()); tap($('btnRide'), () => bigmap.toggle()); tap($('btnBigMap'), () => bigmap.toggle()); tap(ui.mapWrap, () => bigmap.open()); tap($('btnEmote'), () => emote(emoteI + 1));
 const menu = $('menu'); menu.classList.toggle('closed', isTouch);
 tap($('btnMenu'), () => menu.classList.toggle('closed'));
 tap(ui.run, () => { ui.run.classList.toggle('on'); player.run = ui.run.classList.contains('on'); });
@@ -401,7 +406,7 @@ function findTarget() {
   for (const [i, R] of RIDES.entries()) if (R && R.holder.visible) { const sp = garage.spot[i], d = Math.hypot(sp.x - player.x, sp.z - player.z); if (d < 1.4 && d < bd) { bd = d; best = { kind: 'ride', i, label: 'Naik ' + R.name.toLowerCase() }; } }
   if (best) return best;
   for (const n of npcs) { const d = Math.hypot(n.x - player.x, n.z - player.z); if (d < 1.9 && d < bd) { bd = d; best = { kind: 'npc', n, label: 'Ngobrol: ' + n.name }; } }
-  if (best) return best;
+  if (best) return story.npcTarget(best.n) || best;
   if (at) return at;
   if (player.area === 'kota' || player.area === 'luar') { const lt = luar.target(player.area, player.x, player.z); if (lt) return lt; }
   if (player.area === 'kota') for (const [key, label] of [['terminal', 'Terminal: naik bus/angkot ke luar kota'], ['stasiun', 'Stasiun: naik kereta ke Pesisir Lintang']]) {
@@ -428,7 +433,8 @@ function act() {
     if (target.n.mood) return;
     const n = target.n, lines = n.lines || LINES[n.linesKey || (n.filler ? n.name : n.sid)] || ['Halo!'];
     if (n.sid === 'omDarto' && player.flags?.omMarah) { player.flags.omMarah = false; n.say = { text: 'Raka! Balap liar lagi?! Om udah bilang, jalan lingkar itu bukan sirkuit. Om pernah lihat sendiri akibatnya...', t: 5 }; n.heading = Math.atan2(player.z - n.z, player.x - n.x); n.wait = 5; return; }
-    n.say = { text: lines[n.line = ((n.line ?? -1) + 1) % lines.length], t: 3.5 };
+    const sv = story.talk(n);
+    n.say = { text: sv || lines[n.line = ((n.line ?? -1) + 1) % lines.length], t: 3.5 };
     n.heading = Math.atan2(player.z - n.z, player.x - n.x); n.wait = 4; n.tx = n.x; n.tz = n.z;
   } else if (target.kind === 'go') {
     fading = 1; ui.fade.style.opacity = 1;
@@ -446,6 +452,7 @@ function act() {
 // t: { zone ('kota' | id wilayah), x, z (koordinat peta dunia), h, keepRide, cost, msg }
 function travel(t) {
   if (fading) return;
+  if (t.zone !== 'kota') { const g = story.zoneOpen(t.zone); if (!g.ok) { toast(`Wilayah ini baru terbuka di Bab ${g.bab} (mode cerita). Cek Jurnal (B).`); return; } }
   if (t.cost) { if ((player.uang || 0) < t.cost) { toast('Uangnya kurang buat ongkos...'); return; } player.uang -= t.cost; shop.showMoney(); }
   fading = 1; ui.fade.style.opacity = 1; if (t.zone !== 'kota') { ui.loading.textContent = 'Dalam perjalanan…'; ui.loading.style.display = ''; }
   setTimeout(() => {
@@ -457,7 +464,7 @@ function travel(t) {
     Object.assign(player, { heading: t.h ?? player.heading, vx: 0, vz: 0, swim: null, gy: undefined });
     const p = collision.resolve({ x: player.x, z: player.z }, 0.3); player.x = p.x; player.z = p.z;
     cam.x = player.x; cam.z = player.z; placeParked(); ui.loading.style.display = 'none'; ui.fade.style.opacity = 0; fading = 0; saveT = 99;
-    toast(t.msg || 'Sampai: ' + (t.zone === 'kota' ? 'Kota Wirabumi' : luar.cur.name));
+    toast(t.msg || 'Sampai: ' + (t.zone === 'kota' ? 'Kota Wirabumi' : luar.cur.name)); if (t.zone !== 'kota') story.ev('zone', t.zone);
   }, 450);
 }
 // titik turun di kota: depan terminal / stasiun
@@ -693,14 +700,16 @@ function loop(now) {
   { const sk = fight.shake(rdt); if (sk) { camera.position.x += (Math.random() - 0.5) * sk; camera.position.y += (Math.random() - 0.5) * sk; } }
   scene.fog.near = dist * 2.6; scene.fog.far = dist * 2.6 + 50;
   // matahari ikut pemain, dibulatkan ke grid texel bayangan supaya tidak berkedip
-  if (sun.castShadow) {
-    const q = QUALITY[opt.quality], step = (q.ext * 2) / q.shadow;
+  waktu.update(dt, !!fading);
+  const sunOff = player.area === 'dalam' ? { dx: 22, dy: 45, dz: 14 } : waktu.light({ scene, hemi, sun, sky: SKYNOW });
+  {
+    const q = QUALITY[opt.quality], step = (q.ext * 2) / (q.shadow || 1024);
     const sx = Math.round(cam.x / step) * step, sz = Math.round(cam.z / step) * step;
-    sun.target.position.set(sx, 0, sz); sun.position.set(sx + 22, 45, sz + 14);
+    sun.target.position.set(sx, 0, sz); sun.position.set(sx + sunOff.dx, sunOff.dy, sz + sunOff.dz);
   }
-  jajan.update(dt); animals.update(dt); race.update(dt); kolam.update(dt);
+  jajan.update(dt); animals.update(dt); race.update(dt); kolam.update(dt); story.update(dt);
   const inside = player.area === 'dalam';
-  if (inside !== wasInside) { wasInside = inside; scene.background = inside ? DARKBG : SKY; scene.fog.color.copy(inside ? DARKBG : SKY); }
+  if (inside !== wasInside) { wasInside = inside; if (inside) { scene.background = DARKBG; scene.fog.color.copy(DARKBG); hemi.intensity = 1.9; hemi.color.set('#e6efff'); sun.intensity = 2.1; sun.color.set('#fff1d6'); } }
   if (inside) { scene.fog.near = 60; scene.fog.far = 140; interiors.update(camera); }
   renderer.render(scene, camera);
   // HUD
@@ -730,4 +739,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { kolam, luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { kolam, story, waktu, luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

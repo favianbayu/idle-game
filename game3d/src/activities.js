@@ -299,7 +299,7 @@ export function makeActivities({ scene, kota, collision, player, Character, toas
         const pond = fish.s.pond, tot = FISH.reduce((a, f) => a + f[3] * (pond && f[1] === 0 ? 0.3 : 1), 0); let r = Math.random() * tot, f = FISH[0];
         for (const k of FISH) { r -= k[3] * (pond && k[1] === 0 ? 0.3 : 1); if (r <= 0) { f = k; break; } }
         const kg = f[1] ? (f[1] + Math.random() * (f[2] - f[1])).toFixed(1) : 0;
-        inv[f[0]] = (inv[f[0]] || 0) + 1;
+        inv[f[0]] = (inv[f[0]] || 0) + 1; if (kg) dispatchEvent(new CustomEvent('ikan', { detail: f[0] }));
         fish = { st: 'show', t: 0, s: fish.s }; fishUI.style.display = 'none'; bobber.visible = false;
         toast(kg ? `Dapat ${f[0]} ${kg} kg! (${Object.entries(inv).map(([k, v]) => k + ' ' + v).join(', ')})` : `Dapat... ${f[0].toLowerCase()}. Hmm.`);
         return 'fishShow';

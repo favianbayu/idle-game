@@ -128,7 +128,7 @@ export const LINES = {
   pakGunadi: ['Jangan sentuh itu! Eh, itu cuma kopi.', 'Fisika ada di mana-mana, Nak.'],
   bangJaka: ['Lampu Kota bukan geng. Kami keluarga.', 'Anak baru? Ke markas kalau berani.'],
   kirana: ['Mau balapan? Jangan nangis kalau kalah.', 'Abang gue Kobar. Jangan cari masalah.'],
-  andra: ['Tembok ini kanvas gue.', 'Jangan bilang nenek gue ya, gue di sini.'],
+  andra: ['Tembok ini kanvas gue.', 'Jangan bilang nenek gue ya, gue di sini.', 'Rumah gue di Pandansari, ikut Nek Sumi. Ke kota naik angkot.'],
   kobar: ['Anak SMA 3? Salah jalan, lo.', 'Sirkuit Jalan Lingkar punya Serigala Besi.'],
   tegar: ['Tugas Bu Ratna dikumpul besok.', 'Sebagai ketua kelas, gue ingetin: jangan telat.'],
   nadia: ['Pilih aku jadi ketua OSIS, ya.', 'Kamu anak geng motor? Semoga bukan.'],
