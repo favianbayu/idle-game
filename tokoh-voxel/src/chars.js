@@ -81,6 +81,21 @@ import { build as ningsihBuild, OUTFITS as NINGSIH_OUT, EXPRS as NINGSIH_EX } fr
 import { build as prasBuild, OUTFITS as PRAS_OUT, EXPRS as PRAS_EX } from './pras.js';
 import { build as saripBuild, OUTFITS as SARIP_OUT, EXPRS as SARIP_EX } from './sarip.js';
 import { build as kartaBuild, OUTFITS as KARTA_OUT, EXPRS as KARTA_EX } from './karta.js';
+import { build as mahfudBuild, OUTFITS as MAHFUD_OUT, EXPRS as MAHFUD_EX } from './mahfud.js';
+import { build as hadiBuild, OUTFITS as HADI_OUT, EXPRS as HADI_EX } from './hadi.js';
+import { build as sudarmajiBuild, OUTFITS as SUDARMAJI_OUT, EXPRS as SUDARMAJI_EX } from './sudarmaji.js';
+import { build as kodirBuild, OUTFITS as KODIR_OUT, EXPRS as KODIR_EX } from './kodir.js';
+import { build as romlahBuild, OUTFITS as ROMLAH_OUT, EXPRS as ROMLAH_EX } from './romlah.js';
+import { build as ujoBuild, OUTFITS as UJO_OUT, EXPRS as UJO_EX } from './ujo.js';
+import { build as sabarBuild, OUTFITS as SABAR_OUT, EXPRS as SABAR_EX } from './sabar.js';
+import { build as yusufBuild, OUTFITS as YUSUF_OUT, EXPRS as YUSUF_EX } from './yusuf.js';
+import { build as sriBuild, OUTFITS as SRI_OUT, EXPRS as SRI_EX } from './sri.js';
+import { build as darmoBuild, OUTFITS as DARMO_OUT, EXPRS as DARMO_EX } from './darmo.js';
+import { build as sumiBuild, OUTFITS as SUMI_OUT, EXPRS as SUMI_EX } from './sumi.js';
+import { build as titoBuild, OUTFITS as TITO_OUT, EXPRS as TITO_EX } from './tito.js';
+import { build as ayuBuild, OUTFITS as AYU_OUT, EXPRS as AYU_EX } from './ayu.js';
+import { build as rusdiBuild, OUTFITS as RUSDI_OUT, EXPRS as RUSDI_EX } from './rusdi.js';
+import { build as lukmanBuild, OUTFITS as LUKMAN_OUT, EXPRS as LUKMAN_EX } from './lukman.js';
 import { build as cilokBuild, OUTFITS as CILOK_OUT, EXPRS as CILOK_EX } from './cilok.js';
 import { build as andiBuild, OUTFITS as ANDI_OUT, EXPRS as ANDI_EX } from './andi.js';
 import { build as fitriBuild, OUTFITS as FITRI_OUT, EXPRS as FITRI_EX } from './fitri.js';
@@ -116,6 +131,8 @@ import { SPAWN as PENONTON_SP, OUTFITS as PENONTON_SO, EXPRS as PENONTON_SE, bui
 import { SPAWN as SANTRI_SP, OUTFITS as SANTRI_SO, EXPRS as SANTRI_SE, build as SANTRI_SB } from './sp_santri.js';
 import { SPAWN as SILAT_SP, OUTFITS as SILAT_SO, EXPRS as SILAT_SE, build as SILAT_SB } from './sp_silat.js';
 import { SPAWN as PERSIT_SP, OUTFITS as PERSIT_SO, EXPRS as PERSIT_SE, build as PERSIT_SB } from './sp_persit.js';
+import { SPAWN as STM_SP, OUTFITS as STM_SO, EXPRS as STM_SE, build as STM_SB } from './sp_stm.js';
+import { SPAWN as SMK_SP, OUTFITS as SMK_SO, EXPRS as SMK_SE, build as SMK_SB } from './sp_smk.js';
 export const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
   rani: { name: 'Rani', build: raniBuild, OUTFITS: RANI_OUT, EXPRS: RANI_EX },
@@ -200,6 +217,21 @@ export const CHARS = {
   pakPras: { name: 'Pak Pras', build: prasBuild, OUTFITS: PRAS_OUT, EXPRS: PRAS_EX },
   bangSarip: { name: 'Bang Sarip', build: saripBuild, OUTFITS: SARIP_OUT, EXPRS: SARIP_EX },
   abahKarta: { name: 'Abah Karta', build: kartaBuild, OUTFITS: KARTA_OUT, EXPRS: KARTA_EX },
+  kyaiMahfud: { name: 'Kyai Mahfud', build: mahfudBuild, OUTFITS: MAHFUD_OUT, EXPRS: MAHFUD_EX },
+  sermaHadi: { name: 'Serma Hadi', build: hadiBuild, OUTFITS: HADI_OUT, EXPRS: HADI_EX },
+  pakSudarmaji: { name: 'Pak Sudarmaji', build: sudarmajiBuild, OUTFITS: SUDARMAJI_OUT, EXPRS: SUDARMAJI_EX },
+  wakKodir: { name: 'Wak Kodir', build: kodirBuild, OUTFITS: KODIR_OUT, EXPRS: KODIR_EX },
+  buRomlah: { name: 'Bu Romlah', build: romlahBuild, OUTFITS: ROMLAH_OUT, EXPRS: ROMLAH_EX },
+  kangUjo: { name: 'Kang Ujo', build: ujoBuild, OUTFITS: UJO_OUT, EXPRS: UJO_EX },
+  mandorSabar: { name: 'Mandor Sabar', build: sabarBuild, OUTFITS: SABAR_OUT, EXPRS: SABAR_EX },
+  pakYusuf: { name: 'Pak Yusuf', build: yusufBuild, OUTFITS: YUSUF_OUT, EXPRS: YUSUF_EX },
+  mbakSri: { name: 'Mbak Sri', build: sriBuild, OUTFITS: SRI_OUT, EXPRS: SRI_EX },
+  mbahDarmo: { name: 'Mbah Darmo', build: darmoBuild, OUTFITS: DARMO_OUT, EXPRS: DARMO_EX },
+  nekSumi: { name: 'Nek Sumi', build: sumiBuild, OUTFITS: SUMI_OUT, EXPRS: SUMI_EX },
+  tito: { name: 'Tito', build: titoBuild, OUTFITS: TITO_OUT, EXPRS: TITO_EX },
+  nengAyu: { name: 'Neng Ayu', build: ayuBuild, OUTFITS: AYU_OUT, EXPRS: AYU_EX },
+  pakRusdi: { name: 'Pak Rusdi', build: rusdiBuild, OUTFITS: RUSDI_OUT, EXPRS: RUSDI_EX },
+  irLukman: { name: 'Ir. Lukman', build: lukmanBuild, OUTFITS: LUKMAN_OUT, EXPRS: LUKMAN_EX },
   siswaAndi: { name: 'Andi', build: andiBuild, OUTFITS: ANDI_OUT, EXPRS: ANDI_EX },
   siswiFitri: { name: 'Fitri', build: fitriBuild, OUTFITS: FITRI_OUT, EXPRS: FITRI_EX },
   siswiRina: { name: 'Rina', build: rinaBuild, OUTFITS: RINA_OUT, EXPRS: RINA_EX },
@@ -210,5 +242,5 @@ export const CHARS = {
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };
 // NPC spawn (guide segmen 34): tiap template didaftarkan 8 kali (seed 0..7) sebagai <sid>_<v> untuk pratinjau
-export const SPAWNS = [{ SPAWN: PENDAKI_SP, OUTFITS: PENDAKI_SO, EXPRS: PENDAKI_SE, build: PENDAKI_SB }, { SPAWN: TURIS_SP, OUTFITS: TURIS_SO, EXPRS: TURIS_SE, build: TURIS_SB }, { SPAWN: PENONTON_SP, OUTFITS: PENONTON_SO, EXPRS: PENONTON_SE, build: PENONTON_SB }, { SPAWN: SANTRI_SP, OUTFITS: SANTRI_SO, EXPRS: SANTRI_SE, build: SANTRI_SB }, { SPAWN: SILAT_SP, OUTFITS: SILAT_SO, EXPRS: SILAT_SE, build: SILAT_SB }, { SPAWN: PERSIT_SP, OUTFITS: PERSIT_SO, EXPRS: PERSIT_SE, build: PERSIT_SB }, { SPAWN: PEDAGANG_SP, OUTFITS: PEDAGANG_SO, EXPRS: PEDAGANG_SE, build: PEDAGANG_SB }, { SPAWN: MEKANIK_SP, OUTFITS: MEKANIK_SO, EXPRS: MEKANIK_SE, build: MEKANIK_SB }, { SPAWN: NELAYAN_SP, OUTFITS: NELAYAN_SO, EXPRS: NELAYAN_SE, build: NELAYAN_SB }, { SPAWN: SATPAM_SP, OUTFITS: SATPAM_SO, EXPRS: SATPAM_SE, build: SATPAM_SB }, { SPAWN: POLISI_SP, OUTFITS: POLISI_SO, EXPRS: POLISI_SE, build: POLISI_SB }, { SPAWN: PARKIR_SP, OUTFITS: PARKIR_SO, EXPRS: PARKIR_SE, build: PARKIR_SB }, { SPAWN: KULI_SP, OUTFITS: KULI_SO, EXPRS: KULI_SE, build: KULI_SB }, { SPAWN: OJOL_SP, OUTFITS: OJOL_SO, EXPRS: OJOL_SE, build: OJOL_SB }, { SPAWN: GURU_SP, OUTFITS: GURU_SO, EXPRS: GURU_SE, build: GURU_SB }, { SPAWN: SISWI_SP, OUTFITS: SISWI_SO, EXPRS: SISWI_SE, build: SISWI_SB }, { SPAWN: PRIA_SP, OUTFITS: PRIA_SO, EXPRS: PRIA_SE, build: PRIA_SB }, { SPAWN: WANITA_SP, OUTFITS: WANITA_SO, EXPRS: WANITA_SE, build: WANITA_SB }, { SPAWN: HIJAB_SP, OUTFITS: HIJAB_SO, EXPRS: HIJAB_SE, build: HIJAB_SB }, { SPAWN: LANSIA_SP, OUTFITS: LANSIA_SO, EXPRS: LANSIA_SE, build: LANSIA_SB }, { SPAWN: MUDA_SP, OUTFITS: MUDA_SO, EXPRS: MUDA_SE, build: MUDA_SB }, { SPAWN: ANAK_SP, OUTFITS: ANAK_SO, EXPRS: ANAK_SE, build: ANAK_SB }, { SPAWN: TENTARA_SP, OUTFITS: TENTARA_SO, EXPRS: TENTARA_SE, build: TENTARA_SB }, { SPAWN: BURUH_SP, OUTFITS: BURUH_SO, EXPRS: BURUH_SE, build: BURUH_SB }, { SPAWN: PETANI_SP, OUTFITS: PETANI_SO, EXPRS: PETANI_SE, build: PETANI_SB }, { SPAWN: SISWA_SP, OUTFITS: SISWA_SO, EXPRS: SISWA_SE, build: SISWA_SB }];
+export const SPAWNS = [{ SPAWN: STM_SP, OUTFITS: STM_SO, EXPRS: STM_SE, build: STM_SB }, { SPAWN: SMK_SP, OUTFITS: SMK_SO, EXPRS: SMK_SE, build: SMK_SB }, { SPAWN: PENDAKI_SP, OUTFITS: PENDAKI_SO, EXPRS: PENDAKI_SE, build: PENDAKI_SB }, { SPAWN: TURIS_SP, OUTFITS: TURIS_SO, EXPRS: TURIS_SE, build: TURIS_SB }, { SPAWN: PENONTON_SP, OUTFITS: PENONTON_SO, EXPRS: PENONTON_SE, build: PENONTON_SB }, { SPAWN: SANTRI_SP, OUTFITS: SANTRI_SO, EXPRS: SANTRI_SE, build: SANTRI_SB }, { SPAWN: SILAT_SP, OUTFITS: SILAT_SO, EXPRS: SILAT_SE, build: SILAT_SB }, { SPAWN: PERSIT_SP, OUTFITS: PERSIT_SO, EXPRS: PERSIT_SE, build: PERSIT_SB }, { SPAWN: PEDAGANG_SP, OUTFITS: PEDAGANG_SO, EXPRS: PEDAGANG_SE, build: PEDAGANG_SB }, { SPAWN: MEKANIK_SP, OUTFITS: MEKANIK_SO, EXPRS: MEKANIK_SE, build: MEKANIK_SB }, { SPAWN: NELAYAN_SP, OUTFITS: NELAYAN_SO, EXPRS: NELAYAN_SE, build: NELAYAN_SB }, { SPAWN: SATPAM_SP, OUTFITS: SATPAM_SO, EXPRS: SATPAM_SE, build: SATPAM_SB }, { SPAWN: POLISI_SP, OUTFITS: POLISI_SO, EXPRS: POLISI_SE, build: POLISI_SB }, { SPAWN: PARKIR_SP, OUTFITS: PARKIR_SO, EXPRS: PARKIR_SE, build: PARKIR_SB }, { SPAWN: KULI_SP, OUTFITS: KULI_SO, EXPRS: KULI_SE, build: KULI_SB }, { SPAWN: OJOL_SP, OUTFITS: OJOL_SO, EXPRS: OJOL_SE, build: OJOL_SB }, { SPAWN: GURU_SP, OUTFITS: GURU_SO, EXPRS: GURU_SE, build: GURU_SB }, { SPAWN: SISWI_SP, OUTFITS: SISWI_SO, EXPRS: SISWI_SE, build: SISWI_SB }, { SPAWN: PRIA_SP, OUTFITS: PRIA_SO, EXPRS: PRIA_SE, build: PRIA_SB }, { SPAWN: WANITA_SP, OUTFITS: WANITA_SO, EXPRS: WANITA_SE, build: WANITA_SB }, { SPAWN: HIJAB_SP, OUTFITS: HIJAB_SO, EXPRS: HIJAB_SE, build: HIJAB_SB }, { SPAWN: LANSIA_SP, OUTFITS: LANSIA_SO, EXPRS: LANSIA_SE, build: LANSIA_SB }, { SPAWN: MUDA_SP, OUTFITS: MUDA_SO, EXPRS: MUDA_SE, build: MUDA_SB }, { SPAWN: ANAK_SP, OUTFITS: ANAK_SO, EXPRS: ANAK_SE, build: ANAK_SB }, { SPAWN: TENTARA_SP, OUTFITS: TENTARA_SO, EXPRS: TENTARA_SE, build: TENTARA_SB }, { SPAWN: BURUH_SP, OUTFITS: BURUH_SO, EXPRS: BURUH_SE, build: BURUH_SB }, { SPAWN: PETANI_SP, OUTFITS: PETANI_SO, EXPRS: PETANI_SE, build: PETANI_SB }, { SPAWN: SISWA_SP, OUTFITS: SISWA_SO, EXPRS: SISWA_SE, build: SISWA_SB }];
 for (const T of SPAWNS) for (let v = 0; v < 8; v++) CHARS[T.SPAWN.sid + '_' + v] = { name: T.SPAWN.name + ' #' + v, build: o => T.build({ ...o, v }), OUTFITS: T.OUTFITS, EXPRS: T.EXPRS };

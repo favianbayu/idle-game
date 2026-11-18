@@ -109,6 +109,14 @@ export function spawnWarga(A) {
   const nearB = (x, z, r = 2.2) => { for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283; if (A.isB(x + Math.cos(a) * r, z + Math.sin(a) * r)) return true; } return false; };
   // titik di air (renang): air di sekeliling, dekat tepi
   const okWater = (x, z) => isW(x, z) && isW(x + 1, z) && isW(x - 1, z) && isW(x, z + 1) && isW(x, z - 1);
+  // titik darat terdekat dari (x, z) dalam radius r (spiral), dipakai untuk menaruh tokoh di tempat yang ada di peta
+  const clear = (x, z) => { if (!okLand(x, z) || A.isB(x, z)) return false; for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283; for (const r of [0.7, 1.4]) if (A.isB(x + Math.cos(a) * r, z + Math.sin(a) * r)) return false; } return true; };   // tidak di bawah/menempel atap
+  const flat = (x, z, r = 1.5) => { const y = Y(x, z); for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283; for (const q of [r / 2, r]) if (Math.abs(Y(x + Math.cos(a) * q, z + Math.sin(a) * q) - y) > 0.45 * q) return false; } return true; };   // tanah datar (bukan tebing/lereng curam)
+  const yard = r => (x, z) => clear(x, z) && flat(x, z, r);
+  const spot = (x, z, r = 4, test = yard(1.5)) => spot0(x, z, r, test) || spot0(x, z, r, clear) || spot0(x, z, r, okLand);
+  const spot0 = (x, z, r, test) => { for (let rr = 0; rr <= r; rr += 0.5) for (let k = 0; k < (rr ? 16 : 1); k++) { const a = k / 16 * 6.283, px = x + Math.cos(a) * rr, pz = z + Math.sin(a) * rr; if (inZ(px, pz) && test(px, pz)) return [px, pz]; } return null; };
+  const face = (p, tx, tz) => Math.atan2(tz - p[1], tx - p[0]);
+  const at = (p, a, t, o = {}) => ({ x: p[0], z: p[1], a, t, ...o });
 
   /* ---------------- aktivitas umum */
   const FISH_SAY = ['Dapet!', 'Lumayan, buat lauk.', 'Yah, kecil...', 'Mujair!', 'Sabar, sabar...'];
@@ -140,7 +148,7 @@ export function spawnWarga(A) {
     S.forEach(([x, z], i) => {
       const k = i % 3, h = R() * 6.28;
       if (k === 0) plan('ibuDaster', 'Bu Warsih', ['Halamannya kotor terus, daunnya rontok.', 'Mampir, Nak?'], [{ x, z, a: 'sweep', t: 6, h }, { x: x + Math.cos(h) * 1.4, z: z + Math.sin(h) * 1.4, a: 'sweep', t: 6, h }, { x: x + Math.cos(h) * 1.4, z: z + Math.sin(h) * 1.4, a: 'stretch', t: 2, h }], { spd: 0.6 });
-      else if (k === 1) plan('kakek', 'Mbah Darmo', ['Dulu di sini masih hutan semua.', 'Pelan-pelan aja, Nak, hidup jangan buru-buru.'], [{ x, z, a: 'sitDown', t: 10, h }, { x, z, a: 'think', t: 4, h }, { x, z, a: 'laugh', t: 2, h }]);
+      else if (k === 1) plan('kakek', 'Mbah Saleh', ['Dulu di sini masih hutan semua.', 'Pelan-pelan aja, Nak, hidup jangan buru-buru.'], [{ x, z, a: 'sitDown', t: 10, h }, { x, z, a: 'think', t: 4, h }, { x, z, a: 'laugh', t: 2, h }]);
       else plan('ibuHijab', 'Bu Iyah', ['Lagi jemur gabah, Dek.', 'Anak-anak pada main di lapangan.'], [{ x, z, a: 'squat', t: 6, h }, { x, z, a: 'idle', t: 2, h }, { x, z, a: 'talk', t: 4, h }]);
     });
   }
@@ -179,6 +187,16 @@ export function spawnWarga(A) {
     // penyadap karet di kebun karet selatan
     const KR = spots((x, z) => okLand(x, z) && inA(x, z, [20]), 3, bboxOf([20]), 8);
     KR.forEach(([x, z]) => { const h = R() * 6.28; plan('petani', 'Pak Sadap', ['Nyadap karet harus pagi, getahnya banyak.', 'Harga karet lagi turun.'], [{ x, z, a: 'squat', t: 6, h }, { x: x + 2, z: z + 1.5, a: 'squat', t: 6, h }, { x: x + 2, z: z + 1.5, a: 'carry', t: 2, h }]); });
+    // Kyai Mahfud (segmen 33): mengajar santri di halaman pondok -> perpustakaan -> jalan ke pasar hewan menyapa warga -> kembali
+    const KP = spot(-116, 90, 8, yard(3)), KL = spot(-110, 92, 8), KM = spot(-94, 113.5, 6);
+    if (KP && KL && KM) {
+      const SN = spots(okLand, 3, near(KP[0], KP[1] + 1.9, 1.4), 0.9), cx = SN.length ? SN.reduce((a, q) => a + q[0], 0) / SN.length : KP[0], cz = SN.length ? SN.reduce((a, q) => a + q[1], 0) / SN.length : KP[1] + 2, hk = face(KP, cx, cz);
+      SN.forEach((q, i) => plan('santri', ['Santri Zaki', 'Santri Hamdan', 'Santri Ulfa'][i], ['Lagi ngaji sama Pak Kyai, Kang.', 'Hafalan saya baru juz satu.'], [at(q, 'sitDown', 9, { h: face(q, ...KP) }), at(q, 'sitDown', 4, { h: face(q, ...KP) + 0.3 })], { shuffle: true }));
+      plan('kyaiMahfud', 'Kyai Mahfud', ['Tanah itu titipan, Nak. Yang menitipkan masih melihat.', 'Mampir ke perpustakaan pondok, bukunya banyak.', 'Belajar itu seperti menanam padi, Nak. Sabar.'], [
+        at(KP, 'talk', 6, { h: hk, say: ['Ulangi bacaannya, pelan-pelan.', 'Ilmu itu cahaya, Nak.'], p: 0.5 }), at(KP, 'raiseHand', 2, { h: hk }), at(KP, 'read', 6, { h: hk }),
+        at(KL, 'read', 9, { h: R() * 6.28 }), at(KL, 'think', 3),
+        at(KM, 'wave', 2.5, { h: face(KM, -92, 116.5), say: ['Assalamualaikum, Pak Dulah.', 'Sehat, Bu Enah?'], p: 0.6 }), at(KM, 'talk', 5, { h: face(KM, -92, 116.5) }), at(KM, 'laugh', 2)], { si: 0, spd: 0.7 });
+    }
   }
 
   if (id === 'sukamekar') {
@@ -191,13 +209,49 @@ export function spawnWarga(A) {
       st.push({ ...st.at(-1), a: rpick(['stretch', 'carry']), t: 2.5, say: ['Pucuknya dua daun satu kuncup.', 'Keranjang udah setengah.', 'Kabutnya turun, dingin.'], p: 0.3 });
       plan(i % 4 === 3 ? 'petani' : 'petaniW', i % 4 === 3 ? 'Mang Ading' : ['Teh Imas', 'Ceu Euis', 'Teh Lilis'][i % 3], ['Metik teh dari subuh, Dek.', 'Sekilo pucuk dibayar sedikit, tapi lumayan.', 'Mau coba metik?'], st, { spd: 0.6 }); });
     // siswa SMK pariwisata pulang lewat gang desa
-    for (const r of roads.filter(r => r.kind === 'gang')) { walker('siswiA', 'Siswi SMK', ['Praktek tata boga hari ini.', 'Kak, mau ke villa ya?'], line(r.pts, 0.5)); walker('siswaB', 'Siswa SMK', ['Besok praktek di hotel.', 'Sukamekar dingin banget pagi-pagi.'], line(r.pts, -0.5)); }
+    for (const r of roads.filter(r => r.kind === 'gang')) { walker('anakSMK', 'Siswi SMK', ['Praktek tata boga hari ini.', 'Kak, mau ke villa ya?'], line(r.pts, 0.5)); walker('anakSMK', 'Siswa SMK', ['Besok praktek di hotel.', 'Sukamekar dingin banget pagi-pagi.'], line(r.pts, -0.5)); }
     // pabrik teh: buruh angkut karung ke truk
     const PT = spots((x, z) => okLand(x, z) && nearB(x, z, 2.4), 2, near(282, -32, 7), 3);
     PT.forEach(([x, z], i) => { const ex = x + 2.5 * (i ? -1 : 1);
       if (okLand(ex, z + 2)) plan('buruh', 'Buruh Pabrik Teh', ['Karung daun teh berat, Dek.', 'Shift pagi sampai jam dua.'], [{ x, z, a: 'squat', t: 1.5 }, { x, z, a: 'carry', t: 1.5 }, { x: ex, z: z + 2, a: 'carry', t: 1.5 }, { x: ex, z: z + 2, a: 'squat', t: 1.5 }], { spd: 0.8 }); });
     yards([234, -49, 284, -16], 4, (x, z) => inA(x, z, [26]));
     kids(258, -30, 3);
+    // perguruan silat Kembang Teh (segmen 33): Abah Karta melatih murid di pendopo, lalu ke kebun, malam duduk di teras
+    const PD = spot(274, -49, 12, yard(3));
+    if (PD) {
+      const MS = spots(okLand, 3, near(PD[0] + 2.2, PD[1], 1.2), 1.1), DR = q => [at(q, 'guard', 2, { h: face(q, ...PD) }), at(q, 'jab', 0.9, { h: face(q, ...PD) }), at(q, 'straight', 0.9, { h: face(q, ...PD) }), at(q, 'kickFront', 1.3, { h: face(q, ...PD) }), at(q, 'guard', 1.5, { h: face(q, ...PD) }), at(q, 'hook', 0.9, { h: face(q, ...PD) }), at(q, 'kickHigh', 1.4, { h: face(q, ...PD) }), at(q, 'idle', 2.5, { h: face(q, ...PD), say: ['Hiaaat!', 'Kaki pegel, tapi seru!', 'Kuda-kuda dulu, kata Abah.'], p: 0.25 })];
+      MS.forEach((q, i) => plan('muridSilat', ['Ujang (murid silat)', 'Murid Asep', 'Murid Euis'][i], ['Hiaaat! Kakak murid baru ya?', 'Sabukku masih kuning, Kak.'], DR(q), { si: 0 }));
+      const GK = spot(281, -44, 6) || PD, TR = spot(270.5, -45.5, 4) || PD, hm = MS.length ? face(PD, MS[0][0], MS[0][1]) : 0;
+      plan('abahKarta', 'Abah Karta', ['Jurus itu bukan buat pamer. Buat pulang dengan selamat.', 'Mau latihan? Pikul air dari pancuran dulu, sepuluh kali.', 'Orang kota datang cuma mau foto.'], [
+        at(PD, 'raiseHand', 3, { h: hm, say: ['Kuda-kuda! Tahan!', 'Ulangi! Tangan jangan turun!', 'Napas! Jangan buru-buru.'], p: 0.6 }), at(PD, 'talk', 4, { h: hm }), at(PD, 'look', 4, { h: hm }), at(PD, 'jab', 1, { h: hm }), at(PD, 'kickFront', 1.4, { h: hm }), at(PD, 'raiseHand', 3, { h: hm }),
+        at(GK, 'squat', 7), at(GK, 'carry', 2), at(TR, 'sitDown', 10, { h: face(TR, ...PD), say: ['Dulu Abah main kecapi di sini sama Pak Ujang.'], p: 0.3 })], { si: 0, spd: 0.75 });
+      // Neng Ayu (14): nonton latihan, lalu nongkrong di pinggir jalan dekat halte lihat motor lewat
+      const AH = spot(263.5, -40, 3) || PD, AW = spot(PD[0] - 1.8, PD[1] + 1.6, 2) || PD;
+      plan('nengAyu', 'Neng Ayu', ['Kak, boncengin sampai kelokan doang!', 'Aku mau jadi pembalap kayak Teh Kirana.', 'Teh Wulan lagi di sekolah.'], [
+        at(AH, 'look', 6, { h: face(AH, 262, -36) }), at(AH, 'wave', 2, { say: ['Wih, motornya keren!', 'Kak, boncengin sampai kelokan doang!'], p: 0.6 }), at(AH, 'phone', 4),
+        at(AW, 'clap', 3, { h: face(AW, ...PD) }), at(AW, 'cheer', 2, { h: face(AW, ...PD) }), at(AW, 'idle', 4, { h: face(AW, ...PD) })], { spd: 1.1 });
+    }
+    // Mandor Sabar: keliling di antara pemetik teh, tiup peluit, lalu ke pabrik teh mencatat timbangan
+    if (TP.length >= 3) { const sp3 = TP.slice(0, 3).map(([x, z]) => snap(x, z)), PF = spot(280, -31, 5) || sp3[0];
+      plan('mandorSabar', 'Mandor Sabar', ['Pucuk dua daun, jangan lebih. Teh itu soal sabar.', 'Mau kerja metik? Datang subuh.', 'Pabrik ini lebih tua dari kakek saya.'], [
+        at(sp3[0], 'look', 4), at(sp3[0], 'raiseHand', 2, { say: ['Priiit! Kumpul, timbang dulu!', 'Pucuk dua daun, jangan lebih.'], p: 0.5 }), at(sp3[1], 'talk', 4), at(sp3[2], 'think', 3), at(sp3[2], 'look', 3),
+        at(PF, 'read', 6), at(PF, 'talk', 3)], { spd: 0.6 }); }
+    // Ir. Lukman: proyek villa tahap 2, baca gambar, telepon, pasang patok di tepi kebun
+    const VL = spot(205, -57, 5), PK = spot(214, -51, 6);
+    if (VL && PK) {
+      for (const [dx, dz] of [[0.5, 0], [-0.6, 0.4]]) prop(PK[0] + dx, PK[1] + dz, 0, xf => { pm.box(xf, 0, 0, 0, 0.07, 0.6, 0.07, col('#e8e4d8')); pm.box(xf, 0, 0.6, 0, 0.08, 0.12, 0.08, col('#d8342c')); });
+      plan('irLukman', 'Ir. Lukman', ['Ini lahan proyek. Ada urusan apa, Dek?', 'Semua sudah ada izinnya. Katanya.', 'Patoknya jangan dicabut ya.'], [
+        at(VL, 'read', 6), at(VL, 'phone', 4, { say: ['Patoknya geser dua meter. Catat.', 'Tahap dua mulai bulan depan, Pak.'], p: 0.6 }), at(PK, 'squat', 4), at(PK, 'think', 3), at(PK, 'look', 3)], { spd: 0.9 });
+    }
+    // anak SMK Pariwisata: ngobrol di gerbang, praktik tata boga & pemandu wisata
+    const SG = spot(252, -47.5, 6, yard(2.5));
+    if (SG) { chat(SG[0], SG[1], ['anakSMK', 'anakSMK', 'anakSMKhotel'], ['Siswa SMK', 'Siswi SMK', 'Siswa SMK'], ['Praktek hotel besok, rompinya belum disetrika.', 'Kak, mau ke villa ya?', 'Ujian bahasa Inggris pariwisata susah.']);
+      const SB = spot(255.5, -45, 4);
+      if (SB) for (let k = 0; k < 2; k++) plan('anakSMKboga', 'Siswa Tata Boga', ['Hari ini masak pepes ikan.', 'Cobain kuenya, Kak!'], [at([SB[0] + k * 0.9, SB[1]], 'carry', 2), at([SB[0] + k * 0.9 + 1.6, SB[1] + 1], 'carry', 1.5), at([SB[0] + k * 0.9 + 1.6, SB[1] + 1], 'talk', 3), at([SB[0] + k * 0.9, SB[1]], 'squat', 2)], { si: k * 2, spd: 0.8 });
+      const SPm = spot(264, -35, 4);
+      if (SPm) { const T2 = spots(okLand, 2, near(SPm[0], SPm[1] + 1.6, 1.2), 0.9);
+        plan('anakSMKpemandu', 'Pemandu SMK', ['Selamat datang di Sukamekar!', 'Kebun teh ini sudah ada sejak 1920-an.'], [at(SPm, 'talk', 5, { h: face(SPm, SPm[0], SPm[1] + 1.6), say: ['Di sebelah kanan, pabrik teh tua.', 'Ayo, kita jalan ke kebun!'], p: 0.5 }), at(SPm, 'raiseHand', 2, { h: face(SPm, SPm[0], SPm[1] + 1.6) }), at(SPm, 'read', 3)]);
+        T2.forEach((q, i) => plan('turis', 'Wisatawan', ['Dingin ya di sini.', 'Teh hijaunya enak!'], [at(q, 'look', 5, { h: face(q, ...SPm) }), at(q, 'phone', 3, { h: face(q, ...SPm) + 1 })], { shuffle: true })); } }
   }
 
   if (id === 'gunung') {
@@ -219,6 +273,11 @@ export function spawnWarga(A) {
     const EK = spots(okLand, 1, near(90, -98, 6), 1);
     if (EK.length) { const [x, z] = EK[0]; tent(x + 2.5, z, 0.4, '#e86a1a'); tent(x - 2.6, z + 0.5, -0.3, '#2a6ac0'); fire(x, z);
       chat(x, z, ['pendaki', 'pemuda', 'mbak'], ['Dion', 'Yoga', 'Tari'], ['Dingin! Apinya gedein.', 'Bintangnya kelihatan semua.', 'Edelweis jangan dipetik ya.'], true); }
+    // Kang Ujo: kepala basecamp, daftar pendaki, briefing rombongan, pungut sampah sekitar pos
+    const UB = spot(119, -52, 4), U1 = spot(114, -49, 5), U2 = spot(124, -55, 5);
+    if (UB && U1 && U2) plan('kangUjo', 'Kang Ujo', ['Naik boleh, sampahnya turun lagi ya.', 'Jam naik terakhir jam tiga sore. Lewat itu, besok.', 'Lapor dulu, tulis nama sama nomor HP.'], [
+      at(UB, 'read', 5), at(UB, 'raiseHand', 3, { h: face(UB, 121, -48.5), say: ['Naik boleh, sampahnya turun lagi ya!', 'Kabut turun, jangan pisah rombongan!'], p: 0.6 }), at(UB, 'talk', 3, { h: face(UB, 121, -48.5) }),
+      at(U1, 'squat', 2.5), at(U1, 'carry', 1.5), at(U2, 'squat', 2.5), at(U2, 'carry', 1.5), at(UB, 'stretch', 2)], { si: 0, spd: 0.9 });
   }
 
   if (id === 'waduk') {
@@ -232,6 +291,11 @@ export function spawnWarga(A) {
       for (let u = -6.5; u <= 6.5; u += 1) P.push({ x: bd.x + u * c, z: bd.y + u * s });
       walker('mandor', 'Petugas PLTA', ['Debit air normal hari ini.', 'Pintu air dibuka jam tiga.'], P, { yAbs: yT, idles: ['look', 'phone', 'think'] }); }
     kids(-58, -21, 3, 2, ['Ikan bakarnya Bu Atun enak!', 'Kak, mancing yuk!']);
+    // Pak Sudarmaji: petugas pintu air, cek debit, catat di buku, telepon yang menyuruh buka pintu air
+    const DA = spot(-74, 40, 6), DB = spot(-69.5, 41, 6);
+    if (DA && DB) plan('pakSudarmaji', 'Pak Sudarmaji', ['Air itu nggak bisa disuruh, Dek. Orang yang bisa.', 'Jangan main dekat pintu air.', 'Debit naik terus kalau hujan di gunung.'], [
+      at(DA, 'look', 5, { h: face(DA, -74, 34) }), at(DA, 'read', 6, { h: face(DA, -74, 34) }), at(DA, 'phone', 4, { say: ['Iya, Pak... tapi debitnya belum aman.', 'Saya nggak berani, Pak.'], p: 0.5 }),
+      at(DB, 'think', 3), at(DB, 'scratch', 2), at(DB, 'look', 3, { h: face(DB, -74, 34) })], { si: 0, spd: 0.7 });
   }
 
   if (id === 'timur') {
@@ -260,6 +324,27 @@ export function spawnWarga(A) {
       if (i % 2 === 0 && okLand(tx + 2.4, tz)) parkedRide('car', 'truk', '#e8e8e8', tx + 2.4, tz, 0, { box: rpick(['#3a6ab0', '#e8e4d8', '#f2c230']) });
       for (let k = 0; k < 2; k++) plan('buruh', 'Buruh ' + ['Tono', 'Gilang', 'Dedi', 'Udin'][(i + k) % 4], ['Target hari ini dua ribu kardus.', 'Gajian tanggal 25, sabar.', 'Shift malam lebih santai.'],
         [{ x: x + k * 0.9, z, a: 'squat', t: 1.4 }, { x: x + k * 0.9, z, a: 'carry', t: 1 }, { x: tx + k * 0.9, z: tz, a: 'carry', t: 1 }, { x: tx + k * 0.9, z: tz, a: 'squat', t: 1.4 }], { si: k * 2, spd: 0.9 }); });
+    // Serma Hadi: mengawasi apel, hormat, lalu ke gerbang asrama
+    const HA = spot(349.5, 40.5, 3), HG = spot(318, 63, 4);
+    if (HA && HG) plan('sermaHadi', 'Serma Hadi', ['Ulangi. Yang benar.', 'Teman Dimas? Jam sembilan sudah di rumah.', 'Lari subuh besok, ikut kalau berani.'], [
+      at(HA, 'idle', 5, { h: face(HA, 343.5, 44.5) }), at(HA, 'salute', 3, { h: face(HA, 343.5, 44.5) }), at(HA, 'raiseHand', 2, { h: face(HA, 343.5, 44.5), say: ['Ulangi. Yang benar.', 'Barisan lurus!'], p: 0.6 }), at(HA, 'look', 3, { h: face(HA, 343.5, 44.5) }),
+      at(HG, 'look', 4), at(HG, 'talk', 3)], { si: 0 });
+    // Tito: anak asrama main bola sendiri di lapangan kecil, sesekali ditemani bocah lain
+    const TB = spot(306, 52, 8, yard(4));
+    if (TB) { const TB2 = spot(TB[0] + 3.2, TB[1] + 0.6, 2) || TB;
+      plan('tito', 'Tito', ['Kak Dimas bilang kakak jago, beneran?', 'Aku mau jadi kapten kayak Kak Dimas!', 'Lututku luka lagi, nggak apa-apa.'], [
+        at(TB, 'kickBall', 1.2, { h: face(TB, ...TB2) }), { ...at(TB2, 'kickBall', 1.2, { h: face(TB2, ...TB) }), run: true }, at(TB2, 'cheer', 2, { say: ['Goool!', 'Kak Dimas bilang kakak jago, beneran?'], p: 0.4 }), { ...at(TB, 'jump', 1), run: true }, at(TB, 'laugh', 1.5)], { si: 0 });
+      kids(TB[0] + 1.6, TB[1] - 3, 2, 2, ['Tito curang!', 'Oper, To!']); }
+    // Mbak Sri: absen buruh shift di gerbang kawasan industri
+    const SR = spot(346, 110, 6, yard(3));
+    if (SR) { const BL = spots(okLand, 4, near(SR[0], SR[1] + 2.2, 1.6), 1);
+      BL.forEach((q, i) => plan('buruh', 'Buruh ' + ['Yanto', 'Iwan', 'Sutini', 'Rohim'][i], ['Akhirnya pulang...', 'Lembur lagi minggu ini.'], [at(q, 'idle', 4, { h: face(q, ...SR) }), at(q, 'talk', 3, { h: face(q, ...SR) + 1 }), at(q, 'raiseHand', 1.5, { h: face(q, ...SR), say: ['Hadir!', 'Ada, Mbak!'], p: 0.5 }), at(q, 'scratch', 2, { h: face(q, ...SR) })], { shuffle: true }));
+      plan('mbakSri', 'Mbak Sri', ['Absen dulu, baru ngeluh.', 'Shift dua masuk jam dua, jangan telat.', 'Mandor gudang itu bukan orang pabrik.'], [
+        at(SR, 'raiseHand', 3, { h: face(SR, SR[0], SR[1] + 2.2), say: ['Absen dulu, baru ngeluh!', 'Shift dua, baris sini!'], p: 0.6 }), at(SR, 'read', 5, { h: face(SR, SR[0], SR[1] + 2.2) }), at(SR, 'talk', 3, { h: face(SR, SR[0], SR[1] + 2.2) }), at(SR, 'look', 3)], { si: 0 }); }
+    // Pak Rusdi: mandor gudang subkontraktor, pegang daftar tenaga harian
+    const RD = spot(360, 118, 6, (x, z) => okLand(x, z) && nearB(x, z, 2.5));
+    if (RD) plan('pakRusdi', 'Pak Rusdi', ['Cari kerja harian? Nama masuk daftar dulu.', 'Gudang ini bukan tempat main, Dek.', 'Jangan banyak tanya.'], [
+      at(RD, 'read', 6), at(RD, 'raiseHand', 2, { say: ['Yang namanya nggak ada di daftar, pulang!', 'Tenaga harian, kumpul sini!'], p: 0.5 }), at(RD, 'phone', 4, { say: ['Iya, Bang Sarip. Besok truknya masuk.'], p: 0.4 }), at(RD, 'think', 3)], { si: 0 });
   }
 
   if (id === 'sirkuit') {
@@ -277,6 +362,11 @@ export function spawnWarga(A) {
       for (let i = 0; i < 14; i++) { const k = Math.floor(R() * 5), x = tb.x - tb.w / 2 + 1 + R() * (tb.w - 2), z = tb.y - tb.h / 2 + 0.32 + k * 0.64, y = y0 + 0.4 + k * 0.4, h = -Math.PI / 2;
         plan(rpick(['pemuda', 'remaja', 'anakPunk', 'mbak', 'siswaB', 'ibuHijab2', 'bocah', 'ojol']), 'Penonton', ['Gaspol!', 'Ayo nomor 46!', 'Seru banget!'],
           [{ x, z, a: 'sitDown', t: 8, h, y }, { x, z, a: 'cheer', t: 2.5, h, y, say: ['Gaspoool!', 'Wuuuu!', 'Ayo! Ayo!', 'Salip! Salip!'], p: 0.35 }, { x, z, a: 'clap', t: 2, h, y }, { x, z, a: 'sitDown', t: 5, h, y }], { si: Math.floor(R() * 4) }); } }
+    // Pak Yusuf Tanjung: kepala race control, bicara di radio, menyusuri pit memeriksa motor
+    const YA = spot(368, 214.6, 3), YB = spot(352.5, 214.8, 3);
+    if (YA && YB) plan('pakYusuf', 'Pak Yusuf', ['Di sini cepat itu boleh. Di jalan, cepat itu bodoh.', 'Track day akhir bulan. Daftar di sekretariat.', 'Helm full face, jaket, sarung tangan. Wajib.'], [
+      at(YA, 'phone', 4, { say: ['Race control ke marshal: tikungan empat bersih.', 'Bendera kuning, sektor dua.'], p: 0.5 }), at(YA, 'raiseHand', 2), at(YA, 'look', 3, { h: Math.PI / 2 }),
+      at(YB, 'look', 3), at(YB, 'talk', 3, { say: ['Rantai dicek lagi sebelum turun!', 'Tekanan ban berapa?'], p: 0.5 }), at(YB, 'think', 2)], { si: 0, spd: 0.85 });
   }
 
   if (id === 'muara') {
@@ -298,6 +388,11 @@ export function spawnWarga(A) {
       [{ x, z: z + 0.9, a: 'catch', t: 4, h: -Math.PI / 2 }, { x: x + 0.7, z: z + 0.9, a: 'catch', t: 4, h: -Math.PI / 2 }, { x: x + 0.7, z: z + 0.9, a: 'stretch', t: 2, h: Math.PI / 2 }]); });
     kids(300, 266, 3, 2, ['Kak, lihat perahu bapakku!', 'Main pasir yuk!']);
     fishersAt([326, 245, 393, 265], 2, ['nelayan', 'pemuda'], ['Mang Karta', 'Kang Ayi']);
+    // Wak Kodir: juragan perahu, membetulkan jaring di kampung nelayan lalu ke dekat dermaga memanggil anak buah
+    const KA = spot(309, 262.5, 5, (x, z) => okLand(x, z) && nearB(x, z, 3)), KB = spot(316.8, 266.8, 2);
+    if (KA && KB) plan('wakKodir', 'Wak Kodir', ['Laut nggak kenal hari Minggu, Le.', 'Taruhan? Goceng, perahu siapa pulang duluan.', 'Anak saya kerja di pabrik, jarang pulang.'], [
+      at(KA, 'squat', 8, { h: Math.PI / 2 }), at(KA, 'look', 4, { h: Math.PI / 2 }), at(KA, 'laugh', 2, { say: ['Laut nggak kenal hari Minggu, Le.', 'Jaring kusut lagi, haduh.'], p: 0.4 }),
+      at(KB, 'raiseHand', 2, { h: Math.PI / 2, say: ['Woy, perahunya tarik ke pinggir!', 'Subuh besok kita berangkat!'], p: 0.6 }), at(KB, 'look', 4, { h: Math.PI / 2 })], { si: 0, spd: 0.85 });
   }
 
   if (id === 'pantai') {
@@ -337,6 +432,19 @@ export function spawnWarga(A) {
     farmers([19], 4);
     yards([177, 183, 258, 231], 4, (x, z) => inA(x, z, [30]));
     kids(196, 208, 3);
+    // Bu Romlah: pemilik warung seafood, bakar ikan, teriak ke pelayan, antar pesanan
+    const RW = spot(134, 258, 4), RX = spot(129.5, 258.5, 4);
+    if (RW && RX) plan('buRomlah', 'Bu Romlah', ['Kopinya yang dingin ya, yang kemarin laris!', 'Anak sekolah? Sini, Ibu kasih harga pelajar.', 'Cumi bakar, kerang, udang. Segar dari TPI!'], [
+      at(RW, 'squat', 4), at(RW, 'raiseHand', 2.5, { say: ['Neng! Meja tiga belum dibersihin!', 'Ikan bakarnya dua lagi!', 'Kopinya yang dingin ya, yang kemarin laris!'], p: 0.6 }), at(RX, 'carry', 2), at(RX, 'talk', 3), at(RW, 'laugh', 2)], { si: 0, spd: 0.8 });
+    // Mbah Darmo: penjaga mercusuar, jalan pelan dengan lampu minyak, menatap laut
+    const MA = spot(236, 284, 5), MB = spot(232.5, 285, 5), MC = spot(239, 283, 5);
+    if (MA && MB && MC) plan('mbahDarmo', 'Mbah Darmo', ['Lampu ini dulu menuntun kapal pulang. Sekarang menuntun siapa, ya?', 'Tahun berapa sekarang, Le?', 'Kapal Gajah Mina dulu karam di karang itu.'], [
+      at(MA, 'look', 6, { h: Math.PI / 2, say: ['Lampu ini dulu menuntun kapal pulang. Sekarang menuntun siapa, ya?'], p: 0.4 }), at(MB, 'sitDown', 10, { h: Math.PI / 2 }), at(MB, 'think', 3, { h: Math.PI / 2 }), at(MC, 'look', 5, { h: Math.PI / 2 })], { si: 0, spd: 0.35 });
+    // Nek Sumi: jamu gendong keliling Desa Pandansari
+    { let best = null, bd = 1e9; for (const r of roads) { if (r.kind === 'raya') continue; for (const [x, z] of r.pts) { const d = Math.hypot(x - 210, z - 195); if (d < bd) { bd = d; best = r; } } }
+      const P = best && bd < 20 ? line(best.pts, 0.6).filter(q => Math.hypot(q.x - 210, q.z - 195) < 26) : [];
+      if (P.length >= 4) walker('nekSumi', 'Nek Sumi', ['Kunyit asam, Nak? Biar nggak gampang marah kayak cucu Nenek.', 'Beras kencur, sepuluh ribu.', 'Andra itu cucu Nenek. Bandel, tapi baik.'], P, { spd: 0.5, idles: ['talk', 'wave', 'idle', 'look'], chat: ['Jamuuu! Jamu gendooong!', 'Kunyit asam, beras kencur!'] });
+      else { const NS = spot(210, 192, 6); if (NS) plan('nekSumi', 'Nek Sumi', ['Kunyit asam, Nak? Biar nggak gampang marah kayak cucu Nenek.'], [at(NS, 'idle', 5), at(NS, 'talk', 3), at(NS, 'wave', 2)]); } }
   }
 
   if (id === 'pesisir') {

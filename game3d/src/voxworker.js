@@ -94,6 +94,21 @@ import { build as sutrisBuild } from './raka/sutris.js';
 import { build as prasBuild } from './raka/pras.js';
 import { build as saripBuild } from './raka/sarip.js';
 import { build as kartaBuild } from './raka/karta.js';
+import { build as mahfudBuild } from './raka/mahfud.js';
+import { build as hadiBuild } from './raka/hadi.js';
+import { build as sudarmajiBuild } from './raka/sudarmaji.js';
+import { build as kodirBuild } from './raka/kodir.js';
+import { build as romlahBuild } from './raka/romlah.js';
+import { build as ujoBuild } from './raka/ujo.js';
+import { build as sabarBuild } from './raka/sabar.js';
+import { build as yusufBuild } from './raka/yusuf.js';
+import { build as sriBuild } from './raka/sri.js';
+import { build as darmoBuild } from './raka/darmo.js';
+import { build as sumiBuild } from './raka/sumi.js';
+import { build as titoBuild } from './raka/tito.js';
+import { build as ayuBuild } from './raka/ayu.js';
+import { build as rusdiBuild } from './raka/rusdi.js';
+import { build as lukmanBuild } from './raka/lukman.js';
 import { SPAWN as sp_priaS, build as sp_priaB } from './raka/sp_pria.js';
 import { SPAWN as sp_wanitaS, build as sp_wanitaB } from './raka/sp_wanita.js';
 import { SPAWN as sp_hijabS, build as sp_hijabB } from './raka/sp_hijab.js';
@@ -120,6 +135,8 @@ import { SPAWN as sp_penontonS, build as sp_penontonB } from './raka/sp_penonton
 import { SPAWN as sp_santriS, build as sp_santriB } from './raka/sp_santri.js';
 import { SPAWN as sp_silatS, build as sp_silatB } from './raka/sp_silat.js';
 import { SPAWN as sp_persitS, build as sp_persitB } from './raka/sp_persit.js';
+import { SPAWN as sp_stmS, build as sp_stmB } from './raka/sp_stm.js';
+import { SPAWN as sp_smkS, build as sp_smkB } from './raka/sp_smk.js';
 import { voxelFrame } from './raka/frame.js';
 import { exprFor, helmFor } from './raka/expr.js';
 
@@ -185,10 +202,10 @@ const FINE = { raka: buildParts, rani: raniBuild, bimo: bimoBuild, bram: bramBui
   pakTarno: tarnoBuild, mbakDewi: dewiBuild, pengamenDul: dulBuild, omHendrik: hendrikBuild, buWati: watiBuild,
   masIlham: ilhamBuild, kakNana: nanaBuild, pakDarsono: darsonoBuild, wakUdin: udinBuild, buInah: inahBuild,
   bangUcok: ucokBuild, makIjah: ijahBuild, pakRoni: roniBuild, tehLilis: lilisBuild, masTejo: tejoBuild,
-  satpamUdin: satpamudinBuild, buNingsih: ningsihBuild, masCilok: cilokBuild, siswaAndi: andiBuild, siswiFitri: fitriBuild, siswiRina: rinaBuild, siswaBayu: bayuBuild, siswiMaya: mayaBuild, stmBejo: bejoBuild, mandorSutris: sutrisBuild, pakPras: prasBuild, bangSarip: saripBuild, abahKarta: kartaBuild };
+  satpamUdin: satpamudinBuild, buNingsih: ningsihBuild, masCilok: cilokBuild, siswaAndi: andiBuild, siswiFitri: fitriBuild, siswiRina: rinaBuild, siswaBayu: bayuBuild, siswiMaya: mayaBuild, stmBejo: bejoBuild, mandorSutris: sutrisBuild, pakPras: prasBuild, bangSarip: saripBuild, abahKarta: kartaBuild, kyaiMahfud: mahfudBuild, sermaHadi: hadiBuild, pakSudarmaji: sudarmajiBuild, wakKodir: kodirBuild, buRomlah: romlahBuild, kangUjo: ujoBuild, mandorSabar: sabarBuild, pakYusuf: yusufBuild, mbakSri: sriBuild, mbahDarmo: darmoBuild, nekSumi: sumiBuild, tito: titoBuild, nengAyu: ayuBuild, pakRusdi: rusdiBuild, irLukman: lukmanBuild };
 // NPC tanpa nama (guide segmen 34): tiap template spawn didaftarkan 8 kali sebagai <sid>_0..7 (seed v). Sid tampilan boleh
 // membawa baju lewat akhiran '~', misal 'tentara_3~jaga'; tanpa akhiran template memakai baju bawaannya.
-for (const [S, B] of [[sp_priaS, sp_priaB], [sp_wanitaS, sp_wanitaB], [sp_hijabS, sp_hijabB], [sp_lansiaS, sp_lansiaB], [sp_mudaS, sp_mudaB], [sp_anakS, sp_anakB], [sp_tentaraS, sp_tentaraB], [sp_buruhS, sp_buruhB], [sp_petaniS, sp_petaniB], [sp_siswaS, sp_siswaB], [sp_siswiS, sp_siswiB], [sp_guruS, sp_guruB], [sp_ojolS, sp_ojolB], [sp_kuliS, sp_kuliB], [sp_parkirS, sp_parkirB], [sp_polisiS, sp_polisiB], [sp_satpamS, sp_satpamB], [sp_nelayanS, sp_nelayanB], [sp_mekanikS, sp_mekanikB], [sp_pedagangS, sp_pedagangB], [sp_pendakiS, sp_pendakiB], [sp_turisS, sp_turisB], [sp_penontonS, sp_penontonB], [sp_santriS, sp_santriB], [sp_silatS, sp_silatB], [sp_persitS, sp_persitB]]) for (let v = 0; v < 8; v++) FINE[S.sid + '_' + v] = o => B({ ...o, v });
+for (const [S, B] of [[sp_priaS, sp_priaB], [sp_wanitaS, sp_wanitaB], [sp_hijabS, sp_hijabB], [sp_lansiaS, sp_lansiaB], [sp_mudaS, sp_mudaB], [sp_anakS, sp_anakB], [sp_tentaraS, sp_tentaraB], [sp_buruhS, sp_buruhB], [sp_petaniS, sp_petaniB], [sp_siswaS, sp_siswaB], [sp_siswiS, sp_siswiB], [sp_guruS, sp_guruB], [sp_ojolS, sp_ojolB], [sp_kuliS, sp_kuliB], [sp_parkirS, sp_parkirB], [sp_polisiS, sp_polisiB], [sp_satpamS, sp_satpamB], [sp_nelayanS, sp_nelayanB], [sp_mekanikS, sp_mekanikB], [sp_pedagangS, sp_pedagangB], [sp_pendakiS, sp_pendakiB], [sp_turisS, sp_turisB], [sp_penontonS, sp_penontonB], [sp_santriS, sp_santriB], [sp_silatS, sp_silatB], [sp_persitS, sp_persitB], [sp_stmS, sp_stmB], [sp_smkS, sp_smkB]]) for (let v = 0; v < 8; v++) FINE[S.sid + '_' + v] = o => B({ ...o, v });
 const PARTS = new Map();
 const fineParts = (sid, outfit, expr, helm) => {
   const k = sid + '|' + outfit + '|' + expr + (helm ? '+h' : '');

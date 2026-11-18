@@ -15239,7 +15239,7 @@ const CLOTH = {
   putih: '#eeede6', krem: '#e0d4ba', abu: '#8c8e93', abuMuda: '#b9bbc1', hitam: '#2c2c32', navy: '#28344f', biru: '#3c66aa', biruMuda: '#80aad8',
   tosca: '#2c8c8a', hijau: '#3c8c4c', hijauTua: '#2c5c3c', olive: '#6c6c3c', kuning: '#dcbc40', oranye: '#dc7a32', merah: '#c03c34', marun: '#7c2c34',
   pink: '#de8caa', ungu: '#6c4c8c', lilac: '#b29ad0', coklat: '#6c4c32', coklatMuda: '#a27c52', mocca: '#9c7c64', khaki: '#b2a272', jins: '#36486c',
-  jinsMuda: '#5c7aa2', salem: '#e0a088', mint: '#9ccab2', kopi: '#4a3628',
+  jinsMuda: '#5c7aa2', salem: '#e0a088', mint: '#9ccab2', kopi: '#4a3628', oranyePudar: '#c87a46',
   hitamPudar: '#45433f', pinkTua: '#b8607e', pinkPersit: '#e8a4ba', coklatPol: '#6a5236', khakiPNS: '#a8946a', oranyeRompi: '#e86a1c', hijauOjol: '#2ca04c', karet: '#3a2c22',
   lorDasar: '#5c6a44', lorTua: '#3a4630', lorCoklat: '#6e5c3e', lorHitam: '#22261e', stabilo: '#c8e030', safety: '#e8e8e0',
 };
@@ -15253,6 +15253,7 @@ Object.assign(R, {
   spAnyam: ['#a8884e', '#bc9a5c', '#ceac6a', '#dcbc7c'], spAnyamS: ['#8a6c3a'], spKaret: ['#1e1e22', '#28282e', '#323238', '#3e3e46'],
   spKresekP: ['#e4e4e2', '#eeeeec', '#f6f6f4', '#fcfcfa'], spKresekH: ['#26262a', '#303034', '#3a3a3e', '#46464a'], spKresekM: ['#b8302c', '#c83a34', '#d6443c', '#e05048'],
   spIsi: ['#7ab84a'], spOli: ['#2a2622'], spKopi: ['#3a2418'], spKuah: ['#c89a5a'], spBakso: ['#9a7a5e', '#a8886a', '#b69676', '#c4a482'], spLuka: ['#e2aa98'], spRantai: ['#a8a29a', '#bcb6ac', '#d0cabe', '#e4ded2'], spIkan: ['#9aa8b4', '#aab8c4', '#bcc8d2', '#ccd6de'], spSemen: ['#8a8a86', '#9a9a96', '#aaaaa6', '#bababa'], spJaring: ['#3a6a7a'], spMerahLL: ['#e8342c'], spTali: ['#2a2a30'], spLogo: ['#e8e4d8'], spMerahP: ['#c83a34'], spPutihP: ['#f4f4f0'],
+  spApi: ['#f0b030', '#f8c848', '#fcd860', '#fee880'], spJamu: ['#d89a2a', '#e6aa3a', '#f0bc4c', '#f8cc5c'], spMerahPipi: ['#c8705a'],
 });
 addRamps(R);
 
@@ -15435,6 +15436,23 @@ function capOf(v, d) {   // penutup kepala; rambut di bawahnya dibuang
     if (d.headTulis) for (let y = -3; y <= 2; y++) if (y % 2 === 0) { const x = v.front(y, 13); if (x !== null) v.set(x, y, 13, 'spC_' + d.headTulis); }
     return;
   }
+  if (t === 'koboi') {   // topi koboi anyaman: mahkota berlekuk, pita cokelat, pinggiran lebar melengkung naik di kiri-kanan
+    clear(13);
+    for (let z = 13; z <= 20; z++) for (let x = -14; x <= 13; x++) for (let y = -14; y <= 13; y++) {
+      const brim = z === 13 || (z === 14 && Math.abs(y + 0.5) > 10.5), ay = Math.abs(y + 0.5), rr = brim ? 13.6 : 8.4 - Math.max(0, z - 18) * 1.4;
+      const q = ((x + 0.5) / (brim ? 12.6 : rr)) ** 2 + ((y + 0.5) / rr) ** 2;
+      if (q > 1) continue; if (!brim && q < 0.6 && z < 20) continue; if (brim && z === 13 && ay > 10.5) continue;
+      if (z === 20 && ay < 1.5 && x > -5) continue;   // lekuk atas
+      v.set(x, y, z, z === 14 && !brim ? 'spC_coklat' : (x + y + z + 60) % 3 === 0 ? 'spAnyamS' : 'spAnyam');
+    }
+    for (let x = -8; x <= 8; x++) for (let y = -8; y <= 8; y++) if (Math.hypot(x + 0.5, y + 0.5) < 7.6) v.set(x, y, 13, null);
+    return;
+  }
+  if (t === 'topiKoki') {   // topi koki putih: pita tegak + puncak mengembang
+    clear(12);
+    for (let z = 12; z <= 24; z++) { const r = z <= 16 ? 8.6 : 8.6 + Math.min(1.6, (z - 16) * 0.6) - Math.max(0, z - 22) * 1.8; for (let x = -11; x <= 10; x++) for (let y = -11; y <= 10; y++) { const q = Math.hypot(x + 0.5, y + 0.5); if (q <= r && (q > r - 2 || z >= 23)) v.set(x, y, z, z <= 16 ? (z === 12 ? 'spC_putihS' : 'spC_putih') : (Math.floor(Math.atan2(y + 0.5, x + 0.5) * 2.6) + 9) % 2 ? 'spPutihP' : 'spC_putih'); } }
+    return;
+  }
   if (t === 'topiRimba') {
     clear(13);
     for (let z = 13; z <= 19; z++) for (let x = -12; x <= 11; x++) for (let y = -12; y <= 11; y++) { const brim = z === 13, rr = brim ? 11.6 : 8.8, q = ((x + 0.5) / rr) ** 2 + ((y + 0.5) / rr) ** 2 + (brim ? 0 : (Math.max(0, z - 16) / 3.4) ** 2); if (q <= 1 && (q > 0.6 || z >= 19 || brim)) v.set(x, y, z, z === 14 ? c + 'S' : c); }
@@ -15448,9 +15466,10 @@ function lorengAt(x, y, z) {   // loreng: bercak besar tidak beraturan (4 warna)
   return LOR[q > 1.2 ? 3 : q > 0.3 ? 2 : q < -0.9 ? 1 : 0];
 }
 function glassesOf(v, d) {
-  const k = 'spKaca', fx = v.front(-1, 7) + 1;
-  for (const y0 of [-7, 1]) for (let y = y0; y <= y0 + 5; y++) for (let z = 6; z <= 9; z++) { const ey = y === y0 || y === y0 + 5, ez = z === 6 || z === 9; if ((ey && ez) || !(ey || ez)) continue; if (d.face.kacamata === 'tipis' && ez && !ey && z === 6) continue; v.set(fx, y, z, k); }
+  const g = d.face.kacamata, k = g === 'emas' ? 'spEmas' : 'spKaca', fx = v.front(-1, 7) + 1;   // emas: bingkai emas bulat; tebal: lensa tebal tampak kebiruan
+  for (const y0 of [-7, 1]) for (let y = y0; y <= y0 + 5; y++) for (let z = 6; z <= 9; z++) { const ey = y === y0 || y === y0 + 5, ez = z === 6 || z === 9; if ((ey && ez) || !(ey || ez)) { if (g === 'tebal' && !(ey && ez)) v.set(fx, y, z, 'spKacaL'); continue; } if (g === 'tipis' && ez && !ey && z === 6) continue; v.set(fx, y, z, k); }
   for (const y0 of [-7, 1]) v.set(fx, y0 + 4, 8, 'spKacaL');
+  if (g === 'tebal') for (const y0 of [-7, 1]) { v.set(fx, y0 + 2, 7, 'spKaca'); v.set(fx, y0 + 3, 7, 'spKaca'); }
   v.set(fx, -1, 8, k); v.set(fx, 0, 8, k);
   for (const y of [-8, 7]) for (let x = fx; x >= -1; x--) if (!v.has(x, y, 8)) v.set(x, y, 8, k);
 }
@@ -15466,6 +15485,7 @@ function head(d, expr) {
   if (d.hijab) hijabOf(v, d); else hairOf(v, d);
   if (d.face.kacamata) glassesOf(v, d);
   if (d.masker) { for (let z = 1; z <= 5; z++) for (let y = -6; y <= 5; y++) { const x = v.front(y, z); if (x !== null && x >= 4) v.set(x + (z <= 4 && Math.abs(y + 0.5) < 3 ? 1 : 0), y, z, 'spC_' + d.masker); } for (const y of [-8, 7]) v.set(0, y, 6, 'spC_' + d.masker); }
+  if (d.maskerDagu) { const c = 'spC_' + d.maskerDagu; for (let z = -1; z <= 1; z++) for (let y = -5; y <= 4; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === -1 ? c + 'S' : c); } for (const y of [-8, 7]) for (let z = 2; z <= 5; z++) if (!v.has(-1, y, z)) v.set(-1, y, z, c); }   // masker kain diturunkan ke dagu
   if (d.head) capOf(v, d);
   if (d.fx && d.fx.head) d.fx.head(v, d);
   if (d.age === 'anak' && d.sex === 'P' && !d.hijab && !d.head) for (const y of [-6, 5]) v.set(v.front(y, 13) + 1 || 6, y, 13, 'spC_' + (d.jepit || 'pink'));   // jepit rambut
@@ -15486,6 +15506,7 @@ function pattern(v, mat, pat, alt) {
     else if (pat === 'batik') { const q = ((u + z + 400) % 7); if (q === 0) v.set(x, y, z, A); else if (q === 1 || q === 6) v.set(x, y, z, S); else if (q === 3 && (u + 40) % 2 === 0) v.set(x, y, z, A); }   // parang: pita miring + titik
     else if (pat === 'bunga') { const gy = Math.floor(u / 4), gz = Math.floor((z + (gy % 2) * 3) / 6), cy = u % 4, cz = ((z + (gy % 2) * 3) % 6 + 6) % 6; if ((gy + gz) % 2 === 0 && cy >= 1 && cy <= 2 && cz >= 2 && cz <= 3) v.set(x, y, z, A); }
     else if (pat === 'loreng') v.set(x, y, z, lorengAt(x, y, z));
+    else if (pat === 'lurik') { const q = (u + 400) % 5; if (q === 0) v.set(x, y, z, A); else if (q === 2) v.set(x, y, z, S); }   // lurik: garis tegak rapat
     else if (pat === 'kotor') { const h = rnd(Math.floor(x / 2), Math.floor(y / 2), Math.floor(z / 3)); if (h % 37 === 0) v.set(x, y, z, 'spOli'); else if (h % 13 === 0) v.set(x, y, z, S); }   // noda oli & kusam bergumpal, jarang
   });
   return v;
@@ -15577,6 +15598,7 @@ function accChest(v, d, G) {
     for (let z = z0; z <= z1 - 7; z++) for (let y = y0 + 1; y <= y1 - 1; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === z1 - 7 ? c + 'S' : c); }
     for (const y of [y0 + 2, y1 - 2]) for (let z = z1 - 6; z <= z1 + 1; z++) { const x = v.front(y, Math.min(z, z1)); if (x !== null) v.set(x + 1, y, z, c + 'S'); }
     if (d.apronPocket) v.pfBox(-3, z0 + 3, 2, z0 + 5, c + 'S');
+    if (d.apronPat) pattern(v, c, d.apronPat, d.apronPc);
   }
   if (A.includes('boks')) {   // boks makanan ojol di punggung
     const c = cm(d.accCol || 'hijauOjol'), xb = x0 - 1;
@@ -15598,6 +15620,19 @@ function accChest(v, d, G) {
     const a = cm(d.syalCol || 'biru'), b = cm(d.syalCol2 || 'putih'), nz = z1;
     for (let z = nz - 1; z <= nz + 2; z++) v.shell(z, x0, -5, x1 + 1, 4, z % 2 ? a : b, 2);
     for (const [ya, yb, len] of [[-4, -2, 14], [1, 3, 11]]) for (let z = nz - len; z <= nz; z++) for (let y = ya; y <= yb; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === nz - len ? 'spPutihP' : Math.floor((z + 40) / 3) % 2 ? a : b); }
+  }
+  if (A.includes('gendong')) {   // selendang gendong: kain miring bahu kanan -> pinggang kiri, buntelan di punggung berisi botol jamu
+    const c = cm(d.gendongCol || 'merah');
+    for (let z = z0; z <= z1; z++) { const yc = Math.round(y0 + 1 + (z1 - z) * (y1 - y0 - 2) / (z1 - z0)); for (let y = yc - 1; y <= yc + 1; y++) { if (y < y0 || y > y1) continue; const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, (z + y) % 4 ? c : c + 'S'); const xb = v.back(y, z); if (xb !== null) v.set(xb - 1, y, z, c); } }
+    const xb = x0 - 1, yb0 = y0 + 1, yb1 = y1 - 1, zb0 = z0 - 4, zb1 = z0 + 13;
+    for (let z = zb0; z <= zb1; z++) for (let x = xb - 8; x <= xb; x++) for (let y = yb0; y <= yb1; y++) { const q = ((x - xb + 4) / 4.6) ** 2 + ((y - (yb0 + yb1) / 2) / ((yb1 - yb0) / 2 + 0.6)) ** 2; if (q <= 1 && (q > 0.5 || z === zb0)) v.set(x, y, z, z === zb0 + 3 || z === zb1 - 1 ? c + 'S' : c); }
+    const BT = ['spJamu', 'spC_hijau', 'spJamu', 'spC_coklatMuda', 'spC_kuning', 'spJamu'];
+    let i = 0; for (let x = xb - 6; x <= xb - 2; x += 2) for (let y = yb0 + 1; y <= yb1 - 1; y += 3) { const m = BT[i++ % BT.length]; for (let z = zb1 - 2; z <= zb1 + 5; z++) { v.set(x, y, z, m); v.set(x, y + 1, z, m); } v.set(x, y, zb1 + 6, 'spKayu'); }
+  }
+  if (A.includes('radio')) {   // radio genggam dijepit di dada kiri, antena ke atas
+    const yr = y1 - 5, zr = z1 - 13, x = Math.max(...[yr, yr + 3].map(y => v.front(y, zr + 3) ?? x1)) + 1;
+    v.box(x, yr, zr, x + 1, yr + 3, zr + 7, 'spHP'); v.box(x + 2, yr + 1, zr + 4, x + 2, yr + 2, zr + 6, 'spLayar'); v.set(x + 2, yr + 1, zr + 2, 'spMerahP');
+    for (let z = zr + 8; z <= zr + 12; z++) v.set(x, yr + 3, z, 'spHP');
   }
   if (A.includes('peluit')) { for (let z = z1 - 9; z <= z1; z++) { const yy = Math.round((z1 - z) * 0.3); for (const y of [-2 - yy, 1 + yy]) if (z > z1 - 8) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'spMerahP'); } } v.pfBox(-1, z1 - 11, 0, z1 - 10, 'spPerak'); }
 }
@@ -15621,7 +15656,7 @@ function pelvis(d, G) {
   accPelvis(v, d, G); return v;
 }
 function accPelvis(v, d, G) {
-  if (d.acc.includes('celemek')) { const c = cm(d.apronCol || 'putih'), [p0, p1] = G.pel; for (let z = p0 - 2; z <= p1; z++) for (let y = G.pw[1] + 1; y <= G.pw[3] - 1; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === p0 - 2 ? c + 'S' : c); } }
+  if (d.acc.includes('celemek')) { const c = cm(d.apronCol || 'putih'), [p0, p1] = G.pel; for (let z = p0 - 2; z <= p1; z++) for (let y = G.pw[1] + 1; y <= G.pw[3] - 1; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === p0 - 2 ? c + 'S' : c); } if (d.apronPat) pattern(v, c, d.apronPat, d.apronPc); }
   if (d.acc.includes('ht')) { const [p0] = G.pel, y = G.pw[3] + 1; v.rbox(-1, y, p0 + 1, 2, y + 1, p0 + 6, 'spHP', 0); for (let z = p0 + 7; z <= p0 + 10; z++) v.set(1, y + 1, z, 'spHP'); }
   if (d.acc.includes('selempang')) { const [p0, p1] = G.pel, y = G.pw[1] - 2; v.rbox(-3, y - 2, p0, 3, y, p0 + 6, cm(d.accCol || 'coklat'), 1); v.set(3, y - 1, p0 + 4, 'spEmas'); }
   if (d.acc.includes('sabuk')) {   // sabuk silat: lilitan + simpul di kiri depan, dua ujung menjuntai
@@ -15697,6 +15732,16 @@ function prop(v, d, G, p) {
   if (p === 'tasbih') { const cz = hz - Math.round(5 * s), rr = Math.round(4 * s); for (let a = 0; a < 24; a++) { const t = a / 24 * Math.PI * 2, x = Math.round(1 + Math.sin(t) * rr * 0.6), z = Math.round(cz + Math.cos(t) * rr); v.set(x, hy, z, a % 6 === 0 ? 'spEmas' : 'spKayu'); } for (let z = cz - rr - 3; z < cz - rr; z++) v.set(1, hy, z, 'spEmas'); }
   if (p === 'rotan') { for (let z = hz - 12; z <= hz + 16; z++) v.set(3, hy, z, z % 6 === 0 ? 'spAnyamS' : 'spAnyam'); v.set(3, hy + 1, hz + 16, 'spAnyamS'); }
   if (p === 'mangkok') { for (let z = hz - 1; z <= hz + 2; z++) { const r = z === hz - 1 ? 2 : 3 + (z > hz ? 1 : 0); v.shell(z, 3 - r, hy - r, 3 + r, hy + r, z === hz + 2 ? 'spC_hijau' : 'spPutihP', 2); } v.rrect(hz + 1, 1, hy - 2, 5, hy + 2, 'spKuah', 2); for (const [x, y] of [[2, -1], [4, 1], [3, 0], [2, 1], [4, -1]]) v.set(x, hy + y, hz + 2, 'spBakso'); v.set(3, hy + 2, hz + 3, 'spIsi'); }
+  if (p === 'lampu') {   // lampu minyak (teplok gantung) dijinjing: tangkai, tabung kaca, api
+    for (let z = hz - 3; z <= hz; z++) v.set(1, hy, z, 'spBesi');
+    v.rrect(hz - 4, -1, hy - 2, 3, hy + 2, 'spBesi', 1);
+    for (let z = hz - 11; z <= hz - 5; z++) v.shell(z, -1, hy - 2, 3, hy + 2, z >= hz - 9 && z <= hz - 7 ? 'spApi' : 'spKacaL', 1);   // kaca semprong, bagian tengah menyala
+    v.rbox(-2, hy - 3, hz - 14, 4, hy + 3, hz - 12, 'spBesi', 1); v.rrect(hz - 13, -1, hy - 2, 3, hy + 2, 'spKuah', 1);
+  }
+  if (p === 'papan') {   // papan jepit (clipboard): papan kayu, kertas, penjepit
+    const yb = a1(G) + 1; v.box(-4, yb, hz - 3, 5, yb, hz + 10, 'spKayu'); v.box(-3, yb + 1, hz - 2, 4, yb + 1, hz + 8, 'spPutihP');
+    for (let z = hz; z <= hz + 7; z += 2) v.box(-2, yb + 1, z, 3, yb + 1, z, 'spC_abu'); v.box(-1, yb + 1, hz + 9, 2, yb + 2, hz + 10, 'spPerak');
+  }
   if (p === 'keranjang') { for (let z = hz - 12; z <= hz - 3; z++) v.shell(z, -4, hy - 4, 4, hy + 4, (z + hy) % 3 ? 'spAnyam' : 'spAnyamS', 2); v.rrect(hz - 12, -3, hy - 3, 3, hy + 3, 'spAnyam', 2); for (let x = -3; x <= 3; x++) v.set(x, hy, hz - 1 - (Math.abs(x) > 1 ? 1 : 0), 'spAnyamS'); v.set(-2, hy - 2, hz - 3, 'spIsi'); v.set(1, hy + 1, hz - 3, cm('merah')); }
 }
 const a1 = G => G.ay[1];
@@ -15710,7 +15755,8 @@ function thigh(d, G) {
   if (B.stripe) for (let z = t0; z <= t1; z++) v.set(0, ty1, z, cm(B.stripe));
   return pattern(v, c, B.pat, B.pc);
 }
-function shin(d, G) {
+function shin(d, G) { const v = shin0(d, G); if (d.fx && d.fx.shin) d.fx.shin(v, d, G); return v; }
+function shin0(d, G) {
   const B = d.bot, c = cm(B.c || 'hitam'), k = B.kind || 'celana', K = 'spKulit' + d.skin, kid = d.age === 'anak', F = d.feet.kind || 'sepatu';
   if ((k === 'rok' || k === 'sarung' || k === 'daster') && !kid) return pattern(skirtShin(c, c + 'S'), c, B.pat, B.pc);
   const v = new Vox(), [s0, s1] = G.sn, [ty0, ty1] = G.ty, [tx0, tx1] = G.tx;
@@ -16614,6 +16660,458 @@ function build(opt = {}) {
 
 return { OUTFITS, EXPRS, build };
 })();
+// ===== mahfud.js
+NS.mahfud = (() => {
+// Kyai Mahfud Sastrowiryo: 63, pengasuh Pesantren Darul Falah di Desa Tegalsari, cucu Ki Sastro Wiryo (segmen 33).
+// Kurus tinggi, janggut putih pendek, kacamata bulat berbingkai emas, peci hitam, koko putih, sarung kotak hijau,
+// tasbih kayu, pena selalu di saku. Dibangun di atas spawn_base (gaya & rangka sama), voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  koko: { name: 'Harian: peci hitam + koko putih + sarung kotak hijau + sandal, tasbih kayu, pena di saku' },
+  mengajar: { name: 'Mengajar: peci + koko krem + sarung hijau tua + kitab di tangan' },
+  pasar: { name: 'Ke pasar hewan: peci + koko putih + payung hitam + tasbih' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'koko';
+  const d = gen(0, { sex: 'L', age: 'lansia', skin: 1, build: 'kurus', hairCol: 'putih', hair: ['cepak'], salt: 331 });
+  d.face = { skull: 'oval', eyes: 'ramah', brow: 'tipis', mouth: 'senyum', kumis: 'tipis', jenggot: true, kacamata: 'emas', blush: false, hidung: 'kecil' };
+  d.tegak = true; d.head = 'peci';
+  d.fx = { chest: (v, dd, G) => { const nz = G.cz[1], y = G.ch[3] - 3; for (let z = nz - 12; z <= nz - 7; z++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === nz - 7 ? 'spEmas' : 'spHP'); } } };   // pena di saku kiri
+  d.top = { kind: 'koko', c: o === 'mengajar' ? 'krem' : 'putih', sleeve: 'panjang' };
+  d.bot = { kind: 'sarung', c: o === 'mengajar' ? 'hijauTua' : 'hijau', pat: 'kotak', pc: o === 'mengajar' ? 'hijau' : 'hijauTua' };
+  d.feet = { kind: 'sandal', c: 'coklat' };
+  if (o === 'mengajar') { d.handR = 'buku'; d.propCol = 'hijauTua'; }
+  else if (o === 'pasar') { d.handR = 'payung'; d.propCol = 'hitam'; d.handL = 'tasbih'; }
+  else d.handR = 'tasbih';
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== hadi.js
+NS.hadi = (() => {
+// Serma Hadi Aditya: 46, ayah Dimas, bintara Batalyon 3 (segmen 33). Tegap, rambut cepak, kumis tipis rapi, wajah keras,
+// seragam loreng atau kaus olahraga hijau, jam tangan besar. "Ulangi. Yang benar." Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  dinas: { name: 'Dinas: baret hijau + loreng lengan panjang dimasukkan + sabuk + sepatu PDL, jam tangan besar' },
+  olahraga: { name: 'Lari subuh: kaus olahraga hijau + celana training hijau + sepatu lari, jam tangan besar' },
+  rumah: { name: 'Di asrama: kaus loreng + celana pendek hijau + sandal jepit' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'dinas';
+  const d = gen(0, { sex: 'L', age: 'dewasa', skin: 2, build: 'gempal', hairCol: 'hitam', hair: ['cepakTipis'], salt: 341 });
+  d.face = { skull: 'kotak', eyes: 'tajam', brow: 'tebal', mouth: 'datar', kumis: 'tipis', jenggot: false, kacamata: null, blush: false, hidung: 'lebar' };
+  d.tegak = true;
+  if (o === 'olahraga') { d.top = { kind: 'olahraga', c: 'hijauTua', lis: 'kuning', jam: true }; d.bot = { kind: 'celana', c: 'hijauTua', stripe: 'kuning' }; d.feet = { kind: 'sneaker', c: 'hitam' }; }
+  else if (o === 'rumah') { d.top = { kind: 'kaus', c: 'lorDasar', pat: 'loreng', jam: true }; d.bot = { kind: 'pendek', c: 'hijauTua' }; d.feet = { kind: 'jepit', c: 'hitam' }; }
+  else { d.head = 'baret'; d.headCol = 'hijauTua'; d.top = { kind: 'loreng', c: 'lorDasar', pat: 'loreng', sleeve: 'panjang', tuck: true, jam: true }; d.bot = { kind: 'celana', c: 'lorDasar', pat: 'loreng', belt: true }; d.feet = { kind: 'pdl' }; }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== sudarmaji.js
+NS.sudarmaji = (() => {
+// Pak Sudarmaji: 54, petugas pintu air Bendungan Sirnagalih (segmen 33). Gemuk pendek, kemeja dinas PU kusam, helm proyek
+// kuning, sepatu bot karet, buku catatan basah. Jujur tapi penakut. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  dinas: { name: 'Jaga pintu air: helm proyek kuning + kemeja dinas khaki kusam + celana gelap + bot karet, buku catatan' },
+  hujan: { name: 'Jaga hujan: helm kuning + jas hujan biru + bot karet, senter' },
+  rumah: { name: 'Rumah dinas: kaus oblong putih + sarung kotak + sandal, mug kopi' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'dinas';
+  const d = gen(0, { sex: 'L', age: 'dewasa', skin: 2, build: 'gempal', hairCol: 'hitam', hair: ['belah'], salt: 351 });
+  d.face = { skull: 'bulat', eyes: 'lelah', brow: 'tipis', mouth: 'kecil', kumis: 'tebal', jenggot: false, kacamata: null, blush: false, hidung: 'lebar' };
+  d.fx = { head: v => { for (const y of [-6, -5, 4, 5]) { const x = v.front(y, 13); if (x !== null && (v.get(x, y, 13) || '').startsWith('spRmb_')) v.set(x, y, 13, 'spRmb_abu'); } } };   // uban di pelipis
+  if (o === 'rumah') { d.top = { kind: 'kaus', c: 'putih' }; d.bot = { kind: 'sarung', c: 'coklat', pat: 'kotak', pc: 'krem' }; d.feet = { kind: 'sandal', c: 'hitam' }; d.handR = 'mug'; }
+  else {
+    d.head = 'helmProyek'; d.headCol = 'kuning';
+    d.top = o === 'hujan' ? { kind: 'jaket', c: 'biru', c2: 'biru', sleeve: 'panjang' } : { kind: 'pns', c: 'khakiPNS', sleeve: 'pendek', tuck: true };
+    d.bot = { kind: 'celana', c: o === 'hujan' ? 'biru' : 'coklatPol', belt: o !== 'hujan' }; d.feet = { kind: 'bot', c: 'karet' };
+    d.handR = o === 'hujan' ? 'senter' : 'buku'; d.propCol = 'biru';
+  }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== kodir.js
+NS.kodir = (() => {
+// Wak Kodir: 59, juragan perahu dan ketua nelayan muara (segmen 33). Kurus liat, kulit hitam legam, kaus partai lama
+// (tanpa nama partai asli), celana pendek, caping, rokok kretek terselip di telinga. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  melaut: { name: 'Melaut: caping + kaus kuning pudar bergambar + celana pendek + nyeker, jaring' },
+  darat: { name: 'Di darat: kaus kuning pudar + sarung diselempangkan + celana pendek + sandal jepit, kretek di telinga' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'melaut';
+  const d = gen(0, { sex: 'L', age: 'dewasa', skin: 4, build: 'kurus', hairCol: 'abu', hair: ['cepak'], salt: 361 });
+  d.face = { skull: 'kotak', eyes: 'sipit', brow: 'tebal', mouth: 'lebar', kumis: 'tipis', jenggot: false, kacamata: null, blush: false, hidung: 'lebar' };
+  d.fx = { head: v => { if (o === 'darat') { for (let x = -3; x <= 2; x++) v.set(x, 8, 9, x === 2 ? 'spC_coklat' : 'spPutihP'); } } };   // kretek di telinga kiri, tidak dinyalakan
+  d.top = { kind: 'kaus', c: 'kuning', logo: 'merah', pat: 'kotor' };
+  d.bot = { kind: 'pendek', c: 'hitamPudar' };
+  if (o === 'melaut') { d.head = 'caping'; d.feet = { kind: 'nyeker' }; d.handR = 'jaring'; }
+  else { d.acc.push('selempang'); d.accCol = 'hijauTua'; d.feet = { kind: 'jepit', c: 'biru' }; }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== romlah.js
+NS.romlah = (() => {
+// Bu Romlah: 47, pemilik warung seafood terbesar Pantai Lintang (segmen 33). Gemuk, celemek bunga-bunga, rambut dicepol
+// dan diikat kain, gelang emas banyak, suara keras. Galak ke pelayan, baik ke anak sekolah. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  warung: { name: 'Warung: cepol diikat kain merah + daster ungu + celemek bunga + sandal, gelang emas, sutil' },
+  pasar: { name: 'Belanja ke TPI: cepol + blus batik + rok panjang + sandal, keranjang ikan' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'warung';
+  const d = gen(0, { sex: 'P', age: 'dewasa', skin: 2, build: 'gempal', hairCol: 'hitam', hair: ['sanggul'], salt: 371 });
+  d.face = { skull: 'bulat', eyes: 'tajam', brow: 'tebal', mouth: 'lebar', kumis: null, jenggot: false, kacamata: null, blush: true, hidung: 'lebar' };
+  d.fx = {
+    head: v => v.each((x, y, z, k) => { if (k && k.startsWith('spRmb_') && x <= -8 && x >= -10 && z >= 9 && z <= 15) v.set(x, y, z, (z + y) % 3 ? 'spC_merah' : 'spC_merahS'); }),   // kain pengikat cepol
+    fore: (v, dd, G) => { for (const z of [G.hz[1] + 1, G.hz[1] + 3]) v.shell(z, G.ax[0] - 1, G.ay[0] - 1, G.ax[1] + 1, G.ay[1] + 1, 'spEmas', 2); },   // gelang emas
+  };
+  if (o === 'pasar') { d.top = { kind: 'blus', c: 'coklat', pat: 'batik', pc: 'kuning', sleeve: 'pendek' }; d.bot = { kind: 'rok', c: 'coklat', pat: 'batik', pc: 'kuning' }; d.handR = 'keranjang'; }
+  else { d.top = { kind: 'daster', c: 'ungu', sleeve: 'pendek' }; d.bot = { kind: 'rok', c: 'ungu' }; d.acc.push('celemek'); d.apronCol = 'pinkPersit'; d.apronPat = 'bunga'; d.apronPc = 'merah'; d.apronPocket = true; d.handR = 'sutil'; }
+  d.feet = { kind: 'sandal', c: 'coklat' };
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'pink'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== ujo.js
+NS.ujo = (() => {
+// Kang Ujo: 36, kepala basecamp pendakian Sangkala, mantan porter (segmen 33). Jaket gunung oranye pudar, celana kargo,
+// sandal gunung, kumis tipis, wajah merah kena angin. Galak soal sampah. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  basecamp: { name: 'Basecamp: jaket gunung oranye pudar + kaus abu + celana kargo + sandal gunung, papan daftar pendaki' },
+  naik: { name: 'Memandu: kupluk + jaket oranye + carrier + celana kargo + sepatu gunung, tongkat trekking' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'basecamp';
+  const d = gen(0, { sex: 'L', age: 'dewasa', skin: 2, build: 'kurus', hairCol: 'hitam', hair: ['ikal'], salt: 381 });
+  d.face = { skull: 'oval', eyes: 'sipit', brow: 'tebal', mouth: 'senyum', kumis: 'tipis', jenggot: false, kacamata: null, blush: false, hidung: 'kecil' };
+  d.fx = { head: v => { for (const [y, z] of [[-6, 4], [-5, 4], [-6, 5], [4, 4], [5, 4], [5, 5], [-1, 6], [0, 6]]) { const x = v.front(y, z); if (x !== null) v.set(x, y, z, 'spMerahPipi'); } } };   // pipi & hidung merah kena angin
+  d.top = { kind: 'jaket', c: 'oranyePudar', c2: 'abu', sleeve: 'panjang', pat: 'kotor' };
+  d.bot = { kind: 'celana', c: 'khaki' };
+  if (o === 'naik') { d.head = 'kupluk'; d.headCol = 'hijauTua'; d.acc.push('carrier'); d.accCol = 'hijauTua'; d.feet = { kind: 'bot', c: 'coklat' }; d.handR = 'trekking'; }
+  else { d.feet = { kind: 'sandal', c: 'hitam' }; d.handR = 'papan'; }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== sabar.js
+NS.sabar = (() => {
+// Mandor Sabar: 52, mandor pabrik teh tua dan kebun teh Sukamekar (segmen 33). Topi koboi anyaman, kemeja lengan panjang
+// lusuh, sepatu bot, peluit di leher. Sabar, lambat bicara, hafal semua pemetik. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  kebun: { name: 'Kebun: topi koboi anyaman + kemeja lengan panjang krem lusuh + celana cokelat + bot, peluit di leher' },
+  pabrik: { name: 'Pabrik teh: topi koboi + kemeja + rompi khaki + bot, papan catatan timbang' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'kebun';
+  const d = gen(0, { sex: 'L', age: 'dewasa', skin: 3, build: 'sedang', hairCol: 'abu', hair: ['cepak'], salt: 391 });
+  d.face = { skull: 'oval', eyes: 'sayu', brow: 'tipis', mouth: 'senyum', kumis: 'tebal', jenggot: false, kacamata: null, blush: false, hidung: 'lebar' };
+  d.tegak = true; d.head = 'koboi';
+  d.top = { kind: 'kerja', c: 'krem', sleeve: 'panjang', gulung: true, pat: 'kotak', pc: 'coklatMuda', rompi: o === 'pabrik' ? 'khaki' : null };
+  d.bot = { kind: 'celana', c: 'coklat', belt: true }; d.feet = { kind: 'bot', c: 'hitam' };
+  d.acc.push('peluit');
+  if (o === 'pabrik') d.handR = 'papan';
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== yusuf.js
+NS.yusuf = (() => {
+// Pak Yusuf Tanjung: 50, kepala race control Sirkuit Tanjung Pradana, mantan pembalap (segmen 33). Kurus, rambut abu
+// disisir rapi, kemeja race control oranye, radio di dada, bekas luka bakar di tangan kiri. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  raceControl: { name: 'Race control: kemeja oranye lengan panjang + radio di dada + celana hitam + sepatu, HT di tangan' },
+  santai: { name: 'Mes sirkuit: polo abu + celana khaki + sepatu, mug kopi' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'raceControl';
+  const d = gen(0, { sex: 'L', age: 'dewasa', skin: 1, build: 'kurus', hairCol: 'abu', hair: ['klimis'], salt: 401 });
+  d.face = { skull: 'oval', eyes: 'tajam', brow: 'lurus', mouth: 'datar', kumis: null, jenggot: false, kacamata: null, blush: false, hidung: 'kecil' };
+  d.tegak = true;
+  d.fx = { fore: (v, dd, G, side) => { if (side > 0) return; v.each((x, y, z, k) => { if (k === 'spKulit1' && z <= G.hz[1] + 2 && (x + y * 2 + z) % 3 !== 0) v.set(x, y, z, 'spLuka'); }); } };   // bekas luka bakar tangan kiri
+  if (o === 'santai') { d.top = { kind: 'polo', c: 'abu', tuck: true }; d.bot = { kind: 'celana', c: 'khaki', belt: true }; d.feet = { kind: 'sepatu', c: 'coklat' }; d.handR = 'mug'; }
+  else { d.top = { kind: 'kerja', c: 'oranye', sleeve: 'panjang', gulung: true, tuck: true, logo: 'putih' }; d.acc.push('radio'); d.bot = { kind: 'celana', c: 'hitam', belt: true }; d.feet = { kind: 'sepatu', c: 'hitam' }; d.handR = 'ht'; }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'putih'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== sri.js
+NS.sri = (() => {
+// Mbak Sri Wahyuni: 31, koordinator buruh shift Kawasan Industri (segmen 33). Seragam pabrik biru, kerudung abu, masker
+// kain di dagu, kartu ID tergantung, sepatu kets. "Absen dulu, baru ngeluh." Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  shift: { name: 'Shift: kerudung abu + seragam pabrik biru lengan panjang + masker di dagu + kartu ID + celana biru + kets, papan absen' },
+  kos: { name: 'Kos buruh: kerudung abu + kaus panjang krem + rok jins + sandal' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'shift';
+  const d = gen(0, { sex: 'P', age: 'dewasa', skin: 1, build: 'kurus', hairCol: 'hitam', hair: ['kuncir'], salt: 411 });
+  d.face = { skull: 'oval', eyes: 'tajam', brow: 'lurus', mouth: 'datar', kumis: null, jenggot: false, kacamata: null, blush: false, hidung: 'kecil' };
+  d.hijab = 'abu';
+  if (o === 'kos') { d.top = { kind: 'kaus', c: 'krem', sleeve: 'panjang' }; d.bot = { kind: 'rok', c: 'jins' }; d.feet = { kind: 'sandal', c: 'hitam' }; }
+  else { d.maskerDagu = 'navy'; d.top = { kind: 'kerja', c: 'biru', sleeve: 'panjang', tuck: false, logo: 'putih' }; d.acc.push('idcard'); d.idCol = 'merah'; d.bot = { kind: 'celana', c: 'biru' }; d.feet = { kind: 'sneaker', c: 'putih' }; d.handR = 'papan'; }
+  if (opt.helm) { d.hijab = null; d.head = 'helmMotor'; d.headCol = 'biru'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== darmo.js
+NS.darmo = (() => {
+// Mbah Darmo: 81, penjaga mercusuar Tanjung Karang (segmen 33). Sangat tua, punggung bungkuk, sarung dan jaket tentara
+// usang, kacamata tebal, membawa lampu minyak. Pelupa soal hari ini, ingat jelas masa lalu. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  jaga: { name: 'Jaga mercusuar: jaket tentara usang + sarung kotak + sandal jepit, kacamata tebal, lampu minyak' },
+  pagi: { name: 'Pagi di pantai: kupluk + kaus putih + sarung + tongkat' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'jaga';
+  const d = gen(0, { sex: 'L', age: 'lansia', skin: 3, build: 'kurus', hairCol: 'putih', hair: ['botakTengah'], salt: 421 });
+  d.face = { skull: 'oval', eyes: 'lelah', brow: 'tipis', mouth: 'kecil', kumis: 'tipis', jenggot: true, kacamata: 'tebal', blush: false, hidung: 'lebar' };
+  d.top = o === 'pagi' ? { kind: 'kaus', c: 'putih', pat: 'kotor' } : { kind: 'jaket', c: 'olive', c2: 'putih', sleeve: 'panjang', pat: 'kotor' };
+  d.bot = { kind: 'sarung', c: 'marun', pat: 'kotak', pc: 'hitam' }; d.feet = { kind: 'jepit', c: 'hitam' };
+  if (o === 'pagi') { d.head = 'kupluk'; d.headCol = 'abu'; d.handR = 'tongkat'; } else d.handR = 'lampu';
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== sumi.js
+NS.sumi = (() => {
+// Nek Sumi: 72, nenek Andra, penjual jamu gendong di Desa Pandansari (segmen 33, sosoknya dari segmen 26). Kebaya lurik,
+// kain jarik, selendang gendong berisi botol jamu, rambut putih disanggul. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  jamu: { name: 'Jualan jamu: sanggul putih + kebaya lurik cokelat + jarik batik + selendang gendong botol jamu + sandal jepit' },
+  sawah: { name: 'Di sawah: caping + kebaya lurik + jarik + nyeker' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'jamu';
+  const d = gen(0, { sex: 'P', age: 'lansia', skin: 3, build: 'kurus', hairCol: 'putih', hair: ['sanggul'], salt: 431 });
+  d.face = { skull: 'oval', eyes: 'ramah', brow: 'tipis', mouth: 'senyum', kumis: null, jenggot: false, kacamata: null, blush: false, hidung: 'lebar' };
+  d.top = { kind: 'blus', c: 'coklat', sleeve: 'panjang', pat: 'lurik', pc: 'krem' };
+  d.bot = { kind: 'rok', c: 'coklat', pat: 'batik', pc: 'kremS' };
+  if (o === 'sawah') { d.head = 'caping'; d.feet = { kind: 'nyeker' }; }
+  else { d.acc.push('gendong'); d.gendongCol = 'merah'; d.feet = { kind: 'jepit', c: 'hitam' }; d.handR = 'botol'; }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== tito.js
+NS.tito = (() => {
+// Tito: 12, anak asrama Batalyon 3, murid bola Dimas (segmen 33). Kaus bola kebesaran, lutut selalu luka, selalu membuntuti
+// Dimas. "Kak Dimas bilang kakak jago, beneran?" Dibangun di atas spawn_base (rangka anak), voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  bola: { name: 'Main bola: kaus bola merah nomor 10 kebesaran + celana pendek + kaus kaki + sepatu bola, lutut luka, bola' },
+  sekolah: { name: 'Sekolah SD: kemeja putih + celana merah + sepatu hitam + ransel' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'bola';
+  const d = gen(0, { sex: 'L', age: 'anak', skin: 3, build: 'kurus', hairCol: 'hitam', hair: ['jabrik'], salt: 441 });
+  d.face = { skull: 'bulat', eyes: 'besar', brow: 'tebal', mouth: 'lebar', kumis: null, jenggot: false, kacamata: null, blush: true, hidung: 'kecil' };
+  d.fx = { shin: (v, dd, G) => { for (const [x, y, z] of [[2, 2, 11], [2, 3, 11], [2, 2, 10], [1, 3, 12]]) { const xx = v.front(y, z); if (xx !== null) v.set(xx, y, z, (x + z) % 2 ? 'spLuka' : 'spMerahP'); } } };   // lutut lecet
+  if (o === 'sekolah') { d.top = { kind: 'seragam', c: 'putih', tuck: true }; d.bot = { kind: 'pendek', c: 'merah' }; d.feet = { kind: 'sepatu', c: 'hitam' }; d.acc.push('ransel'); d.accCol = 'biru'; }
+  else { d.top = { kind: 'kaus', c: 'merah', lis: 'putih', nomor: 10, sleeve: 'pendek' }; d.bot = { kind: 'pendek', c: 'putih' }; d.feet = { kind: 'sneaker', c: 'hitam', kaus: true }; d.handR = 'bola'; }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'merah'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== ayu.js
+NS.ayu = (() => {
+// Neng Ayu: 14, adik pertama Wulan di Desa Sukamekar, ingin jadi pembalap seperti Kirana (segmen 33). Rambut pendek,
+// jaket balap kebesaran. "Kak, boncengin sampai kelokan doang!" Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  jaket: { name: 'Main: jaket balap merah-putih kebesaran + kaus hitam + celana jins + sneakers' },
+  silat: { name: 'Latihan silat: pangsi hitam + sabuk putih + nyeker' },
+  sekolah: { name: 'SMP: kemeja putih + rok biru panjang + sepatu hitam' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'jaket';
+  const d = gen(0, { sex: 'P', age: 'muda', skin: 2, build: 'kurus', hairCol: 'hitam', hair: ['bob'], salt: 451 });
+  d.face = { skull: 'oval', eyes: 'besar', brow: 'tebal', mouth: 'lebar', kumis: null, jenggot: false, kacamata: null, blush: true, hidung: 'kecil' };
+  if (o === 'silat') { d.top = { kind: 'pangsi', c: 'hitamPudar', sleeve: 'panjang', tuck: true }; d.bot = { kind: 'celana', c: 'hitamPudar' }; d.feet = { kind: 'nyeker' }; d.acc.push('sabuk'); d.sabukCol = 'putih'; }
+  else if (o === 'sekolah') { d.top = { kind: 'seragam', c: 'putih', tuck: true, sleeve: 'pendek' }; d.bot = { kind: 'rok', c: 'navy' }; d.feet = { kind: 'sepatu', c: 'hitam' }; }
+  else { d.top = { kind: 'jaket', c: 'merah', c2: 'hitam', sleeve: 'panjang', stripe: 'putih', logo: 'putih' }; d.bot = { kind: 'celana', c: 'jins' }; d.feet = { kind: 'sneaker', c: 'putih' }; }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'merah'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== rusdi.js
+NS.rusdi = (() => {
+// Pak Rusdi: 49, mandor gudang subkontraktor PT Graha di Kawasan Industri, pemegang daftar "tenaga harian" (segmen 33,
+// antagonis kecil). Gempal, kumis tebal, kemeja kerja abu, topi, papan jepit daftar. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  gudang: { name: 'Gudang: topi hitam + kemeja kerja abu lengan pendek + celana kargo + sepatu safety, papan jepit daftar' },
+  rapi: { name: 'Ketemu atasan: kemeja batik + celana bahan hitam + sepatu' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'gudang';
+  const d = gen(0, { sex: 'L', age: 'dewasa', skin: 2, build: 'gempal', hairCol: 'hitam', hair: ['belah'], salt: 461 });
+  d.face = { skull: 'kotak', eyes: 'kecil', brow: 'tebal', mouth: 'datar', kumis: 'tebal', jenggot: false, kacamata: null, blush: false, hidung: 'lebar' };
+  if (o === 'rapi') { d.top = { kind: 'kemeja', c: 'marun', pat: 'batik', pc: 'kuning', sleeve: 'pendek' }; d.bot = { kind: 'celana', c: 'hitam', belt: true }; d.feet = { kind: 'sepatu', c: 'hitam' }; }
+  else { d.head = 'topi'; d.headCol = 'hitam'; d.top = { kind: 'kerja', c: 'abu', sleeve: 'pendek', tuck: true, logo: 'kuning' }; d.bot = { kind: 'celana', c: 'olive', belt: true }; d.feet = { kind: 'safety', c: 'hitam' }; d.handR = 'papan'; d.acc.push('ht'); }
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== lukman.js
+NS.lukman = (() => {
+// Ir. Lukman: 44, manajer proyek villa tahap 2 PT Graha Megantara, memasang patok di Sukamekar dan Pandansari (segmen 33,
+// antagonis kecil). Rapi, kacamata, helm proyek putih, kemeja biru muda, membawa gambar proyek. Dibangun di atas spawn_base, voxel 1/64 petak.
+const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
+const OUTFITS = {
+  proyek: { name: 'Lapangan: helm proyek putih + kemeja biru muda lengan panjang + rompi oranye + celana khaki + sepatu, gambar proyek' },
+  kantor: { name: 'Kantor proyek: kemeja biru muda + celana bahan abu + sepatu kulit, HP' },
+};
+const EXPRS = EX;
+function build(opt = {}) {
+  const o = OUTFITS[opt.outfit] ? opt.outfit : 'proyek';
+  const d = gen(0, { sex: 'L', age: 'dewasa', skin: 0, build: 'sedang', hairCol: 'hitam', hair: ['belah'], salt: 471 });
+  d.face = { skull: 'oval', eyes: 'sipit', brow: 'lurus', mouth: 'kecil', kumis: null, jenggot: false, kacamata: 'tipis', blush: false, hidung: 'kecil' };
+  d.top = { kind: 'kemeja', c: 'biruMuda', sleeve: 'panjang', tuck: true, rompi: o === 'proyek' ? 'oranyeRompi' : null, stripe: o === 'proyek' ? 'stabilo' : null };
+  d.bot = { kind: 'celana', c: o === 'proyek' ? 'khaki' : 'abu', belt: true }; d.feet = { kind: 'sepatu', c: 'coklat' };
+  if (o === 'proyek') { d.head = 'helmProyek'; d.headCol = 'putih'; d.handR = 'peta'; } else d.handR = 'hp';
+  if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
+  return orang(d, opt.expr || 'biasa');
+}
+
+return { OUTFITS, EXPRS, build };
+})();
+// ===== sp_stm.js
+NS.sp_stm = (() => {
+// Template spawn: siswa STM Karya Bangsa tanpa nama (segmen 88): gerbang, bengkel praktik, parkiran, gudang lama.
+// Lebih kasar dari anak SMA 3: kemeja putih berlogo STM sering tidak dimasukkan, lengan digulung, celana abu kena oli,
+// sepatu safety atau boots. Putri boleh bercelana. Guide segmen 34.
+const {  gen, template, EXPRS: EX  } = NS.spawn_base;
+const SPAWN = { sid: 'siswaSTM', name: 'Siswa STM', seragam: 'seragam', varian: 64 };
+const OUTFITS = {
+  seragam: { name: 'Seragam: kemeja putih logo STM (sering dikeluarkan, lengan digulung) + celana abu + sepatu safety/boots + tas selempang' },
+  praktek: { name: 'Praktik bengkel: wearpack biru dongker bernoda oli + sepatu safety, kunci atau lap' },
+  nongkrong: { name: 'Pulang/nongkrong: kemeja seragam dikeluarkan + jaket atau hoodie gelap + celana abu, HP' },
+};
+const EXPRS = EX;
+const build = template(SPAWN, OUTFITS, (v, o) => {
+  const d = gen(v, { sex: 'LP', pP: 0.15, age: 'muda', build: ['kurus', 'sedang', 'sedang', 'gempal'], kumisP: 0, kacamataP: 0.08, salt: 487 }), r = d.r, L = d.sex === 'L';
+  if (L) d.hairStyle = r.pick(['cepak', 'jabrik', 'belah', 'cepakTipis', 'jabrik', 'poni']);
+  else if (r.p(0.45)) d.hijab = r.pick(['putih', 'putih', 'abu']);
+  else d.hairStyle = r.pick(['kuncir', 'bob', 'kuncir']);
+  d.face.eyes = r.pick(['tajam', 'sipit', 'normal', 'kecil', 'tajam']);
+  const shoes = () => ({ kind: r.pick(['safety', 'safety', 'bot', 'sepatu']), c: r.pick(['hitam', 'hitam', 'coklat']) });
+  if (o === 'praktek') {
+    const c = r.pick(['navy', 'navy', 'biru', 'abu']), dirty = r.p(0.35) ? 'kotor' : 'polos';
+    d.top = { kind: 'kerja', c, sleeve: r.p(0.6) ? 'panjang' : 'pendek', gulung: r.p(0.4), tuck: true, logo: 'kuning', pat: dirty };
+    d.bot = { kind: 'celana', c, pat: dirty }; d.feet = { kind: 'safety', c: 'hitam' };
+    d.handR = r.pick(['kunci', 'lap', 'kunci', null]); d.propCol = 'merah';
+    if (r.p(0.25) && !d.hijab) { d.head = 'topi'; d.headCol = r.pick(['hitam', 'merah']); }
+    return d;
+  }
+  d.top = { kind: 'seragam', c: 'putih', tuck: o === 'seragam' ? r.p(0.3) : false, sleeve: 'pendek', logo: 'marun', gulung: r.p(0.5) };
+  d.bot = { kind: 'celana', c: 'abu', belt: r.p(0.6), pat: r.p(0.35) ? 'kotor' : 'polos' };
+  d.feet = shoes();
+  if (o === 'nongkrong') {
+    d.top = { kind: r.pick(['jaket', 'hoodie', 'jaket']), c: r.pick(['hitam', 'hitam', 'navy', 'marun', 'abu', 'jins']), c2: 'putih', sleeve: 'panjang' };
+    d.handR = r.pick(['hp', 'hp', null]);
+  } else if (r.p(0.6)) { d.acc.push(r.p(0.5) ? 'selempang' : 'ransel'); d.accCol = r.pick(['hitam', 'hitam', 'abu', 'navy']); }
+  return d;
+});
+
+return { SPAWN, OUTFITS, EXPRS, build };
+})();
+// ===== sp_smk.js
+NS.sp_smk = (() => {
+// Template spawn: siswa SMK Pariwisata Sukamekar tanpa nama (peta dunia no. 47): gerbang sekolah, halte, villa & kebun teh
+// tempat praktik pemandu. Jurusan perhotelan, tata boga, usaha perjalanan wisata. Guide segmen 34.
+const {  gen, template, EXPRS: EX  } = NS.spawn_base;
+const SPAWN = { sid: 'siswaSMK', name: 'Siswa SMK', seragam: 'seragam', varian: 64 };
+const OUTFITS = {
+  seragam: { name: 'Seragam: kemeja putih + celana/rok hitam + sepatu hitam, putri berkerudung putih atau rambut diikat rapi' },
+  hotel: { name: 'Praktik perhotelan: kemeja putih + rompi hitam + celana/rok hitam + sepatu pantofel' },
+  tataBoga: { name: 'Praktik tata boga: topi koki putih + baju koki putih + celemek + celana hitam' },
+  pemandu: { name: 'Praktik pemandu wisata: polo hijau tua jurusan + celana khaki + sepatu, papan jepit' },
+};
+const EXPRS = EX;
+const build = template(SPAWN, OUTFITS, (v, o) => {
+  const d = gen(v, { sex: 'LP', pP: 0.6, age: 'muda', build: ['kurus', 'sedang', 'sedang'], kumisP: 0, kacamataP: 0.12, salt: 491 }), r = d.r, L = d.sex === 'L';
+  if (L) d.hairStyle = r.pick(['cepak', 'belah', 'belah', 'klimis']);
+  else if (o !== 'tataBoga' && r.p(0.55)) d.hijab = r.pick(['putih', 'putih', 'hitam']);
+  else d.hairStyle = r.pick(['sanggul', 'kuncir', 'sanggul']);   // rambut wajib rapi diikat
+  const bottom = c => L ? { kind: 'celana', c, belt: true } : (r.p(0.75) ? { kind: 'rok', c, hem: 4 } : { kind: 'celana', c });
+  if (o === 'tataBoga') {
+    d.head = 'topiKoki'; d.hijab = null;
+    d.top = { kind: 'koko', c: 'putih', sleeve: r.p(0.5) ? 'panjang' : 'pendek', gulung: r.p(0.3), tuck: true };
+    d.bot = { kind: 'celana', c: 'hitam' }; d.acc.push('celemek'); d.apronCol = r.pick(['hitam', 'merah', 'coklat']);
+    d.feet = { kind: 'sepatu', c: 'hitam' }; d.handR = r.pick(['sutil', null, 'mangkok']); return d;
+  }
+  if (o === 'pemandu') {
+    d.top = { kind: 'polo', c: 'hijauTua', logo: 'kuning', tuck: true }; d.bot = L ? { kind: 'celana', c: 'khaki', belt: true } : { kind: 'celana', c: 'khaki' };
+    d.feet = { kind: 'sneaker', c: r.pick(['hitam', 'putih']) }; d.handR = r.pick(['papan', 'peta', 'papan']); d.propCol = 'kuning'; d.propCol2 = 'hijauTua';
+    if (r.p(0.4) && !d.hijab) { d.head = 'topi'; d.headCol = 'hijauTua'; }
+    return d;
+  }
+  d.top = { kind: 'seragam', c: 'putih', tuck: true, sleeve: o === 'hotel' ? 'panjang' : r.p(0.3) ? 'panjang' : 'pendek', badge: o !== 'hotel', rompi: o === 'hotel' ? 'hitam' : null };
+  d.bot = bottom('hitam'); d.feet = { kind: 'sepatu', c: 'hitam' };
+  if (o === 'seragam' && r.p(0.6)) { d.acc.push('ransel'); d.accCol = r.pick(['hitam', 'navy', 'coklat', 'hijauTua']); }
+  if (o === 'seragam') d.handR = r.pick([null, null, 'hp', 'buku']);
+  return d;
+});
+
+return { SPAWN, OUTFITS, EXPRS, build };
+})();
 // ===== chars.js
 NS.chars = (() => {
 // Daftar tokoh voxel halus (1/64 petak). Tiap tokoh: build({ outfit, expr, helm }) -> data untuk voxelFrame.
@@ -16699,6 +17197,21 @@ const {  build: ningsihBuild, OUTFITS: NINGSIH_OUT, EXPRS: NINGSIH_EX  } = NS.ni
 const {  build: prasBuild, OUTFITS: PRAS_OUT, EXPRS: PRAS_EX  } = NS.pras;
 const {  build: saripBuild, OUTFITS: SARIP_OUT, EXPRS: SARIP_EX  } = NS.sarip;
 const {  build: kartaBuild, OUTFITS: KARTA_OUT, EXPRS: KARTA_EX  } = NS.karta;
+const {  build: mahfudBuild, OUTFITS: MAHFUD_OUT, EXPRS: MAHFUD_EX  } = NS.mahfud;
+const {  build: hadiBuild, OUTFITS: HADI_OUT, EXPRS: HADI_EX  } = NS.hadi;
+const {  build: sudarmajiBuild, OUTFITS: SUDARMAJI_OUT, EXPRS: SUDARMAJI_EX  } = NS.sudarmaji;
+const {  build: kodirBuild, OUTFITS: KODIR_OUT, EXPRS: KODIR_EX  } = NS.kodir;
+const {  build: romlahBuild, OUTFITS: ROMLAH_OUT, EXPRS: ROMLAH_EX  } = NS.romlah;
+const {  build: ujoBuild, OUTFITS: UJO_OUT, EXPRS: UJO_EX  } = NS.ujo;
+const {  build: sabarBuild, OUTFITS: SABAR_OUT, EXPRS: SABAR_EX  } = NS.sabar;
+const {  build: yusufBuild, OUTFITS: YUSUF_OUT, EXPRS: YUSUF_EX  } = NS.yusuf;
+const {  build: sriBuild, OUTFITS: SRI_OUT, EXPRS: SRI_EX  } = NS.sri;
+const {  build: darmoBuild, OUTFITS: DARMO_OUT, EXPRS: DARMO_EX  } = NS.darmo;
+const {  build: sumiBuild, OUTFITS: SUMI_OUT, EXPRS: SUMI_EX  } = NS.sumi;
+const {  build: titoBuild, OUTFITS: TITO_OUT, EXPRS: TITO_EX  } = NS.tito;
+const {  build: ayuBuild, OUTFITS: AYU_OUT, EXPRS: AYU_EX  } = NS.ayu;
+const {  build: rusdiBuild, OUTFITS: RUSDI_OUT, EXPRS: RUSDI_EX  } = NS.rusdi;
+const {  build: lukmanBuild, OUTFITS: LUKMAN_OUT, EXPRS: LUKMAN_EX  } = NS.lukman;
 const {  build: cilokBuild, OUTFITS: CILOK_OUT, EXPRS: CILOK_EX  } = NS.cilok;
 const {  build: andiBuild, OUTFITS: ANDI_OUT, EXPRS: ANDI_EX  } = NS.andi;
 const {  build: fitriBuild, OUTFITS: FITRI_OUT, EXPRS: FITRI_EX  } = NS.fitri;
@@ -16734,6 +17247,8 @@ const {  SPAWN: PENONTON_SP, OUTFITS: PENONTON_SO, EXPRS: PENONTON_SE, build: PE
 const {  SPAWN: SANTRI_SP, OUTFITS: SANTRI_SO, EXPRS: SANTRI_SE, build: SANTRI_SB  } = NS.sp_santri;
 const {  SPAWN: SILAT_SP, OUTFITS: SILAT_SO, EXPRS: SILAT_SE, build: SILAT_SB  } = NS.sp_silat;
 const {  SPAWN: PERSIT_SP, OUTFITS: PERSIT_SO, EXPRS: PERSIT_SE, build: PERSIT_SB  } = NS.sp_persit;
+const {  SPAWN: STM_SP, OUTFITS: STM_SO, EXPRS: STM_SE, build: STM_SB  } = NS.sp_stm;
+const {  SPAWN: SMK_SP, OUTFITS: SMK_SO, EXPRS: SMK_SE, build: SMK_SB  } = NS.sp_smk;
 const CHARS = {
   raka: { name: 'Raka', build: rakaBuild, OUTFITS: RAKA_OUT, EXPRS: RAKA_EX },
   rani: { name: 'Rani', build: raniBuild, OUTFITS: RANI_OUT, EXPRS: RANI_EX },
@@ -16818,6 +17333,21 @@ const CHARS = {
   pakPras: { name: 'Pak Pras', build: prasBuild, OUTFITS: PRAS_OUT, EXPRS: PRAS_EX },
   bangSarip: { name: 'Bang Sarip', build: saripBuild, OUTFITS: SARIP_OUT, EXPRS: SARIP_EX },
   abahKarta: { name: 'Abah Karta', build: kartaBuild, OUTFITS: KARTA_OUT, EXPRS: KARTA_EX },
+  kyaiMahfud: { name: 'Kyai Mahfud', build: mahfudBuild, OUTFITS: MAHFUD_OUT, EXPRS: MAHFUD_EX },
+  sermaHadi: { name: 'Serma Hadi', build: hadiBuild, OUTFITS: HADI_OUT, EXPRS: HADI_EX },
+  pakSudarmaji: { name: 'Pak Sudarmaji', build: sudarmajiBuild, OUTFITS: SUDARMAJI_OUT, EXPRS: SUDARMAJI_EX },
+  wakKodir: { name: 'Wak Kodir', build: kodirBuild, OUTFITS: KODIR_OUT, EXPRS: KODIR_EX },
+  buRomlah: { name: 'Bu Romlah', build: romlahBuild, OUTFITS: ROMLAH_OUT, EXPRS: ROMLAH_EX },
+  kangUjo: { name: 'Kang Ujo', build: ujoBuild, OUTFITS: UJO_OUT, EXPRS: UJO_EX },
+  mandorSabar: { name: 'Mandor Sabar', build: sabarBuild, OUTFITS: SABAR_OUT, EXPRS: SABAR_EX },
+  pakYusuf: { name: 'Pak Yusuf', build: yusufBuild, OUTFITS: YUSUF_OUT, EXPRS: YUSUF_EX },
+  mbakSri: { name: 'Mbak Sri', build: sriBuild, OUTFITS: SRI_OUT, EXPRS: SRI_EX },
+  mbahDarmo: { name: 'Mbah Darmo', build: darmoBuild, OUTFITS: DARMO_OUT, EXPRS: DARMO_EX },
+  nekSumi: { name: 'Nek Sumi', build: sumiBuild, OUTFITS: SUMI_OUT, EXPRS: SUMI_EX },
+  tito: { name: 'Tito', build: titoBuild, OUTFITS: TITO_OUT, EXPRS: TITO_EX },
+  nengAyu: { name: 'Neng Ayu', build: ayuBuild, OUTFITS: AYU_OUT, EXPRS: AYU_EX },
+  pakRusdi: { name: 'Pak Rusdi', build: rusdiBuild, OUTFITS: RUSDI_OUT, EXPRS: RUSDI_EX },
+  irLukman: { name: 'Ir. Lukman', build: lukmanBuild, OUTFITS: LUKMAN_OUT, EXPRS: LUKMAN_EX },
   siswaAndi: { name: 'Andi', build: andiBuild, OUTFITS: ANDI_OUT, EXPRS: ANDI_EX },
   siswiFitri: { name: 'Fitri', build: fitriBuild, OUTFITS: FITRI_OUT, EXPRS: FITRI_EX },
   siswiRina: { name: 'Rina', build: rinaBuild, OUTFITS: RINA_OUT, EXPRS: RINA_EX },
@@ -16828,7 +17358,7 @@ const CHARS = {
   bram: { name: 'Bram', build: bramBuild, OUTFITS: BRAM_OUT, EXPRS: BRAM_EX },
 };
 // NPC spawn (guide segmen 34): tiap template didaftarkan 8 kali (seed 0..7) sebagai <sid>_<v> untuk pratinjau
-const SPAWNS = [{ SPAWN: PENDAKI_SP, OUTFITS: PENDAKI_SO, EXPRS: PENDAKI_SE, build: PENDAKI_SB }, { SPAWN: TURIS_SP, OUTFITS: TURIS_SO, EXPRS: TURIS_SE, build: TURIS_SB }, { SPAWN: PENONTON_SP, OUTFITS: PENONTON_SO, EXPRS: PENONTON_SE, build: PENONTON_SB }, { SPAWN: SANTRI_SP, OUTFITS: SANTRI_SO, EXPRS: SANTRI_SE, build: SANTRI_SB }, { SPAWN: SILAT_SP, OUTFITS: SILAT_SO, EXPRS: SILAT_SE, build: SILAT_SB }, { SPAWN: PERSIT_SP, OUTFITS: PERSIT_SO, EXPRS: PERSIT_SE, build: PERSIT_SB }, { SPAWN: PEDAGANG_SP, OUTFITS: PEDAGANG_SO, EXPRS: PEDAGANG_SE, build: PEDAGANG_SB }, { SPAWN: MEKANIK_SP, OUTFITS: MEKANIK_SO, EXPRS: MEKANIK_SE, build: MEKANIK_SB }, { SPAWN: NELAYAN_SP, OUTFITS: NELAYAN_SO, EXPRS: NELAYAN_SE, build: NELAYAN_SB }, { SPAWN: SATPAM_SP, OUTFITS: SATPAM_SO, EXPRS: SATPAM_SE, build: SATPAM_SB }, { SPAWN: POLISI_SP, OUTFITS: POLISI_SO, EXPRS: POLISI_SE, build: POLISI_SB }, { SPAWN: PARKIR_SP, OUTFITS: PARKIR_SO, EXPRS: PARKIR_SE, build: PARKIR_SB }, { SPAWN: KULI_SP, OUTFITS: KULI_SO, EXPRS: KULI_SE, build: KULI_SB }, { SPAWN: OJOL_SP, OUTFITS: OJOL_SO, EXPRS: OJOL_SE, build: OJOL_SB }, { SPAWN: GURU_SP, OUTFITS: GURU_SO, EXPRS: GURU_SE, build: GURU_SB }, { SPAWN: SISWI_SP, OUTFITS: SISWI_SO, EXPRS: SISWI_SE, build: SISWI_SB }, { SPAWN: PRIA_SP, OUTFITS: PRIA_SO, EXPRS: PRIA_SE, build: PRIA_SB }, { SPAWN: WANITA_SP, OUTFITS: WANITA_SO, EXPRS: WANITA_SE, build: WANITA_SB }, { SPAWN: HIJAB_SP, OUTFITS: HIJAB_SO, EXPRS: HIJAB_SE, build: HIJAB_SB }, { SPAWN: LANSIA_SP, OUTFITS: LANSIA_SO, EXPRS: LANSIA_SE, build: LANSIA_SB }, { SPAWN: MUDA_SP, OUTFITS: MUDA_SO, EXPRS: MUDA_SE, build: MUDA_SB }, { SPAWN: ANAK_SP, OUTFITS: ANAK_SO, EXPRS: ANAK_SE, build: ANAK_SB }, { SPAWN: TENTARA_SP, OUTFITS: TENTARA_SO, EXPRS: TENTARA_SE, build: TENTARA_SB }, { SPAWN: BURUH_SP, OUTFITS: BURUH_SO, EXPRS: BURUH_SE, build: BURUH_SB }, { SPAWN: PETANI_SP, OUTFITS: PETANI_SO, EXPRS: PETANI_SE, build: PETANI_SB }, { SPAWN: SISWA_SP, OUTFITS: SISWA_SO, EXPRS: SISWA_SE, build: SISWA_SB }];
+const SPAWNS = [{ SPAWN: STM_SP, OUTFITS: STM_SO, EXPRS: STM_SE, build: STM_SB }, { SPAWN: SMK_SP, OUTFITS: SMK_SO, EXPRS: SMK_SE, build: SMK_SB }, { SPAWN: PENDAKI_SP, OUTFITS: PENDAKI_SO, EXPRS: PENDAKI_SE, build: PENDAKI_SB }, { SPAWN: TURIS_SP, OUTFITS: TURIS_SO, EXPRS: TURIS_SE, build: TURIS_SB }, { SPAWN: PENONTON_SP, OUTFITS: PENONTON_SO, EXPRS: PENONTON_SE, build: PENONTON_SB }, { SPAWN: SANTRI_SP, OUTFITS: SANTRI_SO, EXPRS: SANTRI_SE, build: SANTRI_SB }, { SPAWN: SILAT_SP, OUTFITS: SILAT_SO, EXPRS: SILAT_SE, build: SILAT_SB }, { SPAWN: PERSIT_SP, OUTFITS: PERSIT_SO, EXPRS: PERSIT_SE, build: PERSIT_SB }, { SPAWN: PEDAGANG_SP, OUTFITS: PEDAGANG_SO, EXPRS: PEDAGANG_SE, build: PEDAGANG_SB }, { SPAWN: MEKANIK_SP, OUTFITS: MEKANIK_SO, EXPRS: MEKANIK_SE, build: MEKANIK_SB }, { SPAWN: NELAYAN_SP, OUTFITS: NELAYAN_SO, EXPRS: NELAYAN_SE, build: NELAYAN_SB }, { SPAWN: SATPAM_SP, OUTFITS: SATPAM_SO, EXPRS: SATPAM_SE, build: SATPAM_SB }, { SPAWN: POLISI_SP, OUTFITS: POLISI_SO, EXPRS: POLISI_SE, build: POLISI_SB }, { SPAWN: PARKIR_SP, OUTFITS: PARKIR_SO, EXPRS: PARKIR_SE, build: PARKIR_SB }, { SPAWN: KULI_SP, OUTFITS: KULI_SO, EXPRS: KULI_SE, build: KULI_SB }, { SPAWN: OJOL_SP, OUTFITS: OJOL_SO, EXPRS: OJOL_SE, build: OJOL_SB }, { SPAWN: GURU_SP, OUTFITS: GURU_SO, EXPRS: GURU_SE, build: GURU_SB }, { SPAWN: SISWI_SP, OUTFITS: SISWI_SO, EXPRS: SISWI_SE, build: SISWI_SB }, { SPAWN: PRIA_SP, OUTFITS: PRIA_SO, EXPRS: PRIA_SE, build: PRIA_SB }, { SPAWN: WANITA_SP, OUTFITS: WANITA_SO, EXPRS: WANITA_SE, build: WANITA_SB }, { SPAWN: HIJAB_SP, OUTFITS: HIJAB_SO, EXPRS: HIJAB_SE, build: HIJAB_SB }, { SPAWN: LANSIA_SP, OUTFITS: LANSIA_SO, EXPRS: LANSIA_SE, build: LANSIA_SB }, { SPAWN: MUDA_SP, OUTFITS: MUDA_SO, EXPRS: MUDA_SE, build: MUDA_SB }, { SPAWN: ANAK_SP, OUTFITS: ANAK_SO, EXPRS: ANAK_SE, build: ANAK_SB }, { SPAWN: TENTARA_SP, OUTFITS: TENTARA_SO, EXPRS: TENTARA_SE, build: TENTARA_SB }, { SPAWN: BURUH_SP, OUTFITS: BURUH_SO, EXPRS: BURUH_SE, build: BURUH_SB }, { SPAWN: PETANI_SP, OUTFITS: PETANI_SO, EXPRS: PETANI_SE, build: PETANI_SB }, { SPAWN: SISWA_SP, OUTFITS: SISWA_SO, EXPRS: SISWA_SE, build: SISWA_SB }];
 for (const T of SPAWNS) for (let v = 0; v < 8; v++) CHARS[T.SPAWN.sid + '_' + v] = { name: T.SPAWN.name + ' #' + v, build: o => T.build({ ...o, v }), OUTFITS: T.OUTFITS, EXPRS: T.EXPRS };
 
 return { CHARS, SPAWNS };

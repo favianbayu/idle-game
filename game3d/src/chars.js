@@ -59,7 +59,8 @@ export const SPAWN_OF = { ibuHijab: 'wargaHijab', ibuHijab2: 'wargaHijab', ibuDa
   anakSDcw: 'wargaAnak~sd', bocah: 'wargaAnak~main', ojol: 'ojolLewat', tukangBakso: 'pedagang', tukangParkir: 'tukangParkir', tukangParkir2: 'tukangParkir',
   satpam: 'satpamAcak', polisi: 'polisi', mandor: 'kuli', siswaA: 'siswaAcak', siswaB: 'siswaAcak', siswiA: 'siswiAcak', siswiB: 'siswiAcak',
   tentara: 'tentara', tentaraJaga: 'tentara~jaga', petani: 'petani', petaniW: 'petani~kebunTeh', nelayan: 'nelayan', mekanik: 'mekanik', pendaki: 'pendaki',
-  buruh: 'buruh', guru: 'guruAcak', turis: 'turis', penonton: 'penonton', santri: 'santri', muridSilat: 'muridSilat', persit: 'persit' };
+  buruh: 'buruh', guru: 'guruAcak', turis: 'turis', penonton: 'penonton', santri: 'santri', muridSilat: 'muridSilat', persit: 'persit',
+  anakSTM: 'siswaSTM', anakSTMbengkel: 'siswaSTM~praktek', anakSTMgaul: 'siswaSTM~nongkrong', anakSMK: 'siswaSMK', anakSMKhotel: 'siswaSMK~hotel', anakSMKboga: 'siswaSMK~tataBoga', anakSMKpemandu: 'siswaSMK~pemandu' };
 const SEED_NEXT = {};
 export function visualSid(sid, name) {
   if (name && NAME_VIS[name]) return NAME_VIS[name];

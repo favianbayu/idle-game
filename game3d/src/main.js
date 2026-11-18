@@ -588,9 +588,9 @@ function updatePlayer(dt) {
 }
 
 // variasi diam NPC: siswa main HP/ngobrol/baca, orang dewasa jongkok/peregangan, anak-anak joget; beberapa tokoh punya kebiasaan sendiri (guide)
-const STUDENTS = new Set(['raka', 'rani', 'bimo', 'tegar', 'jojo', 'uti', 'nadia', 'sekar', 'laras', 'dimas', 'arga', 'rizal', 'bram', 'rio', 'kevin', 'sasha', 'siswaA', 'siswiA', 'siswiB', 'siswaB', 'paskibra', 'kirana', 'mei', 'andra']);
+const STUDENTS = new Set(['raka', 'rani', 'bimo', 'tegar', 'jojo', 'uti', 'nadia', 'sekar', 'laras', 'dimas', 'arga', 'rizal', 'bram', 'rio', 'kevin', 'sasha', 'siswaA', 'siswiA', 'siswiB', 'siswaB', 'paskibra', 'kirana', 'mei', 'andra', 'anakSTM', 'anakSTMgaul', 'anakSTMbengkel']);
 const KIDS = new Set(['anakSD', 'anakSDcw', 'bocah', 'cici']);
-const HABIT = { pakUjang: 'sweep', mei: 'read', rizal: 'read', jojo: 'phone', sekar: 'think', fajar: 'squat', satpam: 'salute', paskibra: 'salute', polisi: 'salute', kakek: 'squat', andra: 'think', laras: 'carry', bimo: 'laugh', tegar: 'read', pakGunadi: 'think', buRatna: 'read' };
+const HABIT = { pakUjang: 'sweep', mei: 'read', rizal: 'read', jojo: 'phone', sekar: 'think', fajar: 'squat', satpam: 'salute', paskibra: 'salute', polisi: 'salute', kakek: 'squat', andra: 'think', laras: 'carry', bimo: 'laugh', tegar: 'read', pakGunadi: 'think', buRatna: 'read', anakSTM: 'talk', anakSTMgaul: 'phone', anakSTMbengkel: 'squat' };
 const IDLES = { student: ['idle', 'idle', 'phone', 'talk', 'look', 'think', 'laugh', 'read', 'clap'], adult: ['idle', 'idle', 'look', 'phone', 'talk', 'squat', 'stretch', 'scratch'], kid: ['idle', 'look', 'dance', 'squat', 'wave', 'clap'] };
 const pick3 = a => a[Math.floor(Math.random() * a.length)];
 function pickIdle(n) {
