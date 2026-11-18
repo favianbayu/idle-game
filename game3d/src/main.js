@@ -357,7 +357,7 @@ tap($('btnHero'), () => {   // ganti tokoh pemain: simpan pilihan lalu muat ulan
   opt.hero = HERO === 'rani' ? 'raka' : 'rani'; saveT = 99; tick0save(); location.reload();
 });
 $('btnHero').textContent = 'Tokoh: ' + (HERO === 'rani' ? 'Rani' : 'Raka');
-tap($('btnPx'), () => { opt.px = opt.px >= 5 ? 0 : (opt.px || pxSize) + 1; resize(); $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto'); });
+tap($('btnPx'), () => { opt.px = opt.px >= 5 ? 0 : (opt.px || 0) + 1; /* auto -> 1 (halus, resolusi penuh) -> 2 ... 5 -> auto */ resize(); $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto'); });
 ui.quality.textContent = 'Grafik: ' + QUALITY[opt.quality].name; $('btnPx').textContent = 'Pixel: ' + (opt.px || 'auto');
 const bigmap = makeBigMap({ kota, player, isTouch, parked: () => RIDES.flatMap((R, i) => R && R.holder.visible && player.area === 'kota' ? [{ x: garage.spot[i].x, z: garage.spot[i].z, icon: i === 1 ? 'S' : 'M' }] : []) });
 { const bmOpen = bigmap.open; bigmap.open = () => player.area === 'luar' ? toast('Peta besar baru ada untuk kota. Di luar kota pakai minimap & halte.') : bmOpen(); }
