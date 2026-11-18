@@ -59,7 +59,8 @@ function applyQuality() {
 let pxSize = 3;
 function resize() {
   const w = innerWidth, h = innerHeight;
-  pxSize = opt.px || Math.max(2, Math.round(Math.min(h, w * 1.2) / (isTouch ? 260 : 330)));
+  // auto: layar sentuh (HP/tablet) tetap pixel besar supaya FPS aman; PC/laptop pakai resolusi penuh (pixel 1, halus)
+  pxSize = opt.px || (isTouch ? Math.max(2, Math.round(Math.min(h, w * 1.2) / 260)) : 1);
   renderer.setSize(Math.ceil(w / pxSize), Math.ceil(h / pxSize), false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
