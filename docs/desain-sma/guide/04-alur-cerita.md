@@ -32,6 +32,68 @@ Prinsip penyusunan:
 | Desa Pandansari | Bab 2 (rute galon Gilang) | Andra dan sawah neneknya (Bab 6), patok proyek di sawah (Bab 11) | Andra, Gilang | Antar galon, panen, layangan |
 | Pantai selatan (Lintang, Watu Sepi, Tanjung Karang, TPI, bakau) | Bab 2 (kereta & angkot) | Final balap liar di Jalur Pesisir (Bab 10), nelayan mengantar akta lewat laut (Bab 13), ending di mercusuar (Bab 15) | Kirana, Laras, Mei | Ikut nelayan subuh, warung seafood, voli pantai |
 
+## Kalender game
+
+favian memilih kalender ringkas, dan game sudah memakainya (`game3d/src/waktu.js`):
+
+- Setahun = **6 bulan x 28 hari = 168 hari**. Seminggu 7 hari, Minggu libur. Satu jam game = 40 detik nyata.
+- **Libur Panjang** 4 minggu nyambung: dari 2 minggu terakhir bulan 6 sampai 2 minggu pertama bulan 1. Sisanya
+  20 minggu sekolah.
+  - Semester 1: bulan 1 minggu 3 sampai bulan 3.
+  - Semester 2: bulan 4 sampai bulan 6 minggu 2.
+- Game mulai di hari MPLS, **Senin, 15 Kemarau Awal kelas X**. Tiga tahun ajaran (X, XI, XII) = 504 hari.
+
+| Bulan | Nama | Padanan bulan asli |
+|---|---|---|
+| 1 | Kemarau Awal | Juli |
+| 2 | Kemarau | Agustus-September |
+| 3 | Pancaroba | Oktober-Desember |
+| 4 | Hujan | Januari-Februari |
+| 5 | Hujan Akhir | Maret-April |
+| 6 | Kemarau Muda | Mei-Juni |
+
+### Tanggal event cerita
+
+| Kelas | Tanggal | Event | Bab |
+|---|---|---|---|
+| X | 15 Kemarau Awal | MPLS hari pertama | 1 |
+| X | 8 Kemarau | Malam pertama: dicegat Serigala Besi | 3 |
+| Tiap tahun | 17 Kemarau | Upacara & lomba 17 Agustus, malamnya pasar malam | 4 |
+| X | 17 Kemarau | Lomba perahu hias Waduk Sirnagalih | 4 |
+| Tiap tahun | 26 Pancaroba | Rapor semester 1 | |
+| X | 10 Hujan Akhir | HUT Asrama Batalyon 3: hari terbuka | 5 |
+| X | 8 Kemarau Muda | Pak Gito menagih: lunas atau warkop turun | 5 |
+| Tiap tahun | 12 Kemarau Muda | Rapor kenaikan kelas / pengumuman kelulusan | |
+| Tiap tahun | 15 Kemarau Muda - 14 Kemarau Awal | Libur Panjang | |
+| XI | 5 Kemarau | Pemilihan OSIS | 6 |
+| XI | 24 Kemarau | Final basket antar-SMA di GOR | 6 |
+| XI | 8 Pancaroba | Warkop dirusak | 7 |
+| XI | 20-22 Pancaroba | Karyawisata Sangkala | 8 |
+| XI | 15 Hujan | Seri pertama liga resmi sirkuit | 9 |
+| XI | 5 Hujan Akhir | Surat relokasi diumumkan | 10 |
+| XI | 20 Hujan Akhir | Banjir Kali Cendana (musim hujan) | 10 |
+| XI | 10 Kemarau Muda | Pensi akhir tahun | 10 |
+| XII | 22 Kemarau Awal | Try out pertama | 11 |
+| XII | 15 Kemarau | Patok proyek di Pandansari & Sukamekar | 11 |
+| XII | 15 Pancaroba | Kemah puncak angkatan | 12 |
+| XII | 20 Hujan | Sidang & pengantaran akta | 13 |
+| XII | 22 Hujan Akhir | Ujian akhir (seminggu) | 14 |
+| XII | 12 Kemarau Muda | Malam perpisahan & wisuda | 15 |
+| XII | 20 Kemarau Muda | Perjalanan terakhir: mercusuar Tanjung Karang | 15 |
+| XII | 28 Kemarau Muda | Kereta pulang ke Lereng Wangi | 15 |
+
+Event mingguan (tidak berlaku saat Libur Panjang):
+
+| Hari | Event |
+|---|---|
+| Rabu | Pasar hewan Tegalsari ramai |
+| Jumat | Pak Gito menagih cicilan |
+| Sabtu | Ekskul & latihan pensi |
+| Minggu | Sekolah libur |
+
+Kalender ini menggantikan acuan "minggu ke-N" dan nama bulan asli di `01-cerita.md` dan `06-event.md`. Tanggal di
+tabel ini harus sama dengan `EVENTS` di `waktu.js`, jadi kalau salah satunya diubah, ubah juga yang lain.
+
 ## Garis waktu pembukaan wilayah
 
 | Bab | Wilayah / akses baru | Cara |
