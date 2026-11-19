@@ -4,7 +4,7 @@
 // Sekolah: seragam SD swasta (kemeja putih + dasi kotak + celana kotak biru) + ransel. Rangka anak (sama dengan Cici).
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
 
 export const SKEL = { ank: 3.5, shin: 8, thigh: 8.5, up: 3, neck: 16, shY: 6.5, shZ: 11, upper: 7, fore: 6.5, hipY: 3, flap: 4.5, ballR: 0.7 };
 const PV = pivots(SKEL);
@@ -108,6 +108,7 @@ export const OUTFITS = {
   sekolah: { name: 'Sekolah: seragam SD swasta (kemeja putih + dasi kotak + celana kotak biru) + ransel oranye', top: 'sekolah' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.main), expr: opt.expr || 'biasa', face: opt.face };
   const Th = thigh(o), Sn = shin(o), Ft = foot(o), A = arm(o), sl = bodyC(o), leg = legC(o);
   return assemble([

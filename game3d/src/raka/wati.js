@@ -5,7 +5,7 @@
 // Rangka keluarga Nadia, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -116,9 +116,10 @@ function foot(o) {
 
 export const OUTFITS = {
   kantor: { name: 'Kantor bank: jilbab marun bros emas + blazer biru dongker lis emas + blus putih + kartu pegawai + rok span hitam + pantofel + buku tabungan & brosur', top: 'kantor' },
-  libur: { name: 'Akhir pekan: jilbab peach + tunik mint + kulot krem + tas selempang kecil + sepatu flat', top: 'libur' },
+  libur: { name: 'Akhir pekan: jilbab peach + tunik mint + kulot krem + tas selempang kecil + sepatu flat', top: 'libur', propOn: 'all' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kantor), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), [Th, Sn] = legs(o), Ft = foot(o), sl = topC(o), leg = W(o) ? 'wtRok' : 'wtKulot';
   const P = assemble([

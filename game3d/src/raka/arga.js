@@ -3,13 +3,15 @@
 // Seragam dikeluarkan + jaket kulit cokelat warisan ayah, boots hitam. Rangka skala ±1.32 (tinggi pinggul = Raka), voxel 1/64.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { motifKotak, tudung, lapis } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  aSarung: ['#2e4a3a', '#3a5c48', '#4a705a', '#5e8870'], aSarungK: ['#7a2e2a', '#923a34', '#a84a42', '#be6256'], aOblong: ['#cfcfca', '#e2e2dc', '#f0f0ea', '#fbfbf6'],
   aSkin: ['#7a4a2e', '#94603d', '#b07a52', '#c48c62'], aSkinS: ['#94603d'], aScar: ['#d8a07a'],
   aBuzz: ['#1a1413', '#241c19', '#30251f', '#3e3028'], aBuzzT: ['#4a3a30'],
   kulit: ['#2e1c12', '#3e271a', '#5a3a28', '#74503a'], kulitS: ['#8a6448'], zip: ['#a0a4ad'],
@@ -131,7 +133,15 @@ export const OUTFITS = {
   jalan: { name: 'Flanel abu + jeans hitam', top: 'flanel', bot: 'jeansK' },
   kerja: { name: 'Bantu kakek: kaus abu + celana kerja', top: 'kaus', bot: 'kerja' },
 };
+const SARUNG = v => motifKotak(v, 'aSarung', 'aSarungK', 3, ['kerja']);
+OUTFITS.rumah = { ...OUTFITS.kerja, name: 'Rumah: sarung kotak, kaus oblong putih',
+  sw: { asap: 'aOblong', boots: 'aSkin' },
+  fx: { pelvis: SARUNG, thighR: SARUNG, thighL: SARUNG, shinR: SARUNG, shinL: SARUNG } };
+OUTFITS.hujan = { ...OUTFITS.jalan, name: 'Hujan: ponco hitam',
+  sw: { flanel: 'prPoncoH', flanelK: 'prPoncoHS' },
+  fx: { head: v => tudung(v, 'prPoncoH', 'prPoncoHS'), pelvis: v => lapis(v, 'prPoncoH') } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeve(o);
   return assemble([

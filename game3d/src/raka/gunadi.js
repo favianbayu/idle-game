@@ -3,13 +3,15 @@
 // kupu-kupu, celana abu, gelas kimia berasap di tangan. Rangka keluarga Arga (skala 1.28, sedikit membungkuk), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { motifKotak } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 23, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  guPolo: ['#2a4a3a', '#345a46', '#3e6a52', '#4c7e62'], guSarung: ['#4a3a6a', '#5a487e', '#6a5892', '#7e6ca8'], guSarungK: ['#c8b890'],
   guSkin: ['#bc8c68', '#d4a07c', '#e0b088', '#ecc09a'], guSkinS: ['#c89672'], guKerut: ['#b8845e'],
   guHair: ['#a8a49c', '#c0bcb4', '#d6d2ca', '#ecebe6'], guHairS: ['#8e8a82'], guFrame: ['#2a2a30'], guLens: ['#dcecf4'],
   labC: ['#cfd2d6', '#e2e4e8', '#f0f2f4', '#fafbfc'], labS: ['#b0b4ba'], nodaH: ['#5aa04a'], nodaU: ['#8a4ab0'], nodaK: ['#d8a020'], nodaG: ['#4a3a2a'],
@@ -125,7 +127,18 @@ export const OUTFITS = {
   rompi: { name: 'Mengajar teori: rompi wol cokelat + kemeja krem + dasi kupu-kupu', top: 'rompi' },
   kardigan: { name: 'Rumah: kardigan rajut bata + kemeja krem', top: 'kardigan' },
 };
+function rambutBerdiri(v) {   // helai uban mencuat ke atas, gaya ilmuwan
+  const top = new Map(); v.each((x, y, z, c) => { if (c === 'guHair' || c === 'guHairS') { const k = x + ',' + y; if (!top.has(k) || top.get(k) < z) top.set(k, z); } });
+  for (const [k, z] of top) { const [x, y] = k.split(',').map(Number), h = (Math.abs(x * 7 + y * 13) % 5); if (h >= 2) for (let i = 1; i <= h - 1; i++) v.set(x, y, z + i, i === h - 1 ? 'guHair' : 'guHairS'); }
+  return v;
+}
+OUTFITS.kerja = { ...OUTFITS.lab, name: 'Kerja: jas lab bernoda, rambut putih berdiri', fx: { head: rambutBerdiri } };
+const SARUNG_GU = v => motifKotak(v, 'guSarung', 'guSarungK', 3, ['celG2', 'pantoG']);
+OUTFITS.rumah = { ...OUTFITS.kardigan, name: 'Rumah: kaus polo hijau tua + sarung kotak ungu',
+  sw: { kardiG: 'guPolo', kemG: 'guPolo', dasiG: 'guPolo' },
+  fx: { pelvis: SARUNG_GU, thighR: SARUNG_GU, thighL: SARUNG_GU, shinR: SARUNG_GU, shinL: SARUNG_GU } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Gunadi memakai jas lab
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.lab), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o);

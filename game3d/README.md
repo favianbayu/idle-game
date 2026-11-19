@@ -137,6 +137,10 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
 - **Kendaraan parkir** punya tabrakan, dan jumlahnya ganti tiap hari (sepi / jarang / sedang / penuh). Hari berganti saat tidur.
 - **Lapangan basket** umum di samping SMA punya garis lengkap; lapangan basket di dalam SMA 3 bisa dipakai main.
 
+## Barang di tangan tokoh
+
+Barang yang dipegang tokoh fine-voxel (buku, sapu, cangkul, gelas, HP, raket, dll.) adalah bagian terpisah `propR`/`propL`, bukan bagian lengan. Barang ikut tulang lengan bawah. `voxworker.js` memanggil `showProps(P, anim)` per frame, jadi barang hanya muncul saat anim aktivitas yang cocok dengan jenisnya. Contohnya sapu saat `sweep`, buku saat `read` atau `talk`, dan cangkul saat `squat`. Saat jalan atau idle, tangan kosong. Tongkat jalan, payung hujan, senapan jaga, dan tas tangan selalu tampil. Aturan dan daftar jenis barang ada di `tokoh-voxel/PANDUAN-TOKOH.md` bagian 6b.
+
 ## Kembangkan
 
 ```

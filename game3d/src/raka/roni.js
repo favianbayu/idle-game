@@ -4,7 +4,7 @@
 // botol + gancu besi. Jumatan: koko putih bekas + sarung kotak hijau + peci hitam + sandal. Rangka keluarga Arga.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -134,6 +134,7 @@ export const OUTFITS = {
   jumatan: { name: 'Jumatan: peci hitam + koko putih bekas + sarung kotak hijau + sandal', top: 'jumatan' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.mulung), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = M(o) ? 'rnKaus' : 'rnKoko', lg = M(o) ? 'rnCelana' : 'rnSarung';
   const P = assemble([

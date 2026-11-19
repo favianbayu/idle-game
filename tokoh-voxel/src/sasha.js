@@ -4,7 +4,7 @@
 // Rangka skala 1.24 (keluarga Rani), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
 import { skirtPelvis, skirtPanel, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -12,6 +12,7 @@ const PV = pivots(SKEL);
 const TAIL = [-7, 0, 6];
 
 addRamps({
+  saSatin: ['#cfcac2', '#e4e0d8', '#f4f1ea', '#fffdf8'], saSatinS: ['#d6cfc2'], saBulu: ['#e89ab0', '#f2b0c2', '#f8c6d4', '#fdd8e2'], ketsK: ['#5e5a54', '#706c66', '#86827a', '#9a968e'],
   saSkin: ['#c8a088', '#dcb498', '#f2cdb0', '#fadcc4'], saSkinS: ['#e0b498'], lipP: ['#d86a84'], saBlush: ['#eea0a0'],
   saHair: ['#3a1c12', '#4a2618', '#5a3020', '#74402c'], saHairT: ['#8e5236'],
   pinkC: ['#c88898', '#dca0b0', '#f2b8c6', '#f8ccd8'], pinkCS: ['#d896a8'], saGold: ['#8e6e2a', '#ad8936', '#c9a24a', '#e0bc66'],
@@ -164,7 +165,12 @@ export const OUTFITS = {
   jalan: { name: 'Dress bunga + jaket denim putih + tas mini', top: 'dress', bottom: 'dress', shoe: 'flat' },
   malam: { name: 'Penyamaran malam: hoodie hitam + masker', top: 'hoodie', bottom: 'training', shoe: 'kets', hood: true, mask: true },
 };
+OUTFITS.rumah = { ...OUTFITS.malam, hood: false, mask: false, name: 'Rumah: piama satin putih, sandal bulu',
+  sw: { hoodK: 'saSatin', hoodKS: 'saSatinS', ketsL: 'saBulu', sole: 'saBulu', lace: 'saBulu' } };
+OUTFITS.rahasia = { ...OUTFITS.malam, name: 'Rahasia: hoodie hitam polos, celana training, masker, kets lusuh (penyamaran)',
+  sw: { hoodKS: 'hoodK', ketsL: 'ketsK', lace: 'ketsK' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o);
   const sk = o.bottom === 'rok' ? ['saRok', 'saRokS'] : o.bottom === 'dress' ? ['dressP', 'denimWS'] : null;

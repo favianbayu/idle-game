@@ -14,7 +14,7 @@ export function voxelFrame(P, pose) {
   const r = rigPose(pose, P.boxes, P.skel, P.tailPiv), items = [];
   const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
   for (const p of P.parts) {
-    const M = r.mats[p.name]; if (!M) continue;
+    const M = r.mats[p.name] || r.mats[p.name === 'propR' ? 'foreR' : p.name === 'propL' ? 'foreL' : '']; if (!M) continue;   // barang ikut lengan bawah
     const b = p.box, bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9];
     for (let i = 0; i < 8; i++) {
       const q = apply(M, [b[i & 1 ? 3 : 0], b[i & 2 ? 4 : 1], b[i & 4 ? 5 : 2]]);

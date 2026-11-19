@@ -3,7 +3,8 @@
 // di poni. Rangka skala 1.24 (sama dengan Rani), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
+import { tasPinggang, lengan, payungLipat, tudung } from './props.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -11,6 +12,7 @@ const PV = pivots(SKEL);
 const TAIL = [-7, 0, 15];   // ikatan kuncir tinggi (lokal kepala)
 
 addRamps({
+  lPara: ['#b4441c', '#d2562a', '#ea6c3a', '#f68c5c'], lParaS: ['#b4441c'],
   lSkin: ['#9a6640', '#b2774f', '#c48a60', '#d6a074'], lSkinS: ['#b2774f'], lBlush: ['#d9826a'],
   lHair: ['#100b08', '#1a120d', '#24160e', '#382517'], lHairT: ['#24160e', '#382517', '#4e3522', '#664630'],
   karet: ['#c23a2a'], jepit: ['#a87a40', '#c89050', '#dcaa6a', '#ecc488'],
@@ -165,7 +167,14 @@ export const OUTFITS = {
   jalan: { name: 'Kemeja kotak di pinggang + jeans', top: 'hijau', bottom: 'jeans', shoe: 'kets' },
   rumah: { name: 'Daster batik pendek', top: 'daster', bottom: 'daster', shoe: 'sandal' },
 };
+OUTFITS.malam = { ...OUTFITS.jalan, name: 'Jualan malam: jaket parasut oranye, tas pinggang uang receh',
+  sw: { white: 'lPara', whiteS: 'lParaS' }, ball: { elbow: 'lPara' },
+  fx: { chest: v => tasPinggang(v, 34), foreR: v => lengan(v, 'lPara', 31, 'lParaS'), foreL: v => lengan(v, 'lPara', 31, 'lParaS') } };
+OUTFITS.hujan = { ...OUTFITS.jalan, propOn: 'all', name: 'Hujan: plastik kresek jadi jas hujan, payung sewaan besar (ojek payung)',
+  sw: { white: 'prKresek', whiteS: 'prKresekS' },
+  fx: { head: v => tudung(v, 'prKresek', 'prKresekS'), foreR: v => payungLipat(v, 'prPayungH', 22) } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), rok = o.bottom === 'rok';
   const top = { jualan: 'lOren', daster: 'daster' }[o.top] || 'white';

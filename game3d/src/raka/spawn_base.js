@@ -4,7 +4,7 @@
 // rok & sarung memakai rok.js + P.skirt supaya tidak terbelah. Semua bahan berprefiks 'sp'.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, paintFace, skullLayer, HELD_KIND } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 /* ================= warna: ramp dibuat otomatis dari satu warna dasar */
@@ -467,7 +467,11 @@ function fore(d, G, side) {
   v.rbox(x0, a0, G.hz[0], x1 + 1, a1 - (d.age === 'anak' ? 0 : a1 - a0 > 4 ? 1 : 0), G.hz[1], K, 2); v.rrect(G.fist, x0 + 1, a0 + 1, x1, a1 - 1, K, 1);
   if (d.top.jam && side < 0) v.paint(x0, a0, G.fz[0] + 1, x1, a1, G.fz[0] + 2, 'spHP');
   const p = side > 0 ? d.handR : d.handL;
-  if (p) prop(v, d, G, p);
+  if (p) {   // barang pegangan digambar di salinan, selisihnya jadi bagian terpisah (propR / propL)
+    const w = new Vox().add(v); prop(w, d, G, p);
+    const held = new Vox(); w.each((x, y, z, c) => { if (v.get(x, y, z) !== c) held.set(x, y, z, c); });
+    if (held.m.size) v.held = held;
+  }
   if (d.fx && d.fx.fore) d.fx.fore(v, d, G, side);
   return v;
 }
@@ -580,8 +584,9 @@ export function orang(d, expr = 'biasa') {
   const hem = B.hem ?? (d.sex === 'L' ? 5 : 7), panel = s => skirtLong ? pattern(skirtPanel(bc, bc + 'S', s, hem), bc, B.pat, B.pc) : null;
   const sl = sleeveCol(d) || K, long = d.top.sleeve === 'panjang' || d.top.kind === 'jaket' || d.top.kind === 'hoodie';
   const legM = B.kind === 'pendek' && !kid ? K : bc;
+  const fR = fore(d, G, 1), fL = fore(d, G, -1);
   const P = assemble([
-    ['foreR', fore(d, G, 1), PV.foreR], ['foreL', fore(d, G, -1).mirrorY(), PV.foreL],
+    ['foreR', fR, PV.foreR], ['propR', fR.held || null, PV.foreR], ['foreL', fL.mirrorY(), PV.foreL], ['propL', fL.held ? fL.held.mirrorY() : null, PV.foreL],
     ['head', head(d, EXPRS.includes(expr) ? expr : 'biasa'), [0, 0, 0]],
     ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
     ['chest', chest(d, G), PV.chest],
@@ -590,6 +595,7 @@ export function orang(d, expr = 'biasa') {
     ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
     ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
   ], { neck: K, shoulder: sl, elbow: long && !d.top.gulung ? sl : K, hip: kid && skirt ? K : bc, knee: skirtLong ? bc : kid ? (B.kind === 'panjang' ? bc : K) : legM }, skel, TAIL);
+  P.propOn = { propR: d.propOn || HELD_KIND[d.handR] || 'aktif', propL: d.propOn || HELD_KIND[d.handL] || 'aktif' };
   if (skirtLong) P.skirt = skirtInfo(P, bc, bc + 'S');
   else if (skirt && kid) P.skirt = { mats: [P.mat(bc), P.mat(bc + 'S')], fill: P.mat(bc), parts: ['pelvis'] };
   return P;

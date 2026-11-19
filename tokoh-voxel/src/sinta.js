@@ -3,7 +3,7 @@
 // di tangan kiri. Rangka keluarga Nadia (skala 1.24), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -11,6 +11,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  siKardiB: ['#9aa4b0', '#aeb8c4', '#c2ccd6', '#d6dee6'], siDaster: ['#c47a8a', '#d48e9c', '#e2a4b0', '#eebcc6'], siDasterS: ['#a8606e'], siHijabR: ['#6a5a4a', '#7c6a58', '#907c68', '#a6927c'], siHijabRS: ['#5a4a3a'],
   siSkin: ['#c8946c', '#e0ac86', '#e8b48c', '#f4c8a4'], siSkinS: ['#d8a27c'], siBlush: ['#f0a090'],
   hijabSi: ['#c87a62', '#dc9078', '#eca890', '#f8c4ae'], hijabSiS: ['#c07058'], brosSi: ['#f4f0e8'], brosSiC: ['#e8b840'],
   hijabSiL: ['#7a6a9a', '#8e7eae', '#a494c2', '#bcaed6'], hijabSiLS: ['#6a5a8a'], hijabSiM: ['#4a7a6a', '#5a8c7a', '#6c9e8c', '#84b4a2'], hijabSiMS: ['#3a6a5a'],
@@ -121,7 +122,12 @@ export const OUTFITS = {
   gamis: { name: 'Gamis ungu lembut + hijab ungu', top: 'gamis' },
   batik: { name: 'Jumat: batik biru motif kawung + hijab hijau mint', top: 'batik' },
 };
+OUTFITS.kerja = { ...OUTFITS.kardigan, propOn: 'baca', name: 'Kerja: hijab mint pastel, kardigan abu muda, buku',
+  sw: { hijabSi: 'hijabSiM', hijabSiS: 'hijabSiMS', kardiS: 'siKardiB' } };
+OUTFITS.rumah = { ...OUTFITS.gamis, name: 'Rumah: daster panjang merah jambu + hijab instan cokelat',
+  sw: { gamisSi: 'siDaster', gamisSiS: 'siDasterS', hijabSiL: 'siHijabR', hijabSiLS: 'siHijabRS' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Sinta memakai kardigan
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kardigan), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirtC(o), A = arm(o), Th = skirtThigh(c), Sn = skirtShin(c, cS), Ft = foot(o), sl = sleeveC(o);

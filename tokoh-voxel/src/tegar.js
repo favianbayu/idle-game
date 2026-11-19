@@ -4,13 +4,15 @@
 // ikat pinggang kulit, badge ketua kelas, pantofel. Skala lama 1.32, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { tudung } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  tJas: ['#14306a', '#1a3c80', '#224a96', '#3060b0'], tJasS: ['#e8e070'],
   tSkin: ['#c8987a', '#dcaf8e', '#f0c4a0', '#fad6b6'], tSkinS: ['#d8a888'], tBag: ['#c49a86'],
   tHair: ['#060505', '#0c0a0a', '#141010', '#221c1c'], tHairT: ['#4a4650'], tPart: ['#000000'],
   tFrame: ['#08080a', '#0e0e12', '#16161b', '#26262e'], tLens: ['#d8e8f2'],
@@ -151,7 +153,11 @@ export const OUTFITS = {
   rumah: { name: 'Piama setelan biru tua', top: 'piama' },
   jalan: { name: 'Polo abu + chino + kets putih bersih', top: 'polo' },
 };
+OUTFITS.hujan = { ...OUTFITS.les, name: 'Hujan: jas hujan atas-bawah, tas dibungkus plastik',
+  sw: { langit: 'tJas', langitS: 'tJasS', bahan: 'tJas', ransel: 'prPlastik', bukuT: 'prPlastik', bukuM: 'prPlastik', bukuH: 'prPlastik' },
+  fx: { head: v => tudung(v, 'tJas') } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   return assemble([

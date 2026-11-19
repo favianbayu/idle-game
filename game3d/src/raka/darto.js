@@ -3,7 +3,8 @@
 // jepit; saat kerja celemek hijau Warkop Simpang. Rangka keluarga Arga (skala 1.32), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { lapis, lengan } from './props.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
@@ -11,6 +12,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  daJeansJ: ['#3a4a62', '#4a5c78', '#5e7290', '#7a8ca8'], daJeansJS: ['#2a3648'],
   daSkin: ['#8e5a3a', '#a86e48', '#c48a60', '#d49c72'], daSkinS: ['#a87050'], tatoD: ['#4a6a7a'],
   daHair: ['#141010', '#1e1a18', '#2a2420', '#3a322c'], daUban: ['#8a8680', '#a29e98', '#bab6ae', '#cfcbc4'], kumis: ['#141010'],
   oblong: ['#b8b2a2', '#cac4b4', '#dad4c4', '#e6e0d2'], oblongS: ['#a8a090'], celemek: ['#2a5a34', '#326a3e', '#3c7a48', '#50905c'], celemekT: ['#e8dcb0'],
@@ -142,7 +144,12 @@ export const OUTFITS = {
   santai: { name: 'Santai: kaus oblong + sarung di pundak + celana pendek', top: 'oblong', bot: 'pendek', sarungBahu: true },
   rumah: { name: 'Di rumah: kaus kutang + sarung', top: 'kutang', bot: 'sarung' },
 };
+OUTFITS.malam = { ...OUTFITS.kerja, apron: false, name: 'Malam: jaket jeans tua, sarung melilit leher',
+  sw: { oblong: 'daJeansJ', oblongS: 'daJeansJS' }, ball: { elbow: 'daJeansJ' },
+  fx: { chest: v => { lapis(v, 'sarungD', 52, 56); v.each((x, y, z, c) => { if (c === 'sarungD' && (x + y) % 4 === 0) v.set(x, y, z, 'sarungDK'); }); return v; },
+        foreR: v => lengan(v, 'daJeansJ', 31, 'daJeansJS'), foreL: v => lengan(v, 'daJeansJ', 31, 'daJeansJS') } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Om Darto memakai baju kerja warkop
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kerja), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);

@@ -3,7 +3,7 @@
 // sandal jepit. Rangka keluarga Nadia (skala 1.22), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -111,10 +111,11 @@ function foot() {
 }
 
 export const OUTFITS = {
-  jualan: { name: 'Keliling jualan: bergo hijau + caping + kaus oranye digulung + kain batik + tas pinggang + kangkung', top: 'jualan', hijab: 'smBergo', caping: true },
+  jualan: { name: 'Keliling jualan: bergo hijau + caping + kaus oranye digulung + kain batik + tas pinggang + kangkung', top: 'jualan', hijab: 'smBergo', caping: true, propOn: 'all' },
   rumah: { name: 'Di rumah: bergo hijau + daster batik merah muda', top: 'rumah', hijab: 'smBergo' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jualan), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirt(o), A = arm(o), Th = sk(o, skirtThigh(c)), Sn = sk(o, skirtShin(c, cS)), Ft = foot(o), sl = topC(o);
   const panel = s => sk(o, skirtPanel(c, cS, s, 5));

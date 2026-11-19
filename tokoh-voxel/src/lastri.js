@@ -4,7 +4,7 @@
 // + gelas jamu di tangan + sandal jepit. Meracik: daster batik hijau + celemek + cobek & ulekan. Rangka keluarga Nadia.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -145,10 +145,11 @@ function foot() {
 }
 
 export const OUTFITS = {
-  keliling: { name: 'Keliling: kebaya kutubaru kuning + jarik cokelat + selendang lurik + bakul jamu + gelas jamu + sandal jepit', top: 'keliling' },
+  keliling: { name: 'Keliling: kebaya kutubaru kuning + jarik cokelat + selendang lurik + bakul jamu + gelas jamu + sandal jepit', top: 'keliling', propOn: 'jual' },
   racik: { name: 'Meracik: daster batik hijau + celemek + cobek & ulekan', top: 'racik' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.keliling), expr: opt.expr || 'biasa', face: opt.face };
   const c = cK(o), cS = cKS(o);
   const A = arm(o), Th = kain(o, skirtThigh(c)), Sn = kain(o, skirtShin(c, cS)), Ft = foot(o), sl = K(o) ? 'lsKeb' : 'lsDaster';

@@ -3,7 +3,7 @@
 // Rangka keluarga Nadia/Bu Narti (skala 1.2), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12, thigh: 12.5, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -161,10 +161,11 @@ function foot(o) {
 
 export const OUTFITS = {
   warung: { name: 'Warung: ikat kepala batik + daster bunga + celemek bernoda + sutil + sandal jepit', top: 'warung', head: 'iyIkat' },
-  pasar: { name: 'Ke pasar subuh: kerudung putih + kebaya encim marun + selendang + sarung batik + tas anyaman', top: 'pasar', head: 'mukena' },
+  pasar: { name: 'Ke pasar subuh: kerudung putih + kebaya encim marun + selendang + sarung batik + tas anyaman', top: 'pasar', head: 'mukena', propOn: 'all' },
   ngaji: { name: 'Pengajian: kerudung putih panjang + gamis ungu tua + tasbih', top: 'ngaji', head: 'mukena' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Mak Iyah memakai baju warung
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.warung), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = dress(o), A = arm(o), Ft = foot(o), sl = sleeveC(o);

@@ -182,6 +182,46 @@ ulang dengan dua bahan `c`/`cS` (bahan ketiga tidak ikut diisi lambung). Cek lem
   dan anting kecil (Maya).
 - Kilau rambut panjang lurus: dua garis putus-putus saja. Banyak garis rapat terbaca sebagai kisi-kisi.
 
+## 6b. Varian baju dan barang pegangan
+
+**Varian baju.** Baju baru yang mirip baju lama tidak perlu fungsi bagian badan baru. Tulis di bawah blok `OUTFITS`:
+
+```js
+OUTFITS.hujan = { ...OUTFITS.jalan, name: 'Hujan: ponco kuning, payung lipat biru',
+  sw: { cream: 'prPonco' },                       // ganti bahan: lama -> baru
+  fx: { head: v => tudung(v, 'prPonco'), foreR: v => payungLipat(v) },   // tambahan per bagian
+  ball: { elbow: 'prPonco' },                     // warna sendi
+  propOn: 'all' };                                // kapan barang di tangan tampil (lihat bawah)
+```
+
+- `build()` tiap tokoh memanggil `dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0])` di baris pertama. `assemble()` lalu memakai `sw`, `fx`, `ball` dan `propOn`.
+- `fx` jalan dulu, baru `sw`. Jadi bahan yang digambar `fx` ikut diganti kalau namanya ada di `sw`.
+- Properti siap pakai ada di `src/props.js`: raket, payung lipat, penggaris, buku, kipas, kantong bola, peluit, kartu ID, tas pinggang, tudung hujan, handuk bahu, lapisan luar (`lapis`), jas berbukaan V (`jas`), lengan panjang (`lengan`), motif kotak (`motifKotak`), cat semua (`semua`), cat rentang z (`catZ`), hapus bahan (`strip`). Bahannya berawalan `pr`.
+- Ramp baru tetap 4 tingkat (atau 1).
+
+**Barang pegangan terpisah.** Barang di tangan tidak menempel di lengan bawah lagi.
+
+- `assemble()` memotong `foreR`/`foreL`. Yang tersisa di lengan hanyalah kolom penampang lengan, dari ujung kepalan ke atas. Sisanya jadi bagian `propR`/`propL`, yang ikut tulang lengan bawah.
+- Gagang yang tertinggal di dalam kepalan diwarnai seperti kepalan.
+- Template spawn (`spawn_base.js`) memisah sendiri: barang `d.handR`/`d.handL` digambar di salinan, lalu selisihnya jadi `propR`/`propL`.
+- Game (voxworker) dan viewer memanggil `showProps(P, anim)`. Barang hanya tampil saat anim cocok dengan jenisnya:
+
+| Jenis | Kapan barang tampil |
+|---|---|
+| Bawaan | Anim aktivitas (`ACT`): talk, read, squat, carry, sweep, sitDown, phone, dan sejenisnya. Tidak saat jalan, lari, atau idle. |
+| `baca` | read, talk, sitDesk |
+| `sapu` | sweep |
+| `tani` | squat, carry |
+| `minum` | duduk, talk |
+| `angkut` | carry, walk |
+| `jual` | walk, idle, talk |
+| `all` | selalu. Untuk tongkat jalan, payung hujan, senapan jaga, tas tangan. |
+
+- Daftar lengkapnya ada di `PROP_KIND` dan `HELD_KIND` (`model.js`).
+- Tetapkan jenis per baju dengan `propOn` di `OUTFITS`, misalnya `propOn: 'all'` untuk tongkat Mbah Karto.
+- `held: false` mematikan pemotongan, untuk benda yang dipakai di tangan seperti sarung tinju Rio.
+- Lembar periksa: `shots/pegangan.png` membandingkan pose jalan dengan pose aktivitas. Lembar pratinjau baju memakai `"prop": true` supaya barangnya terlihat.
+
 ## 7. Mendaftarkan tokoh
 
 1. `src/<tokoh>.js` mengekspor `SKEL, FACES, EXPRS, OUTFITS, build(opt)`.
@@ -241,11 +281,6 @@ Orang tanpa nama (pejalan kaki, buruh, tentara, petani, siswa acak) **tidak** di
 - Tokoh bernama boleh dibangun di atas `spawn_base.js` (contoh `pras.js`, `sarip.js`, `karta.js`): isi deskripsi `d` secara
   tetap (bukan dari seed), lalu tambah detail khusus lewat kait `d.fx.head(v, d)`, `d.fx.chest(v, d, G)`,
   `d.fx.fore(v, d, G, side)` (bekas luka, kalung, uban, telapak tebal). `d.tegak` mematikan punggung bungkuk lansia.
-- Fitur dasar tambahan untuk tokoh wilayah: kacamata `emas` dan `tebal`, topi `koboi` (anyaman) dan `topiKoki`, bawaan
-  `gendong` (selendang + buntelan botol jamu) dan `radio` (dada kiri), properti `lampu` (teplok, kaca tengah menyala) dan
-  `papan` (papan jepit), `d.maskerDagu`, motif celemek `d.apronPat`, pola kain `lurik`, dan kait `d.fx.shin` (lutut luka).
-- Ramp warna harus 4 tingkat (atau 1). Ramp 2 tingkat membuat `voxelFrame` gagal (`c[0]` undefined) saat sisi permukaan
-  memilih tingkat 3-4.
 - Di game: worker mendaftarkan tiap template sebagai `<sid>_0..7`; sid tampilan boleh membawa baju (`tentara_3~jaga`).
   `chars.js` game memetakan sid generik lama ke template (`SPAWN_OF`) dan NPC bernama ke modelnya lewat nama (`NAME_VIS`).
   Sid logika tidak berubah, jadi stat berantem, kebiasaan, dan dialog tetap jalan.

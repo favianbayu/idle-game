@@ -5,6 +5,7 @@ export const OUTFITS = {
   dinas: { name: 'Jaga pintu air: helm proyek kuning + kemeja dinas khaki kusam + celana gelap + bot karet, buku catatan' },
   hujan: { name: 'Jaga hujan: helm kuning + jas hujan biru + bot karet, senter' },
   rumah: { name: 'Rumah dinas: kaus oblong putih + sarung kotak + sandal, mug kopi' },
+  kerja: { name: 'Kerja: helm proyek kuning + kemeja dinas PU lengan panjang kusam + celana gelap + bot karet, buku catatan' },
 };
 export const EXPRS = EX;
 export function build(opt = {}) {
@@ -15,7 +16,7 @@ export function build(opt = {}) {
   if (o === 'rumah') { d.top = { kind: 'kaus', c: 'putih' }; d.bot = { kind: 'sarung', c: 'coklat', pat: 'kotak', pc: 'krem' }; d.feet = { kind: 'sandal', c: 'hitam' }; d.handR = 'mug'; }
   else {
     d.head = 'helmProyek'; d.headCol = 'kuning';
-    d.top = o === 'hujan' ? { kind: 'jaket', c: 'biru', c2: 'biru', sleeve: 'panjang' } : { kind: 'pns', c: 'khakiPNS', sleeve: 'pendek', tuck: true };
+    d.top = o === 'hujan' ? { kind: 'jaket', c: 'biru', c2: 'biru', sleeve: 'panjang' } : o === 'kerja' ? { kind: 'pns', c: 'khakiPNS', sleeve: 'panjang', tuck: true, pat: 'kotor' } : { kind: 'pns', c: 'khakiPNS', sleeve: 'pendek', tuck: true };
     d.bot = { kind: 'celana', c: o === 'hujan' ? 'biru' : 'coklatPol', belt: o !== 'hujan' }; d.feet = { kind: 'bot', c: 'karet' };
     d.handR = o === 'hujan' ? 'senter' : 'buku'; d.propCol = 'biru';
   }

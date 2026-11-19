@@ -3,7 +3,7 @@
 // emas, selop. Rangka keluarga Nadia (skala 1.26), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -11,6 +11,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  htKebH: ['#6e8466', '#82987a', '#98ae8e', '#b0c4a6'], htKebHS: ['#56684e'], htDaster: ['#8a3a4a', '#a44a5a', '#ba5c6c', '#cc7482'], htDasterK: ['#f0d8b0'],
   htSkin: ['#ae7a54', '#c8906a', '#d9a07a', '#e6b28e'], htSkinS: ['#c08862'], htBlush: ['#d8907a'],
   htHair: ['#140e0c', '#1c1410', '#261c16', '#34281e'], htUban: ['#a8a29a'], htTusuk: ['#c89a3a'],
   kebaya: ['#b8925a', '#cca46a', '#dcb87c', '#e8cc94'], kebayaS: ['#9a7644'], bros: ['#e8c050'], kutubaru: ['#6a3a1a', '#7a4422', '#8c522c', '#a06438'],
@@ -133,7 +134,12 @@ export const OUTFITS = {
   korpri: { name: 'Senin: batik Korpri biru + rok hitam panjang', top: 'korpri' },
   rapat: { name: 'Rapat & sidang Bab 13: blazer biru tua + blus putih + map', top: 'rapat' },
 };
+OUTFITS.kerja = { ...OUTFITS.kebaya, name: 'Kerja: kebaya hijau sage + kain batik, kacamata rantai, sanggul',
+  sw: { kebaya: 'htKebH', kebayaS: 'htKebHS' } };
+OUTFITS.rumah = { ...OUTFITS.kebaya, name: 'Rumah: daster batik bunga + kain, sanggul',
+  sw: { kebaya: 'htDaster', kebayaS: 'htDasterK', kutubaru: 'htDaster', bros: 'htDasterK', rantaiHt: 'htSkin', kacaHt: 'htSkin' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Hartini memakai kebaya
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kebaya), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirt(o), A = arm(o), Th = sk(o, skirtThigh(c)), Sn = sk(o, skirtShin(c, cS)), Ft = foot(o), sl = sleeveC(o);

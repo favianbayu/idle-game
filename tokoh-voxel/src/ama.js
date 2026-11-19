@@ -4,13 +4,14 @@
 // Rangka keluarga Nadia (skala 1.2 lama, dibulatkan ke rangka cewek), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  encim: ['#d8d4cc', '#e8e4dc', '#f4f2ec', '#fdfcf8'], encimS: ['#c8b8a8'], encimK: ['#d46a84'],
   amSkin: ['#c8a07a', '#dab48c', '#e8c49e', '#f2d4b0'], amSkinS: ['#d0a682'], amBlush: ['#e0a08c'],
   amHair: ['#b8b6b0', '#cecccc', '#e0dedc', '#f0eeec'], amHairS: ['#a09e98'], giok: ['#3a8a5a', '#46a06a', '#56b47a', '#6ac88e'],
   kacaAm: ['#141418'], kacaAmS: ['#3a3a42'],
@@ -135,7 +136,10 @@ export const OUTFITS = {
   dapur: { name: 'Bikin bakpao: celemek bertepung + kukusan bambu berisi bakpao', top: 'dapur' },
   imlek: { name: 'Imlek: blus merah bersulam emas + selop merah + angpao', top: 'imlek' },
 };
+OUTFITS.rumah = { ...OUTFITS.toko, propOn: 'santai', name: 'Rumah: sanggul putih, kacamata tebal, kebaya encim bordir, kipas',
+  sw: { samfu: 'encim', samfuS: 'encimS', samfuK: 'encimK', samfuT: 'encimK' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Ama memakai baju jaga toko
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.toko), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = topC(o);

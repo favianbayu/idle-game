@@ -136,6 +136,10 @@ Template hanya mengisi pakaian dan barang bawaan.
 6. **Tidak menggantikan NPC bernama**: Satpam Udin, Satpam Bambang, Pak Polisi Sugeng, Mandor Sutris, dan lainnya tetap
    memakai file sendiri. Template hanya untuk orang tanpa nama.
 
+## Barang di tangan
+
+Barang `handR`/`handL` template (cangkul, sapu, buku, HP, ember, dll.) dibuat sebagai bagian terpisah dari lengan. Game hanya menampilkannya saat NPC sedang melakukan aktivitas yang cocok. Contohnya cangkul saat jongkok atau mengangkut, sapu saat menyapu, buku saat membaca atau mengajar, dan HP saat menelepon. Saat jalan atau berdiri diam, tangannya kosong. Tongkat, payung, senapan jaga, dan tas tangan selalu tampil. Pemetaan barang ke jenis ada di `HELD_KIND` (`tokoh-voxel/src/model.js`), dan aturannya ada di PANDUAN-TOKOH bagian 6b.
+
 ## Urutan pembuatan
 
 | Gelombang | Template | Alasan | Status |
