@@ -72,9 +72,9 @@ addEventListener('resize', resize);
 
 /* ------------------------------------------------------------------ dunia */
 const collision = new Collision();
+initChars(__WORKER_SRC__);   // mulai duluan: worker menyiapkan tokoh sambil thread utama membangun kota
 const kota = buildKota(scene, collision);
 const sekolah = buildSekolah(scene, collision);
-initChars(__WORKER_SRC__);
 
 const SPAWN = (() => { const [x, z] = L(kota.darto.xf, -0.4, kota.darto.d / 2 + 0.5); return { x, z }; })();
 const player = { x: SPAWN.x, z: SPAWN.z, vx: 0, vz: 0, heading: Math.PI / 2, run: false, area: 'kota' };
