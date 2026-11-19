@@ -204,23 +204,11 @@ OUTFITS.hujan = { ...OUTFITS.jalan, name: 'Hujan: ponco kuning, payung lipat bir
 - `assemble()` memotong `foreR`/`foreL`. Yang tersisa di lengan hanyalah kolom penampang lengan, dari ujung kepalan ke atas. Sisanya jadi bagian `propR`/`propL`, yang ikut tulang lengan bawah.
 - Gagang yang tertinggal di dalam kepalan diwarnai seperti kepalan.
 - Template spawn (`spawn_base.js`) memisah sendiri: barang `d.handR`/`d.handL` digambar di salinan, lalu selisihnya jadi `propR`/`propL`.
-- Game (voxworker) dan viewer memanggil `showProps(P, anim)`. Barang hanya tampil saat anim cocok dengan jenisnya:
-
-| Jenis | Kapan barang tampil |
-|---|---|
-| Bawaan | Anim aktivitas (`ACT`): talk, read, squat, carry, sweep, sitDown, phone, dan sejenisnya. Tidak saat jalan, lari, atau idle. |
-| `baca` | read, talk, sitDesk |
-| `sapu` | sweep |
-| `tani` | squat, carry |
-| `minum` | duduk, talk |
-| `angkut` | carry, walk |
-| `jual` | walk, idle, talk |
-| `all` | selalu. Untuk tongkat jalan, payung hujan, senapan jaga, tas tangan. |
-
-- Daftar lengkapnya ada di `PROP_KIND` dan `HELD_KIND` (`model.js`).
-- Tetapkan jenis per baju dengan `propOn` di `OUTFITS`, misalnya `propOn: 'all'` untuk tongkat Mbah Karto.
+- Game (voxworker) memanggil `showProps(P, anim)`. Barang sprite hanya tampil kalau jenisnya `all`: tongkat jalan, payung hujan, senapan jaga, tas tangan, lampu, senter. Barang lain selalu disembunyikan di game.
+- Barang kegiatan (sapu, HP, buku, kardus, pancing, galon, pedang) digambar oleh anim lewat `rig.js` dari pose (`P.broom`, `P.phone`, `P.book`, dan sejenisnya). Kalau barang sprite ikut tampil, barangnya jadi dobel (favian, 2026-11-19).
+- Jenis barang spawn ada di `HELD_KIND` (`model.js`). Untuk tokoh bespoke, set `propOn: 'all'` di `OUTFITS` supaya barangnya tetap tampil, misalnya tongkat Mbah Karto.
 - `held: false` mematikan pemotongan, untuk benda yang dipakai di tangan seperti sarung tinju Rio.
-- Lembar periksa: `shots/pegangan.png` membandingkan pose jalan dengan pose aktivitas. Lembar pratinjau baju memakai `"prop": true` supaya barangnya terlihat.
+- Viewer memanggil `showProps(P, anim, o.prop)`. Lembar pratinjau baju memakai `"prop": true` supaya barang sprite tetap terlihat.
 
 ## 7. Mendaftarkan tokoh
 
