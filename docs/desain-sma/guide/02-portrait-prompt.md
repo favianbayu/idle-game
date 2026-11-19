@@ -93,6 +93,12 @@ pose 1-6 saja.
 - Seragam SMA 3: kemeja putih krem (di portrait dibuat krem hangat, bukan putih abu-abu), badge OSIS kecil di saku kiri
   kecuali disebut lain. Karena sekarang terlihat sampai paha, **bawahan wajib disebut**: rok abu panjang (putri) atau
   celana panjang abu dengan ikat pinggang hitam (putra), dan apakah kemeja dimasukkan atau dikeluarkan.
+- **Baju portrait = outfit voxel.** Di atas tiap prompt NPC tertulis nama outfit voxel yang dipakai (misal Kirana
+  `balap`, Bram `geng`). Detail kecil yang sudah diputuskan waktu bikin sprite (Wulan kepang di punggung + sabuk hijau,
+  Bimo berkacamata, topi Gilang biru-kuning, jam di tangan kiri, dll) wajib sama, supaya portrait dan sprite satu orang.
+  Kalau sprite berubah, ubah juga prompt-nya. Acuan: `tokoh-voxel/src/<tokoh>.js` dan `tokoh-voxel/PANDUAN-TOKOH.md`.
+- Kacamata hitam atau masker yang di sprite menutup mata/mulut tidak dipakai di muka saat portrait (dipegang atau
+  diturunkan ke leher), karena ekspresi harus terbaca.
 - Properti yang dipegang (map, buku, kamera, bola) harus sama di semua sel. Di pose yang butuh dua tangan (`senyum`,
   `jatuhcinta`, `cemas`) properti dipeluk ke dada atau dijepit di ketiak, jangan hilang.
 - Setelah generate: potong per sel, skala ke 480 x 720 tanpa anti-alias (nearest neighbour), simpan sebagai

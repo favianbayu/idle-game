@@ -120,13 +120,15 @@ Teman komik **Nadia**, pelanggan setia **Rizal** (kadang cemburu-cemburuan soal 
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `toko` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 15-year-old Chinese-Indonesian girl, short and petite, light skin, chubby cheeks, shoulder-length black bob with
-a yellow pencil hair clip, large round glasses slipping down her nose, ink stain on her finger, wearing a mustard yellow
-t-shirt with a dark green bookstore apron printed "PENA". Bubbly, awkward bookworm look.
-Key colors mustard yellow, dark green, paper cream.
+Tokoh: 15-year-old Chinese-Indonesian girl, short and petite, light skin, chubby cheeks, shoulder-length black bob
+with a yellow pencil hair clip, large round glasses slipping down her nose, ink stain on her finger, wearing a mustard
+yellow t-shirt with a dark green bookstore apron printed "PENA". Bubbly, awkward bookworm look. Key colors mustard
+yellow, dark green, paper cream.
 Badan: short and petite, slightly hunched forward. Mustard yellow t-shirt under a dark green bookstore apron that
-reaches mid-thigh, black leggings, pencil behind the ear. Signature pose: hugging a tall stack of three books against
-her chest, glasses slipping. Big, flustered movements; when surprised the books start to topple, when confused she
-pushes her glasses up with one finger, when tired she rests her chin on the book stack.
+reaches mid-thigh, blue jeans, yellow pencil tucked behind the ear. Signature pose: hugging a tall stack of three
+books against her chest, glasses slipping. Big, flustered movements; when surprised the books start to topple, when
+confused she pushes her glasses up with one finger, when tired she rests her chin on the book stack.
 ```

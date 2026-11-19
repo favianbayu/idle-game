@@ -47,7 +47,7 @@ Ki Sastro Wiryo (almarhum, pemberi hibah tanah 1950-an) hanya muncul di foto, pr
 - **Peran**: pemegang buku saksi hibah (Bab 12). Saksi kunci di sidang (Bab 13). Perpustakaannya jadi tempat belajar jalur
   kuliah (Bab 11).
 - **Portrait prompt**: `63-year-old Indonesian Muslim scholar, tall and thin, short white beard, round gold-rimmed
-  glasses, black peci cap, white koko shirt, green checked sarong, wooden prayer beads.
+  glasses, black peci cap, white koko shirt, green checked sarong, wooden prayer beads, a pen in the koko pocket.
   Badan: tall and thin, slight stoop, sarong down past the thigh; signature pose prayer beads in the right hand, left hand
   behind the back; small, calm movements.`
 - **Event persahabatan**:

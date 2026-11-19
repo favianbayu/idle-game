@@ -119,10 +119,12 @@ Pernah berkelahi dengan **Kobar**, saling hormat.
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `seragam` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 16-year-old Indonesian boy, lean and muscular, dark tan skin, buzz-cut hair, thin scar cutting through his right
-eyebrow, tired watchful dark eyes, a dimple on the left when he smiles, worn dark brown leather jacket over a rolled-up
-cream school shirt. Quiet, protective look. Key colors leather brown, smoke grey, lamp yellow.
+Tokoh: 16-year-old Indonesian boy, lean and muscular, dark tan skin, buzz-cut hair, thin scar cutting through his
+right eyebrow, tired watchful dark eyes, a dimple on the left when he smiles, worn dark brown leather jacket over a
+rolled-up cream school shirt. Quiet, protective look. Key colors leather brown, smoke grey, lamp yellow.
 Badan: lean and muscular, relaxed but guarded stance with weight back on the rear leg. Worn dark brown leather jacket
 over an untucked cream school shirt with rolled sleeves, long grey school trousers, black belt with a dented buckle.
 Signature pose: both hands in the jacket pockets, shoulders slightly forward. Small, economical movements; laughing is

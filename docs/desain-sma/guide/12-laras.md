@@ -121,13 +121,15 @@ Langganan **Om Darto**. Tidak tahan dengan **Sasha** di awal, akhirnya berteman 
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `jualan` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 16-year-old Indonesian girl, light tan skin, round cheeks, cute snaggletooth visible when smiling, thick black hair
-in a high messy ponytail with loose strands, a wooden clip in the bangs, faded orange t-shirt with a turmeric-yellow
-apron printed with leaves, small towel over one shoulder. Energetic market-girl look.
+Tokoh: 16-year-old Indonesian girl, light tan skin, round cheeks, cute snaggletooth visible when smiling, thick black
+hair in a high messy ponytail tied with a red rubber band, loose strands, a wooden clip in the bangs, faded orange
+t-shirt with a turmeric-yellow apron printed with leaves, small towel over one shoulder. Energetic market-girl look.
 Key colors brick orange, turmeric yellow, banana-leaf green.
 Badan: medium height, sturdy and energetic. Faded orange t-shirt under a turmeric-yellow leaf-print apron that reaches
-mid-thigh, dark brown work trousers, small towel over one shoulder. Signature pose: one hand on her hip, the other
+mid-thigh, dark training track pants, small towel over one shoulder. Signature pose: one hand on her hip, the other
 giving a thumbs up. Big movements; laughing bends her forward, angry has her pointing with a wooden spatula, tired has
 her wiping sweat with the towel.
 ```

@@ -124,13 +124,17 @@ Kenal **Kirana** dari turnamen (saling menghormati), murid-murid kecilnya termas
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `silat` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 16-year-old Sundanese Indonesian village girl, strong and lean, sun-darkened tan skin, very long thick black hair in
-one heavy braid over the shoulder, large calm eyes, straight brows, wearing a black silat martial arts uniform (pangsi)
-with a batik headband and a green tea-colored shawl. Calm, dignified look.
-Key colors tea green, wood brown, off-white.
+Tokoh: 16-year-old Sundanese Indonesian village girl, strong and lean, sun-darkened tan skin, very long thick black
+hair pulled back with a thin middle part, ears visible, in one heavy braid hanging down her back to the waist with a
+green tie at the end, large calm eyes, straight brows, wearing a black silat martial arts uniform (pangsi) with a
+green belt sash and a batik headband, small bruise on one forearm. Calm, dignified look. Key colors tea green, wood
+brown, off-white.
 Badan: tall, lean and strong, calm upright martial artist posture with a low centre of gravity. Black silat pangsi top
-tied with a batik sash at the waist, loose black pangsi trousers, tea-green shawl over one shoulder. Signature pose:
-hands relaxed and loosely clasped in front of her sash. Small, calm movements; when angry she shifts into a half guard
-stance with one open palm forward, when shy she looks down and grips the end of her braid.
+with a shallow V collar, tied with a tea-green belt sash knotted at the front left, loose black pangsi trousers.
+Signature pose: hands relaxed and loosely clasped in front of her sash, braid visible behind one shoulder. Small, calm
+movements; when angry she shifts into a half guard stance with one open palm forward, when shy she pulls the braid
+over her shoulder and grips its end.
 ```

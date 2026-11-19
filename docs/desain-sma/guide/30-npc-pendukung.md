@@ -45,8 +45,8 @@ memberi bonus permanen.
 - **Kebiasaan**: bangun 04.30 menyalakan kompor, menghitung uang sambil mengernyit, tidur siang di kursi warkop.
 - **Interaksi**: pemberi misi utama warkop, penasehat. Saat persahabatan tinggi, warkop memberi gaji harian lebih besar.
 - **Portrait prompt**: `42-year-old Indonesian man, stocky with a round belly, grey-sided crew cut, thick moustache,
-  small faded flower tattoo on the forearm, worn white t-shirt with a green coffee-shop apron, sarong over one shoulder.
-  Badan: stocky, belly over a worn belt, faded khaki trousers, a tea towel tucked in the waistband; signature pose arms
+  small faded flower tattoo on the forearm, worn white t-shirt with a green coffee-shop apron, sarong over one shoulder, grey sides of the hair.
+  Badan: stocky, belly over a worn belt, faded khaki trousers, green Warkop Simpang apron; signature pose arms
   folded on the belly; medium movements.`
 - **Event persahabatan**:
   - 2: "Utang Pertama". Pemain memergoki Om menyembunyikan surat tagihan Pak Gito. Pilihan jujur membahasnya membuka
@@ -91,8 +91,10 @@ memberi bonus permanen.
 - **Cara bicara**: "Bro! Bro! Bro!", gue/lu, takut-takut: "Kita kabur aja yuk..."
 - **Interaksi**: teman sebangku sejak hari pertama (hati awal 2). Bonus resep warkop. Arc kecelakaan balap Bab 9.
 - **Portrait prompt**: (lihat `karakter/portrait/bimo_480*.png`) `15-year-old chubby Indonesian boy, thick curly black
-  hair, round cheeks, cheerful wide smile, cream school shirt tight over the belly.
-  Badan: chubby, untucked shirt, long grey school trousers; signature pose holding a plastic bag of snacks and waving;
+  hair, thick black rounded-square glasses, round cheeks, cheerful wide smile, cream school shirt tight over the belly
+  with buttons straining and a phone in the pocket.
+  Badan: chubby, shirt tucked in with the belt below the belly, long grey school trousers; signature pose holding his
+  phone and waving;
   big movements, laughing makes him hold his belly.`
 - **Event**: 2 "Bakso Gratis", 4 "Takut Gelap" (jaga malam di sekolah), 6 "Balap Liar" (cegah atau temani; kecelakaan Bab
   9 tergantung pilihan), 8 "Koki Warkop" (Bimo jadi koki tetap, menu makanan warkop terbuka semua).
@@ -105,7 +107,7 @@ memberi bonus permanen.
 - **Interaksi**: pintu masuk Lampu Kota, kerja di bengkel (mini game servis), partner usaha bengkel.
 - **Portrait prompt**: `20-year-old Indonesian mechanic, spiky black hair, oil-stained work t-shirt, towel around neck,
   friendly tired smile.
-  Badan: lean, ripped jeans, rubber bracelets; signature pose wiping his hands on a rag with a wrench in the back pocket;
+  Badan: lean, oil-stained work t-shirt, ripped jeans, rubber bracelets; signature pose wiping his hands on a rag with a wrench in the back pocket;
   medium movements.`
 - **Event**: 2 "Servis Gratis", 4 "Buku Paket C" (pemain menemukan buku Fajar), 6 "Ujian" (antar Fajar ke ujian paket C,
   kejar waktu), 8 "Bengkel Bersama" (partner properti bengkel; upgrade kendaraan -15%).

@@ -118,12 +118,15 @@ kelas X-3 naksir dia, termasuk teman Sekar.
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `basket` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 16-year-old tall Indonesian boy, broad shoulders, warm brown skin, neat military-style short haircut with a small
-fringe, friendly face with ears that blush easily, royal blue basketball jersey number 11 over a white t-shirt, white
-sweatband on the wrist. Kind, shy athlete look. Key colors royal blue, white, basketball orange.
+Tokoh: 16-year-old tall Indonesian boy, broad shoulders, warm brown skin, neat military-style short haircut with a
+small fringe and a faded back and sides, friendly face with ears that blush easily, royal blue basketball jersey
+number 11 over a white t-shirt, white headband and sweatband. Kind, shy athlete look. Key colors royal blue, white,
+basketball orange.
 Badan: tall with broad shoulders, slightly hunched as if hiding his height. Royal blue basketball jersey number 11
-over a white t-shirt, black track pants with a white side stripe, sweatband on the wrist. Signature pose: basketball
-held against his hip with one hand, other hand rubbing the back of his neck. Medium movements; when shy his ears go
-red and he hides behind the ball, when happy he spins the ball on one finger.
+over a white t-shirt, matching royal blue knee-length basketball shorts, white sweatband on the wrist. Signature pose:
+basketball held against his hip with one hand, other hand rubbing the back of his neck. Medium movements; when shy his
+ears go red and he hides behind the ball, when happy he spins the ball on one finger.
 ```

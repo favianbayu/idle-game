@@ -121,11 +121,13 @@ Satu band dengan **Andra** (kadang jadi bassist tamu) dan **Jojo** (fotografer b
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `seragam` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
 Tokoh: 15-year-old Indonesian girl, slim, pale skin, long straight black hair in two low twin tails tied with lavender
 hair ties, blunt bangs covering eyebrows, sleepy half-lidded dark eyes, oversized faded denim jacket over cream school
-shirt, a star-pattern bandage on one finger, guitar strap across the chest. Quiet, dreamy look.
-Key colors denim blue, lavender, black.
+shirt, a star-pattern bandage on one finger, guitar strap across the chest. Quiet, dreamy look. Key colors denim blue,
+lavender, black.
 Badan: slim, slightly slouched, head often tilted. Oversized faded denim jacket hanging past her hips over an untucked
 cream shirt and a long grey school skirt; a guitar strap crosses her chest to a guitar case on her back. Signature
 pose: both hands deep in the jacket pockets, weight on one leg. Small, drifting movements; when sleepy she leans on

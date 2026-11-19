@@ -119,11 +119,13 @@ kenal **Bu Narti**.
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `mural` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 16-year-old Javanese Indonesian boy from a vocational school, brown skin, shoulder-length curly hair half tied up
-with loose curls, warm brown eyes, thick brows, lazy smile, small earring on the left ear, paint-splattered white t-shirt
-with a denim overall strap, spray-paint stains on arms. Laid-back artist look.
-Key colors spray yellow, electric blue, concrete grey.
+Tokoh: 16-year-old Javanese Indonesian boy from a vocational school, brown skin, shoulder-length curly hair half tied
+up with loose curls, warm brown eyes, thick brows, lazy smile, small earring on the left ear, marker doodle tattoos on
+the forearm, backwards cap, dust mask pulled down around the neck, paint-splattered white t-shirt with a denim overall
+strap, spray-paint stains on arms. Laid-back artist look. Key colors spray yellow, electric blue, concrete grey.
 Badan: lanky and relaxed, lazy slouch with hips forward. Paint-splattered white t-shirt with one denim overall strap
 hanging loose, overall bib and grey vocational trousers stained with paint. Signature pose: a spray can held loosely
 at the hip, other hand pushing his curls back. Big, loose movements; laughing makes him sway sideways, angry has him

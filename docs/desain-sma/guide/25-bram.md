@@ -121,13 +121,16 @@ Pemimpin geng **Rio**, **Kevin**, **Sasha**. Anak **Pak Haris**. Rival basket **
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `geng` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 17-year-old Indonesian boy, tall and well built, fair skin, black hair slicked back with one strand falling over
-the forehead, sharp jaw, sharp contemptuous eyes, expensive tailored cream school shirt with top button open, silver
-luxury watch, black bomber jacket with wine-red embroidery over the shoulders. Arrogant rich-kid rival look with hidden
-sadness. Key colors black, wine red, silver.
-Badan: tall and well built, chin up and chest out. Tailored cream school shirt tucked in with the top button open,
-black bomber jacket with wine-red embroidery worn open, slim grey school trousers, silver watch. Signature pose: both
-hands in the trouser pockets, weight on one leg, looking down at the viewer. Small, deliberate movements; laughing is
-a short scoff with a hand at his forehead, sad shows only in slumped shoulders while his face stays proud.
+Tokoh: 17-year-old Indonesian boy, tall and well built, fair skin, black hair slicked back with one strand falling
+over the forehead, sharp jaw, sharp contemptuous eyes, expensive tailored cream school shirt with top button open,
+silver luxury watch, black bomber jacket with wine-red embroidery over the shoulders. Arrogant rich-kid rival look
+with hidden sadness. Key colors black, wine red, silver.
+Badan: tall and well built with a V-shaped torso, chin up and chest out. Tailored cream school shirt tucked in with
+the top button open, black bomber jacket with wine-red embroidery worn open, slim black trousers, silver watch on the
+left wrist. Signature pose: one hand in the trouser pocket, the other holding folded black sunglasses, weight on one
+leg, looking down at the viewer. Small, deliberate movements; laughing is a short scoff with a hand at his forehead,
+sad shows only in slumped shoulders while his face stays proud.
 ```

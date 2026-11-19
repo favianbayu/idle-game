@@ -123,12 +123,14 @@ Diam-diam belajar jahit ke ibu **Nadia**. Tetangga **Sekar** dan **Tegar**. Awal
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `seragam` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 16-year-old Indonesian girl, fair skin, long wavy reddish-brown dyed hair, slim face, long lashes, pink lip tint,
-fitted cream school shirt with a soft pink knit cardigan, thin gold watch, sunglasses pushed up on her head. Elegant
-but guarded look. Key colors pastel pink, ivory, gold.
+Tokoh: 16-year-old Indonesian girl, fair skin, long wavy reddish-brown dyed hair parted in the middle with no bangs,
+falling to mid-back, slim face, long lashes, pink lip tint, fitted cream school shirt with a soft pink knit cardigan,
+thin gold watch. Elegant but guarded look. Key colors pastel pink, ivory, gold.
 Badan: slim and poised, model-like stance with weight on one leg and one knee slightly bent. Fitted cream school shirt
-tucked in, soft pink knit cardigan, grey pleated skirt just above the knee, small ivory handbag hooked on her forearm.
-Signature pose: one hand lightly touching her hair, handbag arm bent. Medium, elegant movements; when guarded she
-crosses her arms with the bag still on her arm, when shy she turns her whole body away and peeks over her shoulder.
+tucked in with the top button open, soft pink knit cardigan worn open, grey pleated skirt just above the knee.
+Signature pose: one hand lightly touching her hair, the other arm resting across her waist. Medium, elegant movements;
+when guarded she crosses her arms, when shy she turns her whole body away and peeks over her shoulder.
 ```

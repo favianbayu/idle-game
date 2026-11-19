@@ -119,10 +119,13 @@ Kenal semua NPC pengisi kota karena memotret mereka.
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `seragam` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 15-year-old Batak Indonesian boy, tall and skinny, brown skin, small gelled mohawk, big curious eyes, small mole
-under the right eye, wide toothy grin, army green photographer vest with many pockets over an untucked cream school
-shirt, old DSLR camera on a strap around his neck. Energetic, nosy look. Key colors army green, orange, camera black.
+Tokoh: 15-year-old Batak Indonesian boy, tall and skinny, brown skin, small gelled mohawk, big curious eyes, small
+mole under the right eye, wide toothy grin, army green photographer vest with many pockets over an untucked cream
+school shirt, old DSLR camera on a strap around his neck. Energetic, nosy look. Key colors army green, orange, camera
+black.
 Badan: tall, skinny and lanky with loose restless posture. Army green photographer vest with many pockets over a half-
 untucked cream school shirt, long grey school trousers, old DSLR camera on a neck strap. Signature pose: camera raised
 in both hands at chest height as if about to snap a photo. Big movements; when surprised he nearly drops the camera,

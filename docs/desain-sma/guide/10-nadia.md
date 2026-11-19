@@ -125,10 +125,12 @@ diam-diam akrab dengan **Mei** karena komik. Menghormati **Bu Hartini**.
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `seragam` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
 Tokoh: 15-year-old Indonesian girl, oval face, warm light skin, neat thin eyebrows, sharp brown eyes, wearing a neatly
-folded pale blue-grey square hijab with a small pearl pin, cream long-sleeve school shirt with small OSIS badge,
-a pen clipped to the pocket, small brown leather watch. Tidy, disciplined look. Key colors pale blue-grey, cream, mint.
+folded pale blue-grey square hijab with a small pearl pin, cream long-sleeve school shirt with small OSIS badge, a pen
+clipped to the pocket, small brown leather watch. Tidy, disciplined look. Key colors pale blue-grey, cream, mint.
 Badan: average height, slim, very straight upright posture. Cream long-sleeve shirt neatly tucked into a long grey
 pleated school skirt with a thin black belt. Signature pose: holds a clear plastic folder flat against her chest with
 her left arm, right hand resting at her side. Small, controlled movements; when angry she taps the folder instead of

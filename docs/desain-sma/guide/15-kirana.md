@@ -119,13 +119,15 @@ Adik **Kobar** (sangat protektif), satu sekolah dengan **Andra** (teman sejak ke
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `balap` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 16-year-old Indonesian girl from a vocational school, slim, light-tan sun-touched skin, long straight black hair
-tied low with teal-dyed tips, sharp slightly narrow eyes, small earring, bandage on elbow, black and teal racing jacket
-with number 21 and neon orange trim over a white vocational school shirt. Cool, competitive look.
-Key colors teal, black, neon orange.
-Badan: slim and fit, cool leaning stance with hip cocked. Black and teal racing jacket open over a white vocational
-school shirt, grey work trousers with a utility belt and a keychain clipped on. Signature pose: open-face helmet held
-under one arm, other thumb hooked on the belt. Medium, sharp movements; when competitive she points forward with two
-fingers, when shy she hides half her face behind the helmet.
+Tokoh: 16-year-old Indonesian girl from a vocational school, slim, light-tan sun-touched skin, long straight black
+hair tied low with teal-dyed tips, sharp slightly narrow eyes, small earring, bandage on elbow, black and teal racing
+jacket with number 21 and neon orange trim over a white vocational school shirt with a small blue gear logo on the
+chest, plaster on one elbow. Cool, competitive look. Key colors teal, black, neon orange.
+Badan: slim and fit, cool leaning stance with hip cocked. Black and teal racing jacket open over the white vocational
+school shirt, grey work trousers. Signature pose: black and teal full-face helmet held under one arm, other thumb
+hooked on the trouser pocket. Medium, sharp movements; when competitive she points forward with two fingers, when shy
+she hides half her face behind the helmet.
 ```

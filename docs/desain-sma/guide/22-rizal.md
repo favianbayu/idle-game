@@ -117,10 +117,12 @@ Partner OSIS **Nadia**, rekan mading **Jojo**, pelanggan **Toko Buku Pena** (dek
 
 ## Prompt portrait
 
+Baju portrait = outfit voxel `seragam` (sama dengan sprite di `tokoh-voxel/src/`).
+
 ```
-Tokoh: 15-year-old Indonesian boy, slim, light skin, soft face with long eyelashes, side-parted black hair falling over his
-forehead, thin square glasses, ink stains on fingers, brown knitted sweater vest over a cream school shirt, a pen behind
-his ear. Gentle bookish look. Key colors sweater brown, ink blue, cream.
+Tokoh: 15-year-old Indonesian boy, slim, light yellowish skin, soft face with long eyelashes, side-parted dark brown-
+black hair falling over his forehead, thin square glasses, ink stains on fingers, brown knitted sweater vest over a
+cream school shirt, a pen in the shirt pocket. Gentle bookish look. Key colors sweater brown, ink blue, cream.
 Badan: slim with narrow shoulders, gentle slightly forward-leaning posture. Brown knitted sweater vest over a tucked-
 in cream school shirt, long grey school trousers, canvas satchel strap across the chest. Signature pose: an open book
 held in one hand, the other hand marking a page. Small, gentle movements; when shy he lifts the book to cover his face
