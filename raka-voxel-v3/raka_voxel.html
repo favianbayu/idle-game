@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raka voxel v3 · pratinjau</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #1d2230; color: #e8ecf4; display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: #262c3c; }
+  header b { font-size: 16px; margin-right: 8px; }
+  label { display: flex; gap: 6px; align-items: center; }
+  select, button { font: inherit; background: #333b50; color: inherit; border: 1px solid #4a5470; border-radius: 6px; padding: 4px 8px; }
+  button { cursor: pointer; }
+  #view { flex: 1; width: 100%; min-height: 0; touch-action: none; cursor: grab; image-rendering: pixelated; }
+  #info, #hint { position: fixed; bottom: 10px; background: #0008; padding: 4px 10px; border-radius: 6px; }
+  #info { left: 12px; } #hint { right: 12px; opacity: .8; }
+</style>
+</head>
+<body>
+<header>
+  <b>Raka · voxel v3</b>
+  <label>Baju <select id="outfit"></select></label>
+  <label>Gerakan <select id="anim"></select></label>
+  <label>Ekspresi <select id="expr"></select></label>
+  <label><input id="helm" type="checkbox"> Helm</label>
+  <label>Sudut <input id="pitch" type="range" min="0" max="1.4" step="0.01" value="0.45"></label>
+  <label>Zoom <input id="zoom" type="range" min="1.5" max="24" step="0.1" value="9"></label>
+  <span><button data-yaw="0">Depan</button> <button data-yaw="0.7">Serong</button> <button data-yaw="1.5708">Samping</button> <button data-yaw="3.1416">Belakang</button></span>
+  <label><input id="spin" type="checkbox"> Putar</label>
+  <label><input id="pix" type="checkbox"> Ukuran pixel game</label>
+  <label><input id="compare" type="checkbox"> Banding Raka lama</label>
+</header>
+<canvas id="view"></canvas>
+<div id="info"></div>
+<div id="hint">seret = putar · roda = zoom</div>
+<script>
+const NS = {};
+// ===== voxlib.js
+NS.voxlib = (() => {
+// Diekstrak otomatis dari sprite-stacking/index.html (cabang claude/relaxed-ride-1e8tfb): bentuk tokoh voxel,
+// gaya, dan animasi. Bagian canvas diganti: buildVox di sini mengembalikan daftar voxel berwarna, bukan irisan canvas.
+const TAU = Math.PI * 2;
+function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function hash(x, y, z) {
+  let h = (x * 374761393 + y * 668265263 + z * 2147483647) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+}
+function rng(seed) { let s = (seed >>> 0) || 1; return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; }
+const hexRGB = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const clamp255 = v => Math.max(0, Math.min(255, Math.round(v)));
+const mixc = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+// 4 tingkat warna (gelap -> terang) dari satu warna dasar
+function ramp(hex) {
+  const c = hexRGB(hex);
+  return [mixc(c.map(v => v * 0.55), [40, 24, 64], 0.18), c.map(v => v * 0.8), c, mixc(c, [255, 248, 228], 0.3)].map(a => a.map(clamp255));
+}
+const RAMP_CACHE = {};
+const R = hex => RAMP_CACHE[hex] || (RAMP_CACHE[hex] = ramp(hex));
+
+/* buildVox: fill(x,y,z) -> material (atau null); color(x,y,z,m,exp,at) -> [r,g,b].
+   exp = sisi mana yang terbuka (top, xp, xn, yp, yn). */
+function buildVox(L, W, H, fill, color, o = {}) {
+  const bb = o.bbox || [0, 0, 0, L - 1, W - 1, H - 1];
+  const grid = new Array(L * W * H);
+  const I = (x, y, z) => (z * W + y) * L + x;
+  for (let z = bb[2]; z <= bb[5]; z++) for (let y = bb[1]; y <= bb[4]; y++) for (let x = bb[0]; x <= bb[3]; x++) {
+    const m = fill(x, y, z);
+    if (m) grid[I(x, y, z)] = m;
+  }
+  const at = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= L || y >= W || z >= H) ? null : grid[I(x, y, z)];
+  const vox = [];   // x, y, z, r, g, b, mask sisi terbuka (bit: +x -x +y -y +z -z)
+  for (let z = bb[2]; z <= bb[5]; z++) for (let y = bb[1]; y <= bb[4]; y++) for (let x = bb[0]; x <= bb[3]; x++) {
+    const m = grid[I(x, y, z)];
+    if (!m) continue;
+    const e = { top: !at(x, y, z + 1), xp: !at(x + 1, y, z), xn: !at(x - 1, y, z), yp: !at(x, y + 1, z), yn: !at(x, y - 1, z) };
+    const mask = (e.xp ? 1 : 0) | (e.xn ? 2 : 0) | (e.yp ? 4 : 0) | (e.yn ? 8 : 0) | (e.top ? 16 : 0) | (!at(x, y, z - 1) ? 32 : 0);
+    if (!mask) continue;
+    const c = color(x, y, z, m, e, at);
+    vox.push(x, y, z, c[0], c[1], c[2], mask);
+  }
+  return { L, W, H, vox };
+}
+function vnoise(x, y, s, seed = 5) {
+  const gx = Math.floor(x / s), gy = Math.floor(y / s), fx = x / s - gx, fy = y / s - gy;
+  const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+  const a = hash(gx, gy, seed), b = hash(gx + 1, gy, seed), c = hash(gx, gy + 1, seed), d = hash(gx + 1, gy + 1, seed);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+/* Pewarnaan bangunan dengan "weathering": kotor di bagian bawah dinding, noda rembesan
+   vertikal, lumut, dan variasi warna. Material diawali '!' = bersih (kaca, tulisan). */
+const DIRT = [62, 52, 40], MOSS = [84, 98, 56];
+function weatherColor(x, y, z, m, e, at) {
+  const clean = m[0] === '!';
+  const r = R(clean ? m.slice(1) : m);
+  if (!(e.top || e.xp || e.xn || e.yp || e.yn)) return r[1];
+  let i = e.top ? 3 : (e.xp || e.yp) ? 2 : 1;
+  if (z === 0 && !e.top) i = Math.max(0, i - 1);
+  if (clean) return r[i];
+  const u = e.top ? x : (e.xp || e.xn) ? y : x, v = e.top ? y : z;
+  const n = vnoise(u + 31 * (e.top ? 0 : 1), v, 7, 11), n2 = vnoise(u, v + 17, 13, 23);
+  let c = r[i].map(k => k * (0.92 + 0.12 * n));
+  if (!e.top && z < 12) c = mixc(c, DIRT, (1 - z / 12) * (0.25 + 0.25 * n2));               // kotor dekat tanah
+  if (!e.top && hash(u, 0, 77) < 0.16) c = mixc(c, DIRT, 0.12 + 0.1 * n);                    // noda rembesan
+  if (n2 > 0.68 && (z < 16 || e.top)) c = mixc(c, MOSS, Math.min(0.45, (n2 - 0.68) * 1.8)); // lumut
+  return c.map(clamp255);
+}
+// Potong model jadi 2 lapis: bawah (dinding/batang) & atas (atap/kanopi) supaya urutan gambar pas
+function splitModel(m, zs) {
+  const base = Object.assign({}, m, { slices: m.slices.slice(0, zs), H: Math.min(zs, m.H) });
+  const top = { L: m.L, W: m.W, H: Math.max(0, m.H - zs), slices: m.slices.slice(zs), lift: zs, shadow: m.shadow };
+  return [base, top];
+}
+// Pewarnaan "kotak": atas paling terang, sisi depan/kanan sedang, sisi lain gelap
+function boxColor(look) {
+  return (x, y, z, m, e) => {
+    const r = look(m);
+    let i = e.top ? 3 : (e.xp || e.yp) ? 2 : 1;
+    if (z === 0 && !e.top) i = Math.max(0, i - 1);
+    return r[i];
+  };
+}
+// Pewarnaan "organik": normal permukaan dari tetangga kosong -> cahaya -> 4 tingkat warna
+const LIGHT = (() => { const v = [0.35, -0.45, 0.82], l = Math.hypot(...v); return v.map(c => c / l); })();
+const NOFF = [];
+for (let k = -2; k <= 2; k++) for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) {
+  const d = i * i + j * j + k * k;
+  if (d && d <= 6) NOFF.push([i, j, k, 1 / d]);
+}
+function organicColor(look) {
+  return (x, y, z, m, e, at) => {
+    const r = look(m);
+    if (r.length === 1) return r[0];
+    if (!(e.top || e.xp || e.xn || e.yp || e.yn)) return r[1];
+    let nx = 0, ny = 0, nz = 0;
+    for (const [i, j, k, w] of NOFF) if (!at(x + i, y + j, z + k)) { nx += i * w; ny += j * w; nz += k * w; }
+    const l = Math.hypot(nx, ny, nz) || 1;
+    const v = 0.38 + 0.62 * Math.max(0, (nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]) / l);
+    return r[v < 0.5 ? 0 : v < 0.72 ? 1 : v < 0.9 ? 2 : 3];
+  };
+}
+const boxHex = boxColor(R), organicHex = organicColor(R);
+
+/* =====================================================================
+   2. MANUSIA ORGANIK (tinggi ±36 voxel)
+   Rangka -> bentuk bulat (elipsoid/kapsul) -> cahaya per voxel.
+   Tiap tokoh = STYLE (warna, rambut, pakaian, skala).
+   ===================================================================== */
+const STYLES = {
+  player:     { name: 'Kamu', scale: 1.33, skin: '#f0c09a', hair: '#3a2416', hairStyle: 'spiky', top: '#d64545', sleeves: 'short', bottom: '#3a5bb0', bottomStyle: 'pants', shoe: '#3b2a22', shoeStyle: 'shoe' },
+  ibuHijab:   { name: 'Bu Siti', scale: 1.25, skin: '#e8b48c', hijab: '#c2477a', hairStyle: 'hijab', top: '#efe3cc', sleeves: 'long', bottom: '#5a3d7a', bottom2: '#d8b860', bottomStyle: 'skirt', bottomPattern: 'batik', shoe: '#5a3a2a', shoeStyle: 'sandal' },
+  ibuHijab2:  { name: 'Bu Ani', scale: 1.25, skin: '#d9a37c', hijab: '#2f7a8a', hairStyle: 'hijab', top: '#f0cfa0', sleeves: 'long', bottom: '#3a4a6a', bottom2: '#9ab0d0', bottomStyle: 'skirt', bottomPattern: 'batik', shoe: '#2a2a2a', shoeStyle: 'sandal' },
+  ibuDaster:  { name: 'Bu Narti', scale: 1.24, skin: '#d9a07a', hair: '#2a1a12', hairStyle: 'bun', top: '#e0705a', top2: '#f6d27a', topPattern: 'batik', sleeves: 'short', bottom: '#e0705a', bottom2: '#f6d27a', bottomStyle: 'skirt', bottomPattern: 'batik', shoe: '#3a7a4a', shoeStyle: 'sandal' },
+  bapakPeci:  { name: 'Pak Haji', scale: 1.3, skin: '#c98e66', hair: '#1e1a18', hairStyle: 'peci', top: '#f2f0ea', top2: '#b8b0a0', topPattern: 'koko', sleeves: 'long', bottom: '#2f6b52', bottom2: '#c9b26a', bottomStyle: 'sarung', bottomPattern: 'plaid', shoe: '#2a2a2a', shoeStyle: 'sandal', belly: 0.7 },
+  kakek:      { name: 'Mbah Darmo', scale: 1.22, skin: '#c08a64', hair: '#dcd8d0', hairStyle: 'bald', top: '#ece8dc', sleeves: 'short', bottom: '#7a4a2a', bottom2: '#3a2a1a', bottomStyle: 'sarung', bottomPattern: 'plaid', shoe: '#3a3a3a', shoeStyle: 'sandal', glasses: true },
+  pakRT:      { name: 'Pak RT', scale: 1.3, skin: '#d29a72', hair: '#7a7a78', hairStyle: 'sidepart', glasses: true, top: '#7a4a24', top2: '#e8c070', topPattern: 'batik', sleeves: 'short', bottom: '#2a2a30', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe', belly: 0.5 },
+  anakSD:     { name: 'Dimas', scale: 0.98, skin: '#e6b088', hair: '#1e1612', hairStyle: 'buzz', top: '#f6f6f2', sleeves: 'short', bottom: '#c22a2a', bottomStyle: 'shorts', shoe: '#1a1a1a', shoeStyle: 'shoe' },
+  anakSDcw:   { name: 'Putri', scale: 0.98, skin: '#f0c09a', hair: '#2a1a12', hairStyle: 'twintail', tie: '#e83a5a', top: '#f6f6f2', sleeves: 'short', bottom: '#c22a2a', bottomStyle: 'skirt', skirtShort: true, shoe: '#1a1a1a', shoeStyle: 'shoe' },
+  pemuda:     { name: 'Bayu', scale: 1.3, skin: '#c98e66', hair: '#1a1410', hairStyle: 'curly', top: '#26365a', top2: '#e8e8e8', topPattern: 'stripe', sleeves: 'short', bottom: '#b8a070', bottomStyle: 'shorts', shoe: '#2a6ac0', shoeStyle: 'sandal' },
+  mbak:       { name: 'Mbak Rina', scale: 1.25, skin: '#f0c4a0', hair: '#2a1810', hairStyle: 'long', top: '#f2c94c', sleeves: 'short', bottom: '#4466aa', bottomStyle: 'pants', shoe: '#f2f2f2', shoeStyle: 'shoe' },
+  remaja:     { name: 'Sari', scale: 1.2, skin: '#eec09c', hair: '#3a2014', hairStyle: 'bob', top: '#8fc4e8', sleeves: 'short', bottom: '#2a2a3a', bottomStyle: 'skirt', skirtShort: true, shoe: '#f2f2f2', shoeStyle: 'shoe' },
+  anakPunk:   { name: 'Joni', scale: 1.28, skin: '#d8a27a', hair: '#2a2a2a', hairStyle: 'mohawk', top: '#2a2a2e', top2: '#d23a3a', topPattern: 'stripe', sleeves: 'short', bottom: '#3a4a6a', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe' },
+  ojol:       { name: 'Bang Ojol', scale: 1.3, skin: '#c48a60', hair: '#1a1410', hairStyle: 'helmet', helmet: '#2fa04a', top: '#2fa04a', top2: '#1c6a30', topPattern: 'stripe', sleeves: 'long', bottom: '#2a2a30', bottomStyle: 'pants', shoe: '#1a1a1a', shoeStyle: 'shoe' },
+  bocah:      { name: 'Ucup', scale: 0.95, skin: '#d29a6c', hair: '#1a1410', hairStyle: 'short', top: '#f2c94c', sleeves: 'short', bottom: '#2a6ac0', bottomStyle: 'shorts', shoe: '#c23a3a', shoeStyle: 'sandal' },
+  tukangBakso:{ name: 'Mas Bakso', scale: 1.28, skin: '#b8805a', hair: '#1a1410', hairStyle: 'cap', cap: '#d23a3a', top: '#3a7ac0', sleeves: 'long', bottom: '#3a3a40', bottomStyle: 'pants', shoe: '#2a2a2a', shoeStyle: 'sandal' },
+};
+const fixedRamp = c => [hexRGB(c)];
+// gaya wajah otomatis dari nama (kalau tidak ditulis di style), supaya tiap tokoh beda: bentuk wajah, mata, alis, mulut
+const strHash = str => { let h = 7; for (const ch of str || '') h = Math.imul(h ^ ch.charCodeAt(0), 2654435761) >>> 0; return h / 4294967295; };
+const isFem = st => st.hairStyle === 'hijab' || st.bottomStyle === 'skirt' || ['long', 'bob', 'twintail', 'ponytail', 'bun', 'wavy', 'lowtie', 'braid', 'hightail', 'bobclip', 'twinlow'].includes(st.hairStyle);
+function faceCfg(st) {
+  const h = k => strHash((st.name || '') + k), fem = isFem(st), pk = (k, arr) => st[k] || arr[Math.floor(h(k) * arr.length)];
+  return {
+    fem, shape: pk('face', fem ? ['oval', 'v', 'round', 'oval'] : ['oval', 'square', 'round', 'square']),
+    eyes: pk('eyes', fem ? ['big', 'normal', 'big', 'sharp'] : ['normal', 'small', 'sharp', 'normal']),
+    brow: pk('brow', fem ? ['thin', 'arch', 'thin'] : ['thick', 'normal', 'thick', 'angry']),
+    mouth: pk('mouth', fem ? ['small', 'smile', 'small'] : ['flat', 'smile', 'flat', 'smirk']),
+    lash: st.lash ?? fem, blush: st.blush ?? fem, beard: st.beard || null, glasses: st.glasses || null,
+  };
+}
+function makeRamps(st) {
+  const r = {};
+  r.skin = R(st.skin); r.nose = [r.skin[0], r.skin[0], r.skin[1], r.skin[1]];
+  r.hair = R(st.hair || '#222222'); r.hair2 = r.hair.map(c => c.map(v => Math.round(v * 0.72))); r.brow = [r.hair[0], r.hair[0], r.hair[0], r.hair[1]];
+  r.tie = R(st.tie || '#e83a5a'); r.helmet = R(st.helmet || '#2fa04a'); r.visor = R('#2a3440'); r.phone = fixedRamp('#1e2230');
+  r.stubble = R(st.skin).map((c, i) => mixc(c, r.hair[1], 0.35).map(clamp255));
+  if (st.hairStyle === 'hijab') r.brow = [R('#3a2418')[0], R('#3a2418')[0], R('#3a2418')[1], R('#3a2418')[1]];
+  r.top = R(st.top); r.top2 = R(st.top2 || st.top); r.bottom = R(st.bottom); r.bottom2 = R(st.bottom2 || st.bottom);
+  r.shoe = R(st.shoe); r.sole = R('#2a2420'); r.hijab = R(st.hijab || '#888888'); r.peci = R('#1e1e24'); r.cap = R(st.cap || '#cc3333');
+  r.eye = fixedRamp('#16121e'); r.eyeW = fixedRamp('#ffffff'); r.mouth = fixedRamp('#9a3f38'); r.lip = fixedRamp('#c0605a'); r.teeth = fixedRamp('#f4f0e8');
+  r.blush = fixedRamp('#ec8f82'); r.glasses = fixedRamp('#26262c');
+  r.blade = R('#c4ced8'); r.hilt = R('#b07a26'); r.orb = R('#8fe0ff'); r.stick = R('#9a7440'); r.bristle = R('#d4b36a');
+  // seragam & aksesori
+  r.collar = R('#ffffff'); r.shirt = R('#f4f4f0'); r.seam = R('#bcbcb6'); r.placket = R('#e6e6e0'); r.button = fixedRamp('#8a8a86'); r.reflect = fixedRamp('#e4e8ea');
+  r.badge = fixedRamp('#d8a830'); r.nametag = fixedRamp('#1e2430'); r.belt = R('#1c1c20'); r.buckle = fixedRamp('#d0d4dc');
+  r.clip = R(st.clip || '#f2c230'); r.book = R(st.book || '#3a6ab0'); r.page = R('#f4f0e2'); r.box = R('#b8905a'); r.bag = R(st.bag || '#2a3a5a');
+  return r;
+}
+for (const id in STYLES) { const st = STYLES[id]; st.ramps = makeRamps(st); st.color = organicColor(m => st.ramps[m]); st.fc = faceCfg(st); }
+
+/* ---------- Rangka ----------
+   Sudut tungkai: 0 = lurus ke bawah, +π/2 = ke depan, π = ke atas, negatif = ke belakang.
+   L = kiri, R = kanan. Satuan panjang = "unit", dikali style.scale jadi voxel. */
+const POSE0 = {
+  lean: 0.03, hp: 0, thL: 0, thR: 0, knL: 0.1, knR: 0.1,
+  arL: 0.08, arR: 0.08, elL: 0.25, elR: 0.25, spL: 0.12, spR: 0.12,
+  tw: 0, px: 0, jump: 0, yaw: 0, sword: 0, swa: 0, orb: 0, broom: 0, bsw: 0,
+  hy: 0,          // kepala menoleh kiri/kanan
+  sy: 0,          // pinggul bergeser ke samping (goyang saat jalan/joget)
+  ftL: 0, ftR: 0, // sudut telapak kaki (tumit/jinjit)
+  phone: 0,       // memegang HP di tangan kanan
+  box: 0, book: 0, // membawa kardus / membaca buku (dua tangan)
+};
+const limb = a => [Math.sin(a), 0, -Math.cos(a)];
+const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const rotY = (v, t) => [v[0] * Math.cos(t) - v[2] * Math.sin(t), v[1], v[2] * Math.cos(t) + v[0] * Math.sin(t)];
+// kapsul (ruas a-b, jari-jari r0 -> r1): return posisi t (0..1) jika titik p di dalam, -1 jika di luar.
+// Ditulis tanpa membuat array baru supaya cepat (dipanggil ribuan kali per frame).
+function capsule(p, a, b, r0, r1) {
+  const abx = b[0] - a[0], aby = b[1] - a[1], abz = b[2] - a[2];
+  const apx = p[0] - a[0], apy = p[1] - a[1], apz = p[2] - a[2];
+  const rm = r0 > r1 ? r0 : r1;
+  const L2 = abx * abx + aby * aby + abz * abz;
+  let t = L2 ? (apx * abx + apy * aby + apz * abz) / L2 : 0;
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const dx = apx - abx * t, dy = apy - aby * t, dz = apz - abz * t, r = r0 + (r1 - r0) * t;
+  return dx * dx + dy * dy + dz * dz <= r * r && rm > 0 ? t : -1;
+}
+const sph = (p, c, r) => (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 + (p[2] - c[2]) ** 2 <= r * r;
+
+/* ---------- Gaya rambut ----------
+   Semua dalam koordinat lokal kepala (satuan unit): dx = ke depan, dy = ke samping, dz = ke atas.
+   Kepala = elipsoid 3.9 × 3.7 × 4.0. Return 1 = rambut, string = material lain, 0 = kosong. */
+const BANGS = {   // garis poni: rambut menutupi dahi di atas garis ini
+  short: dy => 1.0 + 0.35 * (Math.floor((dy + 5) * 1.4) % 2),
+  sidepart: dy => 0.55 + 0.28 * dy,
+  bob: dy => 0.6,
+  long: dy => 0.9 + 0.3 * Math.cos(dy * 1.3),
+  twintail: dy => 0.8 + 0.3 * (Math.floor((dy + 5) * 1.2) % 2),
+  ponytail: dy => 1.1,
+  spiky: dy => 0.7 + 0.5 * Math.abs(((dy + 5) * 0.9) % 2 - 1),
+  curly: dy => 0.9,
+  messy: dy => 0.55 + 0.75 * hash(Math.floor(dy * 1.4 + 9), 3, 7),
+  wavy: dy => 0.8 + 0.3 * Math.cos(dy * 1.3),
+  lowtie: dy => 1.0 + 0.2 * Math.abs(dy),
+  braid: dy => 1.2,
+  hightail: dy => 0.75 + 0.35 * (Math.floor((dy + 5) * 1.6) % 2),
+  bobclip: dy => 0.55,
+  twinlow: dy => 0.35,                         // poni menutupi alis
+  halfup: dy => 0.85,
+  slick: dy => (dy > 0.3 && dy < 1.2 ? 0.55 : 9),   // disisir ke belakang, sehelai jatuh di dahi
+  crew: dy => 1.35,
+};
+const SPIKES = [[0.2, 0, 1], [-0.5, 0, 0.85], [-0.9, 0, 0.3], [0.1, 0.7, 0.7], [0.1, -0.7, 0.7], [-0.5, 0.7, 0.5], [-0.5, -0.7, 0.5], [0.75, 0.3, 0.55], [0.75, -0.3, 0.55], [-0.95, 0.4, -0.1], [-0.95, -0.4, -0.1]].map(norm);
+// rambut belakang bawah (tengkuk) hanya di belakang telinga, supaya rahang & pipi tidak tertutup
+const nape = (dx, dz, lo = -4.4) => dz > lo && (dz > -1.3 || dx < -0.6);
+const shellIn = (dx, dy, dz, k = 1) => ((dx + 0.4) / (4.5 * k)) ** 2 + (dy / (4.3 * k)) ** 2 + ((dz - 0.2) / (4.4 * k)) ** 2 <= 1;
+function hairAt(hs, dx, dy, dz, face) {
+  switch (hs) {
+    case 'hijab': return !face && ((dx + 0.3) / 4.6) ** 2 + (dy / 4.4) ** 2 + ((dz - 0.1) / 4.6) ** 2 <= 1 ? 'hijab' : 0;
+    case 'helmet':
+      if (dz > -1.6 && ((dx + 0.2) / 4.9) ** 2 + (dy / 4.7) ** 2 + ((dz - 0.4) / 4.9) ** 2 <= 1) return dx > 3.0 && dz < 1.6 ? 'visor' : 'helmet';
+      return 0;
+    case 'peci': if (dz > 2.0 && dz < 4.7 && ((dx + 0.1) / 4.1) ** 2 + (dy / 3.9) ** 2 <= 1) return 'peci'; return !face && dz < 2.0 && shellIn(dx, dy, dz) ? 1 : 0;
+    case 'cap':
+      if (dz > 1.6 && ((dx + 0.2) / 4.3) ** 2 + (dy / 4.1) ** 2 + ((dz - 0.8) / 4.2) ** 2 <= 1) return 'cap';
+      if (dx > 2.5 && dx < 6.4 && dz > 1.5 && dz < 2.5 && Math.abs(dy) < 3.0) return 'cap';
+      return !face && dz < 1.6 && shellIn(dx, dy, dz) ? 1 : 0;
+    case 'bald': return !face && dz < 0.9 && dx < 1.0 && shellIn(dx, dy, dz) ? 1 : 0;
+    case 'buzz': return !face && shellIn(dx, dy, dz, 0.93) && dz > -2.4 && nape(dx, dz) ? 1 : 0;            // cepak
+    case 'mohawk': return Math.abs(dy) < 1.1 && dz > -1 && ((dx + 0.4) / 5.0) ** 2 + ((dz - 0.4) / 5.6) ** 2 <= 1 ? 1 : 0;
+    case 'spiky': {                                                                          // jabrik
+      if (!face && shellIn(dx, dy, dz, 0.97) && dz > -2.4 && nape(dx, dz)) return 1;
+      const vx = dx + 0.3, vz = dz - 0.3;
+      for (const d of SPIKES) {
+        const t = vx * d[0] + dy * d[1] + vz * d[2];
+        if (t > 3.0 && t < 6.8 && Math.hypot(vx - d[0] * t, dy - d[1] * t, vz - d[2] * t) < (6.8 - t) * 0.42) return 1;
+      }
+      return 0;
+    }
+    case 'curly': {                                                                          // keriting mengembang
+      const b = hash(Math.round(dx * 1.3), Math.round(dy * 1.3), Math.round(dz * 1.3));
+      return !face && dz > -2.8 && ((dx + 0.5) / (5.0 + b * 0.7)) ** 2 + (dy / (4.9 + b * 0.7)) ** 2 + ((dz - 0.7) / (5.0 + b * 0.7)) ** 2 <= 1 ? 1 : 0;
+    }
+    case 'sidepart':                                                                         // belah samping
+      if (!face && shellIn(dx, dy, dz) && dz > -2.4 && nape(dx, dz)) return 1;
+      return dz > 0.3 && ((dx + 0.1) / 4.6) ** 2 + ((dy - 0.7) / 4.4) ** 2 + ((dz - 0.8) / 4.4) ** 2 <= 1 && !(dx > 0.6 && dz < 0.55 + 0.28 * dy) ? 1 : 0;
+    case 'bob':                                                                              // rambut bob sebahu
+      return !face && dz > -3.5 && ((dx + 0.5) / 4.7) ** 2 + (dy / 4.6) ** 2 + ((dz - 0.1) / 4.8) ** 2 <= 1 ? 1 : 0;
+    case 'long':
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      if (dx < 0.6 && ((dx + 1.3) / 3.6) ** 2 + (dy / 4.5) ** 2 <= 1 && dz > -10 && dz < 2) return 1;
+      return Math.abs(dy) > 3.0 && Math.abs(dy) < 4.3 && dx > -1.5 && dx < 2.2 && dz > -6.5 && dz < 1 ? 1 : 0;
+    case 'twintail': {                                                                       // kuncir dua
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      for (const sg of [-1, 1]) {
+        if ((dx + 0.6) ** 2 + (dy - sg * 4.0) ** 2 + (dz - 0.8) ** 2 < 1.2) return 'tie';
+        if (((dx + 0.9) / 1.6) ** 2 + ((dy - sg * 4.7) / 1.4) ** 2 + ((dz + 2.0) / 3.4) ** 2 <= 1) return 1;
+      }
+      return 0;
+    }
+    case 'ponytail':
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      return ((dx + 5.0) / 1.7) ** 2 + (dy / 1.5) ** 2 + ((dz + 1.0) / 3.2) ** 2 <= 1 ? 1 : 0;
+    case 'bun':
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      return (dx + 3.8) ** 2 + dy ** 2 + (dz - 2.6) ** 2 < 2.4 ** 2 ? 1 : 0;
+    case 'messy': {                                                                          // pendek berantakan: jumput tak rata
+      const b = hash(Math.round(dx * 0.9 + 9), Math.round(dy * 0.9 + 9), Math.round(dz * 0.9 + 9));
+      return !face && dz > -2.2 && nape(dx, dz) && shellIn(dx, dy, dz, 0.98 + b * 0.16) ? 1 : 0;
+    }
+    case 'crew': return !face && dz > -2.0 && nape(dx, dz) && shellIn(dx, dy, dz, 0.96) && dz < 4.15 ? 1 : 0;   // cepak rapi, atas rata
+    case 'slick': return !face && dz > -2.2 && nape(dx, dz) && ((dx + 0.7) / 4.6) ** 2 + (dy / 4.2) ** 2 + ((dz - 0.4) / 4.3) ** 2 <= 1 ? 1 : 0;
+    case 'wavy': {                                                                           // panjang bergelombang
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      const wv = 0.45 * Math.sin(dz * 1.5);
+      if (dx < 0.6 && ((dx + 1.3) / (3.7 + wv)) ** 2 + (dy / (4.7 + wv)) ** 2 <= 1 && dz > -10.5 && dz < 2) return 1;
+      return Math.abs(dy) > 3.0 && Math.abs(dy) < 4.4 + wv && dx > -1.5 && dx < 2.2 && dz > -8 && dz < 1 ? 1 : 0;
+    }
+    case 'lowtie': {                                                                         // panjang diikat rendah
+      if (!face && shellIn(dx, dy, dz) && nape(dx, dz, -3.4)) return 1;
+      if (((dx + 4.1) / 1.3) ** 2 + (dy / 1.3) ** 2 <= 1 && dz < -2.8 && dz > -3.6) return 'tie';
+      return ((dx + 4.3 + (dz + 3) * 0.08) / 1.15) ** 2 + (dy / 1.15) ** 2 <= 1 && dz <= -2.8 && dz > -10 ? 1 : 0;
+    }
+    case 'braid': {                                                                          // kuncir dikepang
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      if (dz < -1.2 && dz > -10.5) { const k = Math.floor((dz + 20) / 1.3), o = (k % 2 ? 0.35 : -0.35); if (((dx + 4.7) / 1.2) ** 2 + ((dy - o) / 1.2) ** 2 <= 1) return k % 2 ? 1 : 'hair2'; }
+      return (dx + 4.6) ** 2 + dy ** 2 + (dz + 11) ** 2 < 1.1 ? 'tie' : 0;
+    }
+    case 'hightail': {                                                                       // kuncir kuda tinggi
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      if ((dx + 3.6) ** 2 + dy ** 2 + (dz - 2.9) ** 2 < 1.2) return 'tie';
+      const zz = dz - 2.6, cx = -4.6 - Math.max(0, -zz) * 0.18;
+      return zz < 0.6 && zz > -7 && ((dx - cx) / (1.5 - zz * 0.04)) ** 2 + (dy / 1.4) ** 2 <= 1 ? 1 : 0;
+    }
+    case 'twinlow': {                                                                        // kuncir dua rendah
+      if (!face && shellIn(dx, dy, dz)) return 1;
+      for (const sg of [-1, 1]) {
+        if ((dx + 1.0) ** 2 + (dy - sg * 3.9) ** 2 + (dz + 2.0) ** 2 < 1.1) return 'tie';
+        if (((dx + 1.2) / 1.3) ** 2 + ((dy - sg * 4.1) / 1.2) ** 2 <= 1 && dz < -2.2 && dz > -8) return 1;
+      }
+      return 0;
+    }
+    case 'bobclip':
+      if (dx > 1.8 && dz > 1.6 && dz < 2.3 && dy > 1.2 && dy < 3.0 && ((dx + 0.5) / 5.0) ** 2 + (dy / 4.9) ** 2 + ((dz - 0.1) / 5.1) ** 2 <= 1) return 'clip';   // jepit hanya di permukaan rambut
+      return !face && dz > -3.5 && ((dx + 0.5) / 4.7) ** 2 + (dy / 4.6) ** 2 + ((dz - 0.1) / 4.8) ** 2 <= 1 ? 1 : 0;
+    case 'halfup': {                                                                         // ikal sebahu, setengah diikat ke atas
+      const b = hash(Math.round(dx * 1.3), Math.round(dy * 1.3), Math.round(dz * 1.3));
+      if ((dx + 3.2) ** 2 + dy ** 2 + (dz - 3.4) ** 2 < 2.0 ** 2) return 1;
+      return !face && dz > -6 && ((dx + 0.6) / (4.8 + b * 0.6)) ** 2 + (dy / (4.7 + b * 0.6)) ** 2 + ((dz - 0.2) / (5.0 + b * 0.6)) ** 2 <= 1 && (dz > -2.5 || dx < 0.4) ? 1 : 0;
+    }
+    case 'capback': {                                                                        // topi dibalik: lidah topi ke belakang
+      if (dz > 1.6 && ((dx + 0.2) / 4.3) ** 2 + (dy / 4.1) ** 2 + ((dz - 0.8) / 4.2) ** 2 <= 1) return 'cap';
+      if (dx < -2.5 && dx > -6.6 && dz > 1.2 && dz < 2.2 && Math.abs(dy) < 3.0) return 'cap';
+      const b = hash(Math.round(dx), Math.round(dy), Math.round(dz));
+      return !face && dz < 1.6 && dz > -2.4 && nape(dx, dz) && shellIn(dx, dy, dz, 1 + b * 0.12) ? 1 : 0;
+    }
+    default: return !face && nape(dx, dz) && shellIn(dx, dy, dz) ? 1 : 0;                       // pendek
+  }
+}
+
+// part: 'all' | 'upper' (badan atas + kepala + tangan + properti) | 'lower' (pinggul + kaki)
+const PROPS = new Set(['orb', 'hilt', 'blade', 'phone', 'stick', 'bristle']);   // boleh menyentuh/menembus tanah
+function humanShape(P0, st, part = 'all') {
+  const P = Object.assign({}, POSE0, P0), S = st.scale;
+  const L = Math.ceil(27 * S), W = Math.ceil(19 * S), H = Math.ceil(40 * S);
+  const cy = W / 2;
+  const up = [Math.sin(P.lean), 0, Math.cos(P.lean)], fwd = [Math.cos(P.lean), 0, -Math.sin(P.lean)];
+  const pelvis = [L / 2 - S + P.px * S, cy + P.sy * S, 0];
+  // proporsi lebih natural (±6 kepala): kepala lebih kecil, badan & kaki lebih panjang, anggota badan lebih ramping
+  const HS = 0.84, TL = 1.16, LL = 1.26, AL = 1.2;
+  const neck = add(pelvis, up, 7.8 * TL * S);
+  const ha = P.lean + P.hp, hu = [Math.sin(ha), 0, Math.cos(ha)];
+  const hf = [Math.cos(ha) * Math.cos(P.hy), Math.sin(P.hy), -Math.sin(ha) * Math.cos(P.hy)], hsd = [-Math.sin(P.hy), Math.cos(P.hy), 0];
+  const head = add(neck, hu, (4.6 * HS + 0.5) * S);
+  const arms = [-1, 1].map(s => {
+    const k = s < 0 ? 'L' : 'R', a = P['ar' + k], el = P['el' + k], sp = P['sp' + k];
+    const sh = add(add(pelvis, up, 6.6 * TL * S), [-s * 3.25 * S * Math.sin(P.tw), s * 3.25 * S * Math.cos(P.tw), 0]);
+    const dir = (ang, b) => [Math.sin(ang) * Math.cos(b), s * Math.sin(b), -Math.cos(ang) * Math.cos(b)];
+    const elbow = add(sh, dir(a, sp), 3.3 * AL * S);
+    const hand = add(elbow, dir(a + el, sp * 0.5), 3.1 * AL * S);
+    return { sh, elbow, hand };
+  });
+  const legs = [-1, 1].map(s => {
+    const k = s < 0 ? 'L' : 'R', th = P['th' + k], kn = P['kn' + k];
+    const hip = add(add(pelvis, up, -0.3 * S), [0, s * 1.7 * S, 0]);
+    const knee = add(hip, limb(th), 4.4 * LL * S);
+    const ankle = add(knee, limb(th - kn), 4.3 * LL * S);
+    const toe = add(ankle, limb(th - kn + Math.PI / 2 + P['ft' + k]), 1.7 * S);
+    return { hip, knee, ankle, toe };
+  });
+  // Grounding: geser badan supaya titik terendah menyentuh tanah
+  const butt = add(pelvis, up, -1.0 * S), chest = add(pelvis, up, 3.0 * TL * S);
+  const gp = [[butt, 0.5], [chest, 2.1], [neck, 2.0], [head, 4.0 * HS]];
+  for (const a of arms) gp.push([a.elbow, 1.2], [a.hand, 1.25]);
+  for (const l of legs) gp.push([l.knee, 1.5], [l.ankle, 1.25], [l.toe, 1.15]);
+  const shift = -Math.min(...gp.map(([p, r]) => p[2] - r * S));
+  const buttZ = butt[2] + shift - 0.6 * S;
+  const pts = [pelvis, neck, head, butt, chest];
+  for (const a of arms) pts.push(a.sh, a.elbow, a.hand);
+  for (const l of legs) pts.push(l.hip, l.knee, l.ankle, l.toe);
+  for (const p of pts) p[2] += shift;
+
+  const Rr = arms[1];
+  const bd = rotY(norm(sub(Rr.hand, Rr.elbow)), P.swa);            // arah pedang
+  const orbPos = add(add(arms[0].hand, arms[1].hand).map(v => v / 2), fwd, 2.2 * S);
+  const brd = norm([0.5, P.bsw, -1]);                               // arah sapu
+  const hs = st.hairStyle, bs = st.bottomStyle;
+  // titik-titik properti dihitung sekali (bukan per voxel)
+  const hilt0 = add(Rr.hand, bd, -1.2 * S), hilt1 = add(Rr.hand, bd, 1.0 * S), guardC = add(Rr.hand, bd, 1.3 * S);
+  const blade0 = add(Rr.hand, bd, 1.6 * S), blade1 = add(Rr.hand, bd, 11 * S);
+  const stick0 = add(Rr.hand, brd, -3 * S), stick1 = add(Rr.hand, brd, 10 * S), br0 = add(Rr.hand, brd, 9.5 * S), br1 = add(Rr.hand, brd, 14 * S);
+  const neck0 = add(neck, up, -0.6 * S), neck1 = add(neck, hu, 1.4 * S);
+  const phone0 = add(Rr.hand, norm(sub(Rr.hand, Rr.elbow)), 0.4 * S), phone1 = add(phone0, hu, 1.8 * S);
+  const propC = add(add(add(arms[0].hand, arms[1].hand).map(v => v / 2), fwd, (P.box ? 1.4 : 0.5) * S), up, (P.box ? 0.4 : 0.6) * S);
+
+  const topMat = (x, y, z, f, wy, rx, t) => {
+    if (UNI && t !== undefined) { const u = uniMat(f, wy, rx, t); if (u) return u; }
+    if (st.topPattern === 'vest' && t !== undefined) {   // rompi tukang parkir: terbuka di depan, pita reflektor melintang
+      if (f > 0 && Math.abs(wy) < 0.9 && t < 0.86) return 'top';
+      return t > 0.42 && t < 0.52 ? 'reflect' : 'top2';
+    }
+    if (st.topPattern === 'stripe' && Math.floor(z / 3) % 2) return 'top2';
+    if (st.topPattern === 'batik' && (((x + z) % 5 === 0 && (y + z) % 5 === 0) || hash(x >> 1, y >> 1, z >> 1) < 0.1)) return 'top2';
+    if (st.topPattern === 'koko' && Math.abs(wy) < 0.5 && f > rx * 0.7 && z % 3 === 0) return 'top2';
+    return 'top';
+  };
+  const bottomMat = (x, y, z) => {
+    if (st.bottomPattern === 'plaid' && (Math.floor(x / 2) % 3 === 0 || Math.floor(z / 2) % 3 === 0)) return 'bottom2';
+    if (st.bottomPattern === 'batik' && (((x + z) % 5 === 0 && (y + z) % 5 === 0) || hash(x >> 1, y >> 1, z >> 1) < 0.1)) return 'bottom2';
+    return 'bottom';
+  };
+  // ----- wajah: tiap tokoh punya kombinasi bentuk mata, alis, mulut, kumis/janggut, kacamata
+  const FC = st.fc || faceCfg(st);
+  const EYE = { normal: [0.5, 0.62, 0.62, 0], big: [0.6, 0.85, 0.8, 0], small: [0.42, 0.5, 0.5, 0], sleepy: [0.55, 0.6, 0.15, 0], sharp: [0.62, 0.45, 0.45, 0.3] }[FC.eyes] || [0.5, 0.62, 0.62, 0];
+  const faceMat = (dx, dy, dz) => {
+    const ay = Math.abs(dy), ex = ay - 1.5, side = dy > 0;
+    const G = FC.glasses;
+    if (G) {
+      const round = G === 'round', rim = round ? Math.hypot(ex / 1.05, dz / 0.95) : Math.max(Math.abs(ex) / 1.05, Math.abs(dz) / 0.85);
+      if (dx > 1.6 && rim < 1.08 && rim > 0.8) return 'glasses';
+      if (dx > 2.6 && Math.abs(dz) < 0.3 && ay < 0.5) return 'glasses';
+    }
+    if (dx > 2.0) {
+      const [ew, eh, lid, tilt] = EYE, ez = dz - tilt * ex;
+      if (Math.abs(ex) < ew && ez > -eh && ez < lid) return (ez > lid - 0.45 && ex > 0 && ex < ew * 0.9 && eh > 0.6) ? 'eyeW' : 'eye';
+      if (FC.lash && ex > ew * 0.3 && ex < ew + 0.5 && ez >= lid && ez < lid + 0.45) return 'eye';                    // bulu mata
+      if (FC.eyes === 'sleepy' && Math.abs(ex) < ew + 0.1 && ez >= lid && ez < lid + 0.35) return 'nose';             // kelopak berat
+    }
+    if (dx > 1.8) {
+      const bw = FC.brow === 'thick' ? 0.85 : 0.72, b0 = FC.brow === 'thin' ? 1.3 : 1.15, b1 = FC.brow === 'thick' ? 1.8 : FC.brow === 'thin' ? 1.6 : 1.65;
+      const bz = dz - (FC.brow === 'angry' ? 0.45 * ex : FC.brow === 'arch' ? -0.3 * (1 - Math.abs(ex)) : 0.1 * ex);
+      const scar = st.scar && side && ex > -0.05 && ex < 0.3;
+      if (Math.abs(ex) < bw && bz > b0 && bz < b1 && !scar) return 'brow';
+    }
+    if (dx > 1.8) {   // mulut
+      const mz = dz + 1.75, M = FC.mouth;
+      if (M === 'smile' && ay < 0.95 && Math.abs(mz + 0.0 - 0.35 * (ay / 0.95) ** 2) < 0.3) return 'mouth';
+      if (M === 'grin' && ay < 0.95 && mz > -0.45 && mz < 0.35 - 0.2 * (ay / 0.95) ** 2) return mz > -0.05 && ay < 0.7 ? 'teeth' : 'mouth';
+      if (M === 'smirk' && dy > -0.4 && dy < 0.95 && Math.abs(mz - 0.3 * Math.max(0, dy)) < 0.3) return 'mouth';
+      if (M === 'small' && ay < 0.5 && Math.abs(mz) < 0.3) return 'lip';
+      if (M === 'flat' && ay < 0.75 && Math.abs(mz) < 0.28) return 'mouth';
+    }
+    if (FC.beard) {
+      if (FC.beard === 'mustache' && dx > 1.8 && dz > -1.5 && dz < -1.05 && ay < 1.1) return 'hair';
+      if ((FC.beard === 'beard' || FC.beard === 'goatee') && dx > 1.0 && dz < -2.15 && ay < (FC.beard === 'goatee' ? 0.8 : 2.9)) return 'hair';
+      if (FC.beard === 'stubble' && dx > 1.0 && dz < -1.3 && ay < 2.9 && !(ay < 0.9 && dz > -2.1)) return 'stubble';
+    }
+    if (FC.blush && dx > 1.8 && dz > -1.35 && dz < -0.7 && Math.abs(ay - 2.3) < 0.45) return 'blush';
+    if (dx > 2.6 && dz > -1.15 && dz < -0.25 && ay < 0.4) return 'nose';
+    if (dx > 2.2 && dz > -1.25 && dz < -1.0 && ay > 0.3 && ay < 0.75) return 'nose';                                // cuping hidung
+    return 'skin';
+  };
+  // ----- bentuk kepala: tempurung bulat + rahang yang menyempit ke dagu (beda per bentuk wajah)
+  const HSH = { oval: [0.42, 0.4, 0.55], round: [0.24, 0.2, 0.72], square: [0.16, 0.3, 0.88], v: [0.56, 0.5, 0.38] }[FC.shape] || [0.42, 0.4, 0.55];
+  const headIn = (dx, dy, dz) => {
+    if (dz >= 0.2) return (dx / 3.9) ** 2 + (dy / 3.7) ** 2 + ((dz - 0.2) / 3.95) ** 2 <= 1;
+    const t = (0.2 - dz) / 4.25; if (t >= 1) return false;
+    let ry = 3.7 * (1 - HSH[0] * t ** 1.7), rx = 3.9 * (1 - 0.3 * t ** 1.5);
+    const cx = HSH[1] * t * t;
+    if (t > 0.78) { const k = Math.sqrt(Math.max(0, 1 - ((t - 0.78) / 0.22) ** 2)); ry *= HSH[2] + (1 - HSH[2]) * k; rx *= 0.7 + 0.3 * k; }
+    return ((dx - cx) / rx) ** 2 + (dy / ry) ** 2 <= 1;
+  };
+  const earAt = (dx, dy, dz) => Math.abs(Math.abs(dy) - 3.7) < 0.6 && Math.abs(dx + 0.25) < 0.75 && dz > -1.4 && dz < 0.6;
+  const SHORT = new Set(['short', 'buzz', 'spiky', 'sidepart', 'messy', 'crew', 'slick', 'mohawk', 'bald', 'peci', 'cap', 'capback', 'curly', 'helmet']);
+  const UNI = st.uniform === 'sma';
+  const uniMat = (f, wy, rx, t) => {   // detail seragam SMA di badan atas (t = 0 pinggul .. 1 leher)
+    const front = f > rx * 0.62;
+    if (st.belt && t < 0.255) return front && Math.abs(wy) < 0.6 ? 'buckle' : 'belt';
+    if (st.top !== '#f4f4f0') {         // jaket/rompi dipakai di atas seragam: kemeja putih terlihat di tengah
+      if (front && Math.abs(wy) < 0.55 + Math.max(0, t - 0.7) * 2.2) return t > 0.86 ? 'collar' : 'shirt';
+      return null;
+    }
+    if (t > 0.84 && f > rx * 0.15) { if (Math.abs(wy) < 0.32 + (t - 0.84) * 4) return t > 0.9 ? 'skin' : 'placket'; return Math.abs(wy) < 2.0 ? 'collar' : null; }
+    if (t > 0.8 && t <= 0.84 && f > rx * 0.15 && Math.abs(wy) < 2.0) return 'seam';
+    if (!front) return null;
+    if (Math.abs(wy) < 0.42) return Math.floor(t * 15) % 3 === 0 ? 'button' : 'placket';
+    if (wy < -0.75 && wy > -2.15 && t > 0.53 && t < 0.74) {                    // saku kiri + badge OSIS
+      if (t > 0.65 && t < 0.72 && wy < -1.05 && wy > -1.75) return 'badge';
+      return t < 0.56 || wy > -0.9 || wy < -2.0 ? 'seam' : null;
+    }
+    if (wy > 0.8 && wy < 2.1 && t > 0.63 && t < 0.7) return 'nametag';      // papan nama kanan
+    return null;
+  };
+  const shortHair = (dx, dy, dz) => ((dx + 0.4) / 4.5) ** 2 + (dy / 4.3) ** 2 + ((dz - 0.2) / 4.4) ** 2 <= 1 && dz > -3.2;
+
+  const upperFn = (p, x, y, z) => {
+    // properti
+    if (P.orb > 0 && sph(p, orbPos, P.orb * S)) return 'orb';
+    if (P.sword > 0.5) {
+      if (capsule(p, hilt0, hilt1, 0.65 * S, 0.65 * S) >= 0) return 'hilt';
+      const qx = p[0] - guardC[0], qy = p[1] - guardC[1], qz = p[2] - guardC[2], al = qx * bd[0] + qy * bd[1] + qz * bd[2];
+      if (Math.abs(al) < 0.45 * S && Math.hypot(qx - bd[0] * al, qy - bd[1] * al, qz - bd[2] * al) < 1.9 * S) return 'hilt';
+      if (capsule(p, blade0, blade1, 1.15 * S, 0.55 * S) >= 0) return 'blade';
+    }
+    if (P.phone > 0.5 && capsule(p, phone0, phone1, 0.8 * S, 0.8 * S) >= 0) return 'phone';
+    if (P.box > 0.5 || P.book > 0.5) {   // kardus / buku di depan dada, sejajar badan
+      const q0 = p[0] - propC[0], q1 = p[1] - propC[1], q2 = p[2] - propC[2];
+      const a = (q0 * fwd[0] + q2 * fwd[2]) / S, b = q1 / S, c = (q0 * up[0] + q2 * up[2]) / S;
+      if (P.box > 0.5 && Math.abs(a) < 2.0 && Math.abs(b) < 3.0 && Math.abs(c) < 1.9) return Math.abs(b) < 0.3 && c > 1.4 ? 'seam' : 'box';
+      if (P.book > 0.5) { const a2 = a * 0.8 - c * 0.6, c2 = a * 0.6 + c * 0.8; if (Math.abs(a2) < 0.45 && Math.abs(b) < 2.1 && Math.abs(c2) < 1.5) return a2 > 0.1 && Math.abs(b) < 1.9 && Math.abs(c2) < 1.3 ? 'page' : 'book'; }
+    }
+    if (P.broom > 0.5) {
+      if (capsule(p, stick0, stick1, 0.45 * S, 0.45 * S) >= 0) return 'stick';
+      if (capsule(p, br0, br1, 0.7 * S, 2.6 * S) >= 0) return 'bristle';
+    }
+    // kepala (koordinat lokal kepala, satuan unit)
+    const vx = p[0] - head[0], vy = p[1] - head[1], vz = p[2] - head[2];
+    const dx = (vx * hf[0] + vy * hf[1] + vz * hf[2]) / S / HS, dy = (vx * hsd[0] + vy * hsd[1]) / S / HS, dz = (vx * hu[0] + vz * hu[2]) / S / HS;
+    const inHead = headIn(dx, dy, dz);
+    const face = hs === 'hijab'
+      ? dx > 0.6 && (dy / 2.7) ** 2 + ((dz + 0.8) / 2.6) ** 2 <= 1
+      : hs === 'helmet' ? dx > 0.6 && dz < 0.9 && dz > -3.6 && Math.abs(dy) < 3.0
+      : dx > 0.6 && dz < 1.4 && dz > -3.6 && Math.abs(dy) < (hs === 'bob' ? 2.6 : 3.0);
+    const strand = () => ((Math.floor(dy * 2.2 + 9) + Math.floor(dz * 0.7 + 9)) % 3 === 0) ? 'hair2' : 'hair';
+    if (inHead) {
+      if (face && !(BANGS[hs] && dz > BANGS[hs](dy))) return faceMat(dx, dy, dz);
+      if (face) return strand();                                    // poni
+      if (hs === 'hijab') return 'hijab';
+      if (hs === 'helmet') return dz > -1.5 ? 'helmet' : 'hair';
+      if (hs === 'peci' && dz > 2.2) return 'peci';
+      if (hs === 'cap' && dz > 1.9) return 'cap';
+      if (hs === 'bald' && dz > 0.9) return 'skin';
+      if (hs === 'mohawk' && Math.abs(dy) > 1.1 && dz > -1.5) return 'stubble';
+      return strand();
+    }
+    const ear = hs !== 'hijab' && hs !== 'helmet' && earAt(dx, dy, dz);
+    if (ear && SHORT.has(hs)) return 'nose';                       // telinga terlihat pada rambut pendek
+    const hm = hairAt(hs, dx, dy, dz, face);
+    if (hm) return hm === 1 ? strand() : hm;
+    if (ear) return 'nose';
+    // lengan
+    for (const a of arms) {
+      if (sph(p, a.hand, 1.05 * S)) return 'skin';
+      const t1 = capsule(p, a.sh, a.elbow, 1.2 * S, 1.0 * S);
+      if (t1 >= 0) return (st.sleeves === 'long' || t1 < 0.7) ? topMat(x, y, z, 0, 9, 1) : 'skin';
+      const t2 = capsule(p, a.elbow, a.hand, 1.0 * S, 0.85 * S);
+      if (t2 >= 0) return (st.sleeves === 'long' && t2 < 0.8) ? topMat(x, y, z, 0, 9, 1) : 'skin';
+    }
+    // badan atas
+    const wx = p[0] - pelvis[0], wy0 = p[1] - pelvis[1], wz = p[2] - pelvis[2];
+    const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / (9 * TL);
+    if (t >= 0.2 && t <= 1) {
+      let ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t;
+      if (t > 0.72) { const k = Math.sqrt(Math.max(0, 1 - ((t - 0.72) / 0.3) ** 2)); ry *= 0.55 + 0.45 * k; rx *= 0.6 + 0.4 * k; }
+      const bump = st.belly ? st.belly * Math.exp(-(((t - 0.38) / 0.2) ** 2)) : 0;
+      const f = (wx * fwd[0] + wz * fwd[2]) / S - bump * 0.9, rxx = rx + bump * 0.9, wy = wy0 / S;
+      if (hs === 'hijab' && t > 0.58 && (f / (rxx + 0.7)) ** 2 + (wy / (ry + 0.6)) ** 2 <= 1) return 'hijab';
+      if ((f / rxx) ** 2 + (wy / ry) ** 2 <= 1) return topMat(x, y, z, f, wy, rxx, t);
+    }
+    if (capsule(p, neck0, neck1, 1.1 * S, 1.1 * S) >= 0) return hs === 'hijab' ? 'hijab' : 'skin';
+    return null;
+  };
+
+  const zTopSk = pelvis[2] + 1.6 * S;
+  const zBotSk = st.skirtShort ? Math.min(legs[0].knee[2], legs[1].knee[2]) - 0.3 * S
+    : Math.min(legs[0].ankle[2], legs[1].ankle[2]) + (bs === 'sarung' ? 1.6 : 0.9) * S;
+  // duduk (naik motor/sepeda, dibonceng, duduk, jongkok): kedua paha maju. Rok tidak lagi dibuat per irisan datar
+  // (irisan itu tidak menutup paha yang mendatar sehingga kulit kaki tembus), tapi membungkus paha seperti kain di pangkuan
+  // lalu menjuntai dari lutut (rok panjang).
+  const seated = (bs === 'sarung' || bs === 'skirt') && P.thL > 0.55 && P.thR > 0.55;
+  const lap = seated && (() => {
+    const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    const hipM = mid(legs[0].hip, legs[1].hip), kneeM = mid(legs[0].knee, legs[1].knee), long = !st.skirtShort;
+    const drop = l => add(l.knee, sub(l.ankle, l.knee), bs === 'sarung' ? 0.8 : 0.62), D = legs.map(drop), Dm = mid(D[0], D[1]);
+    return p => {
+      if (capsule(p, hipM, kneeM, 2.9 * S, long ? 2.5 * S : 2.3 * S) >= 0) return true;              // pangkuan (menutup celah antar paha)
+      for (let i = 0; i < 2; i++) {
+        const l = legs[i];
+        if (capsule(p, l.hip, l.knee, 2.35 * S, long ? 2.05 * S : 1.75 * S) >= 0) return true;        // kain di atas paha
+        if (long && capsule(p, l.knee, D[i], 2.0 * S, 1.75 * S) >= 0) return true;                   // juntai dari lutut
+      }
+      if (long && capsule(p, kneeM, Dm, 2.6 * S, 2.2 * S) >= 0) return true;
+      return false;
+    };
+  })();
+  const legX = (l, z) => {
+    const xs = [];
+    for (const [a, b] of [[l.hip, l.knee], [l.knee, l.ankle]]) {
+      const lo = Math.min(a[2], b[2]), hi = Math.max(a[2], b[2]);
+      if (z >= lo && z <= hi && hi > lo) xs.push(a[0] + (b[0] - a[0]) * (z - a[2]) / (b[2] - a[2]));
+    }
+    return xs;
+  };
+  const lowerFn = (p, x, y, z) => {
+    for (const l of legs) {
+      if (st.shoeStyle === 'sandal') {
+        if (capsule(p, l.ankle, l.toe, 1.15 * S, 1.05 * S) >= 0) return p[2] < Math.min(l.ankle[2], l.toe[2]) - 0.5 * S ? 'sole' : 'skin';
+      } else if (capsule(p, l.ankle, l.toe, 1.3 * S, 1.15 * S) >= 0) return 'shoe';
+    }
+    const wx = p[0] - pelvis[0], wy = p[1] - pelvis[1], wz = p[2] - pelvis[2];
+    const t = ((wx * up[0] + wz * up[2]) / S + 1.0) / (9 * TL);
+    if (t >= 0 && t < 0.2) {
+      const ry = 2.6 + 0.9 * t, rx = 1.9 + 0.35 * t, ff = (wx * fwd[0] + wz * fwd[2]) / S;
+      if ((ff / rx) ** 2 + (wy / S / ry) ** 2 <= 1) return st.belt && t > 0.16 ? (ff > rx * 0.62 && Math.abs(wy / S) < 0.6 ? 'buckle' : 'belt') : bottomMat(x, y, z);
+    }
+    if (lap) { if (lap(p)) return bottomMat(x, y, z); }
+    else if ((bs === 'sarung' || bs === 'skirt') && p[2] <= zTopSk && p[2] >= zBotSk) {
+      const xs = [pelvis[0], ...legX(legs[0], p[2]), ...legX(legs[1], p[2])];
+      const xmin = Math.min(...xs), xmax = Math.max(...xs), fl = (zTopSk - p[2]) / (zTopSk - zBotSk || 1);
+      const pad = (1.9 + 0.5 * fl) * S, hy = (2.8 + 0.5 * fl) * S, hx = (xmax - xmin) / 2 + pad, xc = (xmin + xmax) / 2;
+      if (((p[0] - xc) / hx) ** 2 + ((p[1] - cy) / hy) ** 2 <= 1) {
+        if (st.pleats && fl > 0.08) { const an = Math.atan2(p[1] - cy, (p[0] - xc) * hy / hx); if ((((an / Math.PI) * 7 + 20) % 1) < 0.22) return 'bottom2'; }   // lipit rok
+        return bottomMat(x, y, z);
+      }
+    }
+    for (const l of legs) {
+      if (capsule(p, l.hip, l.knee, 1.55 * S, 1.2 * S) >= 0) return (bs === 'pants' || bs === 'shorts') ? 'bottom' : 'skin';
+      const t2 = capsule(p, l.knee, l.ankle, 1.2 * S, 1.0 * S);
+      if (t2 >= 0) return bs === 'pants' || (bs === 'shorts' && t2 < 0.12) ? 'bottom' : 'skin';
+    }
+    return null;
+  };
+  const p = [0, 0, 0];
+  const mat = (x, y, z) => {
+    p[0] = x + 0.5; p[1] = y + 0.5; p[2] = z + 0.5;
+    let m = null;
+    if (part !== 'lower') m = upperFn(p, x, y, z);
+    if (!m && part !== 'upper') m = lowerFn(p, x, y, z);
+    return m;
+  };
+  // kotak batas supaya hanya area tubuh yang dihitung
+  const sp = [[pelvis, 4.6], [neck, 4.2], [head, 6.8 * HS], [add(head, hu, -7 * HS * S), 5.2 * HS]];
+  for (const a of arms) sp.push([a.sh, 2], [a.elbow, 2], [a.hand, 2]);
+  const lr = bs === 'sarung' || bs === 'skirt' ? 3.8 : 2.4;
+  for (const l of legs) sp.push([l.hip, lr], [l.knee, lr], [l.ankle, lr], [l.toe, 2.2]);
+  if (P.sword > 0.5) sp.push([add(Rr.hand, bd, 11 * S), 1.4], [add(Rr.hand, bd, -1.2 * S), 1.2], [add(Rr.hand, bd, 1.3 * S), 2]);
+  if (P.broom > 0.5) sp.push([add(Rr.hand, brd, 14 * S), 3], [add(Rr.hand, brd, -3 * S), 1]);
+  if (P.orb > 0) sp.push([orbPos, P.orb + 0.5]);
+  if (P.phone > 0.5) sp.push([phone1, 1.5]);
+  if (P.box > 0.5 || P.book > 0.5) sp.push([propC, 3.8]);
+  const lo = [0, 1, 2].map(i => Math.min(...sp.map(([c, r]) => c[i] - r * S)) - 1);
+  const hi = [0, 1, 2].map(i => Math.max(...sp.map(([c, r]) => c[i] + r * S)) + 1);
+  // Grounding di atas memakai bola kepala kasar; rambut/topi/helm bisa lebih besar dan tenggelam
+  // ke tanah saat guling terbalik. Cari voxel tubuh terendah (properti seperti sapu boleh menapak)
+  // lalu angkat seluruh frame supaya tidak terpotong tanah. Dicek dgn seluruh tubuh, jadi sama untuk badan atas/bawah.
+  let sink = 0;
+  for (let z = Math.floor(lo[2]); z < 0 && !sink; z++)
+    for (let y = Math.floor(lo[1]); y <= Math.ceil(hi[1]) && !sink; y++) for (let x = Math.floor(lo[0]); x <= Math.ceil(hi[0]); x++) {
+      p[0] = x + 0.5; p[1] = y + 0.5; p[2] = z + 0.5;
+      const m = upperFn(p, x, y, z) || lowerFn(p, x, y, z);
+      if (m && !PROPS.has(m)) { sink = -z; break; }
+    }
+  lo[2] += sink; hi[2] += sink;
+  // Grid menyesuaikan isi frame (pedang, sapu, guling, terbaring) tanpa terpotong.
+  // Titik tengah tetap di (L/2, W/2) supaya semua frame berputar di poros yang sama.
+  const hx = Math.ceil(Math.max(L / 2 - lo[0], hi[0] - L / 2)), hy = Math.ceil(Math.max(W / 2 - lo[1], hi[1] - W / 2));
+  const ox = Math.max(0, hx - Math.floor(L / 2)), oy = Math.max(0, hy - Math.floor(W / 2));
+  const L2 = L + ox * 2, W2 = W + oy * 2, H2 = Math.max(H, Math.ceil(hi[2]) + 1);
+  const bbox = [Math.max(0, Math.floor(lo[0] + ox)), Math.max(0, Math.floor(lo[1] + oy)), Math.max(0, Math.floor(lo[2])),
+                Math.min(L2 - 1, Math.ceil(hi[0] + ox)), Math.min(W2 - 1, Math.ceil(hi[1] + oy)), H2 - 1];
+  const mat2 = ox || oy || sink ? (x, y, z) => mat(x - ox, y - oy, z - sink) : mat;
+  return { mat: mat2, L: L2, W: W2, H: H2, bbox, lift: P.jump * S, pelvisZ: pelvis[2] + sink, yaw: P.yaw, buttZ: buttZ + sink, buttX: butt[0] - L / 2,
+    // titik tangan & pergelangan kaki relatif terhadap pantat [maju, naik] (voxel): untuk mencocokkan setang/pijakan kendaraan
+    joints: { hands: arms.map(a => [a.hand[0] - butt[0], a.hand[2] - butt[2] + 0.6 * S]), ankles: legs.map(l => [l.ankle[0] - butt[0], l.ankle[2] - butt[2] + 0.6 * S]) } };
+}
+
+/* ---------- Gerakan ----------
+   kind: 'loco' (jalan dll), 'upper' (badan atas saja -> bisa sambil jalan), 'full' (seluruh badan).
+   hit: { t: saat kena (0..1), r: jangkauan, arc: lebar sudut }. move: kecepatan gerak saat aksi. */
+function keyed(keys) {
+  let acc = Object.assign({}, POSE0);
+  const full = keys.map(([t, p]) => [t, acc = Object.assign({}, acc, p)]);
+  return t => {
+    let i = 0;
+    while (i < full.length - 2 && t > full[i + 1][0]) i++;
+    const [t0, a] = full[i], [t1, b] = full[i + 1];
+    let u = Math.max(0, Math.min(1, (t - t0) / (t1 - t0 || 1)));
+    u = u * u * (3 - 2 * u);
+    const o = {};
+    for (const k in a) o[k] = a[k] + (b[k] - a[k]) * u;
+    return o;
+  };
+}
+const GUARD = { arL: 0.9, elL: 1.9, arR: 0.9, elR: 1.9, spL: 0.25, spR: 0.25, thL: 0.3, thR: -0.3, knL: 0.25, knR: 0.25, lean: 0.1, tw: 0 };
+const SW = { sword: 1, arR: 0.6, elR: 0.8, swa: 1.2, spR: 0.12, arL: 0.5, elL: 1.2, spL: 0.2, thL: 0.3, thR: -0.3, knL: 0.2, knR: 0.2, tw: 0, lean: 0.05, yaw: 0 };
+const sinT = t => Math.sin(t * TAU), cosT = t => Math.cos(t * TAU);
+const ANIMS = {
+  // --- gerak dasar (lebih natural: pinggul bergoyang, bahu berputar berlawanan, tumit-jinjit) ---
+  idle:   { name: 'Diam', kind: 'loco', n: 8, fps: 4, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.03 + 0.015 * s, sy: 0.25 * c, thL: 0.04 * c, thR: -0.04 * c, knL: 0.12 + 0.05 * Math.max(0, -c), knR: 0.12 + 0.05 * Math.max(0, c),
+             elL: 0.28 + 0.05 * s, elR: 0.28 + 0.05 * s, spL: 0.12 + 0.03 * s, spR: 0.12 + 0.03 * s, hp: 0.02 * s, hy: 0.06 * c }; } },
+  walk:   { name: 'Jalan', kind: 'loco', n: 8, fps: 9, stride: 34, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.07, hp: -0.04 + 0.03 * Math.abs(c), sy: 0.3 * c, tw: 0.12 * s,
+             thL: 0.42 * s, thR: -0.42 * s, knL: 0.1 + 0.75 * Math.max(0, c) ** 1.5, knR: 0.1 + 0.75 * Math.max(0, -c) ** 1.5,
+             ftL: -0.25 * Math.max(0, s) + 0.35 * Math.max(0, -s), ftR: -0.25 * Math.max(0, -s) + 0.35 * Math.max(0, s),
+             arL: 0.05 - 0.38 * s, arR: 0.05 + 0.38 * s, elL: 0.22 + 0.35 * Math.max(0, -s), elR: 0.22 + 0.35 * Math.max(0, s), spL: 0.14, spR: 0.14 }; } },
+  run:    { name: 'Lari', kind: 'loco', n: 8, fps: 13, stride: 62, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.32, hp: -0.24, tw: 0.22 * s, sy: 0.2 * c,
+             thL: 0.2 + 0.9 * s, thR: 0.2 - 0.9 * s, knL: 0.3 + 1.6 * Math.max(0, c), knR: 0.3 + 1.6 * Math.max(0, -c),
+             ftL: 0.5 * Math.max(0, -s), ftR: 0.5 * Math.max(0, s),
+             arL: 0.25 - 0.95 * s, arR: 0.25 + 0.95 * s, elL: 1.55 + 0.25 * s, elR: 1.55 - 0.25 * s, spL: 0.2, spR: 0.2, jump: 1.0 * Math.abs(s) ** 1.5 }; } },
+  crouch: { name: 'Jongkok jalan', kind: 'loco', n: 8, fps: 8, stride: 22, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.5, hp: -0.45, sy: 0.2 * c, thL: 1.0 + 0.35 * s, thR: 1.0 - 0.35 * s, knL: 1.9 + 0.3 * Math.max(0, c), knR: 1.9 + 0.3 * Math.max(0, -c), arL: 0.7 - 0.3 * s, arR: 0.7 + 0.3 * s, elL: 0.9, elR: 0.9, spL: 0.2, spR: 0.2 }; } },
+  crawl:  { name: 'Merangkak', kind: 'loco', n: 8, fps: 6, stride: 20, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 1.3, hp: -0.75, px: -4, thL: 0.25 * s, thR: -0.25 * s, knL: 1.57 + 0.2 * Math.max(0, c), knR: 1.57 + 0.2 * Math.max(0, -c), arL: -0.28 * s, arR: 0.28 * s, elL: 0, elR: 0 }; } },
+  sit:    { name: 'Duduk', kind: 'full', n: 4, fps: 3, loop: true, pose: t => ({ lean: -0.12 + 0.02 * sinT(t), thL: 1.75, thR: 1.7, knL: 0.45, knR: 0.5, arL: 0.6, arR: 0.55, elL: 1.0, elR: 1.0, spL: 0.15, spR: 0.15, hy: 0.15 * sinT(t) }) },
+  sweep:  { name: 'Menyapu', kind: 'full', n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t);
+    return { broom: 1, lean: 0.35, hp: -0.1, sy: 0.2 * s, thL: 0.25, thR: -0.15, knL: 0.35, knR: 0.3, arR: 0.85, elR: 0.5, arL: 0.95, elL: 0.9, spL: 0.05, spR: 0.05, tw: 0.3 * s, bsw: 0.55 * s }; } },
+  wave:   { name: 'Melambai', kind: 'upper', n: 6, fps: 8, loop: true, pose: t => ({ arR: 2.7, elR: 0.5 + 0.5 * sinT(t), spR: 0.35 + 0.15 * sinT(t), hy: 0.1 }) },
+  talk:   { name: 'Ngobrol', kind: 'upper', n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
+    return { arR: 0.7 + 0.35 * Math.max(0, s), elR: 1.3, arL: 0.4 + 0.25 * Math.max(0, -s), elL: 1.1, hp: 0.06 * s, hy: 0.15 * s, lean: 0.05 }; } },
+  // --- variasi diam (NPC & pemain) ---
+  look:   { name: 'Menoleh', kind: 'full', n: 10, fps: 5, loop: true, pose: t => ({ hy: 0.85 * sinT(t), hp: 0.05, sy: 0.15 * sinT(t), elL: 0.3, elR: 0.3 }) },
+  phone:  { name: 'Main HP', kind: 'upper', n: 4, fps: 3, loop: true, pose: t => ({ phone: 1, arR: 0.75, elR: 1.55, spR: 0.05, arL: 0.6, elL: 1.4, spL: 0.0, hp: -0.35 + 0.03 * sinT(t), lean: 0.05 }) },
+  scratch:{ name: 'Garuk kepala', kind: 'upper', n: 6, fps: 8, loop: true, pose: t => ({ arR: 2.2, elR: 2.1 + 0.15 * sinT(t), spR: 0.75, hp: -0.1, hy: -0.15 }) },
+  stretch:{ name: 'Peregangan', kind: 'full', n: 10, fps: 6, pose: keyed([[0, {}], [0.4, { arL: 3.0, arR: 3.0, elL: 0.1, elR: 0.1, spL: 0.25, spR: 0.25, lean: -0.15, hp: 0.25 }], [0.7, { lean: -0.2 }], [1, {}]]) },
+  // --- naik kendaraan ---
+  rideMotor: { name: 'Naik motor', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.3 + 0.02 * sinT(t), thL: 1.3, thR: 1.3, knL: 1.3, knR: 1.3, ftL: -0.2, ftR: -0.2, arL: 0.85, arR: 0.85, elL: 0.3, elR: 0.3, spL: 0.18, spR: 0.18 }) },
+  rideScooter: { name: 'Naik skuter', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.3, hp: -0.22 + 0.02 * sinT(t), thL: 1.45, thR: 1.45, knL: 1.45, knR: 1.45, ftL: -0.1, ftR: -0.1, arL: 0.8, arR: 0.8, elL: 0.45, elR: 0.45, spL: 0.2, spR: 0.2 }) },
+  rideSport: { name: 'Naik motor sport', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.62, hp: -0.55 + 0.02 * sinT(t), thL: 1.7, thR: 1.7, knL: 2.3, knR: 2.3, ftL: 0.2, ftR: 0.2, arL: 0.9, arR: 0.9, elL: 0.3, elR: 0.3, spL: 0.22, spR: 0.22 }) },
+  rideTrail: { name: 'Naik trail', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.4, hp: -0.25 + 0.02 * sinT(t), thL: 1.2, thR: 1.2, knL: 1.5, knR: 1.5, ftL: -0.1, ftR: -0.1, arL: 0.95, arR: 0.95, elL: 0.5, elR: 0.5, spL: 0.4, spR: 0.4 }) },
+  pedalUp: { name: 'Mengayuh santai', kind: 'full', n: 8, fps: 7, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.3, hp: -0.15, thL: 1.05 + 0.42 * s, thR: 1.05 - 0.42 * s, knL: 1.35 + 0.55 * c, knR: 1.35 - 0.55 * c, ftL: -0.1, ftR: -0.1, arL: 0.8, arR: 0.8, elL: 0.4, elR: 0.4, spL: 0.18, spR: 0.18, sy: 0.08 * s }; } },
+  passenger: { name: 'Dibonceng', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.12, hp: 0.02 * sinT(t), thL: 1.4, thR: 1.4, knL: 1.5, knR: 1.5, ftL: -0.3, ftR: -0.3, arL: 0.75, arR: 0.75, elL: 0.6, elR: 0.6, spL: 0.3, spR: 0.3, hy: 0.25 }) },
+  motoLean: { name: 'Motor menikung', kind: 'full', n: 2, fps: 2, loop: true, pose: t => ({ lean: 0.5, hp: -0.35, sy: -0.8, thL: 1.3, thR: 1.2, knL: 1.3, knR: 1.4, ftL: -0.2, ftR: -0.2, arL: 1.2, arR: 1.25, elL: 0.15, elR: 0.25, spL: 0.25, spR: 0.12, hy: -0.2 }) },
+  pedal:  { name: 'Mengayuh', kind: 'full', n: 8, fps: 8, stride: 30, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.55, hp: -0.4, thL: 0.95 + 0.4 * s, thR: 0.95 - 0.4 * s, knL: 1.3 + 0.5 * c, knR: 1.3 - 0.5 * c, arL: 0.92, arR: 0.92, elL: 0.05, elR: 0.05, spL: 0.15, spR: 0.15, sy: 0.15 * s }; } },
+  // --- gerak utama tambahan (guide 71): sprint, jongkok, berbaring, bawa barang, dorong, panjat, sekolah & sosial ---
+  sprint: { name: 'Sprint', kind: 'loco', n: 8, fps: 16, stride: 80, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.45, hp: -0.3, tw: 0.25 * s, sy: 0.15 * c, thL: 0.3 + 1.05 * s, thR: 0.3 - 1.05 * s, knL: 0.35 + 1.9 * Math.max(0, c), knR: 0.35 + 1.9 * Math.max(0, -c),
+             ftL: 0.6 * Math.max(0, -s), ftR: 0.6 * Math.max(0, s), arL: 0.3 - 1.2 * s, arR: 0.3 + 1.2 * s, elL: 1.6, elR: 1.6, spL: 0.15, spR: 0.15, jump: 1.4 * Math.abs(s) ** 1.5 }; } },
+  squat:  { name: 'Jongkok', kind: 'full', move: 0, n: 4, fps: 3, loop: true, pose: t => ({ lean: 0.42 + 0.02 * sinT(t), hp: -0.3, thL: 1.95, thR: 1.85, knL: 2.65, knR: 2.6, ftL: 0.2, ftR: 0.2, arL: 0.95, arR: 0.9, elL: 0.8, elR: 0.9, spL: 0.3, spR: 0.3 }) },
+  lie:    { name: 'Berbaring', kind: 'full', move: 0, n: 4, fps: 2, loop: true, pose: t => ({ lean: -1.5, hp: 0.12, thL: 1.5, thR: 1.35, knL: 0.05, knR: 0.6, arL: -1.5, arR: -1.35, elL: 1.2, elR: 1.0, spL: 0.55, spR: 0.5, px: 4, sy: 0.05 * sinT(t) }) },
+  carry:  { name: 'Bawa kardus', kind: 'upper', n: 2, fps: 2, loop: true, pose: t => ({ box: 1, arL: 0.75, arR: 0.75, elL: 1.05, elR: 1.05, spL: 0.42, spR: 0.42, lean: -0.04, hp: 0.02 * sinT(t) }) },
+  push:   { name: 'Dorong', kind: 'loco', n: 8, fps: 7, stride: 18, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.55, hp: -0.25, thL: 0.55 + 0.35 * s, thR: 0.55 - 0.35 * s, knL: 0.35 + 0.6 * Math.max(0, c), knR: 0.35 + 0.6 * Math.max(0, -c), ftL: -0.3, ftR: -0.3, arL: 1.45, arR: 1.45, elL: 0.35, elR: 0.35, spL: 0.25, spR: 0.25 }; } },
+  climb:  { name: 'Memanjat', kind: 'full', move: 0, n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
+    return { lean: -0.05, arL: 2.6 + 0.35 * s, arR: 2.6 - 0.35 * s, elL: 0.5 - 0.3 * s, elR: 0.5 + 0.3 * s, spL: 0.25, spR: 0.25, thL: 0.7 + 0.6 * s, thR: 0.7 - 0.6 * s, knL: 1.2 + 0.4 * s, knR: 1.2 - 0.4 * s, hp: 0.3 }; } },
+  raiseHand: { name: 'Angkat tangan', kind: 'upper', n: 4, fps: 4, loop: true, pose: t => ({ arR: 2.95 + 0.06 * sinT(t), elR: 0.15, spR: 0.12, hp: 0.12, hy: 0.05 * sinT(t) }) },
+  read:   { name: 'Baca buku', kind: 'upper', n: 4, fps: 2, loop: true, pose: t => ({ book: 1, arL: 0.55, arR: 0.55, elL: 1.75, elR: 1.75, spL: 0.32, spR: 0.32, hp: -0.4 + 0.03 * sinT(t), lean: 0.03 }) },
+  clap:   { name: 'Tepuk tangan', kind: 'upper', n: 4, fps: 10, loop: true, pose: t => { const s = Math.max(0, sinT(t)); return { arL: 1.1, arR: 1.1, elL: 1.2, elR: 1.2, spL: -0.1 + 0.45 * s, spR: -0.1 + 0.45 * s, hp: 0.08 }; } },
+  laugh:  { name: 'Tertawa', kind: 'upper', n: 6, fps: 10, loop: true, pose: t => { const s = sinT(t); return { hp: 0.3 + 0.08 * s, lean: -0.08 + 0.04 * s, arL: 0.2, elL: 2.0, spL: 0.1, arR: 0.35, elR: 1.6, spR: 0.3 }; } },
+  think:  { name: 'Berpikir', kind: 'upper', n: 4, fps: 2, loop: true, pose: t => ({ arR: 0.45, elR: 2.45, spR: 0.32, arL: 0.35, elL: 1.75, spL: 0.35, hp: -0.12, hy: 0.15 + 0.04 * sinT(t) }) },
+  bow:    { name: 'Salam', kind: 'full', move: 0, n: 8, fps: 8, pose: keyed([[0, {}], [0.35, { lean: 0.55, hp: -0.15, arL: 0.25, arR: 0.25, elL: 0.6, elR: 0.6, spL: -0.05, spR: -0.05 }], [0.65, { lean: 0.55 }], [1, POSE0]]) },
+  sitDesk:{ name: 'Duduk menulis', kind: 'full', move: 0, n: 4, fps: 3, loop: true, pose: t => ({ lean: 0.18, hp: -0.35, thL: 1.6, thR: 1.6, knL: 1.6, knR: 1.6, arL: 1.0, arR: 1.1 + 0.05 * sinT(t), elL: 1.3, elR: 1.25, spL: 0.25, spR: 0.2 }) },
+  // --- emote pemain ---
+  dance:  { name: 'Joget', kind: 'full', move: 0, n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { sy: 0.55 * s, tw: 0.3 * s, hy: 0.3 * s, lean: 0.05, knL: 0.3 + 0.35 * Math.max(0, s), knR: 0.3 + 0.35 * Math.max(0, -s), thL: 0.15 * Math.max(0, s), thR: 0.15 * Math.max(0, -s),
+             arL: 1.6 + 0.8 * Math.max(0, s), arR: 1.6 + 0.8 * Math.max(0, -s), elL: 1.4 - 0.6 * s, elR: 1.4 + 0.6 * s, spL: 0.6, spR: 0.6 }; } },
+  salute: { name: 'Hormat', kind: 'upper', n: 10, fps: 8, pose: keyed([[0, {}], [0.25, { arR: 1.55, spR: 1.0, elR: 2.35, hp: 0.05, lean: -0.03 }], [0.8, {}], [1, Object.assign({}, POSE0)]]) },
+  sitDown:{ name: 'Duduk santai', kind: 'full', move: 0, n: 4, fps: 3, loop: true, pose: t => ({ lean: -0.1 + 0.02 * sinT(t), thL: 1.75, thR: 1.6, knL: 0.45, knR: 1.6, arL: -0.4, arR: 0.55, elL: 0.1, elR: 1.0, spL: 0.25, spR: 0.15, hy: 0.25 * sinT(t) }) },
+  roll:   { name: 'Guling', kind: 'full', move: 1.7, n: 10, fps: 16, pose: keyed([[0, {}], [0.12, { thL: 1.6, thR: 1.6, knL: 2.3, knR: 2.3, arL: 1.4, arR: 1.4, elL: 1.6, elR: 1.6, lean: 0.8, hp: -0.6 }],
+    [0.8, { lean: 0.8 + TAU }], [1, Object.assign({}, POSE0, { lean: TAU + 0.03 })]]) },
+  jump:   { name: 'Lompat', kind: 'full', move: 1, n: 10, fps: 12, pose: keyed([
+    [0, {}], [0.15, { thL: 0.7, thR: 0.7, knL: 1.4, knR: 1.4, lean: 0.35, arL: -0.6, arR: -0.6, elL: 0.2, elR: 0.2 }],
+    [0.3, { thL: -0.1, thR: -0.1, knL: 0.1, knR: 0.1, lean: 0.05, arL: 2.6, arR: 2.6, jump: 3 }],
+    [0.5, { thL: 1.0, thR: 0.8, knL: 1.6, knR: 1.5, arL: 1.8, arR: 1.8, jump: 7 }],
+    [0.7, { thL: 0.3, thR: 0.2, knL: 0.4, knR: 0.4, arL: 1.0, arR: 1.0, jump: 3 }],
+    [0.85, { thL: 0.7, thR: 0.7, knL: 1.4, knR: 1.4, lean: 0.35, arL: 0.6, arR: 0.6, jump: 0 }], [1, POSE0]]) },
+  // --- pukulan (bisa sambil jalan) ---
+  jab:      { name: 'Jab kiri', kind: 'upper', n: 6, fps: 16, hit: { t: 0.45, r: 30, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.4, { arL: 1.57, elL: 0, spL: 0.05, tw: 0.35, lean: 0.15 }], [0.6, {}], [1, GUARD]]) },
+  straight: { name: 'Pukulan lurus', kind: 'upper', n: 8, fps: 15, hit: { t: 0.5, r: 32, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.25, { tw: 0.3, arR: 0.6, elR: 2.1 }], [0.5, { tw: -0.55, arR: 1.57, elR: 0, spR: 0.02, lean: 0.22 }], [0.7, {}], [1, GUARD]]) },
+  hook:     { name: 'Hook', kind: 'upper', n: 8, fps: 15, hit: { t: 0.55, r: 30, arc: 1.8 }, pose: keyed([
+    [0, GUARD], [0.3, { tw: 0.6, arR: 1.4, elR: 1.5, spR: 1.1, lean: 0.05 }], [0.55, { tw: -0.8, arR: 1.5, elR: 1.6, spR: 0.3, lean: 0.15 }], [0.7, {}], [1, GUARD]]) },
+  uppercut: { name: 'Uppercut', kind: 'upper', n: 8, fps: 14, hit: { t: 0.55, r: 28, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.3, { arR: 0.1, elR: 2.3, thL: 0.5, thR: 0.1, knL: 1.0, knR: 1.0, lean: 0.25, tw: 0.2 }],
+    [0.55, { arR: 1.6, elR: 1.9, thL: 0.3, thR: -0.3, knL: 0.2, knR: 0.2, lean: -0.15, tw: -0.4 }], [0.75, {}], [1, GUARD]]) },
+  // --- tendangan (seluruh badan) ---
+  kickFront:{ name: 'Tendangan depan', kind: 'full', move: 0.3, n: 8, fps: 12, hit: { t: 0.5, r: 36, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.3, { thR: 1.3, knR: 2.0, thL: 0, knL: 0.15, lean: -0.1 }],
+    [0.5, { thR: 1.55, knR: 0.05, lean: -0.3, arL: 0.6, elL: 1.2, arR: -0.4, elR: 0.6 }], [0.7, { thR: 1.3, knR: 2.0, lean: -0.1 }], [1, GUARD]]) },
+  kickHigh: { name: 'Tendangan tinggi', kind: 'full', move: 0.3, n: 8, fps: 12, hit: { t: 0.5, r: 38, arc: 1.2 }, pose: keyed([
+    [0, GUARD], [0.3, { thR: 1.6, knR: 2.2, thL: 0, knL: 0.1, lean: -0.2 }],
+    [0.5, { thR: 2.3, knR: 0.1, lean: -0.5, arL: 0.4, elL: 1.0, arR: -0.5, elR: 0.5 }], [0.7, { thR: 1.6, knR: 2.2, lean: -0.2 }], [1, GUARD]]) },
+  // --- pedang ---
+  slashV:   { name: 'Tebas atas-bawah', kind: 'upper', n: 10, fps: 15, hit: { t: 0.6, r: 46, arc: 1.4 }, pose: keyed([
+    [0, SW], [0.35, { arR: 2.9, elR: 0.4, swa: 0.6, lean: -0.1, tw: 0.3 }],
+    [0.6, { arR: 1.3, elR: 0, swa: 0.3, lean: 0.25, tw: -0.4, thL: 0.5, knL: 0.4 }], [0.8, { arR: 0.6, swa: 0.3 }], [1, SW]]) },
+  slashH:   { name: 'Tebas menyamping', kind: 'upper', n: 10, fps: 15, hit: { t: 0.55, r: 46, arc: 2.6 }, pose: keyed([
+    [0, SW], [0.3, { tw: 0.9, arR: 1.45, elR: 0.3, spR: 0.9, swa: 0, lean: 0 }],
+    [0.55, { tw: -1.0, arR: 1.45, elR: 0.1, spR: 0.2, lean: 0.15 }], [0.75, { tw: -1.1 }], [1, SW]]) },
+  thrust:   { name: 'Tusukan', kind: 'upper', n: 8, fps: 14, hit: { t: 0.55, r: 52, arc: 0.8 }, pose: keyed([
+    [0, SW], [0.35, { arR: -0.4, elR: 1.97, swa: 0, tw: 0.4, spR: 0.1 }],
+    [0.55, { arR: 1.4, elR: 0.15, tw: -0.6, lean: 0.3, thL: 0.6, knL: 0.5 }], [0.75, {}], [1, SW]]) },
+  spin:     { name: 'Tebasan putar', kind: 'full', move: 0.6, n: 10, fps: 16, hit: { t: 0.5, r: 48, arc: TAU }, pose: keyed([
+    [0, SW], [0.15, { arR: 1.5, elR: 0.1, spR: 1.35, swa: 0, arL: 1.3, spL: 1.2, elL: 0.2 }], [0.85, { yaw: TAU }], [1, Object.assign({}, SW, { yaw: TAU })]]) },
+  cast:     { name: 'Sihir', kind: 'upper', n: 10, fps: 10, hit: { t: 0.8, r: 60, arc: 0.9 }, pose: keyed([
+    [0, {}], [0.3, { arL: 1.9, arR: 1.9, elL: 0.3, elR: 0.3, spL: 0.35, spR: 0.35, orb: 1.2 }],
+    [0.6, { arL: 2.1, arR: 2.1, orb: 2.4, lean: -0.08 }], [0.8, { arL: 1.57, arR: 1.57, elL: 0, elR: 0, spL: 0.15, spR: 0.15, orb: 2.8, lean: 0.15 }], [1, Object.assign({}, POSE0)]]) },
+  fall:     { name: 'Jatuh', kind: 'full', move: 0, n: 8, fps: 10, hold: true, pose: keyed([
+    [0, {}], [0.3, { lean: -0.4, thL: 0.4, knL: 0.6, arL: 1.2, arR: 1.0, elL: 0.4, elR: 0.4 }],
+    [0.6, { lean: -0.8, thL: 1.4, thR: 1.4, knL: 0.4, knR: 0.4, arL: -0.6, arR: -0.6, px: 2 }],
+    [1, { lean: -1.45, hp: 0.15, thL: 1.4, thR: 1.3, knL: 0.15, knR: 0.35, arL: -1.6, arR: -1.3, elL: 0.2, elR: 0.2, spL: 0.5, spR: 0.6, px: 4 }]]) },
+};
+ANIMS.getup = { name: 'Bangun', kind: 'full', move: 0, n: 8, fps: 9, pose: t => ANIMS.fall.pose(1 - t) };
+const COMBOS = { punch: ['jab', 'straight', 'hook', 'uppercut'], kick: ['kickFront', 'kickHigh'], slash: ['slashH', 'slashV', 'thrust', 'spin'] };
+const FAMILY = {}; for (const f in COMBOS) for (const a of COMBOS[f]) FAMILY[a] = f;
+const animDur = n => ANIMS[n].n / ANIMS[n].fps;
+
+
+return { STYLES, ANIMS, humanShape, buildVox, R, fixedRamp, organicColor, hexRGB, makeRamps, faceCfg };
+})();
+// ===== vox.js
+NS.vox = (() => {
+// Kisi voxel jarang untuk menggambar bagian badan + pengubah ke kisi padat (cepat dibaca saat voxel ulang per frame).
+class Vox {
+  constructor() { this.m = new Map(); }
+  static k(x, y, z) { return (x + 128) + (y + 128) * 256 + (z + 128) * 65536; }
+  set(x, y, z, c) { const k = Vox.k(x, y, z); if (c) this.m.set(k, c); else this.m.delete(k); return this; }
+  get(x, y, z) { return this.m.get(Vox.k(x, y, z)); }
+  has(x, y, z) { return this.m.has(Vox.k(x, y, z)); }
+  box(x0, y0, z0, x1, y1, z1, c) {   // kotak inklusif
+    for (let z = Math.min(z0, z1); z <= Math.max(z0, z1); z++) for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++)
+      for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) this.set(x, y, z, c);
+    return this;
+  }
+  // satu lapis persegi bersudut bulat (radius r) di ketinggian z
+  rrect(z, x0, y0, x1, y1, c, r = 0) {
+    const mx = (x0 + x1 + 1) / 2, my = (y0 + y1 + 1) / 2, hx = (x1 - x0 + 1) / 2, hy = (y1 - y0 + 1) / 2; r = Math.min(r, hx, hy);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const dx = Math.max(0, Math.abs(x + 0.5 - mx) - (hx - r)), dy = Math.max(0, Math.abs(y + 0.5 - my) - (hy - r));
+      if (dx * dx + dy * dy <= r * r + 0.3) this.set(x, y, z, c);
+    }
+    return this;
+  }
+  rbox(x0, y0, z0, x1, y1, z1, c, r = 0) { for (let z = z0; z <= z1; z++) this.rrect(z, x0, y0, x1, y1, c, r); return this; }
+  // isi hanya sel yang masih kosong (untuk lapisan luar: rambut, kain, helm)
+  fillE(x0, y0, z0, x1, y1, z1, c) { for (let z = z0; z <= z1; z++) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (!this.has(x, y, z)) this.set(x, y, z, c); return this; }
+  shell(z, x0, y0, x1, y1, c, r = 0) {
+    const mx = (x0 + x1 + 1) / 2, my = (y0 + y1 + 1) / 2, hx = (x1 - x0 + 1) / 2, hy = (y1 - y0 + 1) / 2; r = Math.min(r, hx, hy);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const dx = Math.max(0, Math.abs(x + 0.5 - mx) - (hx - r)), dy = Math.max(0, Math.abs(y + 0.5 - my) - (hy - r));
+      if (dx * dx + dy * dy <= r * r + 0.3 && !this.has(x, y, z)) this.set(x, y, z, c);
+    }
+    return this;
+  }
+  // warnai ulang voxel yang sudah ada (tidak menambah)
+  paint(x0, y0, z0, x1, y1, z1, c) {
+    for (let z = Math.min(z0, z1); z <= Math.max(z0, z1); z++) for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++)
+      for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) if (this.has(x, y, z)) this.set(x, y, z, c);
+    return this;
+  }
+  // voxel terluar di arah tertentu (untuk menggambar di permukaan yang melengkung)
+  front(y, z, lo = -40) { for (let x = 40; x >= lo; x--) if (this.has(x, y, z)) return x; return null; }
+  back(y, z, hi = 40) { for (let x = -40; x <= hi; x++) if (this.has(x, y, z)) return x; return null; }
+  sideP(x, z) { for (let y = 40; y >= -40; y--) if (this.has(x, y, z)) return y; return null; }
+  sideN(x, z) { for (let y = -40; y <= 40; y++) if (this.has(x, y, z)) return y; return null; }
+  pf(y, z, c, d = 1) { const x = this.front(y, z); if (x !== null) for (let i = 0; i < d; i++) if (this.has(x - i, y, z)) this.set(x - i, y, z, c); return this; }
+  pb(y, z, c) { const x = this.back(y, z); if (x !== null) this.set(x, y, z, c); return this; }
+  pfBox(y0, z0, y1, z1, c) { for (let z = z0; z <= z1; z++) for (let y = y0; y <= y1; y++) this.pf(y, z, c); return this; }
+  pbBox(y0, z0, y1, z1, c) { for (let z = z0; z <= z1; z++) for (let y = y0; y <= y1; y++) this.pb(y, z, c); return this; }
+  psBox(sgn, x0, z0, x1, z1, c) { for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) { const y = sgn > 0 ? this.sideP(x, z) : this.sideN(x, z); if (y !== null) this.set(x, y, z, c); } return this; }
+  each(fn) { for (const [k, c] of this.m) fn((k & 255) - 128, ((k >> 8) & 255) - 128, (k >> 16) - 128, c); }
+  mirrorY() { const o = new Vox(); this.each((x, y, z, c) => o.set(x, -1 - y, z, c)); return o; }
+  add(o) { o.each((x, y, z, c) => this.set(x, y, z, c)); return this; }
+}
+// kisi padat: { o:[x0,y0,z0], n:[nx,ny,nz], d: Uint8Array (0 = kosong, i = indeks bahan + 1) }
+function dense(v, matIndex) {
+  const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  v.each((x, y, z) => { lo[0] = Math.min(lo[0], x); lo[1] = Math.min(lo[1], y); lo[2] = Math.min(lo[2], z); hi[0] = Math.max(hi[0], x); hi[1] = Math.max(hi[1], y); hi[2] = Math.max(hi[2], z); });
+  const n = [hi[0] - lo[0] + 1, hi[1] - lo[1] + 1, hi[2] - lo[2] + 1], d = new Uint8Array(n[0] * n[1] * n[2]);
+  v.each((x, y, z, c) => { d[((z - lo[2]) * n[1] + (y - lo[1])) * n[0] + (x - lo[0])] = matIndex(c); });
+  return { o: lo, n, d };
+}
+// ---- mesh kotak dengan cahaya per sisi (hanya untuk properti: motor)
+const DIRS = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+const hex = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
+const LIGHT = (() => { const v = [0.62, -0.38, 0.72], l = Math.hypot(...v); return v.map(c => c / l); })();
+function propMesh(v, pal, scale = 1, off = [0, 0, 0]) {
+  const pos = [], col = [];
+  v.each((x, y, z, c) => {
+    const rgb = hex(pal[c] || '#ff00ff');
+    for (const d of DIRS) {
+      if (v.has(x + d[0], y + d[1], z + d[2])) continue;
+      const a = d[0] ? 0 : d[1] ? 1 : 2, u = (a + 1) % 3, w = (a + 2) % 3, base = [x, y, z]; if (d[a] > 0) base[a] += 1;
+      const f = 0.62 + 0.42 * (0.5 + 0.5 * (d[0] * LIGHT[0] + d[1] * LIGHT[1] + d[2] * LIGHT[2]));
+      for (const [cu, cw] of [[0, 0], [1, 0], [1, 1], [0, 0], [1, 1], [0, 1]]) { const p = base.slice(); p[u] += cu; p[w] += cw; pos.push(p[0] * scale + off[0], p[1] * scale + off[1], p[2] * scale + off[2]); col.push(rgb[0] * f, rgb[1] * f, rgb[2] * f); }
+    }
+  });
+  return { pos: new Float32Array(pos), col: new Float32Array(col), n: pos.length / 3 };
+}
+
+return { Vox, dense, propMesh };
+})();
+// ===== rig.js
+NS.rig = (() => {
+// Rangka Raka. Parameter pose SAMA dengan humanShape di game3d/src/voxlib.js (lean, thL, knL, arL, elL, spL, tw, hy,
+// hp, sy, ...), jadi semua ANIMS game langsung jalan. 'L' = sisi y negatif (sama dengan kode lama).
+// Koordinat model: x maju, y samping, z naik; satuan = voxel halus (1/64 petak, 2x lebih rapat dari tokoh lama).
+const POSE0 = {
+  lean: 0.03, hp: 0, thL: 0, thR: 0, knL: 0.1, knR: 0.1,
+  arL: 0.08, arR: 0.08, elL: 0.25, elR: 0.25, spL: 0.12, spR: 0.12,
+  tw: 0, px: 0, jump: 0, yaw: 0, hy: 0, sy: 0, ftL: 0, ftR: 0,
+  hr: 0,            // kepala miring ke samping
+  lgL: 0, lgR: 0,   // kaki membuka ke samping
+  tail: 0,          // ekor mullet terbang ke belakang
+  roll: 0,          // seluruh badan berputar ke depan (guling)
+  bob: 0,           // badan naik-turun tanpa lepas dari tanah (satuan voxel lama)
+};
+// matriks: [r00..r22 (baris), tx, ty, tz]
+function mul(A, B) {
+  const o = new Array(12);
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) o[r * 3 + c] = A[r * 3] * B[c] + A[r * 3 + 1] * B[3 + c] + A[r * 3 + 2] * B[6 + c];
+    o[9 + r] = A[r * 3] * B[9] + A[r * 3 + 1] * B[10] + A[r * 3 + 2] * B[11] + A[9 + r];
+  }
+  return o;
+}
+const tr = (x, y, z) => [1, 0, 0, 0, 1, 0, 0, 0, 1, x, y, z];
+const rotY = a => { const c = Math.cos(a), s = Math.sin(a); return [c, 0, -s, 0, 1, 0, s, 0, c, 0, 0, 0]; };   // "bawah" berayun ke depan
+const rotX = b => { const c = Math.cos(b), s = Math.sin(b); return [1, 0, 0, 0, c, -s, 0, s, c, 0, 0, 0]; };   // "bawah" berayun ke +y
+const rotZ = g => { const c = Math.cos(g), s = Math.sin(g); return [c, -s, 0, s, c, 0, 0, 0, 1, 0, 0, 0]; };
+const apply = (M, p) => [M[0] * p[0] + M[1] * p[1] + M[2] * p[2] + M[9], M[3] * p[0] + M[4] * p[1] + M[5] * p[2] + M[10], M[6] * p[0] + M[7] * p[1] + M[8] * p[2] + M[11]];
+const chain = (...ms) => ms.reduce(mul);
+
+// titik sendi di pose diam (koordinat model, voxel halus). Tinggi & panjang ruas mengikuti rangka tokoh lama skala 1.3, dikali 2.
+const PIV = {
+  pelvis: [0, 0, 32], chest: [0, 0, 36], head: [0, 0, 59],
+  armL: [0, -9, 52], armR: [0, 9, 52], foreL: [0, -9, 41.5], foreR: [0, 9, 41.5],
+  thighL: [0, -4.5, 32], thighR: [0, 4.5, 32], shinL: [0, -4.5, 18], shinR: [0, 4.5, 18], footL: [0, -4.5, 4.5], footR: [0, 4.5, 4.5],
+  flapB: [-6, 0, 33], flapF: [6, 0, 33],
+};
+const TAIL_PIV = [-5, 0, 1];   // di koordinat lokal kepala
+const S = 2.6;   // satuan pose lama (px, sy, jump) -> voxel halus
+const GROUND = ['footL', 'footR', 'shinL', 'shinR', 'thighL', 'thighR', 'pelvis', 'chest', 'head', 'armL', 'armR', 'foreL', 'foreR'];
+
+/* rigPose(P, boxes) -> { mats, balls, lift, buttZ, buttX }
+   boxes: kotak batas tiap bagian (relatif pivot) untuk menapakkan titik terendah ke tanah.
+   balls: bola pengisi sendi [{ c, r, k }] (k = 'elbow' | 'knee' | 'shoulder' | 'hip' | 'neck'). */
+function rigPose(P0, boxes) {
+  const P = Object.assign({}, POSE0, P0), m = {}, balls = [];
+  const T = chain(tr(P.px * S, P.sy * S, 0), rotY(-P.lean));
+  m.pelvis = T;
+  const C = chain(T, tr(0, 0, 4), rotZ(P.tw));
+  m.chest = C;
+  const ha = P.lean + P.hp, neck = apply(C, [0, 0, 23]);
+  const still = Math.abs(ha) < 0.1 && Math.abs(P.hy) < 0.1 && Math.abs(P.hr) < 0.1;   // kepala hampir tegak: jangan diputar, supaya piksel wajah tetap utuh
+  const H = still ? tr(...neck) : chain(tr(...neck), rotY(-ha), rotZ(P.hy), rotX(P.hr));
+  m.head = H;
+  balls.push({ c: apply(C, [0, 0, 21.5]), r: 3.2, k: 'neck' });
+  for (const [k, s] of [['L', -1], ['R', 1]]) {
+    const sh = apply(C, [0, s * 9, 16]);
+    const U = chain(tr(...sh), rotY(P['ar' + k]), rotX(s * P['sp' + k]));
+    m['arm' + k] = U;
+    const el = apply(U, [0, 0, -10.5]);
+    m['fore' + k] = chain(tr(...el), rotY(P['ar' + k] + P['el' + k]), rotX(s * P['sp' + k] * 0.5));
+    balls.push({ c: apply(C, [0, s * 8.6, 15.6]), r: 3.0, k: 'shoulder' }, { c: el, r: 2.9, k: 'elbow' });
+    const hip = apply(T, [0, s * 4.5, 0]);
+    const th = P['th' + k], kn = P['kn' + k], lg = s * P['lg' + k];
+    const Th = chain(tr(...hip), rotX(lg), rotY(th));
+    m['thigh' + k] = Th;
+    const kp = apply(Th, [0, 0, -14]);
+    const Sh = chain(tr(...kp), rotX(lg), rotY(th - kn));
+    m['shin' + k] = Sh;
+    const an = apply(Sh, [0, 0, -13.5]);
+    m['foot' + k] = chain(tr(...an), rotX(lg * 0.4), rotY(th - kn + P['ft' + k]));
+    balls.push({ c: apply(T, [0, s * 4.5, -1]), r: 3.9, k: 'hip' }, { c: kp, r: 3.5, k: 'knee' });
+  }
+  // kain di pinggang (jaket diikat) tetap menggantung tegak walau badan condong; terdorong kalau paha berayun
+  const back = Math.max(0, -P.thL, -P.thR), front = Math.max(0, P.thL, P.thR);
+  m.flapB = chain(T, tr(-6, 0, 1), rotY(Math.max(-1.6, Math.min(0.5, P.lean * (P.lean < 0 ? 0.45 : 1) - back * 0.9))));
+  m.flapF = chain(T, tr(6, 0, 1), rotY(Math.max(-0.4, Math.min(1.7, P.lean + front * 0.95))));
+  const all = M => { for (const k in m) m[k] = mul(M, m[k]); for (const b of balls) b.c = apply(M, b.c); };
+  if (P.roll) all(chain(tr(0, 0, 14), rotY(-P.roll), tr(0, 0, -14)));
+  // menapak: titik terendah badan menyentuh tanah
+  let lo = 1e9;
+  for (const k of GROUND) {
+    const b = boxes[k]; if (!b) continue;
+    for (let i = 0; i < 8; i++) { const p = apply(m[k], [b[i & 1 ? 3 : 0], b[i & 2 ? 4 : 1], b[i & 4 ? 5 : 2]]); if (p[2] < lo) lo = p[2]; }
+  }
+  all(chain(rotZ(P.yaw || 0), tr(0, 0, -lo + P.bob * 2)));
+  if (still) for (let i = 9; i < 12; i++) m.head[i] = Math.round(m.head[i]);
+  // ekor mullet: ikut kepala, cenderung menggantung tegak, terbang ke belakang saat bergerak
+  const ta = Math.max(-0.15, Math.min(1.2, ha * 0.8)) - P.tail;
+  m.tail = chain(m.head, tr(...TAIL_PIV), rotY(Math.abs(ta) < 0.05 ? 0 : ta));
+  const butt = apply(m.pelvis, [-2, 0, -4]);
+  return { mats: m, balls, lift: P.jump * S, buttZ: butt[2], buttX: butt[0],
+    hands: ['foreL', 'foreR'].map(k => apply(m[k], [0, 0, -11])), feet: ['footL', 'footR'].map(k => apply(m[k], [2, 0, -4.5])) };
+}
+
+return { POSE0, mul, tr, rotY, rotX, rotZ, apply, PIV, TAIL_PIV, rigPose };
+})();
+// ===== model.js
+NS.model = (() => {
+// Raka v3: bagian badan digambar tangan di kisi 2x lebih rapat dari tokoh lama (1 voxel = 1/64 petak),
+// dengan PROPORSI tokoh lama (tinggi ±78 voxel halus = ±39 voxel lama, skala 1.3).
+// Koordinat: x maju, y samping (negatif = sisi 'L' pose), z naik. Kepala & ekor rambut digambar di koordinat lokal kepala.
+const {  Vox, dense  } = NS.vox;
+const {  PIV, TAIL_PIV  } = NS.rig;
+
+// 4 tingkat warna per bahan (gelap -> terang), atau 1 warna tetap (detail wajah, logo)
+const RAMPS = {
+  skin: ['#a2643f', '#c4855b', '#dba274', '#edba8c'], skinS: ['#c4855b'], skinD: ['#a2643f'],
+  hair: ['#120d10', '#1d1518', '#291f23', '#362a2e'], hairT: ['#1d1518', '#291f23', '#3b2e31', '#544441'],
+  fade: ['#5a3f33', '#6f5142', '#866553', '#9b7862'], fade2: ['#85593f', '#a37354', '#bc8965', '#cf9b75'],
+  white: ['#a9adbd', '#cfd1da', '#eeece6', '#fbfaf5'], whiteS: ['#c3c5d0'],
+  tee: ['#17161b', '#22212a', '#302f39', '#454452'], print: ['#f4c531'],
+  pants: ['#474b57', '#5d626f', '#767b88', '#9196a4'], pantsC: ['#525663', '#6a6f7c', '#858a97', '#a0a5b2'],
+  belt: ['#0e0d12', '#17161b', '#22212a', '#34333d'], buckle: ['#dfe2ea'],
+  shoe: ['#7f2422', '#a82f2b', '#d43d34', '#ee6a55'], shoeK: ['#141318', '#1e1d24', '#2b2a32', '#3f3e49'],
+  sole: ['#a9a79f', '#d2cfc6', '#f2efe6', '#ffffff'], lace: ['#f6f2e8'],
+  band: ['#17161b'], tape: ['#b3a184', '#d6c5a3', '#f0e2c2', '#fbf3dc'], chain: ['#c9cdd6'],
+  jk: ['#15141a', '#201f27', '#2d2c35', '#45444f'], jkY: ['#a87b14', '#d19e1c', '#f4c531', '#ffe070'], jkG: ['#6a6c7a'],
+  jeans: ['#1f2a44', '#2a3959', '#374a72', '#4b6090'], glove: ['#121116', '#1b1a20', '#27262d', '#3a3943'],
+  kaus: ['#9c8530', '#c2a843', '#e3c95e', '#f3e08a'], kausS: ['#b89d3c'],
+  shorts: ['#252a35', '#333946', '#444b5a', '#5b6373'], sandal: ['#17437d', '#1f579f', '#2a6ac0', '#4a8ada'],
+  helm: ['#15141a', '#22212a', '#34333f', '#55546a'], visor: ['#3f7f98', '#62a8c2', '#8fd0e8', '#c2eaf6'], strap: ['#17161b'],
+  eyeW: ['#fdfaf3'], eyeK: ['#1c1519'], brow: ['#2c2023'], mouth: ['#7c3b34'], teeth: ['#fdfaf3'], tongue: ['#d0635d'],
+  plaster: ['#f4e2bf'], plasterS: ['#dcc396'], osis: ['#c7922b'], tag: ['#2a3350'], gold: ['#f0cb52'],
+};
+const MAT = Object.keys(RAMPS), MI = Object.fromEntries(MAT.map((k, i) => [k, i + 1]));
+const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const RAMP_RGB = MAT.map(k => RAMPS[k].map(hex));
+const mi = c => { const i = MI[c]; if (!i) throw new Error('bahan tidak dikenal: ' + c); return i; };
+
+/* ---------- Wajah: peta 14 kolom x 15 baris (kolom 0 = kiri layar dilihat dari depan, baris 0 = puncak tengkorak).
+   . kulit  B alis  c bekas luka di alis  K mata  W putih mata  m mulut  T gigi  t lidah  P plester  p tepi plester */
+const FCH = { B: 'brow', c: 'skin', K: 'eyeK', W: 'eyeW', m: 'mouth', T: 'teeth', t: 'tongue', P: 'plaster', p: 'plasterS', s: 'skinS' };
+const F0 = '..............';
+const face = rows => [F0, F0, F0, ...rows];   // 3 baris teratas selalu tertutup poni
+const FACES = {
+  biasa: face([
+    '..............',
+    '.BBB.......BB.',
+    '...BB....B....',
+    '..............',
+    '..WKK....KKW..',
+    '..WKK....KKW..',
+    '.pPp..........',
+    '.pPp..........',
+    '.........m....',
+    '.....mmmm.....',
+    F0, F0]),
+  kedip: face([
+    '..............',
+    '.BBB.......BB.',
+    '...BB....B....',
+    '..............',
+    '..............',
+    '..KKK....KKK..',
+    '.pPp..........',
+    '.pPp..........',
+    '.........m....',
+    '.....mmmm.....',
+    F0, F0]),
+  marah: face([
+    '..............',
+    '.BB........BB.',
+    '..BBB....B.B..',
+    '....BB..BB....',
+    '..KKK....KKK..',
+    '..WKK....KKW..',
+    '.pPp..........',
+    '.pPp..........',
+    '..............',
+    '....mmmmmm....',
+    '....m....m....', F0]),
+  teriak: face([
+    '..............',
+    '.BB........BB.',
+    '..BBB....B.B..',
+    '....BB..BB....',
+    '..KKK....KKK..',
+    '..WKK....KKW..',
+    '.pPp..........',
+    '.pPp..........',
+    '....mTTTTm....',
+    '....mttttm....',
+    '.....mmmm.....', F0]),
+  nyengir: face([
+    '...........BB.',
+    '.BBB.....B....',
+    '...BB.........',
+    '..............',
+    '..KKK....KKK..',
+    '..WKK....KKW..',
+    '.pPp..........',
+    '.pPp..........',
+    '...m......m...',
+    '....TTTTTT....',
+    '....mmmmmm....', F0]),
+  ketawa: face([
+    '.BBB.......BB.',
+    '...BB....B....',
+    '..............',
+    '..............',
+    '..KK......KK..',
+    '.K..K....K..K.',
+    '.pPp..........',
+    '.pPp..........',
+    '...mTTTTTTm...',
+    '....mttttm....',
+    '.....mmmm.....', F0]),
+  sakit: face([
+    '...BB....B....',
+    '.BB........BB.',
+    '..............',
+    '.KK........KK.',
+    '...KK....KK...',
+    '.KK........KK.',
+    '.pPp..........',
+    '.pPp..........',
+    '....mmmmmm....',
+    '....TTTTTT....',
+    '....mmmmmm....', F0]),
+};
+const EXPRS = Object.keys(FACES);
+
+// Kepala: tengkorak 14 x 14 x 15 voxel halus + rambut = ukuran kepala tokoh lama (±9 voxel lama).
+// garis bawah poni per kolom wajah (z lokal kepala): helai tak rata, pelipis lebih panjang
+const FR = [10, 12, 13, 13, 12, 11, 14, 14, 13, 11, 13, 13, 12, 10];
+// tinggi jambul di atas kepala per petak 2x2 (baris = x dari belakang ke depan, kolom = y): acak-acakan, depan lebih tinggi
+const TUFT = [
+  [0, 1, 1, 1, 1, 1, 1, 0],
+  [1, 2, 1, 2, 2, 1, 2, 1],
+  [1, 2, 3, 2, 2, 3, 2, 1],
+  [1, 3, 2, 3, 2, 2, 3, 1],
+  [1, 2, 4, 2, 3, 4, 2, 1],
+  [1, 3, 2, 4, 2, 3, 3, 1],
+  [0, 2, 4, 3, 4, 2, 3, 0],
+  [0, 1, 2, 4, 3, 4, 1, 0]];
+const SIDE = [13, 12, 13, 13, 14, 13, 12, 13, 14];   // garis bawah rambut atas di samping (tak rata)
+const skullLayer = z => z <= 0 ? [-3, -4, 5, 3, 3] : z === 1 ? [-5, -5, 6, 4, 3] : z === 2 ? [-6, -6, 6, 5, 3] : z <= 11 ? [-7, -7, 6, 6, 3] : z <= 13 ? [-7, -7, 6, 6, 4] : [-6, -6, 5, 5, 4];
+
+function head(o) {
+  const v = new Vox();
+  for (let z = 0; z <= 14; z++) { const [a, b, c, d, r] = skullLayer(z); v.rrect(z, a, b, c, d, 'skin', r); }
+  // wajah: 1 piksel peta = 1 voxel terdepan di kolom itu
+  const map = o.face || FACES[o.expr] || FACES.biasa;
+  map.forEach((row, r) => [...row].forEach((ch, c) => { const k = FCH[ch]; if (k) v.pf(c - 7, 14 - r, k); }));
+  v.box(7, -1, 4, 7, 0, 5, 'skin');                                   // hidung
+  // samping dicukur tipis (fade): rambut rata di atas, makin ke bawah makin terang
+  // garis fade miring: tinggi di pelipis, turun ke arah tengkuk
+  for (const s of [-1, 1]) for (let x = -7; x <= 4; x++) {
+    const zh = 10 + Math.floor((x + 8) / 4);
+    if (!o.helm) v.psBox(s, x, zh, x, 14, 'hair');
+    v.psBox(s, x, zh - 3, x, zh - 1, 'fade');
+    if (x <= 0) v.psBox(s, x, zh - 6, x, zh - 4, 'fade2'); else if (x <= 3) v.psBox(s, x, zh - 5 + (x - 1), x, zh - 4, 'fade2');
+  }
+  v.pbBox(-5, 1, 4, 6, 'fade2');
+  for (const y of [-8, 7]) { v.box(-2, y, 5, 0, y, 8, 'skin'); v.box(-1, y, 6, -1, y, 7, 'skinS'); }   // telinga
+  v.set(-1, 7, 4, 'gold');                                            // anting
+  if (o.helm) return helmet(v);
+  // ---- mullet modern: atas bertekstur & bervolume, poni jatuh tak rata, samping tipis, belakang turun ke tengkuk
+  const zmin = (x, y, z) => x >= 5 ? FR[Math.max(0, Math.min(13, y + 7))] : x >= -4 ? SIDE[x + 4] : x >= -6 ? 7 : Math.abs(y + 0.5) <= 3.5 + (z - 3) * 0.5 ? 3 : 99;
+  const hair = new Vox();
+  for (let z = 3; z <= 15; z++) hair.rrect(z, -8, -8, 7, 7, 'hair', z <= 11 ? 4 : 5);
+  new Vox().rrect(0, -8, -8, 7, 7, 'hair', 5).each((x, y) => { const h = TUFT[(x + 8) >> 1][(y + 8) >> 1]; for (let k = 1; k <= h; k++) hair.set(x, y, 15 + k, k === h && h >= 4 ? 'hairT' : 'hair'); });
+  hair.each((x, y, z, c) => { if (!v.has(x, y, z) && z >= zmin(x, y, z)) v.set(x, y, z, c); });
+  // jambul poni: beberapa helai lebih maju supaya atas-depan bervolume
+  v.fillE(8, -5, 14, 8, -3, 16, 'hair'); v.fillE(8, -1, 14, 8, 1, 17, 'hair'); v.fillE(8, 3, 15, 8, 4, 16, 'hair');
+  // ujung helai poni lebih terang
+  for (let c = 0; c < 14; c++) { const y = c - 7, x = v.front(y, FR[c]); if (x !== null && v.get(x, y, FR[c]) === 'hair') v.set(x, y, FR[c], 'hairT'); }
+  // volume di ubun-ubun belakang + beberapa helai terang
+  v.fillE(-9, -4, 8, -9, 3, 14, 'hair');
+  for (const [y, z0, z1] of [[-4, 9, 13], [-1, 5, 9], [2, 10, 14], [3, 4, 7]]) for (let z = z0; z <= z1; z++) { const x = v.back(y, z); if (x !== null && v.get(x, y, z) === 'hair') v.set(x, y, z, 'hairT'); }
+  return v;
+}
+function helmet(v) {   // helm half-face hitam, garis kuning, goggle di dahi; wajah tetap terlihat, ekor mullet keluar di belakang
+  const h = new Vox();
+  for (let z = 6; z <= 19; z++) {
+    const k = z <= 15 ? 0 : z === 16 ? 1 : z === 17 ? 2 : z === 18 ? 3 : 5;
+    h.rrect(z, -9 + k, -9 + k, 8 - k, 8 - k, 'helm', 5);
+  }
+  for (let z = 2; z <= 5; z++) h.rrect(z, -9, -9, 2 - (5 - z), 8, 'helm', 5);       // pelindung telinga & tengkuk
+  h.each((x, y, z, c) => {
+    if (v.has(x, y, z)) return;
+    if (x >= 4 && z <= 11) return;                      // bukaan wajah
+    v.set(x, y, z, Math.abs(y + 0.5) < 1.5 && z >= 10 ? 'jkY' : c);
+  });
+  v.fillE(9, -6, 12, 10, 5, 13, 'helm');                // pet
+  for (let y = -7; y <= 6; y++) for (let z = 14; z <= 16; z++) { const x = v.front(y, z); if (x !== null && x >= 4) v.set(x, y, z, Math.abs(y + 0.5) < 1.5 ? 'strap' : 'visor'); }   // goggle
+  for (const s of [-1, 1]) v.psBox(s, -8, 14, 5, 15, 'strap');
+  for (const y of [-8, 7]) { v.set(3, y, 2, 'strap'); v.set(4, y, 1, 'strap'); v.set(5, y, 0, 'strap'); }
+  return v;
+}
+function tail() {   // ekor mullet (koordinat lokal kepala): menempel di tengkuk, turun sampai kerah, ujung helai mengibas keluar
+  const v = new Vox();
+  for (const [y0, y1, zb] of [[-5, -4, -1], [-3, -2, -4], [-1, 0, -5], [1, 2, -3], [3, 4, -2]]) {
+    v.box(-7, y0, Math.max(zb, 0), -5, y1, 3, 'hair');                 // di belakang tengkuk
+    if (zb < 0) v.box(-6, y0, zb, -4, y1, -1, 'hair');                 // turun menutupi kerah
+    v.box(-7, y0, zb, -7, y1, zb, 'hairT'); v.paint(-6, y0, zb, -6, y1, zb, 'hairT');   // ujung mengibas keluar
+  }
+  for (const s of [-1, 1]) {                                           // helai di kiri-kanan leher, terlihat dari depan
+    const y0 = s < 0 ? -6 : 4;
+    v.box(-5, y0, -1, -3, y0 + 1, 1, 'hair'); v.box(-5, y0, -2, -4, y0 + 1, -2, 'hairT');
+    v.set(-4, s < 0 ? -7 : 6, -1, 'hair'); v.set(-4, s < 0 ? -7 : 6, -2, 'hairT');
+  }
+  return v;
+}
+
+function chest(o) {
+  const v = new Vox(), J = o.kind === 'jaket', K = o.kind === 'kaus';
+  const body = K ? 'kaus' : J ? 'jk' : 'white', inner = K ? 'kaus' : 'tee';
+  for (let z = 34; z <= 55; z++) { const t = z === 55 ? 1 : 0; v.rrect(z, -5, -7 + t, 5 - t, 6 - t, body, z >= 54 ? 4 : 3); }
+  v.rbox(-3, -3, 56, 2, 2, 59, 'skin', 2);                               // leher
+  if (K) {
+    for (let y = -3; y <= 2; y++) for (let z = 54 - (y === -3 || y === 2 ? 0 : 1); z <= 55; z++) v.pf(y, z, 'skin');   // leher kaus
+    for (let z = 56; z <= 56; z++) v.shell(z, -4, -4, 3, 3, 'kausS', 2);
+    return v;
+  }
+  // kemeja dibiarkan terbuka (jaket: ritsleting naik sampai dada): kaus dalam terlihat di tengah, satu voxel lebih dalam dari tepi baju
+  const open = z => J ? (z >= 53 ? 3 : z >= 51 ? 2 : z >= 49 ? 1 : 0) : (z >= 52 ? 3 : z >= 48 ? 2 : 1);
+  for (let z = 34; z <= 55; z++) {
+    const w = open(z); if (!w) continue;
+    for (let y = -1 - w; y <= w; y++) { const x = v.front(y, z); if (x === null) continue; v.set(x, y, z, null); v.paint(x - 2, y, z, x - 1, y, z, inner); }
+  }
+  for (let y = -2; y <= 1; y++) for (let z = 54 - (y === -2 || y === 1 ? 0 : 1); z <= 55; z++) v.pf(y, z, 'skin');   // leher kaus
+  if (!J) for (const [y, z] of [[0, 49], [1, 49], [-1, 48], [0, 48], [-2, 47], [-1, 47], [0, 47], [1, 47], [0, 46], [1, 46], [-1, 45], [0, 45], [-2, 44], [-1, 44]]) v.pf(y, z, 'print');   // sablon petir
+  // kerah berdiri, terbuka di depan
+  const col = J ? 'jkY' : 'white';
+  for (let z = 56; z <= 57; z++) { v.shell(z, -4, -5, 3, 4, col, 2); for (let y = -2; y <= 1; y++) for (let x = 2; x <= 3; x++) if (v.get(x, y, z) === col) v.set(x, y, z, null); }
+  for (const [a, b] of [[-5, -3], [2, 4]]) v.fillE(4, a, 55, 5, b, 56, col);
+  if (J) {
+    for (let z = 34; z <= 48; z++) { v.pf(-1, z, 'jkG'); v.pf(0, z, 'jkG'); }                                                          // ritsleting
+    for (let z = 45; z <= 46; z++) { for (let y = -7; y <= 6; y++) { if (v.get(v.front(y, z), y, z) === 'jk') v.pf(y, z, 'jkY'); v.pb(y, z, 'jkY'); } for (const s of [-1, 1]) v.psBox(s, -5, z, 5, z, 'jkY'); }   // garis dada
+    ['..XXXX..', '.XXXXXX.', 'XXXXXXXX', 'XXXXXXXX', '.XXXXXX.', '..XXXX..', '..SSSS..', '...SS...'].forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.') v.pb(c - 4, 44 - r, ch === 'X' ? 'jkY' : 'jkG'); }));   // emblem bohlam Lampu Kota di punggung
+  } else {
+    for (let y = 3; y <= 6; y++) v.pf(y, 48, 'whiteS');                                // saku
+    v.pfBox(4, 44, 5, 46, 'osis');                                                     // badge OSIS
+    v.pfBox(-6, 47, -4, 48, 'tag');                                                    // papan nama
+    for (let y = -6; y <= 5; y++) v.pb(y, 51, 'whiteS');                               // jahitan bahu belakang
+    for (let z = 38; z <= 50; z++) v.pb(0, z, 'whiteS');                               // lipatan punggung
+  }
+  return v;
+}
+function pelvis(o) {
+  const v = new Vox(), J = o.kind === 'jaket', K = o.kind === 'kaus';
+  const pants = K ? 'shorts' : J ? 'jeans' : 'pants';
+  v.rbox(-5, -8, 28, 4, 7, 33, pants, 3); v.box(-4, -2, 26, 3, 1, 27, pants);
+  if (K) { v.rbox(-5, -8, 32, 4, 7, 33, 'kaus', 3); v.rbox(-5, -7, 34, 4, 6, 35, 'kaus', 3); for (const s of [-1, 1]) v.psBox(s, -5, 32, 4, 32, 'kausS'); for (let y = -8; y <= 7; y++) { v.pf(y, 32, 'kausS'); v.pb(y, 32, 'kausS'); } return v; }
+  v.rbox(-5, -7, 34, 4, 6, 35, 'belt', 3); v.pfBox(-1, 34, 0, 35, 'buckle');
+  if (o.waist) {                                               // jaket balap diikat di pinggang, ujung kemeja mengintip di bawahnya
+    for (let z = 30; z <= 31; z++) v.shell(z, -6, -9, 5, 8, 'white', 4);
+    for (let z = 32; z <= 35; z++) v.shell(z, -6, -9, 5, 8, z === 35 ? 'jkY' : 'jk', 4);
+    v.fillE(6, -2, 31, 7, 1, 35, 'jk'); v.paint(7, -2, 33, 7, 1, 33, 'jkY');          // simpul lengan jaket
+  } else if (J) {                                              // ujung jaket
+    for (let z = 32; z <= 35; z++) v.shell(z, -6, -9, 5, 8, z === 32 ? 'jkY' : 'jk', 4);
+    for (let z = 32; z <= 35; z++) for (let y = -1; y <= 0; y++) if (v.get(5, y, z)) v.set(5, y, z, 'jkG');
+  } else {                                                     // ujung kemeja dikeluarkan, kaus dalam terlihat di tengah
+    v.pfBox(-2, 32, 1, 35, 'tee');
+    for (let z = 30; z <= 35; z++) v.shell(z, -6, -9, 5, 8, 'white', 4);
+    for (let z = 30; z <= 35; z++) for (let y = -2; y <= 1; y++) v.set(5, y, z, null);
+    for (const [x, z] of [[3, 31], [2, 29], [1, 28], [0, 27], [-1, 27], [-2, 28], [-3, 29], [-4, 31]]) v.set(x, -10, z, 'chain');   // rantai dompet
+  }
+  return v;
+}
+function flapBack() {   // badan jaket menggantung di belakang
+  const v = new Vox();
+  v.rbox(-8, -8, 21, -7, 7, 33, 'jk', 2);
+  for (const y of [-8, 7]) { v.set(-8, y, 21, null); v.set(-7, y, 21, null); v.set(-8, y, 22, null); }
+  v.paint(-8, -8, 21, -7, 7, 22, 'jkY'); v.paint(-8, -1, 23, -8, 0, 33, 'jkY');
+  return v;
+}
+function flapFront() {  // dua ujung lengan jaket menjuntai dari simpul
+  const v = new Vox();
+  v.box(6, -5, 25, 7, -2, 31, 'jk'); v.box(6, 1, 23, 7, 4, 31, 'jk');
+  v.paint(6, -5, 25, 7, -2, 26, 'jkY'); v.paint(6, 1, 23, 7, 4, 24, 'jkY');
+  return v;
+}
+// lengan & kaki digambar untuk sisi +y; sisi lain = cermin
+function arm(o) {
+  const v = new Vox(), J = o.kind === 'jaket', K = o.kind === 'kaus';
+  v.rbox(-3, 6, 41, 2, 11, 54, J ? 'jk' : 'skin', 2); v.rrect(55, -3, 6, 2, 11, J ? 'jk' : 'skin', 3); v.rrect(40, -2, 7, 1, 10, J ? 'jk' : 'skin', 2);
+  if (J) { for (let z = 41; z <= 55; z++) { v.set(-1, 11, z, 'jkY'); v.set(0, 11, z, 'jkY'); } }
+  else {
+    const c = K ? 'kaus' : 'white', z0 = K ? 48 : 47;
+    v.paint(-3, 6, z0, 2, 11, 55, c);
+    if (K) v.paint(-3, 6, z0, 2, 11, z0, 'kausS');
+    else for (let z = 46; z <= 47; z++) v.shell(z, -4, 6, 3, 12, 'white', 3);          // lengan baju digulung
+  }
+  return v;
+}
+function fore(o, side) {
+  const v = new Vox(), J = o.kind === 'jaket';
+  v.rbox(-3, 6, 32, 2, 11, 42, J ? 'jk' : 'skin', 2); v.rrect(43, -2, 7, 1, 10, J ? 'jk' : 'skin', 2);
+  v.rbox(-3, 6, 28, 3, 11, 31, J ? 'glove' : 'skin', 2); v.rrect(27, -2, 7, 2, 10, J ? 'glove' : 'skin', 2);   // kepalan
+  if (J) { v.paint(-3, 6, 32, 2, 11, 33, 'jkY'); for (let z = 34; z <= 42; z++) { v.set(-1, 11, z, 'jkY'); v.set(0, 11, z, 'jkY'); } v.paint(3, 6, 29, 3, 11, 30, 'jkY'); }
+  else if (side > 0) v.paint(-3, 6, 28, 3, 11, 30, 'tape');                            // lakban di buku jari tangan kanan
+  else v.paint(-3, 6, 33, 2, 11, 34, 'band');                                          // gelang karet
+  return v;
+}
+function thigh(o) {
+  const v = new Vox(), K = o.kind === 'kaus', J = o.kind === 'jaket', c = K ? 'shorts' : J ? 'jeans' : 'pants';
+  v.rbox(-4, 1, 18, 3, 7, 32, c, 3); v.rrect(33, -3, 2, 2, 6, c, 2); v.rrect(17, -3, 2, 2, 6, c, 2);
+  if (K) { v.paint(-4, 1, 17, 3, 7, 21, 'skin'); for (let z = 22; z <= 23; z++) v.shell(z, -5, 1, 4, 8, 'shorts', 3); }
+  return v;
+}
+function shin(o) {
+  const v = new Vox(), K = o.kind === 'kaus', J = o.kind === 'jaket', c = K ? 'skin' : J ? 'jeans' : 'pants';
+  if (K) { v.rbox(-3, 2, 5, 2, 6, 18, 'skin', 2); v.rrect(19, -2, 3, 1, 5, 'skin', 2); return v; }
+  v.rbox(-4, 1, 7, 3, 7, 18, c, 3); v.rrect(19, -3, 2, 2, 6, c, 2);
+  for (let z = 7; z <= 8; z++) v.shell(z, -5, 1, 4, 8, J ? 'jeans' : 'pantsC', 3);     // ujung celana sedikit melebar
+  if (J) v.paint(-5, 1, 7, 4, 8, 7, 'jkG');
+  return v;
+}
+function foot(o) {
+  const v = new Vox();
+  if (o.kind === 'kaus') {   // sandal jepit
+    v.rbox(-5, 1, 0, 7, 7, 1, 'sandal', 3);
+    v.rbox(-4, 2, 2, 6, 6, 3, 'skin', 2); v.rbox(-3, 2, 4, 2, 6, 7, 'skin', 2);
+    for (const [x, y] of [[5, 4], [4, 3], [4, 5], [3, 2], [3, 6], [2, 2], [2, 6]]) { v.set(x, y, 4, 'shoeK'); if (x <= 3) v.set(x, y, 3, 'shoeK'); }
+    return v;
+  }
+  // sneakers high-top merah, sol & ujung karet putih, kerah hitam
+  v.rbox(-5, 1, 0, 7, 7, 1, 'sole', 3);
+  v.rbox(-5, 1, 2, 7, 7, 3, 'shoe', 3); v.rrect(4, -5, 1, 5, 7, 'shoe', 3);
+  v.rbox(-5, 1, 5, 2, 7, 6, 'shoe', 3); v.rrect(7, -4, 2, 1, 6, 'shoeK', 2);
+  v.paint(6, 1, 2, 7, 7, 2, 'sole'); v.paint(7, 1, 3, 7, 7, 3, 'sole');   // ujung karet
+  for (const x of [1, 3, 5]) v.paint(x, 3, 4, x, 5, 6, 'lace');      // tali
+  v.paint(2, 3, 5, 2, 5, 6, 'shoeK'); v.paint(4, 3, 4, 4, 5, 4, 'shoeK');
+  for (const y of [1, 7]) { v.paint(-2, y, 3, 3, y, 3, 'sole'); v.paint(-1, y, 4, 1, y, 4, 'sole'); }   // strip samping
+  v.paint(-5, 3, 2, -5, 5, 6, 'shoeK');                              // tumit
+  return v;
+}
+
+/* ---------- Motor balap (properti, tetap di kerapatan voxel lama seperti kendaraan lain di game).
+   Jok, setang, dan pijakan ditaruh pas dengan pantat, tangan, dan kaki pose rideSport. */
+const BIKE_PAL = { tire: '#222127', rim: '#3d3d48', hub: '#cdd1da', eng: '#4c4e5b', engL: '#70738a', steel: '#c9cdd6', steelS: '#8f93a0', bk: '#d43d34', bkS: '#a82f2b', seat: '#1f1e24', lamp: '#ffe9a0', tl: '#ff6a4a', plate: '#f6f2e8', visor: '#8fd0e8' };
+const K = 1.3;
+const BIKE_SEAT = [-4, 16];
+function bikeVox(hand, peg) {   // hand = [x, y, z] setang, peg = [x, y, z] pijakan (satuan voxel lama, relatif motor)
+  const v = new Vox(), q = a => Math.round(a * K);
+  const B = (x0, y0, z0, x1, y1, z1, c) => v.box(q(x0), y0, q(z0), q(x1 + 1) - 1, y1, q(z1 + 1) - 1, c);
+  const P = (x0, y0, z0, x1, y1, z1, c) => v.paint(q(x0), y0, q(z0), q(x1 + 1) - 1, y1, q(z1 + 1) - 1, c);
+  const R = 5.6 * K, cz = R - 0.1, wx = [q(-10), q(15)];
+  const wheel = (cx, fat) => {
+    for (let x = cx - 9; x <= cx + 9; x++) for (let z = 0; z <= 16; z++) {
+      const r = Math.hypot(x + 0.5 - cx, z + 0.5 - cz);
+      if (r > R) continue;
+      if (r > R - 2.6) v.box(x, fat ? -2 : -1, z, x, fat ? 1 : 0, z, 'tire');
+      else v.box(x, -1, z, x, 0, z, r < 2 ? 'hub' : (Math.abs(x + 0.5 - cx) < 1 || Math.abs(z + 0.5 - cz) < 1) ? 'hub' : 'rim');
+    }
+  };
+  wheel(wx[0], true); wheel(wx[1], false);
+  B(-4, -2, 4, 6, 1, 9, 'eng'); P(-2, -2, 6, 4, -2, 7, 'engL'); P(-2, 1, 6, 4, 1, 7, 'engL'); P(-4, -2, 4, 6, 1, 4, 'seat');
+  for (const y of [-3, 2]) B(-10, y, 5, -5, y, 5, 'steelS');
+  B(1, -2, 10, 9, 1, 13, 'bk'); B(2, -2, 14, 8, 1, 14, 'bk'); P(2, -1, 14, 8, 0, 14, 'plate'); P(1, -2, 10, 9, 1, 10, 'bkS');
+  B(-9, -2, 9, 0, 1, 10, 'bk'); P(-9, -2, 9, 0, 1, 9, 'bkS');
+  B(-8, -2, 11, 0, 1, 11, 'seat');
+  B(-13, -2, 10, -9, 1, 12, 'bk'); B(-13, -2, 13, -10, 1, 13, 'bk'); P(-12, -2, 11, -10, -2, 12, 'plate'); P(-12, 1, 11, -10, 1, 12, 'plate');
+  B(-14, -1, 11, -14, 0, 12, 'tl');
+  B(-15, -1, 8, -13, 0, 9, 'seat');
+  B(-6, 2, 4, 3, 2, 5, 'steelS'); B(-14, 2, 6, -6, 3, 8, 'steel'); P(-14, 2, 6, -14, 3, 8, 'seat'); P(-13, 2, 6, -7, 3, 6, 'steelS');
+  B(11, -3, 11, 15, 2, 15, 'bk'); B(12, -3, 16, 14, 2, 16, 'bk'); P(11, -3, 11, 15, 2, 11, 'bkS');
+  B(16, -2, 12, 16, 1, 14, 'lamp'); B(16, -3, 12, 16, -3, 14, 'bk'); B(16, 2, 12, 16, 2, 14, 'bk');
+  B(12, -2, 17, 13, 1, 18, 'visor'); B(11, -2, 17, 11, 1, 17, 'visor');
+  for (const y of [-3, 2]) P(12, y, 12, 14, y, 14, 'plate');
+  for (let x = wx[1] - 9; x <= wx[1] + 9; x++) for (let z = Math.round(cz) + 3; z <= 17; z++) { const r = Math.hypot(x + 0.5 - wx[1], z + 0.5 - cz); if (r > R + 0.2 && r <= R + 1.4) v.box(x, -1, z, x, 0, z, 'bk'); }
+  const hx = Math.round(hand[0]), hz = Math.round(hand[2]) - 1, hy = Math.round(Math.abs(hand[1])), px = Math.round(peg[0]), pz = Math.round(peg[2]) - 1, py = Math.round(Math.abs(peg[1]));
+  for (let z = Math.round(cz); z <= hz; z++) { const x = Math.round(wx[1] + (hx - wx[1]) * (z - cz) / (hz - cz)); for (const y of [-2, 1]) v.box(x, y, z, x + 1, y, z, 'steel'); }
+  v.box(hx, -hy - 2, hz, hx + 1, hy + 1, hz, 'steelS'); v.box(hx, -hy - 2, hz, hx + 1, -hy + 1, hz, 'seat'); v.box(hx, hy - 2, hz, hx + 1, hy + 1, hz, 'seat');
+  for (const s of [-1, 1]) v.box(px - 2, s > 0 ? 2 : -py - 1, pz, px + 1, s > 0 ? py : -3, pz, 'steelS');
+  return v;
+}
+
+const OUTFITS = {
+  seragam: { name: 'Seragam bandel + jaket di pinggang', kind: 'seragam', waist: true },
+  seragam2: { name: 'Seragam bandel', kind: 'seragam', waist: false },
+  balap: { name: 'Jaket balap Lampu Kota', kind: 'jaket', waist: false },
+  rumah: { name: 'Kaus rumah', kind: 'kaus', waist: false },
+};
+
+/* buildParts({ outfit, expr, helm }) -> { parts: [{ name, g, piv, box }], boxes, ballMat, ramps }
+   Urutan parts = prioritas saat dua bagian menempati sel yang sama. */
+function buildParts(opt = {}) {
+  const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', helm: !!opt.helm, face: opt.face };
+  const parts = [], J = o.kind === 'jaket', K = o.kind === 'kaus';
+  const put = (name, v, piv) => { const g = dense(v, mi); parts.push({ name, g, piv, box: [g.o[0] - piv[0], g.o[1] - piv[1], g.o[2] - piv[2], g.o[0] + g.n[0] - piv[0], g.o[1] + g.n[1] - piv[1], g.o[2] + g.n[2] - piv[2]] }); };
+  const A = arm(o), T = thigh(o), Sn = shin(o), F = foot(o);
+  put('foreR', fore(o, 1), PIV.foreR); put('foreL', fore(o, -1).mirrorY(), PIV.foreL);   // tangan menang atas kepala (menyisir rambut, menutup wajah)
+  put('head', head(o), [0, 0, 0]);
+  put('tail', tail(), TAIL_PIV);
+  put('armR', A, PIV.armR); put('armL', A.mirrorY(), PIV.armL);
+  put('chest', chest(o), PIV.chest);
+  if (o.waist) put('flapF', flapFront(), PIV.flapF);
+  put('pelvis', pelvis(o), PIV.pelvis);
+  if (o.waist) put('flapB', flapBack(), PIV.flapB);
+  put('footR', F, PIV.footR); put('footL', F.mirrorY(), PIV.footL);
+  put('shinR', Sn, PIV.shinR); put('shinL', Sn.mirrorY(), PIV.shinL);
+  put('thighR', T, PIV.thighR); put('thighL', T.mirrorY(), PIV.thighL);
+  const pants = K ? 'shorts' : J ? 'jeans' : 'pants';
+  const ballMat = { neck: mi('skin'), shoulder: mi(K ? 'kaus' : J ? 'jk' : 'white'), elbow: mi(J ? 'jk' : 'skin'), hip: mi(pants), knee: mi(K ? 'skin' : pants) };
+  return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat, ramps: RAMP_RGB };
+}
+
+return { RAMPS, FACES, EXPRS, BIKE_PAL, BIKE_SEAT, bikeVox, OUTFITS, buildParts };
+})();
+// ===== frame.js
+NS.frame = (() => {
+// Satu frame Raka: pose -> semua bagian badan di-voxel ulang ke SATU kisi lurus (tidak ada kubus miring),
+// lalu diwarnai per voxel dengan 4 tingkat warna seperti tokoh game (normal dari tetangga kosong -> cahaya).
+// Hasil { L, W, H, vox } formatnya sama dengan buildVox di game3d/src/voxlib.js, hanya 1 voxel = 1/64 petak.
+const {  rigPose, apply  } = NS.rig;
+
+const NOFF = [];
+for (let k = -3; k <= 3; k++) for (let j = -3; j <= 3; j++) for (let i = -3; i <= 3; i++) { const d = i * i + j * j + k * k; if (d && d <= 9) NOFF.push(i, j, k, 1 / d); }
+const LIGHT = (() => { const v = [0.45, -0.3, 0.84], l = Math.hypot(...v); return v.map(c => c / l); })();
+const PAD = 3;
+
+/* voxelFrame(P, pose) -> { L, W, H, vox, org, lift, buttX, buttZ, hands, feet }
+   P = hasil buildParts (model.js). vox = [x, y, z, r, g, b, mask] per voxel permukaan; org = posisi sel (0,0,0) di koordinat tokoh. */
+function voxelFrame(P, pose) {
+  const r = rigPose(pose, P.boxes), items = [];
+  const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  for (const p of P.parts) {
+    const M = r.mats[p.name]; if (!M) continue;
+    const b = p.box, bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9];
+    for (let i = 0; i < 8; i++) {
+      const q = apply(M, [b[i & 1 ? 3 : 0], b[i & 2 ? 4 : 1], b[i & 4 ? 5 : 2]]);
+      for (let k = 0; k < 3; k++) { if (q[k] < bb[k]) bb[k] = q[k]; if (q[k] > bb[k + 3]) bb[k + 3] = q[k]; }
+    }
+    for (let k = 0; k < 3; k++) { if (bb[k] < lo[k]) lo[k] = bb[k]; if (bb[k + 3] > hi[k]) hi[k] = bb[k + 3]; }
+    items.push({ p, M, bb });
+  }
+  const balls = r.balls.filter(b => P.ballMat[b.k]);
+  for (const b of balls) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], b.c[k] - b.r); hi[k] = Math.max(hi[k], b.c[k] + b.r); }
+  const x0 = Math.floor(lo[0]) - PAD, y0 = Math.floor(lo[1]) - PAD, z0 = Math.floor(lo[2]) - PAD;
+  const L = Math.ceil(hi[0]) - x0 + PAD, W = Math.ceil(hi[1]) - y0 + PAD, H = Math.ceil(hi[2]) - z0 + PAD;
+  const G = new Uint8Array(L * W * H), LW = L * W;
+  // bagian badan: tiap sel kisi dipetakan balik ke kisi lokal bagian itu (urutan = prioritas, yang pertama menang)
+  for (const { p, M, bb } of items) {
+    const g = p.g, nx = g.n[0], ny = g.n[1], nz = g.n[2], d = g.d;
+    const ox = p.piv[0] - g.o[0], oy = p.piv[1] - g.o[1], oz = p.piv[2] - g.o[2];
+    const a0 = Math.max(0, Math.floor(bb[0]) - x0), a1 = Math.min(L - 1, Math.ceil(bb[3]) - x0);
+    const b0 = Math.max(0, Math.floor(bb[1]) - y0), b1 = Math.min(W - 1, Math.ceil(bb[4]) - y0);
+    const c0 = Math.max(0, Math.floor(bb[2]) - z0, -z0), c1 = Math.min(H - 1, Math.ceil(bb[5]) - z0);
+    for (let c = c0; c <= c1; c++) for (let b = b0; b <= b1; b++) {
+      const wx = x0 + a0 + 0.5 - M[9], wy = y0 + b + 0.5 - M[10], wz = z0 + c + 0.5 - M[11];
+      let lx = M[0] * wx + M[3] * wy + M[6] * wz + ox, ly = M[1] * wx + M[4] * wy + M[7] * wz + oy, lz = M[2] * wx + M[5] * wy + M[8] * wz + oz;
+      let idx = c * LW + b * L + a0;
+      for (let a = a0; a <= a1; a++, idx++, lx += M[0], ly += M[1], lz += M[2]) {
+        if (G[idx] || lx < 0 || ly < 0 || lz < 0 || lx >= nx || ly >= ny || lz >= nz) continue;
+        const m = d[((lz | 0) * ny + (ly | 0)) * nx + (lx | 0)];
+        if (m) G[idx] = m;
+      }
+    }
+  }
+  // bola pengisi sendi (siku, lutut, bahu, pinggul, leher) supaya tidak ada celah saat ruas ditekuk
+  for (const bl of balls) {
+    const m = P.ballMat[bl.k], rr = bl.r * bl.r, c = bl.c;
+    for (let z = Math.floor(c[2] - bl.r); z <= Math.ceil(c[2] + bl.r); z++) for (let y = Math.floor(c[1] - bl.r); y <= Math.ceil(c[1] + bl.r); y++) for (let x = Math.floor(c[0] - bl.r); x <= Math.ceil(c[0] + bl.r); x++) {
+      const dx = x + 0.5 - c[0], dy = y + 0.5 - c[1], dz = z + 0.5 - c[2];
+      if (dx * dx + dy * dy + dz * dz > rr) continue;
+      const idx = (z - z0) * LW + (y - y0) * L + (x - x0);
+      if (!G[idx]) G[idx] = m;
+    }
+  }
+  // warna per voxel permukaan: tingkat warna (0..3) dari normal, lalu bintik lepas dirapikan
+  const vox = [], ramps = P.ramps, NO = NOFF.length, TN = new Int8Array(G.length).fill(-1), surf = [];
+  for (let z = PAD; z < H - PAD; z++) for (let y = PAD; y < W - PAD; y++) {
+    let idx = z * LW + y * L + PAD;
+    for (let x = PAD; x < L - PAD; x++, idx++) {
+      const m = G[idx]; if (!m) continue;
+      const mask = (G[idx + 1] ? 0 : 1) | (G[idx - 1] ? 0 : 2) | (G[idx + L] ? 0 : 4) | (G[idx - L] ? 0 : 8) | (G[idx + LW] ? 0 : 16) | (G[idx - LW] ? 0 : 32);
+      if (!mask) continue;
+      surf.push(idx, x, y, z, mask);
+      if (ramps[m - 1].length === 1) continue;
+      let nxs = 0, nys = 0, nzs = 0;
+      for (let q = 0; q < NO; q += 4) if (!G[idx + NOFF[q] + NOFF[q + 1] * L + NOFF[q + 2] * LW]) { const w = NOFF[q + 3]; nxs += NOFF[q] * w; nys += NOFF[q + 1] * w; nzs += NOFF[q + 2] * w; }
+      const l = Math.hypot(nxs, nys, nzs) || 1, w = 0.5 + 0.5 * (nxs * LIGHT[0] + nys * LIGHT[1] + nzs * LIGHT[2]) / l;
+      TN[idx] = w < 0.13 ? 0 : w < 0.5 ? 1 : w < 0.82 ? 2 : 3;
+    }
+  }
+  // bintik: voxel yang tingkat warnanya hampir sendirian di antara tetangga sebahan -> ikut tingkat terbanyak
+  const fix = [], cnt = [0, 0, 0, 0];
+  for (let s = 0; s < surf.length; s += 5) {
+    const idx = surf[s], t = TN[idx]; if (t < 0) continue;
+    const m = G[idx]; cnt[0] = cnt[1] = cnt[2] = cnt[3] = 0;
+    for (let k = -1; k <= 1; k++) for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+      if (!i && !j && !k) continue;
+      const q = idx + i + j * L + k * LW;
+      if (G[q] === m && TN[q] >= 0) cnt[TN[q]]++;
+    }
+    if (cnt[t] >= 2) continue;
+    let best = t, bc = cnt[t];
+    for (let u = 0; u < 4; u++) if (cnt[u] > bc) { bc = cnt[u]; best = u; }
+    if (best !== t && bc >= 3) fix.push(idx, best);
+  }
+  for (let s = 0; s < fix.length; s += 2) TN[fix[s]] = fix[s + 1];
+  for (let s = 0; s < surf.length; s += 5) {
+    const idx = surf[s], rp = ramps[G[idx] - 1], c = rp[TN[idx] < 0 ? 0 : TN[idx]];
+    vox.push(surf[s + 1], surf[s + 2], surf[s + 3], c[0], c[1], c[2], surf[s + 4]);
+  }
+  return { L, W, H, vox, org: [x0, y0, z0], lift: r.lift, buttX: r.buttX, buttZ: r.buttZ, hands: r.hands, feet: r.feet };
+}
+
+// segitiga untuk pratinjau: satu warna rata per voxel (seperti MeshBasicMaterial + warna vertex di game)
+const FACES = [[1, [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]]], [2, [[0, 1, 0], [0, 0, 0], [0, 0, 1], [0, 1, 1]]], [4, [[1, 1, 0], [0, 1, 0], [0, 1, 1], [1, 1, 1]]],
+  [8, [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]]], [16, [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]]], [32, [[0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]]]];
+function voxMesh(f, s = 1, off = [0, 0, 0]) {
+  const v = f.vox, pos = [], col = [], ox = f.org ? f.org[0] : -f.L / 2, oy = f.org ? f.org[1] : -f.W / 2, oz = (f.org ? f.org[2] : 0) + (f.lift || 0);
+  for (let k = 0; k < v.length; k += 7) for (const [bit, cs] of FACES) if (v[k + 6] & bit) for (const c of [0, 1, 2, 0, 2, 3]) {
+    pos.push((v[k] + cs[c][0] + ox) * s + off[0], (v[k + 1] + cs[c][1] + oy) * s + off[1], (v[k + 2] + cs[c][2] + oz) * s + off[2]);
+    col.push(v[k + 3] / 255, v[k + 4] / 255, v[k + 5] / 255);
+  }
+  return { pos: new Float32Array(pos), col: new Float32Array(col), n: pos.length / 3 };
+}
+
+return { voxelFrame, voxMesh };
+})();
+// ===== anims.js
+NS.anims = (() => {
+// Gerakan Raka. Format sama dengan ANIMS di game (n frame, fps, pose(t)); gerakan lama dari voxlib tetap bisa dipakai.
+const {  ANIMS: OLD  } = NS.voxlib;
+const {  POSE0  } = NS.rig;
+const TAU = Math.PI * 2, sinT = t => Math.sin(t * TAU), cosT = t => Math.cos(t * TAU);
+function keyed(keys) {
+  let acc = Object.assign({}, POSE0);
+  const full = keys.map(([t, p]) => [t, acc = Object.assign({}, acc, p)]);
+  return t => {
+    let i = 0;
+    while (i < full.length - 2 && t > full[i + 1][0]) i++;
+    const [t0, a] = full[i], [t1, b] = full[i + 1];
+    let u = Math.max(0, Math.min(1, (t - t0) / (t1 - t0 || 1)));
+    u = u * u * (3 - 2 * u);
+    const o = {};
+    for (const k in a) o[k] = a[k] + (b[k] - a[k]) * u;
+    return o;
+  };
+}
+// kuda-kuda: kaki depan-belakang terbuka, lutut turun, kepalan di depan dagu, badan menyerong
+const GUARD = { arL: 1.0, elL: 1.75, arR: 0.85, elR: 1.95, spL: 0.3, spR: 0.35, thL: 0.42, thR: -0.34, knL: 0.45, knR: 0.4, lgL: 0.1, lgR: 0.16, lean: 0.16, hp: -0.1, tw: 0.38, hy: -0.3, ftR: 0.25 };
+const MINE = {
+  stand: { name: 'Berdiri (netral)', n: 1, fps: 1, loop: true, pose: t => ({ lean: 0, arL: 0.03, arR: 0.03, elL: 0.12, elR: 0.12, spL: 0.1, spR: 0.1, knL: 0, knR: 0 }) },
+  idle: { name: 'Diam (santai, berat di satu kaki)', n: 8, fps: 4, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: -0.02 + 0.012 * s, sy: 0.55, thL: -0.02, thR: 0.1, knL: 0.04, knR: 0.22, lgL: 0.02, lgR: 0.12, arL: 0.04, arR: 0.1, elL: 0.3 + 0.04 * s, elR: 0.4 + 0.04 * s, spL: 0.16 + 0.02 * s, spR: 0.2 + 0.02 * s,
+             hp: -0.05 + 0.02 * s, hy: 0.08 * c, hr: 0.07, tw: 0.06, bob: 0.25 * s }; } },
+  walk: { name: 'Jalan (gaya petantang-petenteng)', n: 8, fps: 9, stride: 34, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.04, hp: -0.06, sy: 0.45 * c, tw: 0.2 * s, hr: 0.05 * c,
+             thL: 0.46 * s, thR: -0.46 * s, knL: 0.12 + 0.8 * Math.max(0, c) ** 1.5, knR: 0.12 + 0.8 * Math.max(0, -c) ** 1.5,
+             ftL: -0.25 * Math.max(0, s) + 0.35 * Math.max(0, -s), ftR: -0.25 * Math.max(0, -s) + 0.35 * Math.max(0, s),
+             arL: 0.04 - 0.42 * s, arR: 0.04 + 0.42 * s, elL: 0.3 + 0.3 * Math.max(0, -s), elR: 0.3 + 0.3 * Math.max(0, s), spL: 0.24, spR: 0.24,
+             tail: 0.08 + 0.06 * Math.abs(c), bob: 0.5 * Math.abs(s) }; } },
+  run: { name: 'Lari', n: 8, fps: 13, stride: 62, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { lean: 0.34, hp: -0.26, tw: 0.26 * s, sy: 0.2 * c,
+             thL: 0.2 + 0.95 * s, thR: 0.2 - 0.95 * s, knL: 0.3 + 1.6 * Math.max(0, c), knR: 0.3 + 1.6 * Math.max(0, -c),
+             ftL: 0.5 * Math.max(0, -s), ftR: 0.5 * Math.max(0, s),
+             arL: 0.25 - 1.0 * s, arR: 0.25 + 1.0 * s, elL: 1.55 + 0.25 * s, elR: 1.55 - 0.25 * s, spL: 0.22, spR: 0.22, jump: 1.0 * Math.abs(s) ** 1.5, tail: 0.5 + 0.15 * c }; } },
+  guard: { name: 'Kuda-kuda', n: 6, fps: 8, loop: true, pose: t => { const s = sinT(t);
+    return { ...GUARD, knL: 0.45 + 0.1 * s, knR: 0.4 + 0.1 * s, elL: 1.75 + 0.06 * s, elR: 1.95 - 0.06 * s, bob: 0.4 * s, tail: 0.05 }; } },
+  jab: { name: 'Jab', n: 6, fps: 16, pose: keyed([[0, GUARD], [0.4, { arL: 1.5, elL: 0.08, spL: 0.05, tw: 0.75, lean: 0.24, thL: 0.55, hy: -0.6 }], [0.6, {}], [1, GUARD]]) },
+  straight: { name: 'Pukulan lurus', n: 8, fps: 15, pose: keyed([[0, GUARD], [0.25, { tw: 0.6, arR: 0.5, elR: 2.15 }],
+    [0.5, { tw: -0.6, arR: 1.52, elR: 0.05, spR: 0.02, lean: 0.3, hy: 0.45, thL: 0.6, knL: 0.6, arL: 0.7, elL: 2.1, tail: 0.3 }], [0.7, {}], [1, GUARD]]) },
+  hook: { name: 'Hook', n: 8, fps: 15, pose: keyed([[0, GUARD], [0.3, { tw: 0.75, arR: 1.3, elR: 1.5, spR: 1.2, lean: 0.1 }],
+    [0.55, { tw: -0.85, arR: 1.5, elR: 1.55, spR: 0.25, lean: 0.2, hy: 0.6, tail: 0.3 }], [0.7, {}], [1, GUARD]]) },
+  uppercut: { name: 'Uppercut', n: 8, fps: 14, pose: keyed([[0, GUARD], [0.3, { arR: 0.0, elR: 2.2, thL: 0.6, thR: 0.0, knL: 1.0, knR: 0.9, lean: 0.36, tw: 0.45, hp: -0.3 }],
+    [0.55, { arR: 2.2, elR: 1.5, thL: 0.3, thR: -0.3, knL: 0.15, knR: 0.15, lean: -0.12, tw: -0.5, hp: 0.0, hy: 0.4, jump: 1.2, tail: -0.1 }], [0.75, { jump: 0 }], [1, GUARD]]) },
+  kickFront: { name: 'Tendangan depan', n: 8, fps: 12, pose: keyed([[0, GUARD], [0.3, { thR: 1.3, knR: 2.0, thL: 0, knL: 0.2, lean: -0.1, tw: 0 }],
+    [0.5, { thR: 1.55, knR: 0.05, ftR: -0.3, lean: -0.32, hp: 0.25, arL: 0.6, elL: 1.3, arR: -0.5, elR: 0.6, spR: 0.4 }], [0.7, { thR: 1.3, knR: 2.0, lean: -0.1 }], [1, GUARD]]) },
+  kickHigh: { name: 'Tendangan tinggi', n: 8, fps: 12, pose: keyed([[0, GUARD], [0.3, { thR: 1.6, knR: 2.2, thL: 0, knL: 0.15, lean: -0.2, tw: 0 }],
+    [0.5, { thR: 2.35, knR: 0.08, ftR: -0.4, lean: -0.55, hp: 0.4, arL: 0.4, elL: 1.1, arR: -0.6, elR: 0.5, spR: 0.5, spL: 0.5 }], [0.7, { thR: 1.6, knR: 2.2, lean: -0.2 }], [1, GUARD]]) },
+  taunt: { name: 'Provokasi "Sini lu!"', n: 10, fps: 10, loop: true, pose: t => { const s = sinT(t * 2);
+    return { lean: -0.1, hp: -0.2, hr: -0.12, hy: 0.1, sy: -0.3, thL: 0.22, thR: -0.15, knL: 0.12, knR: 0.12, lgL: 0.12, lgR: 0.12, arR: 1.35, spR: 0.25, elR: 0.75 + 0.8 * Math.max(0, s), arL: -0.1, elL: 0.5, spL: 0.45 }; } },
+  hairFix: { name: 'Sisir rambut pakai jari', n: 10, fps: 8, pose: keyed([[0, {}], [0.3, { arR: 2.5, elR: 0.8, spR: -0.25, hp: -0.12, hr: 0.08 }], [0.65, { arR: 2.95, elR: 0.5, spR: -0.3, hp: -0.2, tail: 0.15 }], [1, {}]]) },
+  squat: { name: 'Nongkrong jongkok', n: 4, fps: 3, loop: true, pose: t => ({ lean: 0.35 + 0.02 * sinT(t), hp: -0.3, thL: 1.9, thR: 1.9, knL: 2.6, knR: 2.6, lgL: 0.35, lgR: 0.35, ftL: 0.1, ftR: 0.1, arL: 1.1, arR: 1.1, elL: 0.35, elR: 0.35, spL: 0.3, spR: 0.3, hy: 0.2 * sinT(t) }) },
+  hurt: { name: 'Kena pukul', n: 6, fps: 12, pose: keyed([[0, GUARD], [0.35, { lean: -0.4, hp: -0.35, hy: 0.5, tw: -0.4, arL: 0.2, elL: 1.0, arR: -0.3, elR: 0.8, spL: 0.6, spR: 0.6, thL: 0.5, thR: -0.1, knL: 0.3, px: -1.5, tail: -0.2 }], [0.7, {}], [1, GUARD]]) },
+  rideSport: { name: 'Naik motor (balap)', n: 4, fps: 6, loop: true, pose: t => ({ lean: 0.62, hp: -0.5 + 0.02 * sinT(t), thL: 1.25, thR: 1.25, knL: 2.05, knR: 2.05, lgL: 0.2, lgR: 0.2, ftL: 0.45, ftR: 0.45, arL: 1.0, arR: 1.0, elL: 0.35, elR: 0.35, spL: 0.08, spR: 0.08, tail: 0.75 + 0.1 * sinT(t), bob: 0.15 * sinT(t) }) },
+};
+const ANIMS = { ...OLD, ...MINE };
+const ANIM_LIST = ['stand', 'idle', 'walk', 'run', 'sprint', 'guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'hurt', 'taunt', 'hairFix', 'squat',
+  'rideSport', 'wave', 'talk', 'laugh', 'dance', 'scratch', 'think', 'clap', 'sit', 'jump', 'fall', 'getup', 'bow', 'raiseHand', 'salute', 'crouch', 'climb', 'push'];
+// ekspresi otomatis mengikuti gerakan
+const FIGHT = new Set(['guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'rideSport', 'motoLean', 'sprint', 'push', 'climb']);
+function exprFor(anim, i, n) {
+  if (anim === 'hurt' || anim === 'fall' || anim === 'getup') return 'sakit';
+  if (FIGHT.has(anim)) { const t = i / Math.max(1, n - 1); return ['jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh'].includes(anim) && t > 0.3 && t < 0.72 ? 'teriak' : 'marah'; }
+  if (anim === 'taunt' || anim === 'wave' || anim === 'dance' || anim === 'clap') return 'nyengir';
+  if (anim === 'laugh') return 'ketawa';
+  if (anim === 'idle' && i === 5) return 'kedip';
+  return 'biasa';
+}
+
+return { ANIMS, ANIM_LIST, exprFor };
+})();
+// ===== viewer.js
+NS.viewer = (() => {
+// Pratinjau WebGL kecil (tanpa library): kamera ortografis, warna vertex sudah membawa cahaya (sama seperti di game).
+const {  buildParts, OUTFITS, EXPRS, bikeVox, BIKE_PAL, BIKE_SEAT  } = NS.model;
+const {  voxelFrame, voxMesh  } = NS.frame;
+const {  propMesh  } = NS.vox;
+const {  ANIMS, ANIM_LIST, exprFor  } = NS.anims;
+const {  humanShape, buildVox, makeRamps, organicColor, faceCfg, ANIMS: OLDANIMS  } = NS.voxlib;
+
+const PARTS = new Map();
+function partsFor(outfit, expr, helm, face) {
+  const k = outfit + '|' + expr + '|' + (helm ? 1 : 0) + (face ? face.join('') : '');
+  if (!PARTS.has(k)) PARTS.set(k, buildParts({ outfit, expr, helm, face }));
+  return PARTS.get(k);
+}
+const cat = (a, b) => { const pos = new Float32Array(a.pos.length + b.pos.length), col = new Float32Array(pos.length); pos.set(a.pos); pos.set(b.pos, a.pos.length); col.set(a.col); col.set(b.col, a.col.length); return { pos, col, n: pos.length / 3 }; };
+let BIKE = null;
+// satu frame Raka -> segitiga. Ukuran dalam satuan voxel lama (1/32 petak): voxel Raka = 0.5 satuan.
+const GEO = new Map();
+function rakaFrame(o) {
+  if (o.pose || o.face) return makeFrame(o);
+  const key = [o.outfit, o.anim, o.i, o.expr, o.helm ? 1 : 0, o.bike === false ? 0 : 1].join('|');
+  let g = GEO.get(key);
+  if (!g) { if (GEO.size > 400) GEO.clear(); GEO.set(key, g = makeFrame(o)); }
+  return g;
+}
+function makeFrame(o) {
+  const A = ANIMS[o.anim] || ANIMS.idle, i = o.i || 0;
+  const t = A.loop ? i / A.n : i / Math.max(1, A.n - 1);
+  const expr = o.expr && o.expr !== 'auto' ? o.expr : exprFor(o.anim, i, A.n);
+  const P = partsFor(o.outfit || 'seragam', EXPRS.includes(expr) ? expr : 'biasa', o.helm, o.face);
+  const f = voxelFrame(P, o.pose || A.pose(t));
+  if (o.anim !== 'rideSport' || o.bike === false) return voxMesh(f, 0.5);
+  // naik motor: pantat tokoh ditaruh tepat di jok; setang & pijakan motor dipasang di posisi tangan & kaki
+  const dx = BIKE_SEAT[0] - f.buttX * 0.5, dz = BIKE_SEAT[1] - f.buttZ * 0.5;
+  if (!BIKE) { const h = f.hands[1], p = f.feet[1]; BIKE = propMesh(bikeVox([h[0] * 0.5 + dx, h[1] * 0.5, h[2] * 0.5 + dz], [p[0] * 0.5 + dx, p[1] * 0.5, p[2] * 0.5 + dz]), BIKE_PAL); }
+  f.lift = 0;
+  return cat(voxMesh(f, 0.5, [dx, 0, dz]), BIKE);
+}
+// Raka lama (humanShape) untuk perbandingan
+const OLD = { name: 'Raka', scale: 1.3, skin: '#d9a27a', hair: '#24160e', hairStyle: 'short', top: '#f4f4f0', sleeves: 'short', bottom: '#7d828c', shoe: '#1c1c20', shoeStyle: 'shoe', bottomStyle: 'pants', uniform: 'sma', belt: true };
+OLD.ramps = makeRamps(OLD); OLD.color = organicColor(m => OLD.ramps[m]); OLD.fc = faceCfg(OLD);
+const OLDC = new Map();
+function oldFrame(anim, i) {
+  if (!OLDANIMS[anim]) { anim = 'idle'; i = 0; }
+  const key = anim + i; if (OLDC.has(key)) return OLDC.get(key);
+  const A = OLDANIMS[anim], t = A.loop ? i / A.n : i / Math.max(1, A.n - 1);
+  const sh = humanShape(A.pose(t), OLD, 'all'), m = buildVox(sh.L, sh.W, sh.H, sh.mat, OLD.color, { bbox: sh.bbox });
+  const F = [[1, [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]]], [2, [[0, 1, 0], [0, 0, 0], [0, 0, 1], [0, 1, 1]]], [4, [[1, 1, 0], [0, 1, 0], [0, 1, 1], [1, 1, 1]]],
+    [8, [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]]], [16, [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]]], [32, [[0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]]]];
+  const pos = [], col = [], v = m.vox, lift = (sh.lift || 0);
+  for (let k = 0; k < v.length; k += 7) for (const [bit, cs] of F) if (v[k + 6] & bit) for (const c of [0, 1, 2, 0, 2, 3]) {
+    pos.push(v[k] + cs[c][0] - m.L / 2, v[k + 1] + cs[c][1] - m.W / 2, v[k + 2] + cs[c][2] + lift);
+    col.push(v[k + 3] / 255, v[k + 4] / 255, v[k + 5] / 255);
+  }
+  const g = { pos: new Float32Array(pos), col: new Float32Array(col), n: pos.length / 3 };
+  OLDC.set(key, g); return g;
+}
+
+/* ---------- WebGL */
+const VS = `attribute vec3 p; attribute vec3 c; uniform mat4 m; varying vec3 v; void main(){ v = c; gl_Position = m * vec4(p, 1.0); }`;
+const FS = `precision mediump float; varying vec3 v; uniform float a; void main(){ gl_FragColor = vec4(v, a); }`;
+function makeGL(canvas) {
+  const gl = canvas.getContext('webgl', { antialias: false, preserveDrawingBuffer: true, alpha: false });
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+  const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); gl.useProgram(pr);
+  const bp = gl.createBuffer(), bc = gl.createBuffer(), lp = gl.getAttribLocation(pr, 'p'), lc = gl.getAttribLocation(pr, 'c'), um = gl.getUniformLocation(pr, 'm'), ua = gl.getUniformLocation(pr, 'a');
+  gl.enableVertexAttribArray(lp); gl.enableVertexAttribArray(lc); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
+  const disc = (() => { const p = [], c = []; for (let i = 0; i < 28; i++) { const a0 = i / 28 * 6.2832, a1 = (i + 1) / 28 * 6.2832; p.push(0, 0, 0.05, Math.cos(a0), Math.sin(a0), 0.05, Math.cos(a1), Math.sin(a1), 0.05); c.push(0, 0, 0, 0, 0, 0, 0, 0, 0); } return { pos: new Float32Array(p), col: new Float32Array(c), n: 84 }; })();
+  function drawGeo(g, M, alpha) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, bp); gl.bufferData(gl.ARRAY_BUFFER, g.pos.subarray(0, g.n * 3), gl.DYNAMIC_DRAW); gl.vertexAttribPointer(lp, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bc); gl.bufferData(gl.ARRAY_BUFFER, g.col.subarray(0, g.n * 3), gl.DYNAMIC_DRAW); gl.vertexAttribPointer(lc, 3, gl.FLOAT, false, 0, 0);
+    gl.uniformMatrix4fv(um, false, M); gl.uniform1f(ua, alpha); gl.drawArrays(gl.TRIANGLES, 0, g.n);
+  }
+  /* render(items, cam): items = [{ geo, ox, oy, yaw }], cam = { yaw (0 = tampak depan), pitch, scale (px per voxel), cx, cy (posisi kaki di layar, px), bg } */
+  return function render(items, cam) {
+    const w = canvas.width, h = canvas.height;
+    gl.viewport(0, 0, w, h);
+    const bg = cam.bg || [0.74, 0.85, 0.93]; gl.clearColor(bg[0], bg[1], bg[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    for (const pass of [0, 1]) for (const it of items) {
+      // model (x maju, y samping, z naik) -> layar. yaw 0: kamera di depan tokoh.
+      const a = (it.yaw || 0) - cam.yaw - Math.PI / 2, ca = Math.cos(a), sa = Math.sin(a), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+      // putar terhadap z: X = x*ca - y*sa (kanan layar), D = x*sa + y*ca (menjauh dari kamera)
+      const sx = 2 * cam.scale / w, sy = 2 * cam.scale / h, ox = (it.ox || 0), tx = (cam.cx + ox * cam.scale) / w * 2 - 1, ty = 1 - cam.cy / h * 2;
+      // kamera di depan-atas: layarY = z*cp + D*sp ; kedalaman = D*cp - z*sp
+      const M = new Float32Array([
+        ca * sx, sa * sp * sy, sa * cp * 0.004, 0,
+        -sa * sx, ca * sp * sy, ca * cp * 0.004, 0,
+        0, cp * sy, -sp * 0.004, 0,
+        tx, ty, 0, 1]);
+      if (pass === 0) {
+        gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+        const r = it.big ? 17 : 11, D = new Float32Array(M); for (let k = 0; k < 8; k++) D[k] *= r;
+        drawGeo(disc, D, 0.2); gl.depthMask(true); gl.disable(gl.BLEND);
+      } else drawGeo(it.geo, M, 1);
+    }
+  };
+}
+
+/* ---------- UI */
+const $ = id => document.getElementById(id);
+function initUI() {
+  const cv = $('view'), render = makeGL(cv);
+  const st = { outfit: 'seragam', anim: 'idle', expr: 'auto', helm: false, yaw: 0.6, pitch: 0.45, zoom: 9, spin: false, compare: false, pix: false, t0: performance.now() };
+  for (const [k, o] of Object.entries(OUTFITS)) $('outfit').add(new Option(o.name, k));
+  for (const k of ANIM_LIST) if (ANIMS[k]) $('anim').add(new Option(ANIMS[k].name || k, k));
+  $('expr').add(new Option('Otomatis (ikut gerakan)', 'auto'));
+  for (const k of EXPRS) $('expr').add(new Option(k[0].toUpperCase() + k.slice(1), k));
+  const bind = (id, key, conv = v => v) => $(id).addEventListener('input', e => { st[key] = conv(e.target.type === 'checkbox' ? e.target.checked : e.target.value); st.t0 = performance.now(); });
+  bind('outfit', 'outfit'); bind('anim', 'anim'); bind('expr', 'expr'); bind('helm', 'helm'); bind('pitch', 'pitch', v => +v); bind('zoom', 'zoom', v => +v); bind('spin', 'spin'); bind('compare', 'compare'); bind('pix', 'pix');
+  let drag = null;
+  cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, st.yaw, st.pitch]; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => { if (!drag) return; st.yaw = drag[2] - (e.clientX - drag[0]) * 0.012; st.pitch = Math.max(0, Math.min(1.4, drag[3] + (e.clientY - drag[1]) * 0.008)); $('pitch').value = st.pitch; });
+  cv.addEventListener('pointerup', () => drag = null);
+  cv.addEventListener('wheel', e => { e.preventDefault(); st.zoom = Math.max(1.5, Math.min(24, st.zoom * (e.deltaY > 0 ? 0.9 : 1.1))); $('zoom').value = st.zoom; }, { passive: false });
+  document.querySelectorAll('[data-yaw]').forEach(b => b.onclick = () => { st.yaw = +b.dataset.yaw; st.spin = false; $('spin').checked = false; });
+  let last = performance.now();
+  (function loop(now) {
+    const dt = (now - last) / 1000; last = now;
+    if (st.spin && !drag) st.yaw += dt * 0.7;
+    const r = cv.getBoundingClientRect(), pix = st.pix ? Math.max(1, Math.round(st.zoom / 1.6)) : 1 / (window.devicePixelRatio || 1);
+    const w = Math.max(2, Math.round(r.width / pix)), h = Math.max(2, Math.round(r.height / pix));
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const A = ANIMS[st.anim];
+    let i = Math.floor((now - st.t0) / 1000 * A.fps);
+    i = A.loop ? i % A.n : Math.min(A.n - 1, i % (A.n + Math.ceil(A.fps * 0.7)));
+    const items = [{ geo: rakaFrame({ outfit: st.outfit, anim: st.anim, i, expr: st.expr, helm: st.helm }), ox: st.compare ? 13 : 0, big: st.anim === 'rideSport' }];
+    if (st.compare) items.push({ geo: oldFrame(st.anim, i), ox: -13 });
+    render(items, { yaw: st.yaw, pitch: st.pitch, scale: st.zoom / pix, cx: w / 2, cy: h * 0.86 });
+    $('info').textContent = `${A.name || st.anim} · frame ${i + 1}/${A.n} · ekspresi: ${st.expr === 'auto' ? exprFor(st.anim, i, A.n) : st.expr}`;
+    requestAnimationFrame(loop);
+  })(last);
+}
+// untuk skrip screenshot: gambar satu sel ke canvas 2D
+function cell(o) {
+  const c = cell.c || (cell.c = document.createElement('canvas')), pix = o.pixel || 1;
+  c.width = Math.round(o.w / pix); c.height = Math.round(o.h / pix);
+  const render = cell.r || (cell.r = makeGL(c));
+  const geo = o.old ? oldFrame(o.anim || 'idle', o.i || 0) : rakaFrame(o);
+  render([{ geo, big: !o.old && o.anim === 'rideSport' }], { yaw: o.yaw || 0, pitch: o.pitch ?? 0.4, scale: o.scale / pix, cx: c.width / 2 + (o.dx || 0) / pix, cy: (o.cy ?? o.h * 0.88) / pix, bg: o.bg });
+  return c;
+}
+window.RK = { cell, rakaFrame, oldFrame, ANIMS, EXPRS, OUTFITS };
+
+return { rakaFrame, oldFrame, makeGL, initUI, cell };
+})();
+const { initUI } = NS.viewer;
+
+if (!window.NO_UI) initUI();
+</script>
+</body>
+</html>

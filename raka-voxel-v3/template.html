@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raka voxel v3 · pratinjau</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #1d2230; color: #e8ecf4; display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: #262c3c; }
+  header b { font-size: 16px; margin-right: 8px; }
+  label { display: flex; gap: 6px; align-items: center; }
+  select, button { font: inherit; background: #333b50; color: inherit; border: 1px solid #4a5470; border-radius: 6px; padding: 4px 8px; }
+  button { cursor: pointer; }
+  #view { flex: 1; width: 100%; min-height: 0; touch-action: none; cursor: grab; image-rendering: pixelated; }
+  #info, #hint { position: fixed; bottom: 10px; background: #0008; padding: 4px 10px; border-radius: 6px; }
+  #info { left: 12px; } #hint { right: 12px; opacity: .8; }
+</style>
+</head>
+<body>
+<header>
+  <b>Raka · voxel v3</b>
+  <label>Baju <select id="outfit"></select></label>
+  <label>Gerakan <select id="anim"></select></label>
+  <label>Ekspresi <select id="expr"></select></label>
+  <label><input id="helm" type="checkbox"> Helm</label>
+  <label>Sudut <input id="pitch" type="range" min="0" max="1.4" step="0.01" value="0.45"></label>
+  <label>Zoom <input id="zoom" type="range" min="1.5" max="24" step="0.1" value="9"></label>
+  <span><button data-yaw="0">Depan</button> <button data-yaw="0.7">Serong</button> <button data-yaw="1.5708">Samping</button> <button data-yaw="3.1416">Belakang</button></span>
+  <label><input id="spin" type="checkbox"> Putar</label>
+  <label><input id="pix" type="checkbox"> Ukuran pixel game</label>
+  <label><input id="compare" type="checkbox"> Banding Raka lama</label>
+</header>
+<canvas id="view"></canvas>
+<div id="info"></div>
+<div id="hint">seret = putar · roda = zoom</div>
+<script>
+/*__CODE__*/
+if (!window.NO_UI) initUI();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "lonceng-pulang-3d",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "peta": "python tools/export_kota.py ../docs/desain-sma/peta src/data/kota.json"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
