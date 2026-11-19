@@ -102,7 +102,7 @@ export function makeRutin({ scene, collision, player, Character, npcs, interiors
     if (e && babOk(e) && dayOk(e) && timeOk(e)) { const p = posOf(gid, e.tempat); if (p && p.zone !== 'luar') return { p, anim: 'idle', a: 'berdiri', out: null, keg: '♥ nungguin kamu: ' + e.judul, ev: e }; }
     const r = slotAt(gid); if (!r) return null;
     const [m0, , t, a, of, keg, moda, menit] = r, home = t === G.rumah ? n.home0 : null;
-    const out = G.out[of] || null;
+    const out = r[8] || G.out[of] || null;   // r[8]: baju khusus (ronda, latihan, Senin Korpri, Jumat batik)
     if (a === 'tidur' || a === 'hilang') return { hide: a === 'tidur' ? 'tidur' : keg, out, keg };
     const p = posOf(gid, t, home); if (!p) return { hide: keg };
     if (p.zone === 'luar') return { hide: (D.t[t]?.[3] || t), out, keg };
