@@ -48,6 +48,8 @@ html body #menu{display:none!important}
 #uiBar .ui-kunci{font-size:9px;padding:0 3px;border-width:1px}
 body.touch #uiBar{top:calc(max(12px,env(safe-area-inset-top)) + 150px);bottom:auto;flex-direction:column}
 body.touch #uiBar .ui-kunci{display:none}
+@media (orientation:landscape){body.touch #uiBar{top:max(10px,env(safe-area-inset-top));flex-direction:row;gap:6px}body.touch #uiBar button{width:54px;height:54px;font-size:10px!important}}
+body.touch #fpad button,body.touch #pad button{font-size:12px!important;letter-spacing:-.02em;overflow:hidden}
 
 /* panel pengaturan & menu utama */
 .ui-layar{position:fixed;inset:0;z-index:60;display:none}
@@ -130,6 +132,7 @@ html body #jurnal{width:1000px!important;height:669px!important;max-height:none!
 .ui-lembar i+i{transform:rotateY(180deg)}
 @keyframes uiBalikM{to{transform:rotateY(-180deg)}}
 @keyframes uiBalikK{to{transform:rotateY(180deg)}}
+@media (max-aspect-ratio:1/1){#uiTitle h1{font-size:clamp(34px,11vw,64px)}#uiTitle .logo img{height:min(12vh,90px)}#uiTitle .logo{left:5vw;right:5vw}#uiTitle p{font-size:14px}}
 `;
   const style = el('style', { id: 'uiSkinCss', textContent: css });
   const pasangCss = () => document.head.appendChild(style); // selalu paling akhir supaya menang dari CSS game
