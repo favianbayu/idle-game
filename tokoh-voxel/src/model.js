@@ -402,23 +402,10 @@ function dress(list, ballMat) {
   });
   return [list, Object.fromEntries(Object.entries({ ...ballMat, ...(D.ball || {}) }).map(([k, c]) => [k, S(c)])), c => mi(S(c))];
 }
-/* ---------- barang pegangan: dipisah dari lengan bawah jadi bagian 'propR' / 'propL' (ikut tulang lengan bawah),
-   lalu game hanya menampilkannya saat anim aktivitas yang cocok (showProps). Pemisahan otomatis: lengan = kolom
-   penampang lengan atas (lapis z teratas, +1 voxel) dari ujung kepalan ke atas; sisanya = barang. */
-// anim yang dianggap "sedang beraktivitas" (bawaan barang yang tak dikenal jenisnya)
-export const ACT = ['talk', 'look', 'phone', 'squat', 'crouch', 'carry', 'galon', 'raiseHand', 'read', 'think', 'sitDesk', 'sit', 'sitDown', 'sweep',
-  'stretch', 'laugh', 'scratch', 'cast', 'fishCast', 'fishWait', 'fishPull', 'fishShow', 'cheer', 'push'];
-// jenis barang -> anim saat barang dipegang ('all' = selalu, mis. tongkat jalan, payung hujan, senapan jaga)
-export const PROP_KIND = {
-  all: 'all', aktif: ACT,
-  baca: ['read', 'talk', 'sitDesk', 'think', 'raiseHand', 'sitDown', 'look'], hp: ['phone'], radio: ['phone', 'talk', 'look', 'raiseHand'],
-  minum: ['sitDown', 'sit', 'sitDesk', 'talk'], sapu: ['sweep'], tani: ['squat', 'crouch', 'carry', 'sweep'],
-  angkut: ['carry', 'galon', 'galonWalk', 'walk', 'talk'], masak: ['carry', 'squat', 'talk'],
-  ikan: ['squat', 'carry', 'fishCast', 'fishWait', 'fishPull', 'fishShow', 'tread', 'cast'], bola: ['dribble', 'shoot', 'kickBall', 'catch', 'carry'],
-  olahraga: ['stretch', 'jump', 'carry', 'talk', 'catch'], sorak: ['cheer', 'clap', 'jump', 'wave', 'raiseHand'], ajar: ['talk', 'raiseHand', 'read', 'think', 'look'],
-  santai: ['sitDown', 'sit', 'talk', 'think', 'read', 'idle'], jual: ['walk', 'idle', 'talk', 'carry'], kerja: ['squat', 'crouch', 'carry'],
-  main: ['look', 'run', 'wave', 'idle', 'cheer', 'jump'],
-};
+/* ---------- barang pegangan: dipisah dari lengan bawah jadi bagian 'propR' / 'propL' (ikut tulang lengan bawah).
+   Game hanya menampilkan barang yang propOn-nya 'all' (showProps); barang kegiatan datang dari anim (rig.js).
+   Pemisahan otomatis: lengan = kolom penampang lengan atas (lapis z teratas, +1 voxel) dari ujung kepalan ke atas;
+   sisanya = barang. */
 // barang spawn_base (d.handR / d.handL) -> jenis
 export const HELD_KIND = {
   arit: 'tani', cangkul: 'tani', sekop: 'tani', sapu: 'sapu', rotan: 'ajar', buku: 'baca', map: 'baca', papan: 'baca', peta: 'baca', hp: 'hp', ht: 'radio',
@@ -462,12 +449,13 @@ function splitHeld(list) {
   }
   return out;
 }
-const kindAnims = k => Array.isArray(k) ? k : PROP_KIND[k] || ACT;
 const SHOWN = new WeakMap();
-// P tanpa barang yang tidak cocok dengan anim ini (all = tampilkan semua, untuk lembar pratinjau)
+// P tanpa barang pegangan sprite (all = tampilkan semua, untuk lembar pratinjau). Barang kegiatan (sapu, HP, buku,
+// kardus, pancing...) sudah digambar oleh anim lewat rig.js, jadi barang sprite cuma tampil kalau propOn 'all'
+// (bawaan tetap: tongkat, payung, tas, senapan, lampu). Selain itu disembunyikan supaya tidak dobel.
 export function showProps(P, anim, all = false) {
   if (all || !P.parts.some(p => p.name === 'propR' || p.name === 'propL')) return P;
-  const on = n => { const k = (P.propOn || {})[n]; const a = k === 'all' ? 'all' : kindAnims(k); return a === 'all' || a.includes(anim); };
+  const on = n => (P.propOn || {})[n] === 'all';
   const key = (on('propR') ? 'R' : '') + (on('propL') ? 'L' : '');
   let c = SHOWN.get(P); if (!c) SHOWN.set(P, c = {});
   return c[key] || (c[key] = { ...P, parts: P.parts.filter(p => (p.name !== 'propR' || key.includes('R')) && (p.name !== 'propL' || key.includes('L'))) });
