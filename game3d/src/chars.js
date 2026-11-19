@@ -2,13 +2,13 @@
 // Ganti frame = ganti geometri (tanpa membangun ulang apa pun) -> murah saat kamera berputar.
 import * as THREE from 'three';
 
-const CACHE = new Map(), PENDING = new Set(), QUEUE = [];
+const CACHE = new Map(), PENDING = new Map(), QUEUE = [];
 let worker = null, ready = false, busy = 0, META = null;
 const listeners = [];
 export const onCharsReady = fn => ready ? fn(META) : listeners.push(fn);
 
 export function initChars(src) {
-  // Worker dari Blob kadang diblok (preview di HP, iframe sandbox, file://). Kalau gagal / tidak "ready" dalam 6 detik,
+  // Worker dari Blob kadang diblok (preview di HP, iframe sandbox, file://). Kalau gagal / tidak "ready" setelah ±6 detik thread utama bebas,
   // kode worker yang sama dijalankan di thread utama (lebih lambat sedikit, tapi tokoh tetap muncul).
   let fellBack = false;
   const fallback = why => {
@@ -21,7 +21,9 @@ export function initChars(src) {
     worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
     worker.onmessage = onMsg;
     worker.onerror = e => fallback('error: ' + (e && e.message));
-    setTimeout(() => fallback("timeout"), 6000);
+    // hitung 12 detak x 0.5 dtk, bukan setTimeout 6 dtk: saat dunia dibangun thread utama macet puluhan detik di HP,
+    // detak yang tertahan cuma terhitung sekali, jadi worker sehat tidak dianggap gagal.
+    let n = 0; const iv = setInterval(() => { if (ready || fellBack) clearInterval(iv); else if (++n >= 12) { clearInterval(iv); fallback('timeout'); } }, 500);
   } catch (e) { fallback(e && e.message); }
 }
 // Tiruan Worker: jalankan kode worker dengan `self` palsu; satu pekerjaan per tick supaya layar tidak macet.
@@ -37,25 +39,43 @@ function onMsg(e) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(d.pos, 3));
   g.setAttribute('normal', new THREE.BufferAttribute(d.nor, 3, true));
-  g.setAttribute('color', new THREE.BufferAttribute(d.col, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(d.col, 3, d.col instanceof Uint16Array));
   g.setIndex(new THREE.BufferAttribute(d.idx, 1));
   g.computeBoundingSphere();
   g.userData.lift = d.lift; g.userData.butt = d.butt; g.userData.buttX = d.buttX;
+  g.userData.t = PENDING.get(d.key) || performance.now(); g.userData.bytes = sizeOf(g); bytes += g.userData.bytes;
   CACHE.set(d.key, g); PENDING.delete(d.key);
-  pump();
+  evict(); pump();
+}
+// Cache frame dibatasi memori: satu frame tokoh voxel halus ~0,8 MB, dan 180-an NPC x semua animasi bisa tembus
+// berGB-GB -> tab HP di-kill ("gagal memuat"). Frame yang paling lama tidak dipakai dibuang (geometri + memori GPU);
+// kalau dibutuhkan lagi, worker membangunnya ulang. Frame yang dipakai 1,5 detik terakhir tidak pernah dibuang.
+const TOUCH = typeof matchMedia === 'function' && (matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window);
+const BUDGET = (TOUCH ? 200 : 700) * 1e6;
+let bytes = 0;
+const sizeOf = g => { let b = g.index.array.byteLength; for (const k in g.attributes) b += g.attributes[k].array.byteLength; return b; };
+function evict() {
+  if (bytes <= BUDGET) return;
+  const now = performance.now(), old = [...CACHE].filter(([, g]) => now - g.userData.t > 1500).sort((a, b) => a[1].userData.t - b[1].userData.t);
+  for (const [k, g] of old) { if (bytes <= BUDGET * 0.85) break; CACHE.delete(k); bytes -= g.userData.bytes; g.dispose(); }
 }
 function pump() {
+  const now = performance.now();
   while (ready && busy < 2 && QUEUE.length) {
     // prioritas: frame pemain dulu
     QUEUE.sort((a, b) => b.p - a.p);
-    const j = QUEUE.shift(); busy++; worker.postMessage(j);
+    const j = QUEUE.shift();
+    // permintaan basi (NPC sudah lewat / ganti animasi): buang, jangan bikin worker kerja sia-sia
+    if (j.p < 2 && now - PENDING.get(j.key) > 3000) { PENDING.delete(j.key); continue; }
+    busy++; worker.postMessage(j);
   }
 }
 export function frame(sid, anim, i, prio = 0) {
   const key = sid + '|' + anim + '|' + i;
   const g = CACHE.get(key);
-  if (g) return g;
-  if (!PENDING.has(key)) { PENDING.add(key); QUEUE.push({ key, sid, anim, i, p: prio }); pump(); }
+  if (g) { g.userData.t = performance.now(); return g; }
+  if (!PENDING.has(key)) { PENDING.set(key, performance.now()); QUEUE.push({ key, sid, anim, i, p: prio }); pump(); }
+  else PENDING.set(key, performance.now());
   return null;
 }
 export const animInfo = name => META && META.anims[name];

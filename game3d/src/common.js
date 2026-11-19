@@ -7,10 +7,20 @@ export const hash = (a, b = 0) => { let h = (a * 374761393 + b * 668265263) | 0;
 export const pick = (arr, r) => arr[Math.floor(r * arr.length) % arr.length];
 export const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
 export const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+// Titik di dalam poligon. Kotak batas tiap poligon disimpan (WeakMap) supaya titik di luar kotak langsung ditolak:
+// dipanggil puluhan ribu kali saat memuat dunia, jadi ini memangkas waktu muat di HP.
+const PBB = new WeakMap();
 export function inPoly(x, y, pts) {
+  let bb = PBB.get(pts);
+  if (!bb) {
+    bb = [Infinity, Infinity, -Infinity, -Infinity];
+    for (const p of pts) { if (p[0] < bb[0]) bb[0] = p[0]; if (p[1] < bb[1]) bb[1] = p[1]; if (p[0] > bb[2]) bb[2] = p[0]; if (p[1] > bb[3]) bb[3] = p[1]; }
+    PBB.set(pts, bb);
+  }
+  if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) return false;
   let ins = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    const pi = pts[i], pj = pts[j], xi = pi[0], yi = pi[1], xj = pj[0], yj = pj[1];
     if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins;
   }
   return ins;

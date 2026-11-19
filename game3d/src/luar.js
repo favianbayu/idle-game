@@ -64,28 +64,23 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
   const K = { ...DUNIA };
   const roads = K.roads, rivers = K.rivers;
   const RS = roads.map(r => resample(r.pts, 1));
-  // jarak ke tepi jalan (grid 1 petak) untuk penempatan
-  function roadDist(x, z) {
-    let best = 99;
-    for (const r of roads) for (let i = 1; i < r.pts.length; i++) {
-      const [ax, az] = r.pts[i - 1], [bx, bz] = r.pts[i];
-      if (Math.min(ax, bx) - 6 > x || Math.max(ax, bx) + 6 < x || Math.min(az, bz) - 6 > z || Math.max(az, bz) + 6 < z) continue;
-      const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
-      best = Math.min(best, Math.hypot(x - ax - dx * t, z - az - dz * t) - r.w / 2);
-    }
-    return best;
-  }
+  // Jarak ke tepi jalan/sungai. Ruas garis diindeks per sel 8 petak (hanya ruas yang kotaknya +-6 menyentuh sel), jadi
+  // tiap panggilan cuma memeriksa ruas di dekatnya; hasilnya sama persis dengan memeriksa semua ruas.
+  const segGrid = lines => { const G = new Map(), C = 8;
+    for (const r of lines) for (let i = 1; i < r.pts.length; i++) { const [ax, az] = r.pts[i - 1], [bx, bz] = r.pts[i], sg = [ax, az, bx, bz, r.w / 2];
+      for (let cx = Math.floor((Math.min(ax, bx) - 6) / C); cx <= Math.floor((Math.max(ax, bx) + 6) / C); cx++)
+        for (let cz = Math.floor((Math.min(az, bz) - 6) / C); cz <= Math.floor((Math.max(az, bz) + 6) / C); cz++) { const k = cx + ',' + cz; let L = G.get(k); if (!L) G.set(k, L = []); L.push(sg); } }
+    return (x, z) => { const L = G.get(Math.floor(x / C) + ',' + Math.floor(z / C)); let best = 99; if (!L) return best;
+      for (const [ax, az, bx, bz, hw] of L) {
+        if (Math.min(ax, bx) - 6 > x || Math.max(ax, bx) + 6 < x || Math.min(az, bz) - 6 > z || Math.max(az, bz) + 6 < z) continue;
+        const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
+        best = Math.min(best, Math.hypot(x - ax - dx * t, z - az - dz * t) - hw);
+      }
+      return best; };
+  };
+  const roadDist = segGrid(roads);
   const inWaterA = (x, z) => WATER.some(i => inPoly(x, z, K.areas[i].pts));
-  function riverDist(x, z) {
-    let best = 99;
-    for (const r of rivers) for (let i = 1; i < r.pts.length; i++) {
-      const [ax, az] = r.pts[i - 1], [bx, bz] = r.pts[i];
-      if (Math.min(ax, bx) - 6 > x || Math.max(ax, bx) + 6 < x || Math.min(az, bz) - 6 > z || Math.max(az, bz) + 6 < z) continue;
-      const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
-      best = Math.min(best, Math.hypot(x - ax - dx * t, z - az - dz * t) - r.w / 2);
-    }
-    return best;
-  }
+  const riverDist = segGrid(rivers);
   const waterAt = (x, z) => (inWaterA(x, z) || riverDist(x, z) < 0) && roadDist(x, z) > 0.2;
 
   /* ---------------- tata letak bangunan (guide 90: tidak clipping ke jalan/air, menghadap jalan, mundur sesuai wilayah) */

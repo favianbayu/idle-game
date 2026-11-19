@@ -167,8 +167,9 @@ function mesh(m, S = 1 / 32, cx = m.L / 2, cy = m.W / 2, cz = 0) {
   const { vox } = m;
   let nq = 0;
   for (let i = 0; i < vox.length; i += 7) { let k = vox[i + 6]; while (k) { nq += k & 1; k >>= 1; } }
-  const pos = new Float32Array(nq * 12), nor = new Int8Array(nq * 12), col = new Float32Array(nq * 12);
-  const idx = new Uint32Array(nq * 6);
+  // warna Uint16 ternormalisasi (cukup halus untuk warna linear) dan indeks Uint16 bila muat: ~30% lebih hemat memori
+  const pos = new Float32Array(nq * 12), nor = new Int8Array(nq * 12), col = new Uint16Array(nq * 12);
+  const idx = nq * 4 <= 65536 ? new Uint16Array(nq * 6) : new Uint32Array(nq * 6);
   let q = 0;
   for (let i = 0; i < vox.length; i += 7) {
     const x = vox[i], y = vox[i + 1], z = vox[i + 2], r = LIN[vox[i + 3]], g = LIN[vox[i + 4]], b = LIN[vox[i + 5]], mask = vox[i + 6];
@@ -178,7 +179,7 @@ function mesh(m, S = 1 / 32, cx = m.L / 2, cy = m.W / 2, cz = 0) {
         const o = (q * 4 + c) * 3, [dx, dy, dz] = corners[c];
         pos[o] = (x + dx - cx) * S; pos[o + 1] = (z + dz + cz) * S; pos[o + 2] = -(y + dy - cy) * S;
         nor[o] = n[0] * 127; nor[o + 1] = n[1] * 127; nor[o + 2] = n[2] * 127;
-        col[o] = r; col[o + 1] = g; col[o + 2] = b;
+        col[o] = r * 65535 + 0.5; col[o + 1] = g * 65535 + 0.5; col[o + 2] = b * 65535 + 0.5;
       }
       const v = q * 4, j = q * 6;
       idx[j] = v; idx[j + 1] = v + 1; idx[j + 2] = v + 2; idx[j + 3] = v; idx[j + 4] = v + 2; idx[j + 5] = v + 3;
