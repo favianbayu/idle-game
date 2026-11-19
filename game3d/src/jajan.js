@@ -102,7 +102,7 @@ export function makeJajan({ scene, kota, collision, player, Character, npcs, sho
       for (const c of carts) if (Math.hypot(c.x + Math.cos(c.fa) * 0.7 - player.x, c.z + Math.sin(c.fa) * 0.7 - player.z) < 1.1)
         return { kind: 'act', label: 'Jajan: ' + c.K.title, fn: () => shop.open({ title: c.K.title, sub: 'Gerobak pinggir jalan', items: CATALOG[c.K.id], thanks: 'Makasih, Mas!' }) };
       if (wk && Math.hypot(wk.x - player.x, wk.z - player.z) < 1.4) {
-        if (clock - workT > 60) return { kind: 'act', label: 'Bantu Om Darto jualan kopi (+Rp5.000)', fn: () => { workT = clock; acts.doAct('carry', 5, () => shop.earn(5000, 'Om Darto: "Nih, uang jajan."')); } };
+        if (clock - workT > 60) return { kind: 'act', label: 'Bantu Om Darto jualan kopi (+Rp5.000)', fn: () => { workT = clock; acts.doAct('serve', 5, () => shop.earn(5000, 'Om Darto: "Nih, uang jajan."')); } };
         return { kind: 'act', label: 'Ngopi di Warkop Simpang', fn: () => shop.open({ title: 'Warkop Simpang', sub: 'Gratis buat keponakan sendiri', items: CATALOG.kopi, thanks: 'Diminum, jangan dibuang.' }) };
       }
       return null;

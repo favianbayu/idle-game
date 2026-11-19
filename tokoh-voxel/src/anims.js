@@ -56,7 +56,9 @@ const MINE = {
 };
 export const ANIMS = { ...OLD, ...MINE };
 export const ANIM_LIST = ['stand', 'idle', 'walk', 'run', 'galon', 'galonWalk', 'sprint', 'guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'hurt', 'taunt', 'hairFix', 'squat',
-  'rideSport', 'wave', 'talk', 'laugh', 'dance', 'scratch', 'think', 'clap', 'sit', 'jump', 'fall', 'getup', 'bow', 'raiseHand', 'salute', 'crouch', 'climb', 'push'];
+  'rideSport', 'wave', 'talk', 'laugh', 'dance', 'scratch', 'think', 'clap', 'sit', 'jump', 'fall', 'getup', 'bow', 'raiseHand', 'salute', 'crouch', 'climb', 'push',
+  // kegiatan dengan barang (voxlib ACT_ANIMS)
+  'teach', 'cook', 'eat', 'drink', 'wrench', 'guitar', 'busk', 'photo', 'sketch', 'paint', 'lift', 'racket', 'hoe', 'pray', 'skate', 'bball', 'kickAbout', 'write', 'cashier', 'sell', 'water', 'serve'];
 // ekspresi otomatis mengikuti gerakan
 const FIGHT = new Set(['guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'rideSport', 'motoLean', 'sprint', 'push', 'climb']);
 export function exprFor(anim, i, n) {

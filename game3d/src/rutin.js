@@ -11,12 +11,18 @@ import { SCHOOL_OX } from './world.js';
 import { styleName } from './chars.js';
 
 const DAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-const ANIM = { duduk: 'sitDown', duduk_tulis: 'sitDesk', makan: 'sitDown', berdiri: 'idle', mengajar: 'talk', masak: 'carry', servis: 'squat', ngobrol: 'talk',
-  sapu: 'sweep', baca: 'read', silat: 'guard', salat: 'bow', hp: 'phone', jongkok: 'squat', jualan: 'talk', gitar: 'sitDown', angkut: 'carry', basket: 'dribble',
-  lari: 'run', kasir: 'idle', foto: 'phone', futsal: 'kickBall', gambar: 'sitDesk', tidur_kursi: 'sitDown', kerja_mesin: 'squat', olahraga: 'stretch',
-  tidur_meja: 'sitDesk', lukis: 'raiseHand', skate: 'walk', mancing: 'fishWait', petik: 'squat', piano: 'sitDesk', jala: 'fishCast', nyanyi: 'cheer',
+// kegiatan jadwal -> anim. Anim kegiatan (voxlib ACT_ANIMS) membawa barangnya sendiri: penggaris, wajan, piring, kunci pas, gitar, kamera,
+// buku sketsa, kuas, dumbel, sajadah, papan skate, bola, pulpen, kalkulator, kipas, gembor. Daftar lengkap: game3d/KEGIATAN-ANIMASI.md
+const ANIM = { duduk: 'sitDown', duduk_tulis: 'write', makan: 'eat', berdiri: 'idle', mengajar: 'teach', masak: 'cook', servis: 'wrench', ngobrol: 'talk',
+  sapu: 'sweep', baca: 'read', silat: 'guard', salat: 'pray', hp: 'phone', jongkok: 'squat', jualan: 'sell', gitar: 'guitar', angkut: 'carry', basket: 'bball',
+  lari: 'run', kasir: 'cashier', foto: 'photo', futsal: 'kickAbout', gambar: 'sketch', tidur_kursi: 'sitDown', kerja_mesin: 'wrench', olahraga: 'lift',
+  tidur_meja: 'sitDesk', lukis: 'paint', skate: 'skate', mancing: 'fishWait', petik: 'water', piano: 'sitDesk', jala: 'fishCast', nyanyi: 'busk',
   jalan: 'walk', naik_motor: 'walk', sepeda: 'walk', tidur: 'lie' };
-const MOVING = new Set(['walk', 'run', 'sweep', 'dribble', 'kickBall']);
+// teks kegiatan yang lebih spesifik dari kodenya (kode kegiatan -> [pola teks, anim])
+const ANIM_TXT = { duduk: [[/kopi|warkop|kafe|ngopi|teh manis/i, 'drink']], ngobrol: [[/kafe|warkop|ngopi/i, 'drink']], olahraga: [[/bulu tangkis|badminton/i, 'racket']],
+  jongkok: [[/taman|kebun|tanaman|bunga/i, 'water']], angkut: [[/galon/i, 'galonWalk']] };
+const animOf = (a, keg) => { for (const [re, an] of ANIM_TXT[a] || []) if (re.test(keg || '')) return an; return ANIM[a] || 'idle'; };
+const MOVING = new Set(['walk', 'run', 'sweep', 'dribble', 'kickBall', 'skate', 'galonWalk']);
 const VEHICLE = new Set(['motor', 'angkot', 'bus', 'mobil', 'sepeda', 'perahu']);
 const MODA = { motor: 'naik motor', angkot: 'naik angkot', bus: 'naik bus', mobil: 'naik mobil', sepeda: 'naik sepeda', perahu: 'naik perahu', jalan: 'jalan kaki' };
 // anim yang cuma masuk akal di dalam rumah / ruang tertutup
@@ -110,7 +116,7 @@ export function makeRutin({ scene, collision, player, Character, npcs, interiors
     if (moda && VEHICLE.has(moda) && into < menit) return { hide: MODA[moda] + ' ke ' + (D.t[t]?.[3] || t), out, keg };
     if (p.inside && !OUTDOORISH.has(a)) return { hide: D.t[t]?.[3] || t, out, keg };
     if (!p.room && home && INDOOR.has(a)) return { hide: 'di rumah', out, keg };
-    return { p, anim: ANIM[a] || 'idle', a, out, keg };
+    return { p, anim: animOf(a, keg), a, out, keg };
   }
 
   const ZONE_AREA = { kota: undefined, sekolah: undefined, dalam: 'dalam' };
