@@ -777,7 +777,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
   if (stm) {
     const xf = { x: stm.x, z: stm.y, a: stm.a }; let [x, z] = L(xf, stm.w / 2 - 1.6, 2.2 + 0.55); put('stm_bengkel', x, z, stm.a + Math.PI / 2);
     [x, z] = L(xf, -3.4, -stm.h / 2 + 3.2 + 0.55); put('stm_gudang', x, z, stm.a + Math.PI / 2);
-    [x, z] = L(xf, -1.0, stm.h / 2 + 0.7); const p = collision.resolve({ x, z }, 0.3), c = new Character('satpam'); scene.add(c.group);
+    [x, z] = L(xf, -1.0, stm.h / 2 + 0.7); const p = collision.resolve({ x, z }, 0.3), c = new Character('satpam', { name: 'Pak Bonar' }); scene.add(c.group);
     npcs.push({ sid: 'satpam', name: 'Pak Bonar (satpam STM)', filler: true, lines: ['Anak SMA 3? Mau ngapain ke sini?', 'Masuk boleh, bikin ribut jangan.', 'Kobar sama gengnya jangan diladenin.'], c, home: { ...p }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: 2, heading: stm.a + Math.PI / 2, say: null, greetT: 0, roam: 1.2, key: 'bonar' });
   }
 

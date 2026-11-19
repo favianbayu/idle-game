@@ -215,7 +215,7 @@ onCharsReady(() => {
   // tukang parkir di minimarket, lahan parkir, dan parkir liar depan ruko: mondar-mandir sepanjang deretan motor, memberi aba-aba
   const PNAMES = ['Bang Jalu', 'Pak Darno', 'Mas Tejo', 'Bang Ipul', 'Pak Somad', 'Mang Udin', 'Kang Asep', 'Bang Mamat', 'Pak Ogah', 'Mas Bowo', 'Bang Romli', 'Pak Kumis'];
   (kota.parkir || []).forEach((sp, i) => {
-    const sid = i % 3 === 2 ? 'tukangParkir2' : 'tukangParkir', c = new Character(sid); scene.add(c.group);
+    const sid = i % 3 === 2 ? 'tukangParkir2' : 'tukangParkir', c = new Character(sid, { name: PNAMES[i % PNAMES.length] }); scene.add(c.group);
     const ux = Math.cos(sp.a), uz = Math.sin(sp.a), h = sp.len / 2;
     const path = [{ x: sp.x - ux * h, z: sp.z - uz * h }, { x: sp.x + ux * h, z: sp.z + uz * h }];
     const p = collision.resolve({ x: sp.x, z: sp.z }, 0.3);
@@ -242,7 +242,7 @@ onCharsReady(() => {
     if (wi >= 18) break;
     const mid = path[path.length >> 1]; if (used.some(u => Math.hypot(u.x - mid.x, u.z - mid.z) < 14)) continue; used.push(mid);
     for (let r = 0; r < (path.length > 70 ? 2 : 1) && wi < 18; r++, wi++) {
-      const sid = WSIDS[wi % WSIDS.length], c = new Character(sid); scene.add(c.group);
+      const sid = WSIDS[wi % WSIDS.length], c = new Character(sid, { name: WNAMES[wi % WNAMES.length] }); scene.add(c.group);
       const k = Math.floor((r + 0.3 + Math.random() * 0.4) / 2 * path.length) % path.length, p = path[k];
       npcs.push({ sid, name: WNAMES[wi % WNAMES.length], filler: true, lines: [WLINES[wi % WLINES.length], WLINES[(wi * 3 + 2) % WLINES.length]], roam: 0, key: 'w' + wi, c, home: { x: p.x, z: p.z }, x: p.x, z: p.z, tx: p.x, tz: p.z, wait: 0, heading: 0, say: null, greetT: Math.random() * 10,
         path, k, dir: Math.random() < 0.5 ? 1 : -1, spd: sid === 'kakek' ? 0.7 : 0.95 + Math.random() * 0.3, stopT: Math.random() * 2, idleA: 'idle', ext: walkExt });

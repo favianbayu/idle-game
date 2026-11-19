@@ -82,11 +82,37 @@ export const SPAWN_OF = { ibuHijab: 'wargaHijab', ibuHijab2: 'wargaHijab', ibuDa
   buruh: 'buruh', guru: 'guruAcak', turis: 'turis', penonton: 'penonton', santri: 'santri', muridSilat: 'muridSilat', persit: 'persit',
   anakSTM: 'siswaSTM', anakSTMbengkel: 'siswaSTM~praktek', anakSTMgaul: 'siswaSTM~nongkrong', anakSMK: 'siswaSMK', anakSMKhotel: 'siswaSMK~hotel', anakSMKboga: 'siswaSMK~tataBoga', anakSMKpemandu: 'siswaSMK~pemandu' };
 const SEED_NEXT = {};
+// jenis kelamin tiap seed 0..7 per template (dihitung dari gen() di raka/spawn_base.js; L = cowok, P = cewek)
+const SEED_SEX = {"wargaAnak":"LLPPPPPP","buruh":"PLLLLPPP","guruAcak":"LPLLLLLP","wargaHijab":"PPPPPPPP","kuli":"LLLLLLLL","wargaLansia":"LLPPLLLP","mekanik":"LLLLLLLL","wargaMuda":"PLLPPLLP","nelayan":"PLLLLLLL","ojolLewat":"LLLPLLLL","tukangParkir":"LLLLLLLL","pedagang":"LPLLLPLL","pendaki":"LPPPLLLP","penonton":"PPLPLLLL","persit":"PPPPPPPP","petani":"LLPPLPPP","polisi":"LLPLLPPP","wargaPria":"LLLLLLLL","santri":"LLLLLPLP","satpamAcak":"LLLLLPLP","muridSilat":"LPLLPLPP","siswaAcak":"LLLLLLLL","siswiAcak":"PPPPPPPP","siswaSMK":"PPPLLPPP","siswaSTM":"LLPLLLLL","tentara":"LLLLLLLL","turis":"PPLLLPLL","wargaWanita":"PPPPPPPP"};
+// template pengganti kalau templatenya tidak punya seed dengan jenis kelamin yang dibutuhkan
+const SEX_ALT = { L: { wargaWanita: 'wargaPria', wargaHijab: 'wargaPria', persit: 'wargaPria', siswiAcak: 'siswaAcak' }, P: { wargaPria: 'wargaWanita', kuli: 'wargaWanita', mekanik: 'wargaWanita', tukangParkir: 'wargaWanita', tentara: 'persit', siswaAcak: 'siswiAcak' } };
+// tebak jenis kelamin dari nama: sapaan dulu (Mas/Bu/...), lalu nama depan yang umum
+const T_L = /^(mas|bang|pak|kang|mang|om|kakek|uda|wak|koh|cak|ki|kyai|ustaz|opa|aa|bapak|babe|abah|mandor|juru|marshal|serma|kopral|ir\.?|engkong|cang|mbah\s+(karso|saleh|karto|darmo|kakung))$/;
+const T_P = /^(bu|ibu|mbak|teh|nyonya|nek|nenek|mak|neng|ceu|oma|tante|bidan|mbok|cici|ning|kak\s+nana|mbah\s+(putri|uti|sumi))$/;
+const N_P = new Set('sinta dewi nisa ayu rina fitri maya lilis sutini ulfa euis iyem tarmi wati enok sri rini yuni lita nana lastri dian siti ani ina tini ratih sari indah putri nur wulan tuti atun cicih warsih iyah ijah inah sumi lina desi vina mira novi rani intan fatimah aisyah zahra salsa nadia laras mega ningsih yanti susi sumiati karsih darsih romlah ratna hartini melati veronika nining imas neneng eti oneng ocih popon yayah ani tari lia sasa citra eva nia ida ema icih asih wiwin titin iis lela leni yati marni sumarni'.split(' '));
+const N_L = new Set('dani fikri joko hadi usman rendi sabar tono gilang dedi udin yanto iwan rohim zaki hamdan darsim waryo reza andre dodi ferry gugun hari bagas bejo asep ujang ipul somad jalu darno tejo mamat romli bowo ogah kumis saleh karso opik dion jono wijaya sugeng bambang agus budi eko rudi andi bayu rizki ilham kevin raffi arif fajar yusuf rusdi lukman sarip tarno ucok roni darmin darsono karto sadap darsa sarpan bonar jaka dimas arga rizal tegar bram andra bimo kobar rio tito gito haris aldi doni yoga dika rangga fauzi teguh wahyu adi heru slamet paijo sukri parman karjo jalal codet bogel dewa tio dirjo bagong jarwo darto ucup otong'.split(' '));
+export function genderOf(name) {
+  const w = String(name || '').replace(/["()]/g, ' ').toLowerCase().split(/\s+/).filter(Boolean); if (!w.length) return null;
+  const two = w.slice(0, 2).join(' ');
+  if (T_P.test(two) || T_P.test(w[0])) return 'P';
+  if (T_L.test(two) || (w[0] !== 'mbah' && T_L.test(w[0]))) return 'L';
+  for (const x of w) { if (N_P.has(x)) return 'P'; if (N_L.has(x)) return 'L'; }
+  return null;
+}
+const SID_SEX = { anakPunk: 'L', ibuHijab: 'P', ibuHijab2: 'P', ibuDaster: 'P', mbak: 'P', anakSDcw: 'P', petaniW: 'P', bapakPeci: 'L', pemuda: 'L', pakRT: 'L', kakek: 'L', anakSD: 'L', tukangBakso: 'L', ojol: 'L', mandor: 'L', satpam: 'L', polisi: 'L', siswaA: 'L', siswaB: 'L', siswiA: 'P', siswiB: 'P', anakSTM: 'L', anakSTMbengkel: 'L', anakSTMgaul: 'L' };
+function pickSeed(role, sex) {
+  const S = SEED_SEX[role], k = sex ? role + sex : role;
+  const ok = [...Array(8).keys()].filter(v => !sex || !S || S[v] === sex);
+  const i = SEED_NEXT[k] = ((SEED_NEXT[k] ?? (role.length * 3) % 8) + 1) % 8;
+  return ok.length ? ok[i % ok.length] : i;
+}
 export function visualSid(sid, name) {
   if (name && NAME_VIS[name]) return NAME_VIS[name];
   const t = SPAWN_OF[sid]; if (!t) return sid;
-  const [role, outfit] = t.split('~'), v = SEED_NEXT[role] = ((SEED_NEXT[role] ?? (role.length * 3) % 8) + 1) % 8;
-  return role + '_' + v + (outfit ? '~' + outfit : '');
+  let [role, outfit] = t.split('~');
+  const sex = genderOf(name) || SID_SEX[sid] || null;
+  if (sex && SEED_SEX[role] && !SEED_SEX[role].includes(sex)) { role = SEX_ALT[sex][role] || role; outfit = null; }
+  return role + '_' + pickSeed(role, SEED_SEX[role]?.includes(sex) ? sex : null) + (outfit ? '~' + outfit : '');
 }
 export class Character {
   constructor(sid, o = {}) {

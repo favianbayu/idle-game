@@ -125,10 +125,14 @@ export function makeRutin({ scene, collision, player, Character, npcs, interiors
     const wasAway = n.rtAway; n.rtAway = false;
     n.area = ZONE_AREA[p.zone];
     n.home = { x: p.x, z: p.z }; n.rtAnim = w.anim; n.roam = MOVING.has(w.anim) ? 2.2 : 0;
+    // macet: jarak ke tujuan tidak berkurang 0.5 petak dalam 3 detik (tembok, pagar) -> pindah langsung
+    const tk = p.x.toFixed(1) + ',' + p.z.toFixed(1);
+    if (far > 3 && rt.tk === tk && rt.best != null && far > rt.best - 0.5) rt.stuck += 0.5; else { rt.best = far; rt.stuck = 0; }
+    rt.tk = tk;
     if (far > 3) {
       const zoneSame = rt.zone === p.zone;
       // pindah langsung kalau tidak kelihatan pemain, beda wilayah, atau macet
-      if (wasAway || !zoneSame || pd > 32 || rt.stuck > 4) { n.x = p.x; n.z = p.z; n.tx = p.x; n.tz = p.z; rt.stuck = 0; n.wait = 0.5; n.idle = w.anim; }
+      if (wasAway || !zoneSame || pd > 32 || rt.stuck > 3) { n.x = p.x; n.z = p.z; n.tx = p.x; n.tz = p.z; rt.stuck = 0; rt.best = 0; n.wait = 0.5; n.idle = w.anim; }
       else if (Math.hypot(n.tx - p.x, n.tz - p.z) > 1) { n.tx = p.x; n.tz = p.z; n.wait = 0; }
     }
     rt.zone = p.zone;
@@ -143,6 +147,7 @@ export function makeRutin({ scene, collision, player, Character, npcs, interiors
       if (!gid || seen.has(gid) || n.ext || n.area || !String(n.key).startsWith('n')) continue;
       seen.add(gid); attach(n, gid);
     }
+    for (const n of npcs) if (n.filler && !n.rt && !n.area && /^[nwp]\d/.test(String(n.key))) { n.school = n.home && n.home.x > SCHOOL_OX - 6; fillers.push(n); }
     // tokoh yang belum ada di kota (Wulan: rumahnya di gunung, sekolahnya di SMA 3)
     for (const gid of ['wulan']) if (!seen.has(gid) && D.n[gid]) {
       const sid = D.n[gid].sid, c = new Character(sid, { name: styleName(sid) }); scene.add(c.group);
@@ -154,8 +159,23 @@ export function makeRutin({ scene, collision, player, Character, npcs, interiors
   function attach(n, gid) { n.rt = { gid, base: n.c.vsid.split('~')[0], stuck: 0, zone: null }; n.home0 = { ...n.home }; ruled.push(n); }
 
   let tT = 0;
+  // NPC pengisi (bukan tokoh guide): ritme sederhana. Malam pulang (hilang), anak sekolah cuma ada di jam sekolah,
+  // pedagang sekolah tutup sore, tukang parkir pulang jam 22, pejalan kaki tinggal sepertiga di malam hari.
+  const fillers = [];
+  const SCH_KID = new Set(['siswaA', 'siswaB', 'siswiA', 'siswiB', 'paskibra']), SCH_JUAL = new Set(['ibuHijab', 'tukangBakso', 'pakPras']);
+  const NIGHT = new Set(['satpam', 'satpamBambang', 'polisiSugeng', 'pengamenDul']);
+  function fillerHidden(n, t, c) {
+    if (n.mood || n.say) return false;
+    if (n.school) { if (SCH_KID.has(n.sid)) return c.libur || t < 375 || t >= 1020; if (SCH_JUAL.has(n.sid)) return c.libur || t < 360 || t >= 1050; return false; }
+    if (n.key[0] === 'w') return (t < 300 || t >= 1290) && +n.key.slice(1) % 3 !== 0;
+    if (n.key[0] === 'p') return t < 420 || t >= 1320;
+    if (NIGHT.has(n.sid)) return false;
+    return t < 300 || t >= 1320;
+  }
   function tick() {
     for (const n of ruled) if (!n.mood) apply(n, want(n));
+    const t = now(), c = waktu.cal();
+    for (const n of fillers) n.rtAway = fillerHidden(n, t, c);
   }
 
   /* ---------------- event hati */
@@ -297,7 +317,6 @@ export function makeRutin({ scene, collision, player, Character, npcs, interiors
     tag(n) { return n.rt && n.rt.keg ? short(n.rt.keg) : ''; },
     update(dt) {
       tT -= dt; if (tT > 0) return; tT = 0.5; tick();
-      for (const n of ruled) { const rt = n.rt; if (!n.rtAway && n.wait <= 0 && Math.hypot(n.tx - n.x, n.tz - n.z) > 0.3) { const mv = Math.hypot(n.x - (rt.px ?? n.x), n.z - (rt.pz ?? n.z)); rt.stuck = mv < 0.15 ? rt.stuck + 0.5 : 0; } else rt.stuck = 0; rt.px = n.x; rt.pz = n.z; }
       if (K.style.display === 'block') { const sig = (nearToko() || '') + '|' + (nearNpc()?.key || ''); if (sig !== kSig) render(); }
     },
   };
