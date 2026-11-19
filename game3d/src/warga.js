@@ -135,7 +135,7 @@ export function spawnWarga(A) {
     const box = bboxOf(areaIds), S = spots((x, z) => okLand(x, z) && inA(x, z, areaIds), cnt, box, 4);
     S.forEach(([x, z], i) => {
       const an = (K.areas[areaIds[0]].angle || 0) * Math.PI / 180, ux = Math.cos(an), uz = Math.sin(an), st = [];
-      for (let k = 0; k < 4; k++) { const px = x + ux * k * 1.1, pz = z + uz * k * 1.1; if (!okLand(px, pz) || !inA(px, pz, areaIds)) break; st.push({ x: px, z: pz, a: 'squat', t: 5, h: an + Math.PI / 2 }); }
+      for (let k = 0; k < 4; k++) { const px = x + ux * k * 1.1, pz = z + uz * k * 1.1; if (!okLand(px, pz) || !inA(px, pz, areaIds)) break; st.push({ x: px, z: pz, a: k % 2 ? 'hoe' : 'squat', t: 5, h: an + Math.PI / 2 }); }   // tanam padi / mencangkul
       if (!st.length) return;
       st.push({ ...st.at(-1), a: rpick(['stretch', 'look', 'idle']), t: 2.5, say: ['Panas, istirahat dulu.', 'Padinya bagus tahun ini.', 'Hus, hus! Burung!'], p: 0.3 });
       for (let k = st.length - 2; k > 0; k--) st.push({ ...st[k] });

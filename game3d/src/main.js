@@ -603,8 +603,9 @@ function updatePlayer(dt) {
 // variasi diam NPC: siswa main HP/ngobrol/baca, orang dewasa jongkok/peregangan, anak-anak joget; beberapa tokoh punya kebiasaan sendiri (guide)
 const STUDENTS = new Set(['raka', 'rani', 'bimo', 'tegar', 'jojo', 'uti', 'nadia', 'sekar', 'laras', 'dimas', 'arga', 'rizal', 'bram', 'rio', 'kevin', 'sasha', 'siswaA', 'siswiA', 'siswiB', 'siswaB', 'paskibra', 'kirana', 'mei', 'andra', 'anakSTM', 'anakSTMgaul', 'anakSTMbengkel']);
 const KIDS = new Set(['anakSD', 'anakSDcw', 'bocah', 'cici']);
-const HABIT = { pakUjang: 'sweep', mei: 'read', rizal: 'read', jojo: 'phone', sekar: 'think', fajar: 'squat', satpam: 'salute', paskibra: 'salute', polisi: 'salute', kakek: 'squat', andra: 'think', laras: 'carry', bimo: 'laugh', tegar: 'read', pakGunadi: 'think', buRatna: 'read', anakSTM: 'talk', anakSTMgaul: 'phone', anakSTMbengkel: 'squat' };
+const HABIT = { pakUjang: 'sweep', mei: 'read', rizal: 'read', jojo: 'phone', sekar: 'think', fajar: 'wrench', satpam: 'salute', paskibra: 'salute', polisi: 'salute', kakek: 'squat', andra: 'think', laras: 'carry', bimo: 'laugh', tegar: 'read', pakGunadi: 'think', buRatna: 'read', anakSTM: 'talk', anakSTMgaul: 'phone', anakSTMbengkel: 'wrench' };
 const IDLES = { student: ['idle', 'idle', 'phone', 'talk', 'look', 'think', 'laugh', 'read', 'clap'], adult: ['idle', 'idle', 'look', 'phone', 'talk', 'squat', 'stretch', 'scratch'], kid: ['idle', 'look', 'dance', 'squat', 'wave', 'clap'] };
+const MOVE_ANIM = { skate: 'skate', galonWalk: 'galonWalk', run: 'run' };   // kegiatan jadwal yang tetap dipakai saat berpindah
 const pick3 = a => a[Math.floor(Math.random() * a.length)];
 function pickIdle(n) {
   if (n.rtAnim) return n.rtAnim;   // jadwal guide 35: kegiatan sesuai jam
@@ -644,7 +645,7 @@ function updateNPC(n, dt) {
   }
   // jangan tembus pemain
   const pd = Math.hypot(dx, dz); if (pd < 0.55 && pd > 1e-4) { n.x = player.x + dx / pd * 0.55; n.z = player.z + dz / pd * 0.55; }
-  n.c.heading = n.heading; n.c.play(moving ? (n.galon ? 'galonWalk' : 'walk') : n.galon ? 'galon' : n.say && !n.filler ? 'talk' : n.idle || 'idle');
+  n.c.heading = n.heading; n.c.play(moving ? (n.galon ? 'galonWalk' : MOVE_ANIM[n.rtAnim] || 'walk') : n.galon ? 'galon' : n.say && !n.filler ? 'talk' : n.idle || 'idle');
   n.c.group.position.set(n.x, !n.area || n.area === 'kota' ? kota.groundY(n.x, n.z) : n.area === 'luar' ? luar.groundY(n.x, n.z) : 0, n.z); n.c.update(dt);
   if (n.say) { n.say.t -= dt; if (n.say.t <= 0) n.say = null; }
   n.greetT -= dt;

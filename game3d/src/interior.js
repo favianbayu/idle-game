@@ -195,7 +195,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     R.sign('back', ['KOPI', 'Warkop Simpang'], -0.2, 1.3, 0.7, 0.32, '#3a2214', '#f2d29a', 40);
     pot(m, P(-4.1, 3.0), 1.1, '#e83a5a'); pot(m, P(1.0, 3.0), 1.0, '#f2f2f2');
     R.spot(3.4, -1.0, 1.1, 'Tidur (nyawa pulih)', sleep);
-    R.spot(-1.2, -1.6, 1.0, 'Makan masakan Bu Narti (gratis)', () => acts.doAct('sitDown', 2.4, () => { player.fx.hp = Math.min(fight.maxHP(), player.fx.hp + 6); toast('Kenyang! Nyawa +6'); }));
+    R.spot(-1.2, -1.6, 1.0, 'Makan masakan Bu Narti (gratis)', () => acts.doAct('eat', 4, () => { player.fx.hp = Math.min(fight.maxHP(), player.fx.hp + 6); toast('Kenyang! Nyawa +6'); }));
     R.spot(2.3, -2.3, 0.9, 'Belajar (Nyali +)', () => acts.doAct('read', 4, () => { fight.gain('nyali', 1.5); toast('Belajar bikin pede. Nyali naik dikit.'); }));
     R.spot(-2.2, 0.2, 1.0, 'Nonton TV', () => { player.emote = 'sitDown'; toast('Berita: balap liar di Jalan Lingkar makin rame...'); });
     addNPC(R, 'cici', 'Cici', 0.4, 1.2, ['Kak Raka, bantuin PR matematika dong!', 'Om Darto lagi di gerobak.', 'Jangan berantem terus, nanti dimarahin Om.'], 0.8);
@@ -369,10 +369,10 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     for (let r = 0; r < 3; r++) box(55, 36.5 + r * 2.2, 10, 1.6, 0.02, r % 2 ? '#a83a3a' : '#c84a4a', { y: 0.005 }); box(54, 40.6, 0.6, 1.6, 0.5, '#7a5030', { solid: true });
     // titik interaksi
     spot(26, cz, 1.6, 'Latihan lari bolak-balik (Kelincahan)', () => acts.doAct('run', 4, () => { fight.gain('kelincahan', 3); toast('Ngos-ngosan... Kelincahan naik!'); }));
-    spot(18, cz - 3, 1.4, 'Main badminton (sewa lapangan Rp20.000)', () => { if (player.uang < 20000) { toast('Sewa lapangan Rp20.000 sejam. Uangnya kurang.'); return; } player.uang -= 20000; shop.showMoney(); acts.doAct('raiseHand', 4, () => { fight.gain('kelincahan', 4); toast('Smes! Sejam main badminton. Kelincahan naik.'); }); });
+    spot(18, cz - 3, 1.4, 'Main badminton (sewa lapangan Rp20.000)', () => { if (player.uang < 20000) { toast('Sewa lapangan Rp20.000 sejam. Uangnya kurang.'); return; } player.uang -= 20000; shop.showMoney(); acts.doAct('racket', 4, () => { fight.gain('kelincahan', 4); toast('Smes! Sejam main badminton. Kelincahan naik.'); }); });
     spot(51, 6.6, 1.5, 'Lari di treadmill (kardio: Kelincahan)', gymSession('Kardio treadmill', 'run', ['kelincahan']));
     spot(52, 9.75, 1.3, 'Sepeda statis (kardio: Kelincahan)', gymSession('Sepeda statis', 'run', ['kelincahan']));
-    spot(60.5, 9.0, 1.2, 'Dumbel & bench press (Kekuatan)', gymSession('Beban bebas', 'carry', ['kekuatan']));
+    spot(60.5, 9.0, 1.2, 'Dumbel & bench press (Kekuatan)', gymSession('Beban bebas', 'lift', ['kekuatan']));
     spot(55, 13.4, 1.3, 'Leg press & lat pulldown (Kekuatan)', gymSession('Latihan mesin', 'squat', ['kekuatan']));
     spot(51.5, 18, 1.6, 'Sparring di ring tinju (Kekuatan + Nyali)', gymSession('Sparring', 'straight', ['kekuatan', 'nyali']));
     spot(60.75, 20.75, 1.8, 'Latihan silat di matras (Kelincahan)', gymSession('Latihan silat', 'kickHigh', ['kelincahan']));
@@ -382,7 +382,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     spot(15, 34.9, 1.2, 'Loket tiket event', () => toast('Petugas: "Belum ada event minggu ini, Dik. Gym & badminton buka tiap hari."'));
     spot(39, 32.9, 1.3, 'Jajan di Kantin GOR', () => shop.open({ title: 'Kantin GOR', sub: 'Habis olahraga, isi tenaga', items: CATALOG.warung, thanks: 'Semangat latihannya!' }));
     spot(49.5, 32.4, 1.1, 'Rebahan di ruang medis (nyawa +50%)', () => acts.doAct('lie', 3, () => { player.fx.hp = Math.min(fight.maxHP(), player.fx.hp + fight.maxHP() * 0.5); toast('Dikompres es & dikasih plester. Mendingan.'); }));
-    spot(59.5, 40, 1.4, 'Salat sebentar (hati tenang, Nyali +)', () => acts.doAct('bow', 3, () => { fight.gain('nyali', 1); toast('Hati jadi tenang.'); }));
+    spot(59.5, 40, 1.4, 'Salat sebentar (hati tenang, Nyali +)', () => acts.doAct('pray', 6, () => { fight.gain('nyali', 1); toast('Hati jadi tenang.'); }));
     npc('pakRT', 'Coach Herman', 57.5, 23.4, ['Latihan itu konsisten, bukan sekali gas.', 'Maksimal dua sesi sehari. Otot juga butuh tidur.', 'Kardio buat napas, beban buat tenaga, silat buat gesit.'], 1.2);
     npc('kakek', 'Pak Komar (penjaga GOR)', 15, 35.6, ['Jangan lupa lepas sepatu yang kotor.', 'Bola dikembalikan ke keranjang, ya.'], 0.6);
     npc('ibuHijab', 'Bu Kantin GOR', 38, 32.6, ['Es teh, es jeruk, nasi bungkus!', 'Habis main basket pasti haus.'], 0.4);
@@ -589,7 +589,7 @@ export function makeInteriors({ scene, kota, collision, player, Character, npcs,
     let workT = -999;
     spot(3.2, 11.3, 1.3, 'Servis motor praktik (+Rp15.000)', () => {
       if (performance.now() - workT < 60000) { toast('Pak Darmo: "Motornya udah beres semua. Nanti lagi."'); return; }
-      toast('Ganti oli...'); acts.doAct('squat', 2, () => { toast('Setel karbu...'); acts.doAct('crouch', 2, () => { toast('Ganti kampas rem...'); acts.doAct('squat', 2, () => { workT = performance.now(); shop.earn(15000, 'Servis beres! Upah praktik'); fight.gain('kelincahan', 1); }); }); });
+      toast('Ganti oli...'); acts.doAct('wrench', 2, () => { toast('Setel karbu...'); acts.doAct('wrench', 2, () => { toast('Ganti kampas rem...'); acts.doAct('wrench', 2, () => { workT = performance.now(); shop.earn(15000, 'Servis beres! Upah praktik'); fight.gain('kelincahan', 1); }); }); });
     });
     spot(33, 7.6, 1.3, 'Ukur tenaga motor di dyno', () => { const u = (player.upg || {}).motor || 0; acts.doAct('crouch', 2.5, () => toast(`Dyno: motor bebek kamu ${(8.2 * (1 + 0.1 * u)).toFixed(1)} dk, top speed ±${Math.round(116 * (1 + 0.03 * u))} km/j (upgrade ${u}/5).`)); });
     spot(36.5, 12.4, 1.3, 'Koperasi suku cadang (20% lebih murah)', () => shop.open({ title: 'Koperasi Suku Cadang STM', sub: 'Part murah anak STM, 20% di bawah bengkel kota', items: CATALOG.bengkel.map(([n, p, e, c]) => [n, Math.round(p * 0.8 / 1000) * 1000, e, c]), thanks: 'Pasang sendiri ya, anak STM.' }));

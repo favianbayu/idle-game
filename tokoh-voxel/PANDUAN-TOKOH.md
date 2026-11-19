@@ -206,6 +206,7 @@ OUTFITS.hujan = { ...OUTFITS.jalan, name: 'Hujan: ponco kuning, payung lipat bir
 - Template spawn (`spawn_base.js`) memisah sendiri: barang `d.handR`/`d.handL` digambar di salinan, lalu selisihnya jadi `propR`/`propL`.
 - Game (voxworker) memanggil `showProps(P, anim)`. Barang sprite hanya tampil kalau jenisnya `all`: tongkat jalan, payung hujan, senapan jaga, tas tangan, lampu, senter. Barang lain selalu disembunyikan di game.
 - Barang kegiatan (sapu, HP, buku, kardus, pancing, galon, pedang) digambar oleh anim lewat `rig.js` dari pose (`P.broom`, `P.phone`, `P.book`, dan sejenisnya). Kalau barang sprite ikut tampil, barangnya jadi dobel (favian, 2026-11-19).
+- Barang kegiatan baru (penggaris, wajan, piring, gitar, kamera, sajadah, skate, bola, dll.) dibuat sebagai anim di `voxlib.js` `ACT_ANIMS` dengan `pose.tool`, lalu digambar `tools()` di `rig.js`. Saat anim itu jalan, barang `all` sprite juga disembunyikan (`BUSY` di `model.js`). Daftar lengkap: `game3d/KEGIATAN-ANIMASI.md`.
 - Jenis barang spawn ada di `HELD_KIND` (`model.js`). Untuk tokoh bespoke, set `propOn: 'all'` di `OUTFITS` supaya barangnya tetap tampil, misalnya tongkat Mbah Karto.
 - `held: false` mematikan pemotongan, untuk benda yang dipakai di tangan seperti sarung tinju Rio.
 - Viewer memanggil `showProps(P, anim, o.prop)`. Lembar pratinjau baju memakai `"prop": true` supaya barang sprite tetap terlihat.

@@ -212,6 +212,7 @@ const POSE0 = {
   ftL: 0, ftR: 0, // sudut telapak kaki (tumit/jinjit)
   phone: 0,       // memegang HP di tangan kanan
   box: 0, book: 0, // membawa kardus / membaca buku (dua tangan)
+  tool: 0, tl: 0, // barang kegiatan (nomor, lihat ACT_ANIMS) + parameter geraknya; digambar oleh raka/rig.js
 };
 const limb = a => [Math.sin(a), 0, -Math.cos(a)];
 const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
@@ -881,6 +882,70 @@ const ANIMS = {
   cheer:    { name: 'Selebrasi', kind: 'full', n: 8, fps: 9, loop: true, pose: t => { const s = Math.abs(sinT(t)); return { arL: 2.9, arR: 2.9, elL: 0.3, elR: 0.3, spL: 0.45, spR: 0.45, jump: 3 * s, knL: 0.4 * (1 - s), knR: 0.4 * (1 - s), hp: 0.25 }; } },
   catch:    { name: 'Tangkap bola', kind: 'upper', n: 4, fps: 6, loop: true, pose: t => ({ arL: 1.35, arR: 1.35, elL: 0.6, elR: 0.6, spL: 0.25, spR: 0.25, lean: 0.1 + 0.03 * sinT(t) }) },
 };
+// --- anim kegiatan (jadwal NPC & aksi pemain) dengan barang di tangan. Barang digambar raka/rig.js dari pose.tool:
+//  1 penggaris + buku  2 wajan + sutil  3 piring + sendok  4 gelas kopi  5 kunci pas  6 gitar  7 kamera  8 buku sketsa + pensil
+//  9 kuas + kaleng cat  10 dumbel  11 raket  12 cangkul  13 sajadah  14 papan skate  15 bola basket  16 bola sepak  17 pulpen
+//  18 kalkulator  19 kipas bambu  20 gembor  21 nampan + 2 gelas
+const SITB = { lean: -0.05, thL: 1.7, thR: 1.7, knL: 1.5, knR: 1.5, spL: 0.2, spR: 0.2 };   // duduk di kursi/bangku, kaki menapak
+const ACT_ANIMS = {
+  teach:   { name: 'Mengajar (penggaris)', kind: 'upper', n: 8, fps: 5, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 1, arR: 1.45 + 0.2 * s, elR: 0.25, spR: 0.35, arL: 0.45, elL: 1.5, spL: 0.25, hy: 0.35 + 0.15 * s, hp: 0.05, lean: 0.02, tw: -0.15 }; } },
+  cook:    { name: 'Memasak (wajan)', kind: 'full', move: 0, n: 8, fps: 7, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { tool: 2, tl: t, lean: 0.14, hp: -0.4, arL: 0.75, elL: 0.75, spL: 0.05, arR: 0.85 + 0.12 * s, elR: 0.95 + 0.15 * c, spR: 0.0, tw: 0.08 * s, sy: 0.1 * c, knL: 0.12, knR: 0.12 }; } },
+  eat:     { name: 'Makan (piring)', kind: 'full', move: 0, n: 10, fps: 5, loop: true, pose: keyed([
+    [0, { ...SITB, tool: 3, arL: 0.55, elL: 1.15, arR: 0.6, elR: 1.0, hp: -0.4 }], [0.35, { arR: 0.55, elR: 1.05 }],
+    [0.6, { arR: 0.85, elR: 2.0, spR: 0.0, hp: -0.1 }], [0.75, { arR: 0.85, elR: 2.0 }], [1, { arR: 0.6, elR: 1.0, spR: 0.2, hp: -0.4 }]]) },
+  drink:   { name: 'Ngopi (gelas)', kind: 'full', move: 0, n: 10, fps: 4, loop: true, pose: keyed([
+    [0, { ...SITB, tool: 4, arR: 0.45, elR: 1.2, arL: 0.2, elL: 0.6, hy: 0.2 }], [0.45, { hy: -0.15 }],
+    [0.65, { arR: 0.75, elR: 2.05, spR: 0.0, hp: 0.12, hy: 0 }], [0.8, { arR: 0.75, elR: 2.05, hp: 0.12 }], [1, { arR: 0.45, elR: 1.2, spR: 0.2, hp: 0, hy: 0.2 }]]) },
+  wrench:  { name: 'Servis (kunci pas)', kind: 'full', move: 0, n: 6, fps: 7, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 5, lean: 0.5, hp: -0.35, thL: 1.95, thR: 1.85, knL: 2.65, knR: 2.6, ftL: 0.2, ftR: 0.2, arR: 1.2 + 0.15 * s, elR: 0.45 - 0.25 * s, spR: 0.15 + 0.15 * s, arL: 1.0, elL: 0.6, spL: 0.25 }; } },
+  guitar:  { name: 'Main gitar (duduk)', kind: 'full', move: 0, n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t * 2);
+    return { ...SITB, tool: 6, lean: 0.06, hp: -0.25, hr: 0.1, arR: 0.35, elR: 1.25 + 0.18 * s, spR: 0.1, arL: 0.95, elL: 1.25, spL: 0.75, hy: -0.2, tw: 0.15 }; } },
+  busk:    { name: 'Ngamen (gitar berdiri)', kind: 'full', move: 0, n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t * 2), c = cosT(t);
+    return { tool: 6, lean: 0.02, hp: 0.05 + 0.05 * c, arR: 0.35, elR: 1.35 + 0.18 * s, spR: 0.1, arL: 0.95, elL: 1.25, spL: 0.75, hy: -0.15, tw: 0.15, sy: 0.3 * c, knL: 0.15 + 0.1 * Math.max(0, c), knR: 0.15 }; } },
+  photo:   { name: 'Memotret (kamera)', kind: 'upper', n: 10, fps: 6, loop: true, pose: keyed([
+    [0, { tool: 7, arR: 1.0, elR: 1.9, spR: 0.15, arL: 1.0, elL: 1.9, spL: 0.15, hp: 0.0 }], [0.4, { hy: 0.25 }], [0.55, { hy: 0.25, elR: 2.0 }], [0.65, { elR: 1.9 }], [1, { hy: 0 }]]) },
+  sketch:  { name: 'Menggambar (buku sketsa)', kind: 'full', move: 0, n: 8, fps: 5, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { ...SITB, tool: 8, arL: 0.5, elL: 1.55, spL: 0.2, arR: 0.55 + 0.05 * s, elR: 1.45 + 0.08 * c, spR: 0.05, hp: -0.45, hy: 0.05 * s }; } },
+  paint:   { name: 'Mengecat (kuas)', kind: 'full', move: 0, n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 9, arR: 2.0 + 0.35 * s, elR: 0.25, spR: 0.25, arL: 0.2, elL: 0.9, spL: 0.15, hp: 0.15 + 0.15 * s, lean: -0.05, thL: 0.2, thR: -0.15 }; } },
+  lift:    { name: 'Angkat dumbel', kind: 'full', move: 0, n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 10, arL: 0.15, arR: 0.15, elL: 1.3 - 1.05 * s, elR: 1.3 + 1.05 * s, spL: 0.2, spR: 0.2, lean: -0.03, thL: 0.1, thR: -0.05, hp: 0.05 }; } },
+  racket:  { name: 'Main badminton (raket)', kind: 'full', move: 0, n: 12, fps: 10, loop: true, pose: keyed([
+    [0, { tool: 11, arR: 0.9, elR: 1.2, spR: 0.35, arL: 0.8, elL: 0.6, thL: 0.3, thR: -0.25, knL: 0.35, knR: 0.35, lean: 0.12 }],
+    [0.35, { arR: 2.6, elR: 1.6, spR: 0.5, arL: 2.0, elL: 0.3, lean: -0.15, tw: 0.45, hy: 0.1 }],
+    [0.55, { arR: 2.4, elR: 0.1, spR: 0.2, arL: 0.6, elL: 0.8, lean: 0.25, tw: -0.4, jump: 1.5 }],
+    [0.75, { arR: 0.9, elR: 0.6, jump: 0, tw: -0.1 }], [1, { arR: 0.9, elR: 1.2, spR: 0.35, lean: 0.12, tw: 0 }]]) },
+  hoe:     { name: 'Mencangkul', kind: 'full', move: 0, n: 10, fps: 7, loop: true, pose: keyed([
+    [0, { tool: 12, arR: 0.55, elR: 0.35, spR: -0.15, arL: 0.75, elL: 0.3, spL: -0.15, lean: 0.6, hp: -0.3, thL: 0.45, thR: -0.25, knL: 0.55, knR: 0.35 }],
+    [0.45, { arR: 2.5, elR: 0.6, arL: 2.6, elL: 0.6, lean: -0.05, hp: 0.05 }],
+    [0.65, { arR: 0.6, elR: 0.3, arL: 0.8, elL: 0.25, lean: 0.62, hp: -0.3 }], [1, { arR: 0.55, elR: 0.35, arL: 0.75, elL: 0.3 }]]) },
+  pray:    { name: 'Salat (sajadah)', kind: 'full', move: 0, n: 24, fps: 4, loop: true, pose: keyed([
+    [0, { tool: 13, arL: 0.55, elL: 1.75, spL: -0.35, arR: 0.6, elR: 1.75, spR: -0.35, hp: -0.25 }], [0.2, {}],
+    [0.3, { lean: 1.45, hp: -0.1, arL: 0.95, elL: 0.0, spL: 0.0, arR: 0.95, elR: 0.0, spR: 0.0, knL: 0.05, knR: 0.05 }], [0.4, {}],
+    [0.5, { lean: 0.03, arL: 0.08, elL: 0.25, arR: 0.08, elR: 0.25, spL: 0.12, spR: 0.12, hp: -0.25 }],
+    [0.62, { lean: 2.0, hp: 0.25, thL: 0.45, thR: 0.45, knL: 2.05, knR: 2.05, ftL: 0.9, ftR: 0.9, arL: 0.75, elL: 0.35, arR: 0.75, elR: 0.35, spL: 0.35, spR: 0.35 }],
+    [0.76, {}], [0.84, { lean: 0.15, hp: -0.3, thL: 1.7, thR: 1.7, knL: 2.9, knR: 2.9, ftL: 0.9, ftR: 0.9, arL: 0.5, elL: 0.9, arR: 0.5, elR: 0.9, spL: 0.1, spR: 0.1 }],
+    [0.92, {}], [1, { lean: 0.03, hp: -0.25, thL: 0, thR: 0, knL: 0.1, knR: 0.1, ftL: 0, ftR: 0, arL: 0.55, elL: 1.75, spL: -0.35, arR: 0.6, elR: 1.75, spR: -0.35 }]]) },
+  skate:   { name: 'Main skateboard', kind: 'loco', n: 8, fps: 6, stride: 50, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { tool: 14, bob: 1.6, lean: 0.12, thL: 0.35, thR: -0.3, knL: 0.45 + 0.1 * s, knR: 0.35 + 0.1 * s, arL: 0.45 + 0.1 * c, arR: 0.3, elL: 0.4, elR: 0.5, spL: 0.7, spR: 0.6, tw: 0.35, hy: -0.3, sy: 0.15 * c }; } },
+  bball:   { name: 'Dribel bola basket', kind: 'full', move: 0, n: 8, fps: 9, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 15, tl: Math.abs(cosT(t / 1)), arR: 0.55 + 0.25 * s, elR: 0.55 - 0.25 * s, spR: 0.3, arL: 0.6, elL: 1.2, spL: 0.25, lean: 0.2, hp: -0.15, thL: 0.35, thR: -0.2, knL: 0.5, knR: 0.45 }; } },
+  kickAbout:{ name: 'Main bola (sepak)', kind: 'full', move: 0, n: 10, fps: 10, loop: true, pose: keyed([
+    [0, { tool: 16, tl: 0 }], [0.35, { thR: -0.7, knR: 1.3, thL: 0.15, knL: 0.3, lean: 0.1, arL: 0.9, spL: 0.5, arR: -0.3, tw: 0.2 }],
+    [0.55, { thR: 1.0, knR: 0.2, lean: -0.15, arL: 0.4, arR: 0.6, spR: 0.4, tw: -0.25, tl: 1 }], [0.75, { thR: 0.3, knR: 0.3, tl: 0.4 }], [1, { thR: 0, knR: 0.1, thL: 0, knL: 0.1, lean: 0.03, arL: 0.08, arR: 0.08, spL: 0.12, spR: 0.12, tw: 0, tl: 0 }]]) },
+  write:   { name: 'Menulis (pulpen)', kind: 'full', move: 0, n: 6, fps: 4, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 17, lean: 0.18, hp: -0.4, thL: 1.6, thR: 1.6, knL: 1.6, knR: 1.6, arL: 1.0, arR: 1.1 + 0.04 * s, elL: 1.3, elR: 1.25 + 0.06 * cosT(t), spL: 0.25, spR: 0.15 }; } },
+  cashier: { name: 'Jaga kasir (kalkulator)', kind: 'upper', n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t * 2);
+    return { tool: 18, arL: 0.65, elL: 1.25, spL: 0.1, arR: 0.75, elR: 1.15 + 0.1 * Math.max(0, s), spR: -0.1, hp: -0.35, lean: 0.06 }; } },
+  sell:    { name: 'Jualan (kipas)', kind: 'upper', n: 6, fps: 8, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 19, arR: 0.85, elR: 0.75 + 0.45 * s, spR: 0.2, arL: 0.3, elL: 1.4, spL: 0.1, hp: -0.25, hy: 0.2 * cosT(t / 2), lean: 0.08 }; } },
+  water:   { name: 'Menyiram tanaman (gembor)', kind: 'full', move: 0, n: 8, fps: 4, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 20, tl: 0.6 + 0.15 * s, arR: 0.75, elR: 0.35, spR: 0.25, arL: 0.25, elL: 0.6, lean: 0.2, hp: -0.4, thL: 0.25, thR: -0.15, knL: 0.3, knR: 0.25, hy: 0.25 * s }; } },
+  serve:   { name: 'Bawa nampan', kind: 'upper', n: 4, fps: 3, loop: true, pose: t => ({ tool: 21, arL: 0.45, elL: 1.15, spL: 0.25, arR: 0.45, elR: 1.15, spR: 0.25, lean: -0.03, hp: -0.1 + 0.02 * sinT(t) }) },
+};
+Object.assign(ANIMS, ACT_ANIMS);
 ANIMS.getup = { name: 'Bangun', kind: 'full', move: 0, n: 8, fps: 9, pose: t => ANIMS.fall.pose(1 - t) };
 const COMBOS = { punch: ['jab', 'straight', 'hook', 'uppercut'], kick: ['kickFront', 'kickHigh'], slash: ['slashH', 'slashV', 'thrust', 'spin'] };
 const FAMILY = {}; for (const f in COMBOS) for (const a of COMBOS[f]) FAMILY[a] = f;
@@ -1044,6 +1109,7 @@ const POSE0 = {
   tail: 0,          // ekor mullet terbang ke belakang
   roll: 0,          // seluruh badan berputar ke depan (guling)
   bob: 0,           // badan naik-turun tanpa lepas dari tanah (satuan voxel lama)
+  tool: 0, tl: 0,   // barang kegiatan (lihat ACT_ANIMS di voxlib.js) + parameter geraknya
 };
 // matriks: [r00..r22 (baris), tx, ty, tz]
 function mul(A, B) {
@@ -1126,6 +1192,7 @@ function rigPose(P0, boxes, K = SKEL_RAKA, tailPiv = TAIL_PIV) {
     for (let i = 0; i < 8; i++) { const p = apply(m[k], [b[i & 1 ? 3 : 0], b[i & 2 ? 4 : 1], b[i & 4 ? 5 : 2]]); if (p[2] < lo) lo = p[2]; }
   }
   all(chain(rotZ(P.yaw || 0), tr(0, 0, -lo + P.bob * 2)));
+  groundProps(P, m, prims);
   if (still) for (let i = 9; i < 12; i++) m.head[i] = Math.round(m.head[i]);
   // ekor mullet: ikut kepala, cenderung menggantung tegak, terbang ke belakang saat bergerak
   const ta = Math.max(-0.15, Math.min(1.2, ha * 0.8)) - P.tail;
@@ -1143,7 +1210,7 @@ const addv = (a, d, k) => [a[0] + d[0] * k, a[1] + d[1] * k, a[2] + d[2] * k];
 const rotYo = (v, t) => [v[0] * Math.cos(t) - v[2] * Math.sin(t), v[1], v[2] * Math.cos(t) + v[0] * Math.sin(t)];   // sama dengan voxlib
 function props(P, m, C, K) {
   const out = [];
-  if (!(P.sword > 0.5 || P.broom > 0.5 || P.rod > 0.5 || P.phone > 0.5 || P.box > 0.5 || P.book > 0.5 || P.orb > 0 || P.galon > 0.5)) return out;
+  if (!(P.sword > 0.5 || P.broom > 0.5 || P.rod > 0.5 || P.phone > 0.5 || P.box > 0.5 || P.book > 0.5 || P.orb > 0 || P.galon > 0.5 || P.tool >= 0.5)) return out;
   const hand = k => apply(m['fore' + k], [0.5, 0, -K.fore - 1.5]), elbow = k => apply(m['fore' + k], [0, 0, 0]);
   const hR = hand('R'), hL = hand('L'), fw = [Math.cos(P.lean), 0, -Math.sin(P.lean)], up = [Math.sin(P.lean), 0, Math.cos(P.lean)];
   const cap = (a, b, r0, r1, mat) => out.push({ t: 'cap', p: [a, b], r: [r0, r1], mat });
@@ -1186,7 +1253,109 @@ function props(P, m, C, K) {
     cap(addv(hR, brd, -3 * U), addv(hR, brd, 10 * U), 0.55 * U, 0.55 * U, 'stick');
     cap(addv(hR, brd, 9.5 * U), addv(hR, brd, 14 * U), 0.7 * U, 2.6 * U, 'bristle');
   }
+  if (P.tool >= 0.5) tools(Math.round(P.tool), P, out, hR, hL, elbow('R'), elbow('L'), m, K);
   return out;
+}
+
+// ---- barang kegiatan (pose.tool). Arah: X = maju, Y = samping (kanan +), Z = naik, dalam koordinat model sebelum yaw.
+const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+// kotak berorientasi: c = pusat, a/b/n = sumbu (dinormalkan), h = setengah ukuran di tiap sumbu
+const obox = (out, c, a, b, n, h, mat) => { a = nrm(a); b = nrm(b); n = nrm(n); out.push({ t: 'box', p: [c, addv(c, a, 1), addv(c, b, 1), addv(c, n, 1)], h, mat }); };
+const capT = (out, a, b, r0, r1, mat) => out.push({ t: 'cap', p: [a, b], r: [r0, r1], mat });
+const sphT = (out, c, r, mat) => out.push({ t: 'sph', p: [c], r, mat });
+// silinder ujung datar (frame.js 't: cyl'): base, sumbu, panjang, jari-jari (r1 = jari-jari ujung atas, untuk wajan/ember)
+const cyl = (out, base, axis, len, r, mat, r1 = r) => out.push({ t: 'cyl', p: [base, addv(base, axis, len)], r: [r, r1], mat });
+function tools(id, P, out, hR, hL, eR, eL, m, K) {
+  const dR = nrm(sub3(hR, eR)), dL = nrm(sub3(hL, eL));   // arah lengan bawah (siku -> kepalan)
+  if (id === 1) {   // penggaris papan tulis di tangan kanan + buku di tangan kiri
+    capT(out, addv(hR, dR, -1.5), addv(hR, dR, 30), 0.7, 0.6, 'tRuler');
+    const c = addv(addv(hL, X, 2.5), Z, 1.5);
+    obox(out, c, X, Y, Z, [0.6, 4.5, 5.5], 'tPaper'); obox(out, addv(c, X, -0.4), X, Y, Z, [0.9, 5, 6], 'book');
+  } else if (id === 2) {   // wajan di tangan kiri, sutil di tangan kanan mengaduk
+    const pc = addv(addv(hL, X, 7.5), Z, -1);
+    cyl(out, addv(pc, Z, 1.2), Z, 0.8, 4.2, 'tFood');
+    cyl(out, pc, Z, 2.4, 4.2, 'tIron', 6.2);
+    capT(out, addv(hL, X, -1), addv(pc, nrm(sub3(hL, pc)), 7), 0.8, 0.8, 'stick');
+    const tip = addv(addv(pc, Z, 2.6), [Math.cos(P.tl * 6.28), Math.sin(P.tl * 6.28), 0], 2);
+    capT(out, addv(hR, nrm(sub3(hR, tip)), 2), tip, 0.6, 0.6, 'stick'); sphT(out, tip, 1.6, 'tMetal');
+  } else if (id === 3) {   // piring di tangan kiri, sendok di tangan kanan
+    const pc = addv(addv(hL, X, 4), Y, 3);
+    cyl(out, addv(pc, Z, 0.9), Z, 1.6, 3.2, 'tRice', 1.6);
+    cyl(out, pc, Z, 0.9, 4.2, 'tPlate', 5.2);
+    capT(out, addv(hR, dR, -0.5), addv(hR, dR, 5), 0.45, 0.45, 'tMetal'); sphT(out, addv(hR, dR, 5.8), 1.2, 'tMetal');
+  } else if (id === 4) {   // gelas kopi di tangan kanan
+    const b = addv(addv(hR, X, 1.5), Z, -2);
+    cyl(out, addv(b, Z, 4.3), Z, 0.6, 2.0, 'tCoffee'); cyl(out, b, Z, 5, 2.4, 'tPlate');
+  } else if (id === 5) {   // kunci pas
+    const w = nrm(addv(dR, Y, -0.6));
+    capT(out, addv(hR, w, -1.5), addv(hR, w, 7), 0.6, 0.6, 'tMetal'); sphT(out, addv(hR, w, 8), 1.5, 'tMetal');
+  } else if (id === 6) {   // gitar: badan di paha kanan / perut, leher ke tangan kiri
+    const c = addv(addv(hR, Y, -1.5), Z, -2.5), a = nrm(sub3(hL, c)), n0 = X, b = nrm(cross(a, n0)), n = nrm(cross(b, a));
+    obox(out, addv(c, n, 1.7), a, b, n, [1.6, 1.6, 0.4], 'tIron');
+    obox(out, c, a, b, n, [5.5, 6.5, 1.6], 'tGuitar'); obox(out, addv(c, a, 6), a, b, n, [3, 4.8, 1.6], 'tGuitar');
+    capT(out, addv(c, a, 8), addv(hL, a, 4), 0.9, 0.9, 'stick'); obox(out, addv(hL, a, 5), a, b, n, [1.5, 1.2, 0.8], 'stick');
+  } else if (id === 7) {   // kamera di depan mata, dua tangan
+    const c = addv(mid(hR, hL), X, 1.2);
+    obox(out, addv(c, X, 2.6), X, Y, Z, [1.2, 1.5, 1.5], 'tMetal'); obox(out, c, X, Y, Z, [1.6, 3.8, 2.2], 'tIron');
+  } else if (id === 8) {   // buku sketsa (kiri) + pensil (kanan)
+    const c = addv(addv(hL, X, 2), Y, 3), a = 0.8, f2 = [Math.cos(a), 0, -Math.sin(a)], u2 = [Math.sin(a), 0, Math.cos(a)];
+    obox(out, addv(c, f2, 0.5), f2, Y, u2, [0.4, 5, 4], 'tPaper'); obox(out, c, f2, Y, u2, [0.6, 5.4, 4.4], 'tBoard');
+    capT(out, addv(hR, dR, -0.5), addv(hR, dR, 4.5), 0.45, 0.3, 'tPencil');
+  } else if (id === 9) {   // kuas (kanan) + kaleng cat (kiri)
+    capT(out, addv(hR, dR, -1), addv(hR, dR, 6), 0.5, 0.5, 'stick'); capT(out, addv(hR, dR, 6), addv(hR, dR, 8.5), 1.1, 0.9, 'tPaint');
+    const b = addv(hL, Z, -5.5); cyl(out, addv(b, Z, 4.6), Z, 0.5, 2.5, 'tPaint'); cyl(out, b, Z, 5, 3.0, 'tMetal');
+    capT(out, addv(b, Z, 5), hL, 0.3, 0.3, 'tMetal');
+  } else if (id === 10) {   // dumbel di kedua tangan
+    for (const h of [hR, hL]) { capT(out, addv(h, Y, -3.5), addv(h, Y, 3.5), 0.7, 0.7, 'tMetal'); for (const k of [-3.5, 3.5]) capT(out, addv(h, Y, k - 0.8), addv(h, Y, k + 0.8), 2.4, 2.4, 'tIron'); }
+  } else if (id === 11) {   // raket badminton
+    const hc = addv(hR, dR, 11), b = nrm(cross(dR, X)).some(isNaN) ? Y : nrm(cross(dR, X)), n = nrm(cross(dR, b));
+    capT(out, addv(hR, dR, -1.5), addv(hR, dR, 6.5), 0.7, 0.45, 'tIron');
+    obox(out, hc, dR, b, n, [3.6, 2.8, 0.25], 'tString'); obox(out, hc, dR, b, n, [4.4, 3.4, 0.6], 'tPaint');
+  } else if (id === 12) {   // cangkul: gagang lewat dua tangan, mata cangkul di ujung menghadap badan
+    const d = nrm(addv(dR, dL, 1)), h0 = mid(hR, hL), e = addv(h0, d, 22), n = nrm(cross(d, Y));
+    capT(out, addv(h0, d, -4), e, 0.8, 0.8, 'stick');
+    obox(out, addv(addv(e, n, -3), d, 0.8), d, Y, n, [0.5, 2.6, 3.2], 'tMetal');
+  } else if (id === 15) {   // bola basket memantul di bawah tangan kanan
+    const g = addv(hR, X, 1.5), z = g[2] - 3 - (1 - P.tl) * Math.max(0, g[2] - 9);
+    sphT(out, [g[0], g[1], z], 3.6, 'tBasket');
+  } else if (id === 17) {   // pulpen
+    capT(out, addv(hR, dR, -0.5), addv(hR, dR, 4), 0.4, 0.3, 'tIron');
+  } else if (id === 18) {   // kalkulator di tangan kiri
+    const c = addv(addv(hL, X, 1.5), Y, 2.5), a = 0.5, f2 = [Math.cos(a), 0, -Math.sin(a)], u2 = [Math.sin(a), 0, Math.cos(a)];
+    obox(out, addv(addv(c, f2, 0.5), u2, 1.6), f2, Y, u2, [0.2, 1.8, 0.8], 'tScreen'); obox(out, c, f2, Y, u2, [0.6, 2.4, 3.4], 'tCalc');
+  } else if (id === 19) {   // kipas bambu
+    const b = nrm(cross(dR, Z)).some(isNaN) ? Y : nrm(cross(dR, Z)), n = nrm(cross(dR, b));
+    capT(out, addv(hR, dR, -1), addv(hR, dR, 3), 0.45, 0.45, 'stick');
+    obox(out, addv(hR, dR, 6.5), dR, b, n, [3.5, 3.2, 0.3], 'tWeave');
+  } else if (id === 20) {   // gembor
+    const b = addv(hR, Z, -6), t = P.tl || 0.6, sp = nrm([Math.cos(t), 0, -Math.sin(t)]);
+    cyl(out, b, Z, 6, 3.0, 'tCan'); capT(out, addv(b, Z, 6.3), hR, 0.4, 0.4, 'tCan');
+    capT(out, addv(addv(b, Z, 2), X, 2), addv(addv(addv(b, Z, 2), X, 2), sp, 8), 0.6, 0.6, 'tCan'); sphT(out, addv(addv(addv(b, Z, 2), X, 2), sp, 8.5), 1.2, 'tCan');
+  } else if (id === 21) {   // nampan + dua gelas kopi
+    const c = addv(addv(mid(hR, hL), X, 3.5), Z, 1.2);
+    obox(out, c, X, Y, Z, [5, 7.5, 0.4], 'tMetal');
+    for (const k of [-3.2, 3.2]) { const g = addv(c, Y, k); cyl(out, addv(g, Z, 5.4), Z, 0.6, 1.9, 'tCoffee'); cyl(out, addv(g, Z, 0.4), Z, 5.6, 2.3, 'tPlate'); }
+  }
+}
+// barang di tanah (sesudah badan menapak): sajadah, papan skate, bola sepak
+function groundProps(P, m, out) {
+  const id = Math.round(P.tool || 0); if (id !== 13 && id !== 14 && id !== 16) return;
+  const yaw = P.yaw || 0, f = [Math.cos(yaw), Math.sin(yaw), 0], s = [-Math.sin(yaw), Math.cos(yaw), 0];
+  const fL = apply(m.footL, [2, 0, -4.5]), fR = apply(m.footR, [2, 0, -4.5]), c = mid(fL, fR);
+  if (id === 13) {   // sajadah: hijau, pinggir kuning, mihrab di ujung depan
+    const g = [c[0], c[1], 0.4], k = addv(g, f, 12);
+    obox(out, addv(addv(k, f, 9), Z, 0.05), f, s, Z, [2.2, 3.5, 0.5], 'tMat2');
+    obox(out, k, f, s, Z, [16, 7.2, 0.4], 'tMat'); obox(out, addv(k, Z, -0.05), f, s, Z, [17, 8.2, 0.4], 'tMat2');
+  } else if (id === 14) {   // papan skate di bawah kaki
+    const g = [c[0], c[1], 2.0];
+    obox(out, g, f, s, Z, [13, 4.2, 0.6], 'tIron');
+    for (const a of [-8.5, 8.5]) for (const b of [-3, 3]) sphT(out, addv(addv([g[0], g[1], 1.1], f, a), s, b), 1.1, 'tBasket');
+  } else {   // bola sepak di depan kaki kanan, menggelinding saat ditendang
+    const g = addv(addv([fR[0], fR[1], 3.4], f, 5 + 14 * (P.tl || 0)), s, -1);
+    sphT(out, g, 3.4, 'tBallW'); for (const [a, b, z] of [[1, 0, 1], [-1, 1.5, -0.5], [0, -2, 0.5]]) sphT(out, addv(addv(addv(g, f, a * 2.2), s, b), Z, z * 2), 1.2, 'tBallK');
+  }
 }
 
 return { POSE0, mul, tr, rotY, rotX, rotZ, apply, SKEL_RAKA, pivots, PIV, TAIL_PIV, rigPose };
@@ -1222,6 +1391,17 @@ const RAMPS = {
   box: ['#7a5c34', '#98744a', '#b8905a', '#d2ac78'], seam: ['#d9c49a'],
   galon: ['#4a90c4', '#62a6d4', '#82bce2', '#aad4f0'], galonS: ['#3a78a8'], galonT: ['#2470b0'], book: ['#22406e', '#2e5590', '#3a6ab0', '#5a88cc'], page: ['#f4f0e2'],
   plaster: ['#f4e2bf'], plasterS: ['#dcc396'], osis: ['#c7922b'], tag: ['#2a3350'], gold: ['#f0cb52'],
+  // barang kegiatan (raka/rig.js tools)
+  tRuler: ['#a8742a', '#c98f3a', '#e2ae58', '#f2cb7e'], tPaper: ['#e8e2d0', '#f4f0e2', '#fbf8ee', '#ffffff'],
+  tIron: ['#18181c', '#24242a', '#33333b', '#4a4a55'], tMetal: ['#7d8794', '#9da7b4', '#c4ced8', '#e4ecf2'],
+  tFood: ['#a8641c', '#c8822a', '#e2a040', '#f2c060'], tRice: ['#e8e4d8', '#f4f2ea', '#fcfbf6', '#ffffff'], tPlate: ['#c8ccd4', '#dde1e8', '#eef1f5', '#ffffff'],
+  tCoffee: ['#2a170c', '#3a2214', '#4e2f1c', '#6a4228'], tGuitar: ['#7a3c12', '#9a5018', '#bc6a24', '#d88a3c'],
+  tBoard: ['#5a3a1c', '#704a26', '#8a5e32', '#a87842'], tPencil: ['#c89a10', '#e2b41c', '#f4cc34', '#ffe066'],
+  tPaint: ['#8a1a1a', '#b02424', '#d23a30', '#ec5a48'], tString: ['#dcdcd4', '#ecece6', '#f8f8f4', '#ffffff'],
+  tMat: ['#1a4a2a', '#22603a', '#2e7a4a', '#3e9660'], tMat2: ['#a8841c', '#c8a028', '#e2bc40', '#f2d466'],
+  tBasket: ['#a84a14', '#c8601c', '#e27a2a', '#f29a48'], tBallW: ['#c8ccd4', '#e2e6ec', '#f2f4f8', '#ffffff'], tBallK: ['#18181c'],
+  tCalc: ['#3a3e48', '#4a505c', '#5e6574', '#78808e'], tScreen: ['#8aa070'], tWeave: ['#a07a3a', '#bc944a', '#d6ae62', '#ead080'],
+  tCan: ['#2a6a3a', '#348248', '#409c58', '#58b870'],
 };
 // daftar bahan bersama untuk semua tokoh (indeks 1..n, maks 65535; kisi memakai Uint16Array); tokoh lain menambah lewat addRamps()
 const MAT = [], MI = {}, RAMP_RGB = [];
@@ -1648,9 +1828,12 @@ const SHOWN = new WeakMap();
 // P tanpa barang pegangan sprite (all = tampilkan semua, untuk lembar pratinjau). Barang kegiatan (sapu, HP, buku,
 // kardus, pancing...) sudah digambar oleh anim lewat rig.js, jadi barang sprite cuma tampil kalau propOn 'all'
 // (bawaan tetap: tongkat, payung, tas, senapan, lampu). Selain itu disembunyikan supaya tidak dobel.
+// anim yang tangannya sedang memegang barang kegiatan: barang 'all' (tongkat, tas, payung) ikut disembunyikan supaya tidak bertumpuk
+const BUSY = new Set(['teach', 'cook', 'eat', 'drink', 'wrench', 'guitar', 'busk', 'photo', 'sketch', 'paint', 'lift', 'racket', 'hoe', 'pray', 'skate', 'bball',
+  'kickAbout', 'write', 'cashier', 'sell', 'water', 'serve', 'read', 'phone', 'carry', 'galon', 'galonWalk', 'sweep', 'fishCast', 'fishWait', 'fishPull', 'fishShow', 'sitDesk']);
 function showProps(P, anim, all = false) {
   if (all || !P.parts.some(p => p.name === 'propR' || p.name === 'propL')) return P;
-  const on = n => (P.propOn || {})[n] === 'all';
+  const on = n => !BUSY.has(anim) && (P.propOn || {})[n] === 'all';
   const key = (on('propR') ? 'R' : '') + (on('propL') ? 'L' : '');
   let c = SHOWN.get(P); if (!c) SHOWN.set(P, c = {});
   return c[key] || (c[key] = { ...P, parts: P.parts.filter(p => (p.name !== 'propR' || key.includes('R')) && (p.name !== 'propL' || key.includes('L'))) });
@@ -17888,7 +18071,7 @@ function voxelFrame(P, pose) {
     items.push({ p, M, bb });
   }
   for (const q of r.prims) {   // properti
-    const e = q.t === 'cap' ? Math.max(q.r[0], q.r[1]) : q.t === 'sph' ? q.r : Math.hypot(...q.h) + 1;
+    const e = q.t === 'cap' || q.t === 'cyl' ? Math.max(q.r[0], q.r[1]) : q.t === 'sph' ? q.r : Math.hypot(...q.h) + 1;
     const pts = q.t === 'box' ? [q.p[0]] : q.p;
     for (const c of pts) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], c[k] - e); hi[k] = Math.max(hi[k], c[k] + e); }
   }
@@ -17900,7 +18083,7 @@ function voxelFrame(P, pose) {
   // properti dulu (menang atas tangan yang menggenggamnya); ditandai supaya boleh menembus tanah
   const PR = r.prims.length ? new Uint8Array(L * W * H) : null;
   for (const q of r.prims) {
-    const m = P.mat(q.mat), e = q.t === 'cap' ? Math.max(q.r[0], q.r[1]) : q.t === 'sph' ? q.r : Math.hypot(...q.h) + 1;
+    const m = P.mat(q.mat), e = q.t === 'cap' || q.t === 'cyl' ? Math.max(q.r[0], q.r[1]) : q.t === 'sph' ? q.r : Math.hypot(...q.h) + 1;
     const pts = q.t === 'box' ? [q.p[0]] : q.p, a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9];
     for (const c of pts) for (let k = 0; k < 3; k++) { a[k] = Math.min(a[k], c[k] - e); b[k] = Math.max(b[k], c[k] + e); }
     let test;
@@ -17908,6 +18091,9 @@ function voxelFrame(P, pose) {
     else if (q.t === 'cap') {
       const [A, B] = q.p, ab = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], L2 = ab[0] ** 2 + ab[1] ** 2 + ab[2] ** 2 || 1;
       test = (x, y, z) => { const ax = x - A[0], ay = y - A[1], az = z - A[2]; let t = (ax * ab[0] + ay * ab[1] + az * ab[2]) / L2; t = t < 0 ? 0 : t > 1 ? 1 : t; const r = q.r[0] + (q.r[1] - q.r[0]) * t; return (ax - ab[0] * t) ** 2 + (ay - ab[1] * t) ** 2 + (az - ab[2] * t) ** 2 <= r * r; };
+    } else if (q.t === 'cyl') {   // silinder ujung datar (piring, wajan, gelas, kaleng)
+      const [A, B] = q.p, ab = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], L2 = ab[0] ** 2 + ab[1] ** 2 + ab[2] ** 2 || 1;
+      test = (x, y, z) => { const ax = x - A[0], ay = y - A[1], az = z - A[2], t = (ax * ab[0] + ay * ab[1] + az * ab[2]) / L2; if (t < 0 || t > 1) return false; const r = q.r[0] + (q.r[1] - q.r[0]) * t; return (ax - ab[0] * t) ** 2 + (ay - ab[1] * t) ** 2 + (az - ab[2] * t) ** 2 <= r * r; };
     } else {
       const c = q.p[0], ax = [1, 2, 3].map(i => [q.p[i][0] - c[0], q.p[i][1] - c[1], q.p[i][2] - c[2]]);
       test = (x, y, z) => { const d = [x - c[0], y - c[1], z - c[2]]; for (let i = 0; i < 3; i++) if (Math.abs(d[0] * ax[i][0] + d[1] * ax[i][1] + d[2] * ax[i][2]) > q.h[i]) return false; return true; };
@@ -18092,7 +18278,9 @@ const MINE = {
 };
 const ANIMS = { ...OLD, ...MINE };
 const ANIM_LIST = ['stand', 'idle', 'walk', 'run', 'galon', 'galonWalk', 'sprint', 'guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'hurt', 'taunt', 'hairFix', 'squat',
-  'rideSport', 'wave', 'talk', 'laugh', 'dance', 'scratch', 'think', 'clap', 'sit', 'jump', 'fall', 'getup', 'bow', 'raiseHand', 'salute', 'crouch', 'climb', 'push'];
+  'rideSport', 'wave', 'talk', 'laugh', 'dance', 'scratch', 'think', 'clap', 'sit', 'jump', 'fall', 'getup', 'bow', 'raiseHand', 'salute', 'crouch', 'climb', 'push',
+  // kegiatan dengan barang (voxlib ACT_ANIMS)
+  'teach', 'cook', 'eat', 'drink', 'wrench', 'guitar', 'busk', 'photo', 'sketch', 'paint', 'lift', 'racket', 'hoe', 'pray', 'skate', 'bball', 'kickAbout', 'write', 'cashier', 'sell', 'water', 'serve'];
 // ekspresi otomatis mengikuti gerakan
 const FIGHT = new Set(['guard', 'jab', 'straight', 'hook', 'uppercut', 'kickFront', 'kickHigh', 'rideSport', 'motoLean', 'sprint', 'push', 'climb']);
 function exprFor(anim, i, n) {

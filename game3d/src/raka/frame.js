@@ -24,7 +24,7 @@ export function voxelFrame(P, pose) {
     items.push({ p, M, bb });
   }
   for (const q of r.prims) {   // properti
-    const e = q.t === 'cap' ? Math.max(q.r[0], q.r[1]) : q.t === 'sph' ? q.r : Math.hypot(...q.h) + 1;
+    const e = q.t === 'cap' || q.t === 'cyl' ? Math.max(q.r[0], q.r[1]) : q.t === 'sph' ? q.r : Math.hypot(...q.h) + 1;
     const pts = q.t === 'box' ? [q.p[0]] : q.p;
     for (const c of pts) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], c[k] - e); hi[k] = Math.max(hi[k], c[k] + e); }
   }
@@ -36,7 +36,7 @@ export function voxelFrame(P, pose) {
   // properti dulu (menang atas tangan yang menggenggamnya); ditandai supaya boleh menembus tanah
   const PR = r.prims.length ? new Uint8Array(L * W * H) : null;
   for (const q of r.prims) {
-    const m = P.mat(q.mat), e = q.t === 'cap' ? Math.max(q.r[0], q.r[1]) : q.t === 'sph' ? q.r : Math.hypot(...q.h) + 1;
+    const m = P.mat(q.mat), e = q.t === 'cap' || q.t === 'cyl' ? Math.max(q.r[0], q.r[1]) : q.t === 'sph' ? q.r : Math.hypot(...q.h) + 1;
     const pts = q.t === 'box' ? [q.p[0]] : q.p, a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9];
     for (const c of pts) for (let k = 0; k < 3; k++) { a[k] = Math.min(a[k], c[k] - e); b[k] = Math.max(b[k], c[k] + e); }
     let test;
@@ -44,6 +44,9 @@ export function voxelFrame(P, pose) {
     else if (q.t === 'cap') {
       const [A, B] = q.p, ab = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], L2 = ab[0] ** 2 + ab[1] ** 2 + ab[2] ** 2 || 1;
       test = (x, y, z) => { const ax = x - A[0], ay = y - A[1], az = z - A[2]; let t = (ax * ab[0] + ay * ab[1] + az * ab[2]) / L2; t = t < 0 ? 0 : t > 1 ? 1 : t; const r = q.r[0] + (q.r[1] - q.r[0]) * t; return (ax - ab[0] * t) ** 2 + (ay - ab[1] * t) ** 2 + (az - ab[2] * t) ** 2 <= r * r; };
+    } else if (q.t === 'cyl') {   // silinder ujung datar (piring, wajan, gelas, kaleng)
+      const [A, B] = q.p, ab = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], L2 = ab[0] ** 2 + ab[1] ** 2 + ab[2] ** 2 || 1;
+      test = (x, y, z) => { const ax = x - A[0], ay = y - A[1], az = z - A[2], t = (ax * ab[0] + ay * ab[1] + az * ab[2]) / L2; if (t < 0 || t > 1) return false; const r = q.r[0] + (q.r[1] - q.r[0]) * t; return (ax - ab[0] * t) ** 2 + (ay - ab[1] * t) ** 2 + (az - ab[2] * t) ** 2 <= r * r; };
     } else {
       const c = q.p[0], ax = [1, 2, 3].map(i => [q.p[i][0] - c[0], q.p[i][1] - c[1], q.p[i][2] - c[2]]);
       test = (x, y, z) => { const d = [x - c[0], y - c[1], z - c[2]]; for (let i = 0; i < 3; i++) if (Math.abs(d[0] * ax[i][0] + d[1] * ax[i][1] + d[2] * ax[i][2]) > q.h[i]) return false; return true; };

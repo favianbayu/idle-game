@@ -27,6 +27,17 @@ export const RAMPS = {
   box: ['#7a5c34', '#98744a', '#b8905a', '#d2ac78'], seam: ['#d9c49a'],
   galon: ['#4a90c4', '#62a6d4', '#82bce2', '#aad4f0'], galonS: ['#3a78a8'], galonT: ['#2470b0'], book: ['#22406e', '#2e5590', '#3a6ab0', '#5a88cc'], page: ['#f4f0e2'],
   plaster: ['#f4e2bf'], plasterS: ['#dcc396'], osis: ['#c7922b'], tag: ['#2a3350'], gold: ['#f0cb52'],
+  // barang kegiatan (raka/rig.js tools)
+  tRuler: ['#a8742a', '#c98f3a', '#e2ae58', '#f2cb7e'], tPaper: ['#e8e2d0', '#f4f0e2', '#fbf8ee', '#ffffff'],
+  tIron: ['#18181c', '#24242a', '#33333b', '#4a4a55'], tMetal: ['#7d8794', '#9da7b4', '#c4ced8', '#e4ecf2'],
+  tFood: ['#a8641c', '#c8822a', '#e2a040', '#f2c060'], tRice: ['#e8e4d8', '#f4f2ea', '#fcfbf6', '#ffffff'], tPlate: ['#c8ccd4', '#dde1e8', '#eef1f5', '#ffffff'],
+  tCoffee: ['#2a170c', '#3a2214', '#4e2f1c', '#6a4228'], tGuitar: ['#7a3c12', '#9a5018', '#bc6a24', '#d88a3c'],
+  tBoard: ['#5a3a1c', '#704a26', '#8a5e32', '#a87842'], tPencil: ['#c89a10', '#e2b41c', '#f4cc34', '#ffe066'],
+  tPaint: ['#8a1a1a', '#b02424', '#d23a30', '#ec5a48'], tString: ['#dcdcd4', '#ecece6', '#f8f8f4', '#ffffff'],
+  tMat: ['#1a4a2a', '#22603a', '#2e7a4a', '#3e9660'], tMat2: ['#a8841c', '#c8a028', '#e2bc40', '#f2d466'],
+  tBasket: ['#a84a14', '#c8601c', '#e27a2a', '#f29a48'], tBallW: ['#c8ccd4', '#e2e6ec', '#f2f4f8', '#ffffff'], tBallK: ['#18181c'],
+  tCalc: ['#3a3e48', '#4a505c', '#5e6574', '#78808e'], tScreen: ['#8aa070'], tWeave: ['#a07a3a', '#bc944a', '#d6ae62', '#ead080'],
+  tCan: ['#2a6a3a', '#348248', '#409c58', '#58b870'],
 };
 // daftar bahan bersama untuk semua tokoh (indeks 1..n, maks 65535; kisi memakai Uint16Array); tokoh lain menambah lewat addRamps()
 const MAT = [], MI = {}, RAMP_RGB = [];
@@ -453,9 +464,12 @@ const SHOWN = new WeakMap();
 // P tanpa barang pegangan sprite (all = tampilkan semua, untuk lembar pratinjau). Barang kegiatan (sapu, HP, buku,
 // kardus, pancing...) sudah digambar oleh anim lewat rig.js, jadi barang sprite cuma tampil kalau propOn 'all'
 // (bawaan tetap: tongkat, payung, tas, senapan, lampu). Selain itu disembunyikan supaya tidak dobel.
+// anim yang tangannya sedang memegang barang kegiatan: barang 'all' (tongkat, tas, payung) ikut disembunyikan supaya tidak bertumpuk
+const BUSY = new Set(['teach', 'cook', 'eat', 'drink', 'wrench', 'guitar', 'busk', 'photo', 'sketch', 'paint', 'lift', 'racket', 'hoe', 'pray', 'skate', 'bball',
+  'kickAbout', 'write', 'cashier', 'sell', 'water', 'serve', 'read', 'phone', 'carry', 'galon', 'galonWalk', 'sweep', 'fishCast', 'fishWait', 'fishPull', 'fishShow', 'sitDesk']);
 export function showProps(P, anim, all = false) {
   if (all || !P.parts.some(p => p.name === 'propR' || p.name === 'propL')) return P;
-  const on = n => (P.propOn || {})[n] === 'all';
+  const on = n => !BUSY.has(anim) && (P.propOn || {})[n] === 'all';
   const key = (on('propR') ? 'R' : '') + (on('propL') ? 'L' : '');
   let c = SHOWN.get(P); if (!c) SHOWN.set(P, c = {});
   return c[key] || (c[key] = { ...P, parts: P.parts.filter(p => (p.name !== 'propR' || key.includes('R')) && (p.name !== 'propL' || key.includes('L'))) });
