@@ -12,7 +12,7 @@
 
 ## Penampilan
 
-Tinggi 1.18 (paling pendek), kulit kuning langsat, rambut bob sebahu hitam dengan jepit pensil kuning. Kacamata bulat
+Tinggi 1.24 (rangka sama dengan Rani; tampak mungil dari bahu sempit dan pipi tembam), kulit kuning langsat, rambut bob sebahu hitam dengan jepit pensil kuning. Kacamata bulat
 besar yang sering melorot. Pipi tembam, mata sipit yang hilang saat tertawa. Ada noda tinta di jari tengah kanan.
 
 ## Pakaian
