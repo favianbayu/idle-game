@@ -171,6 +171,7 @@ const POSE0 = {
   ftL: 0, ftR: 0, // sudut telapak kaki (tumit/jinjit)
   phone: 0,       // memegang HP di tangan kanan
   box: 0, book: 0, // membawa kardus / membaca buku (dua tangan)
+  tool: 0, tl: 0, // barang kegiatan (nomor, lihat ACT_ANIMS) + parameter geraknya; digambar oleh raka/rig.js
 };
 const limb = a => [Math.sin(a), 0, -Math.cos(a)];
 const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
@@ -840,6 +841,70 @@ const ANIMS = {
   cheer:    { name: 'Selebrasi', kind: 'full', n: 8, fps: 9, loop: true, pose: t => { const s = Math.abs(sinT(t)); return { arL: 2.9, arR: 2.9, elL: 0.3, elR: 0.3, spL: 0.45, spR: 0.45, jump: 3 * s, knL: 0.4 * (1 - s), knR: 0.4 * (1 - s), hp: 0.25 }; } },
   catch:    { name: 'Tangkap bola', kind: 'upper', n: 4, fps: 6, loop: true, pose: t => ({ arL: 1.35, arR: 1.35, elL: 0.6, elR: 0.6, spL: 0.25, spR: 0.25, lean: 0.1 + 0.03 * sinT(t) }) },
 };
+// --- anim kegiatan (jadwal NPC & aksi pemain) dengan barang di tangan. Barang digambar raka/rig.js dari pose.tool:
+//  1 penggaris + buku  2 wajan + sutil  3 piring + sendok  4 gelas kopi  5 kunci pas  6 gitar  7 kamera  8 buku sketsa + pensil
+//  9 kuas + kaleng cat  10 dumbel  11 raket  12 cangkul  13 sajadah  14 papan skate  15 bola basket  16 bola sepak  17 pulpen
+//  18 kalkulator  19 kipas bambu  20 gembor  21 nampan + 2 gelas
+const SITB = { lean: -0.05, thL: 1.7, thR: 1.7, knL: 1.5, knR: 1.5, spL: 0.2, spR: 0.2 };   // duduk di kursi/bangku, kaki menapak
+const ACT_ANIMS = {
+  teach:   { name: 'Mengajar (penggaris)', kind: 'upper', n: 8, fps: 5, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 1, arR: 1.45 + 0.2 * s, elR: 0.25, spR: 0.35, arL: 0.45, elL: 1.5, spL: 0.25, hy: 0.35 + 0.15 * s, hp: 0.05, lean: 0.02, tw: -0.15 }; } },
+  cook:    { name: 'Memasak (wajan)', kind: 'full', move: 0, n: 8, fps: 7, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { tool: 2, tl: t, lean: 0.14, hp: -0.4, arL: 0.75, elL: 0.75, spL: 0.05, arR: 0.85 + 0.12 * s, elR: 0.95 + 0.15 * c, spR: 0.0, tw: 0.08 * s, sy: 0.1 * c, knL: 0.12, knR: 0.12 }; } },
+  eat:     { name: 'Makan (piring)', kind: 'full', move: 0, n: 10, fps: 5, loop: true, pose: keyed([
+    [0, { ...SITB, tool: 3, arL: 0.55, elL: 1.15, arR: 0.6, elR: 1.0, hp: -0.4 }], [0.35, { arR: 0.55, elR: 1.05 }],
+    [0.6, { arR: 0.85, elR: 2.0, spR: 0.0, hp: -0.1 }], [0.75, { arR: 0.85, elR: 2.0 }], [1, { arR: 0.6, elR: 1.0, spR: 0.2, hp: -0.4 }]]) },
+  drink:   { name: 'Ngopi (gelas)', kind: 'full', move: 0, n: 10, fps: 4, loop: true, pose: keyed([
+    [0, { ...SITB, tool: 4, arR: 0.45, elR: 1.2, arL: 0.2, elL: 0.6, hy: 0.2 }], [0.45, { hy: -0.15 }],
+    [0.65, { arR: 0.75, elR: 2.05, spR: 0.0, hp: 0.12, hy: 0 }], [0.8, { arR: 0.75, elR: 2.05, hp: 0.12 }], [1, { arR: 0.45, elR: 1.2, spR: 0.2, hp: 0, hy: 0.2 }]]) },
+  wrench:  { name: 'Servis (kunci pas)', kind: 'full', move: 0, n: 6, fps: 7, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 5, lean: 0.5, hp: -0.35, thL: 1.95, thR: 1.85, knL: 2.65, knR: 2.6, ftL: 0.2, ftR: 0.2, arR: 1.2 + 0.15 * s, elR: 0.45 - 0.25 * s, spR: 0.15 + 0.15 * s, arL: 1.0, elL: 0.6, spL: 0.25 }; } },
+  guitar:  { name: 'Main gitar (duduk)', kind: 'full', move: 0, n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t * 2);
+    return { ...SITB, tool: 6, lean: 0.06, hp: -0.25, hr: 0.1, arR: 0.35, elR: 1.25 + 0.18 * s, spR: 0.1, arL: 0.95, elL: 1.25, spL: 0.75, hy: -0.2, tw: 0.15 }; } },
+  busk:    { name: 'Ngamen (gitar berdiri)', kind: 'full', move: 0, n: 8, fps: 8, loop: true, pose: t => { const s = sinT(t * 2), c = cosT(t);
+    return { tool: 6, lean: 0.02, hp: 0.05 + 0.05 * c, arR: 0.35, elR: 1.35 + 0.18 * s, spR: 0.1, arL: 0.95, elL: 1.25, spL: 0.75, hy: -0.15, tw: 0.15, sy: 0.3 * c, knL: 0.15 + 0.1 * Math.max(0, c), knR: 0.15 }; } },
+  photo:   { name: 'Memotret (kamera)', kind: 'upper', n: 10, fps: 6, loop: true, pose: keyed([
+    [0, { tool: 7, arR: 1.0, elR: 1.9, spR: 0.15, arL: 1.0, elL: 1.9, spL: 0.15, hp: 0.0 }], [0.4, { hy: 0.25 }], [0.55, { hy: 0.25, elR: 2.0 }], [0.65, { elR: 1.9 }], [1, { hy: 0 }]]) },
+  sketch:  { name: 'Menggambar (buku sketsa)', kind: 'full', move: 0, n: 8, fps: 5, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { ...SITB, tool: 8, arL: 0.5, elL: 1.55, spL: 0.2, arR: 0.55 + 0.05 * s, elR: 1.45 + 0.08 * c, spR: 0.05, hp: -0.45, hy: 0.05 * s }; } },
+  paint:   { name: 'Mengecat (kuas)', kind: 'full', move: 0, n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 9, arR: 2.0 + 0.35 * s, elR: 0.25, spR: 0.25, arL: 0.2, elL: 0.9, spL: 0.15, hp: 0.15 + 0.15 * s, lean: -0.05, thL: 0.2, thR: -0.15 }; } },
+  lift:    { name: 'Angkat dumbel', kind: 'full', move: 0, n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 10, arL: 0.15, arR: 0.15, elL: 1.3 - 1.05 * s, elR: 1.3 + 1.05 * s, spL: 0.2, spR: 0.2, lean: -0.03, thL: 0.1, thR: -0.05, hp: 0.05 }; } },
+  racket:  { name: 'Main badminton (raket)', kind: 'full', move: 0, n: 12, fps: 10, loop: true, pose: keyed([
+    [0, { tool: 11, arR: 0.9, elR: 1.2, spR: 0.35, arL: 0.8, elL: 0.6, thL: 0.3, thR: -0.25, knL: 0.35, knR: 0.35, lean: 0.12 }],
+    [0.35, { arR: 2.6, elR: 1.6, spR: 0.5, arL: 2.0, elL: 0.3, lean: -0.15, tw: 0.45, hy: 0.1 }],
+    [0.55, { arR: 2.4, elR: 0.1, spR: 0.2, arL: 0.6, elL: 0.8, lean: 0.25, tw: -0.4, jump: 1.5 }],
+    [0.75, { arR: 0.9, elR: 0.6, jump: 0, tw: -0.1 }], [1, { arR: 0.9, elR: 1.2, spR: 0.35, lean: 0.12, tw: 0 }]]) },
+  hoe:     { name: 'Mencangkul', kind: 'full', move: 0, n: 10, fps: 7, loop: true, pose: keyed([
+    [0, { tool: 12, arR: 0.55, elR: 0.35, spR: -0.15, arL: 0.75, elL: 0.3, spL: -0.15, lean: 0.6, hp: -0.3, thL: 0.45, thR: -0.25, knL: 0.55, knR: 0.35 }],
+    [0.45, { arR: 2.5, elR: 0.6, arL: 2.6, elL: 0.6, lean: -0.05, hp: 0.05 }],
+    [0.65, { arR: 0.6, elR: 0.3, arL: 0.8, elL: 0.25, lean: 0.62, hp: -0.3 }], [1, { arR: 0.55, elR: 0.35, arL: 0.75, elL: 0.3 }]]) },
+  pray:    { name: 'Salat (sajadah)', kind: 'full', move: 0, n: 24, fps: 4, loop: true, pose: keyed([
+    [0, { tool: 13, arL: 0.55, elL: 1.75, spL: -0.35, arR: 0.6, elR: 1.75, spR: -0.35, hp: -0.25 }], [0.2, {}],
+    [0.3, { lean: 1.45, hp: -0.1, arL: 0.95, elL: 0.0, spL: 0.0, arR: 0.95, elR: 0.0, spR: 0.0, knL: 0.05, knR: 0.05 }], [0.4, {}],
+    [0.5, { lean: 0.03, arL: 0.08, elL: 0.25, arR: 0.08, elR: 0.25, spL: 0.12, spR: 0.12, hp: -0.25 }],
+    [0.62, { lean: 2.0, hp: 0.25, thL: 0.45, thR: 0.45, knL: 2.05, knR: 2.05, ftL: 0.9, ftR: 0.9, arL: 0.75, elL: 0.35, arR: 0.75, elR: 0.35, spL: 0.35, spR: 0.35 }],
+    [0.76, {}], [0.84, { lean: 0.15, hp: -0.3, thL: 1.7, thR: 1.7, knL: 2.9, knR: 2.9, ftL: 0.9, ftR: 0.9, arL: 0.5, elL: 0.9, arR: 0.5, elR: 0.9, spL: 0.1, spR: 0.1 }],
+    [0.92, {}], [1, { lean: 0.03, hp: -0.25, thL: 0, thR: 0, knL: 0.1, knR: 0.1, ftL: 0, ftR: 0, arL: 0.55, elL: 1.75, spL: -0.35, arR: 0.6, elR: 1.75, spR: -0.35 }]]) },
+  skate:   { name: 'Main skateboard', kind: 'loco', n: 8, fps: 6, stride: 50, loop: true, pose: t => { const s = sinT(t), c = cosT(t);
+    return { tool: 14, bob: 1.6, lean: 0.12, thL: 0.35, thR: -0.3, knL: 0.45 + 0.1 * s, knR: 0.35 + 0.1 * s, arL: 0.45 + 0.1 * c, arR: 0.3, elL: 0.4, elR: 0.5, spL: 0.7, spR: 0.6, tw: 0.35, hy: -0.3, sy: 0.15 * c }; } },
+  bball:   { name: 'Dribel bola basket', kind: 'full', move: 0, n: 8, fps: 9, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 15, tl: Math.abs(cosT(t / 1)), arR: 0.55 + 0.25 * s, elR: 0.55 - 0.25 * s, spR: 0.3, arL: 0.6, elL: 1.2, spL: 0.25, lean: 0.2, hp: -0.15, thL: 0.35, thR: -0.2, knL: 0.5, knR: 0.45 }; } },
+  kickAbout:{ name: 'Main bola (sepak)', kind: 'full', move: 0, n: 10, fps: 10, loop: true, pose: keyed([
+    [0, { tool: 16, tl: 0 }], [0.35, { thR: -0.7, knR: 1.3, thL: 0.15, knL: 0.3, lean: 0.1, arL: 0.9, spL: 0.5, arR: -0.3, tw: 0.2 }],
+    [0.55, { thR: 1.0, knR: 0.2, lean: -0.15, arL: 0.4, arR: 0.6, spR: 0.4, tw: -0.25, tl: 1 }], [0.75, { thR: 0.3, knR: 0.3, tl: 0.4 }], [1, { thR: 0, knR: 0.1, thL: 0, knL: 0.1, lean: 0.03, arL: 0.08, arR: 0.08, spL: 0.12, spR: 0.12, tw: 0, tl: 0 }]]) },
+  write:   { name: 'Menulis (pulpen)', kind: 'full', move: 0, n: 6, fps: 4, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 17, lean: 0.18, hp: -0.4, thL: 1.6, thR: 1.6, knL: 1.6, knR: 1.6, arL: 1.0, arR: 1.1 + 0.04 * s, elL: 1.3, elR: 1.25 + 0.06 * cosT(t), spL: 0.25, spR: 0.15 }; } },
+  cashier: { name: 'Jaga kasir (kalkulator)', kind: 'upper', n: 8, fps: 6, loop: true, pose: t => { const s = sinT(t * 2);
+    return { tool: 18, arL: 0.65, elL: 1.25, spL: 0.1, arR: 0.75, elR: 1.15 + 0.1 * Math.max(0, s), spR: -0.1, hp: -0.35, lean: 0.06 }; } },
+  sell:    { name: 'Jualan (kipas)', kind: 'upper', n: 6, fps: 8, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 19, arR: 0.85, elR: 0.75 + 0.45 * s, spR: 0.2, arL: 0.3, elL: 1.4, spL: 0.1, hp: -0.25, hy: 0.2 * cosT(t / 2), lean: 0.08 }; } },
+  water:   { name: 'Menyiram tanaman (gembor)', kind: 'full', move: 0, n: 8, fps: 4, loop: true, pose: t => { const s = sinT(t);
+    return { tool: 20, tl: 0.6 + 0.15 * s, arR: 0.75, elR: 0.35, spR: 0.25, arL: 0.25, elL: 0.6, lean: 0.2, hp: -0.4, thL: 0.25, thR: -0.15, knL: 0.3, knR: 0.25, hy: 0.25 * s }; } },
+  serve:   { name: 'Bawa nampan', kind: 'upper', n: 4, fps: 3, loop: true, pose: t => ({ tool: 21, arL: 0.45, elL: 1.15, spL: 0.25, arR: 0.45, elR: 1.15, spR: 0.25, lean: -0.03, hp: -0.1 + 0.02 * sinT(t) }) },
+};
+Object.assign(ANIMS, ACT_ANIMS);
 ANIMS.getup = { name: 'Bangun', kind: 'full', move: 0, n: 8, fps: 9, pose: t => ANIMS.fall.pose(1 - t) };
 const COMBOS = { punch: ['jab', 'straight', 'hook', 'uppercut'], kick: ['kickFront', 'kickHigh'], slash: ['slashH', 'slashV', 'thrust', 'spin'] };
 const FAMILY = {}; for (const f in COMBOS) for (const a of COMBOS[f]) FAMILY[a] = f;

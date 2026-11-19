@@ -10,6 +10,7 @@ export const POSE0 = {
   tail: 0,          // ekor mullet terbang ke belakang
   roll: 0,          // seluruh badan berputar ke depan (guling)
   bob: 0,           // badan naik-turun tanpa lepas dari tanah (satuan voxel lama)
+  tool: 0, tl: 0,   // barang kegiatan (lihat ACT_ANIMS di voxlib.js) + parameter geraknya
 };
 // matriks: [r00..r22 (baris), tx, ty, tz]
 export function mul(A, B) {
@@ -92,6 +93,7 @@ export function rigPose(P0, boxes, K = SKEL_RAKA, tailPiv = TAIL_PIV) {
     for (let i = 0; i < 8; i++) { const p = apply(m[k], [b[i & 1 ? 3 : 0], b[i & 2 ? 4 : 1], b[i & 4 ? 5 : 2]]); if (p[2] < lo) lo = p[2]; }
   }
   all(chain(rotZ(P.yaw || 0), tr(0, 0, -lo + P.bob * 2)));
+  groundProps(P, m, prims);
   if (still) for (let i = 9; i < 12; i++) m.head[i] = Math.round(m.head[i]);
   // ekor mullet: ikut kepala, cenderung menggantung tegak, terbang ke belakang saat bergerak
   const ta = Math.max(-0.15, Math.min(1.2, ha * 0.8)) - P.tail;
@@ -109,7 +111,7 @@ const addv = (a, d, k) => [a[0] + d[0] * k, a[1] + d[1] * k, a[2] + d[2] * k];
 const rotYo = (v, t) => [v[0] * Math.cos(t) - v[2] * Math.sin(t), v[1], v[2] * Math.cos(t) + v[0] * Math.sin(t)];   // sama dengan voxlib
 function props(P, m, C, K) {
   const out = [];
-  if (!(P.sword > 0.5 || P.broom > 0.5 || P.rod > 0.5 || P.phone > 0.5 || P.box > 0.5 || P.book > 0.5 || P.orb > 0 || P.galon > 0.5)) return out;
+  if (!(P.sword > 0.5 || P.broom > 0.5 || P.rod > 0.5 || P.phone > 0.5 || P.box > 0.5 || P.book > 0.5 || P.orb > 0 || P.galon > 0.5 || P.tool >= 0.5)) return out;
   const hand = k => apply(m['fore' + k], [0.5, 0, -K.fore - 1.5]), elbow = k => apply(m['fore' + k], [0, 0, 0]);
   const hR = hand('R'), hL = hand('L'), fw = [Math.cos(P.lean), 0, -Math.sin(P.lean)], up = [Math.sin(P.lean), 0, Math.cos(P.lean)];
   const cap = (a, b, r0, r1, mat) => out.push({ t: 'cap', p: [a, b], r: [r0, r1], mat });
@@ -152,5 +154,107 @@ function props(P, m, C, K) {
     cap(addv(hR, brd, -3 * U), addv(hR, brd, 10 * U), 0.55 * U, 0.55 * U, 'stick');
     cap(addv(hR, brd, 9.5 * U), addv(hR, brd, 14 * U), 0.7 * U, 2.6 * U, 'bristle');
   }
+  if (P.tool >= 0.5) tools(Math.round(P.tool), P, out, hR, hL, elbow('R'), elbow('L'), m, K);
   return out;
+}
+
+// ---- barang kegiatan (pose.tool). Arah: X = maju, Y = samping (kanan +), Z = naik, dalam koordinat model sebelum yaw.
+const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+// kotak berorientasi: c = pusat, a/b/n = sumbu (dinormalkan), h = setengah ukuran di tiap sumbu
+const obox = (out, c, a, b, n, h, mat) => { a = nrm(a); b = nrm(b); n = nrm(n); out.push({ t: 'box', p: [c, addv(c, a, 1), addv(c, b, 1), addv(c, n, 1)], h, mat }); };
+const capT = (out, a, b, r0, r1, mat) => out.push({ t: 'cap', p: [a, b], r: [r0, r1], mat });
+const sphT = (out, c, r, mat) => out.push({ t: 'sph', p: [c], r, mat });
+// silinder ujung datar (frame.js 't: cyl'): base, sumbu, panjang, jari-jari (r1 = jari-jari ujung atas, untuk wajan/ember)
+const cyl = (out, base, axis, len, r, mat, r1 = r) => out.push({ t: 'cyl', p: [base, addv(base, axis, len)], r: [r, r1], mat });
+function tools(id, P, out, hR, hL, eR, eL, m, K) {
+  const dR = nrm(sub3(hR, eR)), dL = nrm(sub3(hL, eL));   // arah lengan bawah (siku -> kepalan)
+  if (id === 1) {   // penggaris papan tulis di tangan kanan + buku di tangan kiri
+    capT(out, addv(hR, dR, -1.5), addv(hR, dR, 30), 0.7, 0.6, 'tRuler');
+    const c = addv(addv(hL, X, 2.5), Z, 1.5);
+    obox(out, c, X, Y, Z, [0.6, 4.5, 5.5], 'tPaper'); obox(out, addv(c, X, -0.4), X, Y, Z, [0.9, 5, 6], 'book');
+  } else if (id === 2) {   // wajan di tangan kiri, sutil di tangan kanan mengaduk
+    const pc = addv(addv(hL, X, 7.5), Z, -1);
+    cyl(out, addv(pc, Z, 1.2), Z, 0.8, 4.2, 'tFood');
+    cyl(out, pc, Z, 2.4, 4.2, 'tIron', 6.2);
+    capT(out, addv(hL, X, -1), addv(pc, nrm(sub3(hL, pc)), 7), 0.8, 0.8, 'stick');
+    const tip = addv(addv(pc, Z, 2.6), [Math.cos(P.tl * 6.28), Math.sin(P.tl * 6.28), 0], 2);
+    capT(out, addv(hR, nrm(sub3(hR, tip)), 2), tip, 0.6, 0.6, 'stick'); sphT(out, tip, 1.6, 'tMetal');
+  } else if (id === 3) {   // piring di tangan kiri, sendok di tangan kanan
+    const pc = addv(addv(hL, X, 4), Y, 3);
+    cyl(out, addv(pc, Z, 0.9), Z, 1.6, 3.2, 'tRice', 1.6);
+    cyl(out, pc, Z, 0.9, 4.2, 'tPlate', 5.2);
+    capT(out, addv(hR, dR, -0.5), addv(hR, dR, 5), 0.45, 0.45, 'tMetal'); sphT(out, addv(hR, dR, 5.8), 1.2, 'tMetal');
+  } else if (id === 4) {   // gelas kopi di tangan kanan
+    const b = addv(addv(hR, X, 1.5), Z, -2);
+    cyl(out, addv(b, Z, 4.3), Z, 0.6, 2.0, 'tCoffee'); cyl(out, b, Z, 5, 2.4, 'tPlate');
+  } else if (id === 5) {   // kunci pas
+    const w = nrm(addv(dR, Y, -0.6));
+    capT(out, addv(hR, w, -1.5), addv(hR, w, 7), 0.6, 0.6, 'tMetal'); sphT(out, addv(hR, w, 8), 1.5, 'tMetal');
+  } else if (id === 6) {   // gitar: badan di paha kanan / perut, leher ke tangan kiri
+    const c = addv(addv(hR, Y, -1.5), Z, -2.5), a = nrm(sub3(hL, c)), n0 = X, b = nrm(cross(a, n0)), n = nrm(cross(b, a));
+    obox(out, addv(c, n, 1.7), a, b, n, [1.6, 1.6, 0.4], 'tIron');
+    obox(out, c, a, b, n, [5.5, 6.5, 1.6], 'tGuitar'); obox(out, addv(c, a, 6), a, b, n, [3, 4.8, 1.6], 'tGuitar');
+    capT(out, addv(c, a, 8), addv(hL, a, 4), 0.9, 0.9, 'stick'); obox(out, addv(hL, a, 5), a, b, n, [1.5, 1.2, 0.8], 'stick');
+  } else if (id === 7) {   // kamera di depan mata, dua tangan
+    const c = addv(mid(hR, hL), X, 1.2);
+    obox(out, addv(c, X, 2.6), X, Y, Z, [1.2, 1.5, 1.5], 'tMetal'); obox(out, c, X, Y, Z, [1.6, 3.8, 2.2], 'tIron');
+  } else if (id === 8) {   // buku sketsa (kiri) + pensil (kanan)
+    const c = addv(addv(hL, X, 2), Y, 3), a = 0.8, f2 = [Math.cos(a), 0, -Math.sin(a)], u2 = [Math.sin(a), 0, Math.cos(a)];
+    obox(out, addv(c, f2, 0.5), f2, Y, u2, [0.4, 5, 4], 'tPaper'); obox(out, c, f2, Y, u2, [0.6, 5.4, 4.4], 'tBoard');
+    capT(out, addv(hR, dR, -0.5), addv(hR, dR, 4.5), 0.45, 0.3, 'tPencil');
+  } else if (id === 9) {   // kuas (kanan) + kaleng cat (kiri)
+    capT(out, addv(hR, dR, -1), addv(hR, dR, 6), 0.5, 0.5, 'stick'); capT(out, addv(hR, dR, 6), addv(hR, dR, 8.5), 1.1, 0.9, 'tPaint');
+    const b = addv(hL, Z, -5.5); cyl(out, addv(b, Z, 4.6), Z, 0.5, 2.5, 'tPaint'); cyl(out, b, Z, 5, 3.0, 'tMetal');
+    capT(out, addv(b, Z, 5), hL, 0.3, 0.3, 'tMetal');
+  } else if (id === 10) {   // dumbel di kedua tangan
+    for (const h of [hR, hL]) { capT(out, addv(h, Y, -3.5), addv(h, Y, 3.5), 0.7, 0.7, 'tMetal'); for (const k of [-3.5, 3.5]) capT(out, addv(h, Y, k - 0.8), addv(h, Y, k + 0.8), 2.4, 2.4, 'tIron'); }
+  } else if (id === 11) {   // raket badminton
+    const hc = addv(hR, dR, 11), b = nrm(cross(dR, X)).some(isNaN) ? Y : nrm(cross(dR, X)), n = nrm(cross(dR, b));
+    capT(out, addv(hR, dR, -1.5), addv(hR, dR, 6.5), 0.7, 0.45, 'tIron');
+    obox(out, hc, dR, b, n, [3.6, 2.8, 0.25], 'tString'); obox(out, hc, dR, b, n, [4.4, 3.4, 0.6], 'tPaint');
+  } else if (id === 12) {   // cangkul: gagang lewat dua tangan, mata cangkul di ujung menghadap badan
+    const d = nrm(addv(dR, dL, 1)), h0 = mid(hR, hL), e = addv(h0, d, 22), n = nrm(cross(d, Y));
+    capT(out, addv(h0, d, -4), e, 0.8, 0.8, 'stick');
+    obox(out, addv(addv(e, n, -3), d, 0.8), d, Y, n, [0.5, 2.6, 3.2], 'tMetal');
+  } else if (id === 15) {   // bola basket memantul di bawah tangan kanan
+    const g = addv(hR, X, 1.5), z = g[2] - 3 - (1 - P.tl) * Math.max(0, g[2] - 9);
+    sphT(out, [g[0], g[1], z], 3.6, 'tBasket');
+  } else if (id === 17) {   // pulpen
+    capT(out, addv(hR, dR, -0.5), addv(hR, dR, 4), 0.4, 0.3, 'tIron');
+  } else if (id === 18) {   // kalkulator di tangan kiri
+    const c = addv(addv(hL, X, 1.5), Y, 2.5), a = 0.5, f2 = [Math.cos(a), 0, -Math.sin(a)], u2 = [Math.sin(a), 0, Math.cos(a)];
+    obox(out, addv(addv(c, f2, 0.5), u2, 1.6), f2, Y, u2, [0.2, 1.8, 0.8], 'tScreen'); obox(out, c, f2, Y, u2, [0.6, 2.4, 3.4], 'tCalc');
+  } else if (id === 19) {   // kipas bambu
+    const b = nrm(cross(dR, Z)).some(isNaN) ? Y : nrm(cross(dR, Z)), n = nrm(cross(dR, b));
+    capT(out, addv(hR, dR, -1), addv(hR, dR, 3), 0.45, 0.45, 'stick');
+    obox(out, addv(hR, dR, 6.5), dR, b, n, [3.5, 3.2, 0.3], 'tWeave');
+  } else if (id === 20) {   // gembor
+    const b = addv(hR, Z, -6), t = P.tl || 0.6, sp = nrm([Math.cos(t), 0, -Math.sin(t)]);
+    cyl(out, b, Z, 6, 3.0, 'tCan'); capT(out, addv(b, Z, 6.3), hR, 0.4, 0.4, 'tCan');
+    capT(out, addv(addv(b, Z, 2), X, 2), addv(addv(addv(b, Z, 2), X, 2), sp, 8), 0.6, 0.6, 'tCan'); sphT(out, addv(addv(addv(b, Z, 2), X, 2), sp, 8.5), 1.2, 'tCan');
+  } else if (id === 21) {   // nampan + dua gelas kopi
+    const c = addv(addv(mid(hR, hL), X, 3.5), Z, 1.2);
+    obox(out, c, X, Y, Z, [5, 7.5, 0.4], 'tMetal');
+    for (const k of [-3.2, 3.2]) { const g = addv(c, Y, k); cyl(out, addv(g, Z, 5.4), Z, 0.6, 1.9, 'tCoffee'); cyl(out, addv(g, Z, 0.4), Z, 5.6, 2.3, 'tPlate'); }
+  }
+}
+// barang di tanah (sesudah badan menapak): sajadah, papan skate, bola sepak
+function groundProps(P, m, out) {
+  const id = Math.round(P.tool || 0); if (id !== 13 && id !== 14 && id !== 16) return;
+  const yaw = P.yaw || 0, f = [Math.cos(yaw), Math.sin(yaw), 0], s = [-Math.sin(yaw), Math.cos(yaw), 0];
+  const fL = apply(m.footL, [2, 0, -4.5]), fR = apply(m.footR, [2, 0, -4.5]), c = mid(fL, fR);
+  if (id === 13) {   // sajadah: hijau, pinggir kuning, mihrab di ujung depan
+    const g = [c[0], c[1], 0.4], k = addv(g, f, 12);
+    obox(out, addv(addv(k, f, 9), Z, 0.05), f, s, Z, [2.2, 3.5, 0.5], 'tMat2');
+    obox(out, k, f, s, Z, [16, 7.2, 0.4], 'tMat'); obox(out, addv(k, Z, -0.05), f, s, Z, [17, 8.2, 0.4], 'tMat2');
+  } else if (id === 14) {   // papan skate di bawah kaki
+    const g = [c[0], c[1], 2.0];
+    obox(out, g, f, s, Z, [13, 4.2, 0.6], 'tIron');
+    for (const a of [-8.5, 8.5]) for (const b of [-3, 3]) sphT(out, addv(addv([g[0], g[1], 1.1], f, a), s, b), 1.1, 'tBasket');
+  } else {   // bola sepak di depan kaki kanan, menggelinding saat ditendang
+    const g = addv(addv([fR[0], fR[1], 3.4], f, 5 + 14 * (P.tl || 0)), s, -1);
+    sphT(out, g, 3.4, 'tBallW'); for (const [a, b, z] of [[1, 0, 1], [-1, 1.5, -0.5], [0, -2, 0.5]]) sphT(out, addv(addv(addv(g, f, a * 2.2), s, b), Z, z * 2), 1.2, 'tBallK');
+  }
 }
