@@ -3,6 +3,7 @@
 import { gen, orang, EXPRS as EX } from './spawn_base.js';
 export const OUTFITS = {
   jamu: { name: 'Jualan jamu: sanggul putih + kebaya lurik cokelat + jarik batik + selendang gendong botol jamu + sandal jepit' },
+  rumah: { name: 'Rumah: sanggul + kebaya lurik + kain jarik + selendang gendong botol jamu' },
   sawah: { name: 'Di sawah: caping + kebaya lurik + jarik + nyeker' },
 };
 export const EXPRS = EX;
@@ -13,7 +14,7 @@ export function build(opt = {}) {
   d.top = { kind: 'blus', c: 'coklat', sleeve: 'panjang', pat: 'lurik', pc: 'krem' };
   d.bot = { kind: 'rok', c: 'coklat', pat: 'batik', pc: 'kremS' };
   if (o === 'sawah') { d.head = 'caping'; d.feet = { kind: 'nyeker' }; }
-  else { d.acc.push('gendong'); d.gendongCol = 'merah'; d.feet = { kind: 'jepit', c: 'hitam' }; d.handR = 'botol'; }
+  else { d.acc.push('gendong'); d.gendongCol = 'merah'; d.feet = o === 'rumah' ? { kind: 'nyeker' } : { kind: 'jepit', c: 'hitam' }; if (o !== 'rumah') d.handR = 'botol'; }
   if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
   return orang(d, opt.expr || 'biasa');
 }

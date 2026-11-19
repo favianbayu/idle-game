@@ -22,14 +22,7 @@ SYN = {'sekolah': ['seragam', 'sekolah', 'kemeja', 'dinas', 'korpri', 'kebaya', 
        'geng': ['geng', 'lampu', 'nongkrong'], 'balap': ['balap'], 'ngaji': ['ngaji', 'pengajian', 'koko'], 'tidur': ['piama', 'rumah', 'santai']}
 
 # baju guide yang tidak punya padanan langsung di model: dipilih manual dari OUTFITS model
-OVR = {'nadia': {'olahraga': 'jalan'}, 'laras': {'malam': 'jalan'}, 'sasha': {'rumah': 'jalan', 'rahasia': 'malam'}, 'arga': {'rumah': 'kerja'},
-       'jojo': {'kerja': 'liputan'}, 'bram': {'basket': 'rumah', 'resmi': 'seragam'}, 'om_darto': {'malam': 'santai'}, 'bimo': {'masak': 'koki', 'rumah': 'kaus'},
-       'jaka': {'kerja': 'santai'}, 'pak_rt': {'rumah': 'batik', 'kerja': 'batik'}, 'ama': {'rumah': 'dapur'}, 'rio': {'geng': 'jalan'},
-       'hartini': {'kerja': 'kebaya', 'rumah': 'kebaya'}, 'ratna': {'kerja': 'blazer'}, 'hendro': {'kerja': 'olahraga', 'rumah': 'batik'},
-       'wawan': {'kerja': 'pns', 'rumah': 'batik'}, 'sinta': {'kerja': 'kardigan', 'rumah': 'gamis'}, 'anton': {'kerja': 'kemeja', 'rumah': 'denim'},
-       'gunadi': {'kerja': 'rompi', 'rumah': 'kardigan'}, 'melati': {'kerja': 'etnik'}, 'kyai_mahfud': {'rumah': 'koko'}, 'abah_karta': {'silat': 'pangsi'},
-       'sudarmaji': {'kerja': 'dinas'}, 'kang_ujo': {'kerja': 'basecamp'}, 'mandor_sabar': {'kerja': 'kebun'}, 'pak_yusuf': {'kerja': 'raceControl'},
-       'mbak_sri': {'kerja': 'shift', 'rumah': 'kos'}, 'mbah_darmo': {'rumah': 'pagi'}, 'nek_sumi': {'rumah': 'jamu'}, 'tito': {'rumah': 'bola'}, 'neng_ayu': {'rumah': 'jaket'}}
+OVR = {'pak_rt': {'kerja': 'batik'}}   # baju guide lain sudah ada di model (OUTFITS); Pak RT 'kerja' harian tetap batik, bukan kerja bakti
 # kata di teks kegiatan yang langsung memilih baju khusus model (ronda malam, latihan, liputan, rapat, ...)
 KW = ['ronda', 'latihan', 'silat', 'liputan', 'pensi', 'rapat', 'wasit', 'senam', 'debat', 'tinju', 'osis', 'lab', 'sawah', 'jamu', 'shift', 'dapur', 'koki', 'wasit']
 GURU = {'hartini', 'ratna', 'hendro', 'wawan', 'sinta', 'anton', 'gunadi', 'melati'}
@@ -39,7 +32,8 @@ def model_outfits(gid):
     if not os.path.exists(f): return []
     src = open(f, encoding='utf-8').read()
     m = re.search(r'export const OUTFITS = \{(.*?)\n\};', src, re.S)
-    return re.findall(r'^  ([a-zA-Z]+): \{', m.group(1), re.M) if m else []
+    # baju di dalam blok OUTFITS + varian yang ditambah sesudahnya (OUTFITS.hujan = { ...OUTFITS.jalan, ... })
+    return (re.findall(r'^  (\w+): \{', m.group(1), re.M) if m else []) + re.findall(r'^OUTFITS\.(\w+) = \{', src, re.M)
 
 def pick_outfit(key, have):
     if not have: return None

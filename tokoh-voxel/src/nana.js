@@ -4,7 +4,7 @@
 // Pulang: hoodie abu + celana jogger + sepatu kets + kantong belanja. Rangka keluarga Nadia, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -122,9 +122,10 @@ function foot(o) {
 
 export const OUTFITS = {
   kasir: { name: 'Jaga kasir: kemeja biru muda + rompi merah SERBAMART + papan nama + celana hitam + pemindai barcode', top: 'kasir' },
-  pulang: { name: 'Pulang: hoodie abu + jogger + sepatu kets + kantong belanja', top: 'pulang' },
+  pulang: { name: 'Pulang: hoodie abu + jogger + sepatu kets + kantong belanja', top: 'pulang', propOn: 'all' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kasir), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = K(o) ? 'nnKemeja' : 'nnHoodie', leg = K(o) ? 'nnHitam' : 'nnJogger';
   return assemble([

@@ -4,7 +4,8 @@
 // selempang kanvas berisi buku. Voxel halus 1/64 petak, rangka sama keluarga Arga tapi lebih ramping.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { payungLipat } from './props.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 0.9 };
@@ -193,7 +194,9 @@ export const OUTFITS = {
   rumah: { name: 'Kaus festival literasi + sarung', top: 'kaus', bot: 'sarung', shoe: 'sandal' },
   jalan: { name: 'Kemeja kotak cokelat + slacks + sepatu kanvas', top: 'kotak', bot: 'slack', shoe: 'rzKanvas' },
 };
+OUTFITS.hujan = { ...OUTFITS.jalan, propOn: 'all', name: 'Hujan: payung hitam besar', fx: { foreR: v => payungLipat(v, 'prPayungH', 22) } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), sar = o.bot === 'sarung';
   const leg = sar ? 'sarung' : legC(o);

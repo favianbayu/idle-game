@@ -3,7 +3,7 @@
 // sepatu kets butut, handuk kecil di leher. Rangka keluarga Arga, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -109,10 +109,11 @@ function foot(o) {
 }
 
 export const OUTFITS = {
-  ojek: { name: 'Mangkal: rompi oranye nomor 07 + jaket jeans + handuk leher + helm di tangan + kets butut', top: 'ojek' },
+  ojek: { name: 'Mangkal: rompi oranye nomor 07 + jaket jeans + handuk leher + helm di tangan + kets butut', top: 'ojek', propOn: 'all' },
   santai: { name: 'Sepi orderan: kaus kuning + celana pendek + sandal jepit + rokok di telinga', top: 'santai', rokok: true },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.ojek), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), leg = legC(o);
   return assemble([

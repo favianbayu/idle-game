@@ -3,13 +3,15 @@
 // tergantung di leher, rompi fotografer hijau army penuh saku. Skala lama 1.3, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { kartu } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 14, thigh: 14, up: 4, neck: 24, shY: 9, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  jHitam: ['#111114', '#19191d', '#232328', '#33333a'], jHitamS: ['#3a3a42'], jCelana: ['#0e0e11', '#16161a', '#1f1f24', '#2c2c33'],
   jSkin: ['#7e5236', '#94603f', '#a8724e', '#bc8660'], jSkinS: ['#946040'], tahi: ['#3a2418'],
   jHair: ['#120e0a', '#1a140e', '#2a2018', '#3a2e22'], jHairT: ['#6a5a48'], jSide: ['#2a2018', '#342820', '#403228', '#4e3e32'],
   army: ['#3e4828', '#4c5832', '#5c6b3c', '#71824c'], armyS: ['#46512c'], kamera: ['#121214', '#1a1a1d', '#242428', '#36363c'], lensa: ['#4a6a8a'], kameraT: ['#b8bcc4'],
@@ -165,7 +167,11 @@ export const OUTFITS = {
   rumah: { name: 'Kaus "Horas!" + celana pendek', top: 'horas' },
   jalan: { name: 'Kemeja hawaii oranye + kargo + sandal gunung', top: 'hawai' },
 };
+OUTFITS.kerja = { ...OUTFITS.jalan, name: 'Kerja kru: kemeja & celana hitam, kartu kru',
+  sw: { hawai: 'jHitam', hawaiD: 'jHitam', hawaiB: 'jHitam', kargoJ: 'jCelana', gunung: 'jHitam' },
+  fx: { chest: v => kartu(v, 54, 44, 'prTali') } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   return assemble([

@@ -3,7 +3,8 @@
 // kecil tali kulit, pantofel hitam mengilap. Rangka skala 1.24 (sama dengan Rani), voxel halus 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { raket, payungLipat, strip, tudung } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -17,6 +18,8 @@ addRamps({
   pantofel: ['#09080b', '#121116', '#1f1e25', '#4a4a56'], nStrap: ['#5a3420'], pen: ['#2a4fa0'],
   almamater: ['#14203f', '#1c2b52', '#263a6a', '#36508a'], almaS: ['#c7a24a'], map: ['#d9ecf2'],
   mint: ['#5f9c80', '#7ab89a', '#9fd3b5', '#bfe6cf'], mintS: ['#7ab89a'],
+  nSport: ['#3d6fa8', '#4f86c4', '#6aa0dc', '#8ab9ec'], nSportS: ['#3d6fa8'], nTrain: ['#1b1d26', '#262935', '#343846', '#474c5c'],
+  nHijabSp: ['#1d2a4a', '#26365e', '#334676', '#45598e'], nHijabSpS: ['#26365e'],
   kulot: ['#8a6d50', '#a88865', '#c4a47f', '#dbbf9b'], bag: ['#6f5a3f', '#8a7354', '#a68f6c', '#c2ad8a'],
 });
 
@@ -158,7 +161,14 @@ export const OUTFITS = {
   jalan: { name: 'Tunik + kulot', top: 'tunik', bottom: 'kulot', shoe: 'kets' },
   rumah: { name: 'Gamis rumahan', top: 'gamis', bottom: 'rok', shoe: 'kaus' },
 };
+OUTFITS.olahraga = { ...OUTFITS.jalan, propOn: 'olahraga', name: 'Olahraga: kaus lengan panjang, celana training, hijab sport, raket',
+  sw: { cream: 'nSport', creamS: 'nSportS', kulot: 'nTrain', hijab: 'nHijabSp', hijabS: 'nHijabSpS', pearl: 'nHijabSp' },
+  fx: { chest: v => strip(v, 'bag'), foreR: raket } };
+OUTFITS.hujan = { ...OUTFITS.seragam, propOn: 'all', name: 'Hujan: ponco kuning, payung lipat biru',
+  sw: { cream: 'prPonco', creamS: 'prPoncoS', osis: 'prPonco', tag: 'prPonco', pen: 'prPonco' },
+  fx: { head: v => tudung(v, 'prPonco', 'prPoncoS'), foreR: v => payungLipat(v) } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o);
   const top = o.top === 'alma' ? 'almamater' : o.top === 'gamis' ? 'mint' : 'cream';

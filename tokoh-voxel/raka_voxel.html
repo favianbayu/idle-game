@@ -1579,9 +1579,99 @@ const OUTFITS = {
 };
 
 // rakit bagian-bagian jadi data tokoh untuk voxelFrame. list = [[nama, Vox, pivot], ...] urut prioritas
+/* Varian baju: entri OUTFITS boleh membawa sw (ganti bahan: { lama: 'baru' }) dan fx (tambahan per bagian:
+   { chest: v => ..., foreR: v => ... }). build() tokoh memanggil dressing(OUTFITS[opt.outfit]) di awal; assemble()
+   memakainya lalu mengosongkannya. Jadi baju baru cukup { ...BASE, name, sw, fx } tanpa mengubah fungsi bagian badan. */
+let DRESS = null;
+function dressing(def) { DRESS = def && (def.sw || def.fx || def.ball || def.propOn || def.held === false) ? def : null; }
+function dress(list, ballMat) {
+  const D = DRESS; DRESS = null;
+  if (!D) return [list, ballMat, mi];
+  const sw = D.sw || {}, fx = D.fx || {}, S = c => sw[c] || c;
+  list = list.map(([name, v, piv]) => {
+    if (!v && !fx[name]) return [name, v, piv];
+    let w = new Vox(); if (v) w.add(v);
+    if (fx[name]) w = fx[name](w) || w;
+    if (D.sw) { const o = new Vox(); w.each((x, y, z, c) => o.set(x, y, z, S(c))); w = o; }
+    return [name, w.m.size ? w : null, piv];
+  });
+  return [list, Object.fromEntries(Object.entries({ ...ballMat, ...(D.ball || {}) }).map(([k, c]) => [k, S(c)])), c => mi(S(c))];
+}
+/* ---------- barang pegangan: dipisah dari lengan bawah jadi bagian 'propR' / 'propL' (ikut tulang lengan bawah),
+   lalu game hanya menampilkannya saat anim aktivitas yang cocok (showProps). Pemisahan otomatis: lengan = kolom
+   penampang lengan atas (lapis z teratas, +1 voxel) dari ujung kepalan ke atas; sisanya = barang. */
+// anim yang dianggap "sedang beraktivitas" (bawaan barang yang tak dikenal jenisnya)
+const ACT = ['talk', 'look', 'phone', 'squat', 'crouch', 'carry', 'galon', 'raiseHand', 'read', 'think', 'sitDesk', 'sit', 'sitDown', 'sweep',
+  'stretch', 'laugh', 'scratch', 'cast', 'fishCast', 'fishWait', 'fishPull', 'fishShow', 'cheer', 'push'];
+// jenis barang -> anim saat barang dipegang ('all' = selalu, mis. tongkat jalan, payung hujan, senapan jaga)
+const PROP_KIND = {
+  all: 'all', aktif: ACT,
+  baca: ['read', 'talk', 'sitDesk', 'think', 'raiseHand', 'sitDown', 'look'], hp: ['phone'], radio: ['phone', 'talk', 'look', 'raiseHand'],
+  minum: ['sitDown', 'sit', 'sitDesk', 'talk'], sapu: ['sweep'], tani: ['squat', 'crouch', 'carry', 'sweep'],
+  angkut: ['carry', 'galon', 'galonWalk', 'walk', 'talk'], masak: ['carry', 'squat', 'talk'],
+  ikan: ['squat', 'carry', 'fishCast', 'fishWait', 'fishPull', 'fishShow', 'tread', 'cast'], bola: ['dribble', 'shoot', 'kickBall', 'catch', 'carry'],
+  olahraga: ['stretch', 'jump', 'carry', 'talk', 'catch'], sorak: ['cheer', 'clap', 'jump', 'wave', 'raiseHand'], ajar: ['talk', 'raiseHand', 'read', 'think', 'look'],
+  santai: ['sitDown', 'sit', 'talk', 'think', 'read', 'idle'], jual: ['walk', 'idle', 'talk', 'carry'], kerja: ['squat', 'crouch', 'carry'],
+  main: ['look', 'run', 'wave', 'idle', 'cheer', 'jump'],
+};
+// barang spawn_base (d.handR / d.handL) -> jenis
+const HELD_KIND = {
+  arit: 'tani', cangkul: 'tani', sekop: 'tani', sapu: 'sapu', rotan: 'ajar', buku: 'baca', map: 'baca', papan: 'baca', peta: 'baca', hp: 'hp', ht: 'radio',
+  mug: 'minum', mangkok: 'minum', botol: 'jual', bola: 'bola', bendera: 'sorak', terompet: 'sorak', layangan: 'main', kunci: 'kerja', lap: 'kerja',
+  sutil: 'masak', dayung: 'ikan', jaring: 'ikan', ikan: 'ikan', ember: 'angkut', kardus: 'angkut', keranjang: 'angkut', rantang: 'angkut',
+  kresek: 'angkut', kresekH: 'angkut', kresekM: 'angkut', tasTangan: 'all', tasbih: 'santai', lampu: 'all', senter: 'all', payung: 'all',
+  senapan: 'all', tongkat: 'all', tongkatLL: 'all', trekking: 'all',
+};
+function splitFore(v) {
+  // puncak lengan bawah = lapis tertinggi yang penampangnya penuh (tali tas / gagang yang mencuat ke atas tidak dihitung)
+  const lc = new Map(); v.each((x, y, z) => lc.set(z, (lc.get(z) || 0) + 1));
+  const big = Math.max(...lc.values()); let zMax = -1e9; for (const [z, n] of lc) if (n >= big * 0.5 && z > zMax) zMax = z;
+  // bahan lengan atas = bahan yang banyak di 4 lapis teratas (barang yang kebetulan mencuat ke atas tidak ikut)
+  const tc = new Map(); let tn = 0; v.each((x, y, z, c) => { if (z >= zMax - 3) { tc.set(c, (tc.get(c) || 0) + 1); tn++; } });
+  const top = new Set([...tc].filter(([, n]) => n >= tn * 0.2).map(([c]) => c));
+  const b = [1e9, -1e9, 1e9, -1e9];
+  v.each((x, y, z, c) => { if (z >= zMax - 3 && top.has(c)) { b[0] = Math.min(b[0], x); b[1] = Math.max(b[1], x); b[2] = Math.min(b[2], y); b[3] = Math.max(b[3], y); } });
+  b[0]--; b[1]++; b[2]--; b[3]++;
+  const inB = (x, y) => x >= b[0] && x <= b[1] && y >= b[2] && y <= b[3];
+  const cnt = new Map(); v.each((x, y, z) => { if (inB(x, y)) cnt.set(z, (cnt.get(z) || 0) + 1); });
+  const A = cnt.get(zMax - 2) || 1; let zF = zMax;
+  for (let z = zMax; z > zMax - 60; z--) { if ((cnt.get(z) || 0) < A * 0.25) break; zF = z; }
+  const arm = new Vox(), held = new Vox();
+  v.each((x, y, z, c) => (inB(x, y) && z >= zF ? arm : held).set(x, y, z, c));
+  if (held.m.size < 6 || arm.m.size < 20) return [v, null];
+  // sisa barang di dalam kolom lengan (gagang dalam kepalan, batang menempel lengan): bahan barang yang bukan bahan
+  // lengan atas. Di luar penampang asli -> ikut barang; di dalam -> diwarnai seperti lapis lengan itu.
+  const hm = new Set(); held.each((x, y, z, c) => { if (!top.has(c)) hm.add(c); });
+  const lay = new Map(); arm.each((x, y, z, c) => { if (!hm.has(c)) { const m = lay.get(z) || new Map(); m.set(c, (m.get(c) || 0) + 1); lay.set(z, m); } });
+  const dom = z => { for (let k = 0; k < 8; k++) for (const zz of [z + k, z - k]) { const m = lay.get(zz); if (m) return [...m].sort((p, q) => q[1] - p[1])[0][0]; } return null; };
+  const inB0 = (x, y) => x > b[0] && x < b[1] && y > b[2] && y < b[3];
+  arm.each((x, y, z, c) => { if (!hm.has(c)) return; if (!inB0(x, y)) { arm.set(x, y, z, null); held.set(x, y, z, c); } else { const d = dom(z); if (d) arm.set(x, y, z, d); } });
+  return [arm, held];
+}
+function splitHeld(list) {
+  const out = [];
+  const own = new Set(list.filter(e => e[0].startsWith('prop')).map(e => e[0]));   // tokoh yang sudah memisah sendiri
+  for (const [name, v, piv] of list) {
+    if (v && (name === 'foreR' || name === 'foreL') && !own.has(name === 'foreR' ? 'propR' : 'propL')) { const [arm, held] = splitFore(v); out.push([name, arm, piv]); if (held) out.push([name === 'foreR' ? 'propR' : 'propL', held, piv]); }
+    else out.push([name, v, piv]);
+  }
+  return out;
+}
+const kindAnims = k => Array.isArray(k) ? k : PROP_KIND[k] || ACT;
+const SHOWN = new WeakMap();
+// P tanpa barang yang tidak cocok dengan anim ini (all = tampilkan semua, untuk lembar pratinjau)
+function showProps(P, anim, all = false) {
+  if (all || !P.parts.some(p => p.name === 'propR' || p.name === 'propL')) return P;
+  const on = n => { const k = (P.propOn || {})[n]; const a = k === 'all' ? 'all' : kindAnims(k); return a === 'all' || a.includes(anim); };
+  const key = (on('propR') ? 'R' : '') + (on('propL') ? 'L' : '');
+  let c = SHOWN.get(P); if (!c) SHOWN.set(P, c = {});
+  return c[key] || (c[key] = { ...P, parts: P.parts.filter(p => (p.name !== 'propR' || key.includes('R')) && (p.name !== 'propL' || key.includes('L'))) });
+}
 function assemble(list, ballMat, skel, tailPiv) {
+  const D = DRESS; let mat; [list, ballMat, mat] = dress(list, ballMat); if (!D || D.held !== false) list = splitHeld(list);
   const parts = list.filter(e => e[1]).map(([name, v, piv]) => { const g = dense(v, mi); return { name, g, piv, box: [g.o[0] - piv[0], g.o[1] - piv[1], g.o[2] - piv[2], g.o[0] + g.n[0] - piv[0], g.o[1] + g.n[1] - piv[1], g.o[2] + g.n[2] - piv[2]] }; });
-  return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat: Object.fromEntries(Object.entries(ballMat).map(([k, c]) => [k, mi(c)])), ramps: RAMP_RGB, mat: mi, skel, tailPiv };
+  const po = D && D.propOn, propOn = po ? (typeof po === 'object' && !Array.isArray(po) ? po : { propR: po, propL: po }) : null;
+  return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat: Object.fromEntries(Object.entries(ballMat).map(([k, c]) => [k, mi(c)])), ramps: RAMP_RGB, mat, skel, tailPiv, propOn };
 }
 // cat peta wajah ke voxel terdepan: map = baris (atas -> bawah), top = z baris pertama, c0 = y kolom pertama
 function paintFace(v, map, chars, top, c0) { map.forEach((row, r) => [...row].forEach((ch, c) => { const k = chars[ch]; if (k) v.pf(c + c0, top - r, k); })); }
@@ -1609,7 +1699,157 @@ function buildParts(opt = {}) {   // Raka
   return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat, ramps: RAMP_RGB, mat: mi, skel: SKEL_RAKA, tailPiv: TAIL_PIV };
 }
 
-return { RAMPS, addRamps, mi, FACES, EXPRS, skullLayer, helmet, BIKE_PAL, BIKE_SEAT, bikeVox, OUTFITS, assemble, paintFace, buildParts };
+return { RAMPS, addRamps, mi, FACES, EXPRS, skullLayer, helmet, BIKE_PAL, BIKE_SEAT, bikeVox, OUTFITS, dressing, ACT, PROP_KIND, HELD_KIND, showProps, assemble, paintFace, buildParts };
+})();
+// ===== props.js
+NS.props = (() => {
+// Properti kecil untuk varian baju (dipakai lewat fx di OUTFITS, lihat dressing() di model.js).
+// Semua fungsi menerima Vox bagian badan dan menggambar relatif terhadap bentuk yang sudah ada,
+// jadi bisa dipakai di tokoh mana pun tanpa tahu angka rangkanya.
+const {  addRamps  } = NS.model;
+
+addRamps({
+  prRaket: ['#1d3f8a', '#2a56b4', '#3b70d6', '#5a8cec'], prSenar: ['#e9eef4'], prGrip: ['#f4f4f0'],
+  prPayung: ['#1f3e86', '#2a52a8', '#3a68c8', '#5584dc'], prPayungH: ['#151517', '#1f1f23', '#2b2b31', '#3a3a42'], prGagang: ['#6a4a2c'],
+  prKayu: ['#a77a45', '#c49359', '#dcab6e', '#ecc387'], prKertas: ['#f3efe2'], prSampul: ['#2c3e6a'],
+  prPeluit: ['#c9ccd4'], prTali: ['#c43a2e'], prKartu: ['#f6f6f2'], prKartuT: ['#1f8ad0'],
+  prPlastik: ['#b9c8cf', '#d2dde2', '#e6eef1', '#f5f9fa'], prBola: ['#d96a1f'], prKipas: ['#b8322b', '#d4473a', '#e86352', '#f2846f'],
+  prTas: ['#2b2b2b', '#3a3a3a', '#4b4b4b', '#5e5e5e'], prKoin: ['#d8b54a'], prRadio: ['#1c1d22'], prAntena: ['#3a3b42'],
+  prTasbih: ['#7a4e2a'], prLampu: ['#f2c14a'], prKaca: ['#ffe9a0'],
+  prKresek: ['#7fa6bc', '#98bccf', '#b3d0de', '#cfe3ec'], prKresekS: ['#7fa6bc'],
+  prHanduk: ['#c8c4b8', '#dcd8cc', '#ecE8dc', '#f8f6ee'], prHandukS: ['#c0584a'], prGlove: ['#6a5a3a', '#7e6c48', '#92805a', '#a8966e'],
+  prPonco: ['#c99a14', '#e2b522', '#f2cb3a', '#fadf6e'], prPoncoS: ['#c99a14'], prPoncoH: ['#141518', '#1d1f24', '#292c33', '#3a3e48'], prPoncoHS: ['#1d1f24'],
+});
+
+// titik genggam: tengah voxel paling bawah (ujung kepalan)
+function hand(v) {
+  let z0 = 1e9; v.each((x, y, z) => { if (z < z0) z0 = z; });
+  let sx = 0, sy = 0, n = 0; v.each((x, y, z) => { if (z <= z0 + 1) { sx += x; sy += y; n++; } });
+  return [Math.round(sx / n), Math.round(sy / n), z0];
+}
+// batas kotak sebuah Vox
+function bounds(v) {
+  const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  v.each((x, y, z) => { const p = [x, y, z]; for (let i = 0; i < 3; i++) { lo[i] = Math.min(lo[i], p[i]); hi[i] = Math.max(hi[i], p[i]); } });
+  return [lo, hi];
+}
+// hapus semua voxel berbahan tertentu
+function strip(v, ...mats) { const k = []; v.each((x, y, z, c) => { if (mats.includes(c)) k.push([x, y, z]); }); for (const p of k) v.set(...p, null); return v; }
+
+// raket badminton digenggam, kepala raket menggantung ke bawah di samping kaki
+function raket(v) {
+  const [x, y, z] = hand(v);
+  for (let k = 1; k <= 7; k++) v.set(x, y, z - k, k <= 4 ? 'prGrip' : 'prRaket');
+  const cz = z - 15;
+  for (let a = -5; a <= 5; a++) for (let b = -7; b <= 7; b++) {
+    const r = (a / 4.6) ** 2 + (b / 6.6) ** 2;
+    if (r <= 1.05 && r >= 0.62) v.set(x + a, y, cz + b, 'prRaket'); else if (r < 0.62 && (a + b) % 2 === 0) v.set(x + a, y, cz + b, 'prSenar');
+  }
+  return v;
+}
+// payung lipat tergulung digenggam
+function payungLipat(v, c = 'prPayung', panjang = 12) {
+  const [x, y, z] = hand(v);
+  for (let k = 1; k <= panjang; k++) { v.set(x, y, z - k, k <= 3 ? 'prGagang' : c); if (k > 3 && k < panjang - 1) v.set(x + 1, y, z - k, c); }
+  v.set(x, y, z - panjang - 1, 'prAntena');
+  return v;
+}
+// penggaris kayu panjang
+function penggaris(v) { const [x, y, z] = hand(v); for (let k = -6; k <= 16; k++) { v.set(x + 1, y, z + 1 - k, 'prKayu'); v.set(x + 2, y, z + 1 - k, k % 4 === 0 ? 'prSampul' : 'prKayu'); } return v; }
+// buku / buku catatan di tangan
+function buku(v, c = 'prSampul') { const [x, y, z] = hand(v); v.box(x - 3, y - 1, z - 7, x + 3, y + 1, z, c); v.box(x - 2, y - 1, z - 6, x + 2, y + 1, z - 1, 'prKertas'); v.box(x - 3, y - 1, z - 7, x + 3, y - 1, z, c); return v; }
+// kipas lipat terbuka
+function kipas(v) {
+  const [x, y, z] = hand(v);
+  for (let a = -6; a <= 6; a++) for (let b = 0; b <= 8; b++) { const d = Math.hypot(a, b); if (d <= 8 && d >= 2 && b >= Math.abs(a) * 0.4) v.set(x + a, y, z - 1 - b, (a + 8) % 3 ? 'prKipas' : 'prKayu'); }
+  return v;
+}
+// kantong plastik berisi bola
+function kantongBola(v) {
+  const [x, y, z] = hand(v);
+  for (let k = 1; k <= 3; k++) v.set(x, y, z - k, 'prPlastik');
+  for (let a = -5; a <= 5; a++) for (let b = -5; b <= 5; b++) for (let c = -5; c <= 5; c++) { const d = Math.hypot(a, b, c); if (d <= 5.3) v.set(x + a, y + b, z - 9 + c, d > 4.3 ? (a + c) % 3 ? 'prPlastik' : 'prBola' : 'prBola'); }
+  return v;
+}
+// peluit di leher: tali merah dari kerah turun ke dada, peluit perak
+function peluit(v, zTop, zEnd) {
+  for (let z = zEnd; z <= zTop; z++) { const t = (zTop - z) / Math.max(1, zTop - zEnd), dy = Math.round(4 * (1 - t)); for (const y of [-1 - dy, dy]) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, 'prTali'); } }
+  const x = v.front(0, zEnd - 1) ?? v.front(0, zEnd); if (x !== null) { v.box(x + 1, -1, zEnd - 3, x + 2, 0, zEnd - 1, 'prPeluit'); }
+  return v;
+}
+// kartu ID tergantung tali di dada
+function kartu(v, zTop, zEnd, tali = 'prKartuT') {
+  for (let z = zEnd; z <= zTop; z++) { const t = (zTop - z) / Math.max(1, zTop - zEnd), dy = Math.round(4 * (1 - t)); for (const y of [-1 - dy, dy]) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, tali); } }
+  for (let z = zEnd - 5; z <= zEnd - 1; z++) for (let y = -2; y <= 1; y++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === zEnd - 1 ? tali : 'prKartu'); }
+  return v;
+}
+// tas pinggang di depan perut
+function tasPinggang(v, zMid) {
+  for (let z = zMid - 2; z <= zMid + 2; z++) for (let y = -4; y <= 3; y++) { const x = v.front(y, z); if (x !== null) { v.set(x + 1, y, z, 'prTas'); if (Math.abs(z - zMid) <= 1 && Math.abs(y + 0.5) < 3) v.set(x + 2, y, z, z === zMid + 1 && y === 0 ? 'prKoin' : 'prTas'); } }
+  for (let y = -12; y <= 11; y++) { const x = v.front(y, zMid + 1); if (x !== null && v.get(x, y, zMid + 1) !== 'prTas') v.set(x, y, zMid + 1, 'prTas'); }
+  return v;
+}
+// tudung jas hujan / hoodie: selapis kain di luar kepala, wajah tetap terbuka
+function tudung(v, c, cS = c) {
+  const [lo, hi] = bounds(v), add = [], fx = hi[0] - 4, zFace = hi[2] - 4;
+  v.each((x, y, z) => {
+    for (const [dx, dy, dz] of [[-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [1, 0, 0]]) {
+      const X = x + dx, Y = y + dy, Z = z + dz;
+      if (v.has(X, Y, Z)) continue;
+      if (dx === 1 && (x < fx || z <= zFace) && z <= zFace + 1) continue;   // jangan menutup muka
+      if (x >= fx - 1 && z <= zFace && Math.abs(y + 0.5) < (hi[1] - lo[1]) / 2 - 1) continue;
+      if (z < lo[2] + 2) continue;
+      add.push([X, Y, Z]);
+    }
+  });
+  for (const p of add) v.set(...p, c);
+  for (let y = lo[1]; y <= hi[1]; y++) { const x = v.front(y, zFace + 2); if (x !== null && v.get(x, y, zFace + 2) === c) v.set(x, y, zFace + 2, cS); }
+  return v;
+}
+// bungkus plastik di atas punggung (gitar / tas)
+function bungkusPunggung(v, z0, z1, w = 5, tebal = 4) {
+  const [lo] = bounds(v);
+  for (let z = z0; z <= z1; z++) for (let y = -w; y <= w - 1; y++) for (let k = 1; k <= tebal; k++) v.set(lo[0] - k, y, z, (y + z) % 5 === 0 && k === tebal ? 'prPlastik' : k === tebal || Math.abs(y + 0.5) > w - 1.5 ? 'prPlastik' : 'prPlastik');
+  return v;
+}
+// lampu minyak (teplok) digenggam
+function lampuMinyak(v) { const [x, y, z] = hand(v); v.set(x, y, z - 1, 'prAntena'); v.box(x - 2, y - 2, z - 7, x + 2, y + 2, z - 6, 'prAntena'); v.box(x - 1, y - 1, z - 5, x + 1, y + 1, z - 2, 'prKaca'); v.set(x, y, z - 4, 'prLampu'); return v; }
+// tasbih tergantung dari genggaman
+function tasbih(v) { const [x, y, z] = hand(v); for (let k = 1; k <= 7; k++) v.set(x + (k > 4 ? 1 : 0), y, z - k, 'prTasbih'); return v; }
+// selapis kain luar (ponco, jas) di atas bagian badan yang ada, dari zLo sampai zHi
+function lapis(v, c, zLo = -1e9, zHi = 1e9, sisi = [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+  const add = [];
+  v.each((x, y, z) => { if (z < zLo || z > zHi) return; for (const [dx, dy] of sisi) if (!v.has(x + dx, y + dy, z)) add.push([x + dx, y + dy, z]); });
+  for (const p of add) v.set(...p, c);
+  return v;
+}
+// lengan panjang: cat ulang lengan bawah dari z0 ke atas (tangan di bawah z0 tetap kulit)
+function lengan(v, c, z0, cuff) { v.each((x, y, z) => { if (z >= z0) v.set(x, y, z, z === z0 && cuff ? cuff : c); }); return v; }
+// cat ulang semua voxel dalam rentang z (celana panjang di betis, kaus kaki, dsb.)
+function catZ(v, c, z0, z1, kecuali = []) { v.each((x, y, z, m) => { if (z >= z0 && z <= z1 && !kecuali.includes(m)) v.set(x, y, z, c); }); return v; }
+// motif kotak-kotak (sarung, kemeja kotak): cat ulang semua voxel bahan tertentu
+function motifKotak(v, a, b, n = 3, hanya = null) { v.each((x, y, z, c) => { if (hanya && !hanya.includes(c)) return; v.set(x, y, z, (Math.floor((x + 64) / n) + Math.floor((y + 64) / n) + Math.floor((z + 64) / n)) % 2 ? a : b); }); return v; }
+// jas / blazer: selapis di luar badan z0..z1, dengan bukaan V di depan (isi di dalam tetap terlihat)
+function jas(v, c, z0, z1, vLo, cS = c) {
+  lapis(v, c, z0, z1);
+  for (let z = vLo; z <= z1; z++) { const w = Math.floor((z - vLo) / 2.2); for (let y = -1 - w; y <= w; y++) { const x = v.front(y, z); if (x !== null && v.get(x, y, z) === c) { v.set(x, y, z, null); const x2 = v.front(y, z); if (x2 !== null && x2 < x - 1) v.set(x - 1, y, z, cS); } } for (const y of [-2 - w, w + 1]) { const x = v.front(y, z); if (x !== null && v.get(x, y, z) === c) v.set(x, y, z, cS); } }
+  return v;
+}
+// ganti semua voxel (kecuali bahan tertentu) jadi satu bahan
+function semua(v, c, kecuali = []) { v.each((x, y, z, m) => { if (!kecuali.includes(m)) v.set(x, y, z, c); }); return v; }
+// handuk kecil tersampir di bahu (sisi s = 1 kanan / -1 kiri), menjuntai di depan & belakang
+function handukBahu(v, c = 'prHanduk', s = 1, cS = 'prHandukS') {
+  const [lo, hi] = bounds(v), y0 = s > 0 ? hi[1] - 4 : lo[1] + 1, y1 = y0 + 3;
+  for (let y = y0; y <= y1; y++) {
+    let top = -1e9; v.each((x, yy, z) => { if (yy === y && z > top) top = z; });
+    if (top < -1e8) continue;
+    for (let x = lo[0] - 1; x <= hi[0] + 1; x++) v.set(x, y, top + 1, c);
+    for (let z = top - 9; z <= top; z++) { const m = z === top - 9 || z === top - 7 ? cS : c, xf = v.front(y, z), xb = v.back(y, z); if (xf !== null) v.set(xf + 1, y, z, m); if (xb !== null) v.set(xb - 1, y, z, m); }
+  }
+  return v;
+}
+
+return { hand, bounds, strip, raket, payungLipat, penggaris, buku, kipas, kantongBola, peluit, kartu, tasPinggang, tudung, bungkusPunggung, lampuMinyak, tasbih, lapis, lengan, catZ, motifKotak, jas, semua, handukBahu };
 })();
 // ===== rani.js
 NS.rani = (() => {
@@ -1618,7 +1858,7 @@ NS.rani = (() => {
 // Rangka skala 1.24 (tokoh lama), voxel halus 1/64 petak. Koordinat sama dengan Raka: x maju, y samping, z naik.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer, helmet  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer, helmet  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -1799,6 +2039,7 @@ const OUTFITS = {
   rumah: { name: 'Kaus longgar + training', top: 'kaus', bottom: 'training', shoe: 'sandal' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', helm: !!opt.helm, face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), skirt = o.bottom === 'rok';
   const top = o.top === 'lampu' ? 'jk' : o.top === 'jeans' ? 'denim' : o.top === 'kaus' ? 'rTee' : 'white';
@@ -1825,13 +2066,15 @@ NS.bimo = (() => {
 // seragam sesak di perut (kancing hampir lepas), HP di saku. Rangka skala 1.3 + perut buncit, voxel halus 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  lapis, handukBahu  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12.5, hipY: 5, flap: 7, ballR: 1.15 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  bKausR: ['#b8862a', '#d09a34', '#e4ae46', '#f0c466'], bMi: ['#f6e6a0'], bMiK: ['#c8402e'],
   bSkin: ['#94603d', '#b07650', '#c98e66', '#dca57c'], bSkinS: ['#b07650'], blush: ['#d9826e'],
   bHair: ['#0d0a09', '#17120f', '#221a16', '#33281f'], bHairT: ['#1a1411', '#28201a', '#382b22', '#46372b'],
   btn: ['#d8d8d2'], glass: ['#141218', '#1c1a21', '#26232c', '#3a3642'], lensG: ['#cfe3f0'], phoneB: ['#2a2e3a'],
@@ -1964,7 +2207,13 @@ const OUTFITS = {
   kaus: { name: 'Kaus Bakso Pak Pras', top: 'kaus' },
   koki: { name: 'Koki Warkop (celemek)', top: 'koki' },
 };
+OUTFITS.rumah = { ...OUTFITS.kaus, name: 'Rumah: kaus kebesaran bergambar mi, celana pendek',
+  sw: { bTee: 'bKausR', bowl: 'bMiK', bowlY: 'bMi' },
+  fx: { pelvis: v => lapis(v, 'bTee', 28, 99) } };
+OUTFITS.masak = { ...OUTFITS.koki, name: 'Masak: celemek bakso ayahnya, handuk di bahu',
+  fx: { chest: v => handukBahu(v, 'prHanduk', 1) } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), K = o.top !== 'kemeja';
   return assemble([
@@ -1987,13 +2236,15 @@ NS.bram = (() => {
 // & dimasukkan rapi, kancing atas terbuka, jam tangan perak, sepatu kulit cokelat. Voxel halus 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  catZ, jas, lengan, semua  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10, shZ: 17, upper: 11, fore: 11.5, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  bJersey: ['#0b0a0e', '#141318', '#1c1c22', '#2c2c35'], bEmas: ['#b8902e', '#d4aa40', '#e8c25a', '#f4d87e'], bJas: ['#0c0c10', '#15151a', '#1e1e25', '#2c2c36'], bJasS: ['#2e2e38'],
   mSkin: ['#b8835f', '#cf9b78', '#e2b392', '#eec3a2'], mSkinS: ['#cf9b78'],
   mHair: ['#07050a', '#0e0a0d', '#171115', '#241b20'], mHairT: ['#1c1a22', '#26242e', '#33313d', '#45434f'],
   mPants: ['#121116', '#1b1a20', '#25242b', '#36353e'], leather: ['#3a1a10', '#4f2416', '#6a311f', '#8a4630'],
@@ -2119,7 +2370,19 @@ const OUTFITS = {
   geng: { name: 'Bomber geng + kacamata hitam', top: 'bomber', shades: true },
   rumah: { name: 'Kaus hitam + training', top: 'kaus' },
 };
+const NOMOR = [[0, 0], [1, 0], [2, 0], [3, 0], [3, -1], [2, -2], [2, -3], [1, -4], [1, -5]];   // angka 7
+OUTFITS.basket = { ...OUTFITS.rumah, name: 'Basket: jersey hitam pribadi, sepatu limited edition',
+  sw: { mTrack: 'mTee' },
+  fx: { chest: v => { for (const [dy, dz] of NOMOR) v.pf(dy - 2, 52 + dz, 'bEmas'); for (const y of [-8, 7]) for (let z = 37; z <= 56; z++) { const x = v.front(y, z); if (x !== null) v.set(x, y, z, 'bEmas'); } return v; },
+        armR: v => semua(v, 'mSkin'), armL: v => semua(v, 'mSkin'),
+        shinR: v => catZ(v, 'mSkin', -99, 17), shinL: v => catZ(v, 'mSkin', -99, 17) },
+  ball: { shoulder: 'mSkin', knee: 'mSkin' } };
+OUTFITS.resmi = { ...OUTFITS.seragam, name: 'Resmi: jas hitam setelan',
+  fx: { chest: v => jas(v, 'bJas', 37, 58, 47, 'bJasS'), armR: v => semua(v, 'bJas'), armL: v => semua(v, 'bJas'),
+        foreR: v => lengan(v, 'bJas', 35, 'white'), foreL: v => lengan(v, 'bJas', 35, 'white'), pelvis: v => semua(v, 'bJas', ['leather']) },
+  ball: { shoulder: 'bJas', elbow: 'bJas' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), top = o.top === 'bomber' ? 'bomber' : o.top === 'kaus' ? 'mTee' : 'white';
   return assemble([
@@ -2142,7 +2405,8 @@ NS.nadia = (() => {
 // kecil tali kulit, pantofel hitam mengilap. Rangka skala 1.24 (sama dengan Rani), voxel halus 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  raket, payungLipat, strip, tudung  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -2156,6 +2420,8 @@ addRamps({
   pantofel: ['#09080b', '#121116', '#1f1e25', '#4a4a56'], nStrap: ['#5a3420'], pen: ['#2a4fa0'],
   almamater: ['#14203f', '#1c2b52', '#263a6a', '#36508a'], almaS: ['#c7a24a'], map: ['#d9ecf2'],
   mint: ['#5f9c80', '#7ab89a', '#9fd3b5', '#bfe6cf'], mintS: ['#7ab89a'],
+  nSport: ['#3d6fa8', '#4f86c4', '#6aa0dc', '#8ab9ec'], nSportS: ['#3d6fa8'], nTrain: ['#1b1d26', '#262935', '#343846', '#474c5c'],
+  nHijabSp: ['#1d2a4a', '#26365e', '#334676', '#45598e'], nHijabSpS: ['#26365e'],
   kulot: ['#8a6d50', '#a88865', '#c4a47f', '#dbbf9b'], bag: ['#6f5a3f', '#8a7354', '#a68f6c', '#c2ad8a'],
 });
 
@@ -2297,7 +2563,14 @@ const OUTFITS = {
   jalan: { name: 'Tunik + kulot', top: 'tunik', bottom: 'kulot', shoe: 'kets' },
   rumah: { name: 'Gamis rumahan', top: 'gamis', bottom: 'rok', shoe: 'kaus' },
 };
+OUTFITS.olahraga = { ...OUTFITS.jalan, propOn: 'olahraga', name: 'Olahraga: kaus lengan panjang, celana training, hijab sport, raket',
+  sw: { cream: 'nSport', creamS: 'nSportS', kulot: 'nTrain', hijab: 'nHijabSp', hijabS: 'nHijabSpS', pearl: 'nHijabSp' },
+  fx: { chest: v => strip(v, 'bag'), foreR: raket } };
+OUTFITS.hujan = { ...OUTFITS.seragam, propOn: 'all', name: 'Hujan: ponco kuning, payung lipat biru',
+  sw: { cream: 'prPonco', creamS: 'prPoncoS', osis: 'prPonco', tag: 'prPonco', pen: 'prPonco' },
+  fx: { head: v => tudung(v, 'prPonco', 'prPoncoS'), foreR: v => payungLipat(v) } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o);
   const top = o.top === 'alma' ? 'almamater' : o.top === 'gamis' ? 'mint' : 'cream';
@@ -2325,13 +2598,15 @@ NS.dimas = (() => {
 // Rangka skala 1.38 (sama dengan Bram), voxel halus 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  lapis, kantongBola  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10, shZ: 17, upper: 11, fore: 11.5, hipY: 4.5, flap: 6, ballR: 1.05 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  dBatik: ['#5a3a1c', '#6e4824', '#84582e', '#9c6a3a'], dBatikK: ['#e0b860'], dPara: ['#2e5a4a', '#386c58', '#448068', '#56987e'], dParaS: ['#244a3c'],
   dSkin: ['#94603d', '#b07650', '#c98e66', '#dca57c'], dSkinS: ['#b07650'], dEar: ['#9a5e42', '#b87050', '#d08868', '#e09c7c'],
   dHair: ['#080607', '#100c0d', '#1a1415', '#28201f'], dHairF: ['#3a2e2c'],
   dFadeA: ['#1c1513', '#261c19', '#32251f', '#402f27'], dFadeB: ['#4e3324', '#603f2c', '#734c36', '#865a40'], dFadeC: ['#80553b', '#966446', '#ad7552', '#c0865f'],
@@ -2483,7 +2758,13 @@ const OUTFITS = {
   jalan: { name: 'Hoodie biru + chino', top: 'hoodie', bot: 'chino' },
   rumah: { name: 'Kaus loreng + celana pendek', top: 'loreng', bot: 'short' },
 };
+const BATIK = v => { v.each((x, y, z, c) => { if (c === 'white' || c === 'whiteS') v.set(x, y, z, (x + y * 2 + z * 3) % 7 === 0 || (y - z + 64) % 6 === 0 ? 'dBatikK' : 'dBatik'); }); return v; };
+OUTFITS.resmi = { ...OUTFITS.seragam, name: 'Resmi: kemeja batik ayahnya yang terlalu besar (dikeluarkan)',
+  fx: { chest: v => BATIK(lapis(v, 'white', 36, 56)), armR: v => BATIK(lapis(v, 'white')), armL: v => BATIK(lapis(v, 'white')), pelvis: v => BATIK(lapis(v, 'white', 30, 99)) } };
+OUTFITS.hujan = { ...OUTFITS.jalan, propOn: 'angkut', name: 'Hujan: jaket parasut, bola di kantong plastik',
+  sw: { hoodie: 'dPara', hoodieS: 'dParaS' }, fx: { foreR: kantongBola } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Ft = foot(o);
   const top = o.top === 'jersey' ? 'dSkin' : o.top === 'loreng' ? 'loreng' : o.top === 'hoodie' ? 'hoodie' : 'white';
@@ -2548,7 +2829,8 @@ NS.sekar = (() => {
 // kebesaran, rok abu panjang, kets kanvas hitam, gitar di punggung. Rangka skala 1.24 (sama dengan Rani), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
+const {  lengan, tudung  } = NS.props;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -2556,6 +2838,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  sGaun: ['#121114', '#1a191d', '#242328', '#34333a'], sGaunS: ['#2a292f'], sHood: ['#2e3a30', '#38463a', '#445446', '#566856'],
   sSkin: ['#c4977a', '#dcb294', '#f0c8a8', '#fad9bf'], sSkinS: ['#dcb294'],
   sHair: ['#0c080a', '#150f12', '#1e1418', '#2e2226'], sHairT: ['#1e1418', '#2e2226', '#433238', '#5a464c'],
   lav: ['#6e4aa0', '#8a5ad0', '#a47ce0', '#c3a6ee'], lavS: ['#b9a3d6', '#cbb9e2', '#dccfee', '#ece4f6'],
@@ -2706,7 +2989,14 @@ const OUTFITS = {
   jalan: { name: 'Flanel ungu + rok panjang', top: 'flanel', bottom: 'rok', sk: 'denim' },
   rumah: { name: 'Sweater lavender + piama', top: 'sweater', bottom: 'piama' },
 };
+OUTFITS.pentas = { ...OUTFITS.seragam, name: 'Pentas: gaun hitam sederhana, jaket jeans penuh pin, boots',
+  sw: { white: 'sGaun', whiteS: 'sGaunS', sSkirt: 'sGaun', sSkirtS: 'sGaunS', sock: 'gig', canvas: 'gig' },
+  fx: { chest: v => { const pin = ['rubber', 'rubberB', 'rubberY', 'starP']; v.each((x, y, z, c) => { if ((c === 'denim' || c === 'denimL') && (x * 7 + y * 13 + z * 5) % 17 === 0) v.set(x, y, z, pin[(y + z + 40) % 4]); }); return v; } } };
+OUTFITS.hujan = { ...OUTFITS.band, name: 'Hujan: hoodie bertudung, gitar dibungkus plastik besar',
+  sw: { bandT: 'sHood', bandP: 'sHood', gig: 'prPlastik', gigS: 'prPlastik' }, ball: { elbow: 'sHood' },
+  fx: { head: v => tudung(v, 'sHood'), foreR: v => lengan(v, 'sHood', 31), foreL: v => lengan(v, 'sHood', 31) } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), rok = o.bottom === 'rok';
   const top = { jeans: 'denim', band: 'bandT', sweater: 'lavS', flanel: 'lav' }[o.top] || 'white';
@@ -2734,13 +3024,15 @@ NS.arga = (() => {
 // Seragam dikeluarkan + jaket kulit cokelat warisan ayah, boots hitam. Rangka skala ±1.32 (tinggi pinggul = Raka), voxel 1/64.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  motifKotak, tudung, lapis  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  aSarung: ['#2e4a3a', '#3a5c48', '#4a705a', '#5e8870'], aSarungK: ['#7a2e2a', '#923a34', '#a84a42', '#be6256'], aOblong: ['#cfcfca', '#e2e2dc', '#f0f0ea', '#fbfbf6'],
   aSkin: ['#7a4a2e', '#94603d', '#b07a52', '#c48c62'], aSkinS: ['#94603d'], aScar: ['#d8a07a'],
   aBuzz: ['#1a1413', '#241c19', '#30251f', '#3e3028'], aBuzzT: ['#4a3a30'],
   kulit: ['#2e1c12', '#3e271a', '#5a3a28', '#74503a'], kulitS: ['#8a6448'], zip: ['#a0a4ad'],
@@ -2862,7 +3154,15 @@ const OUTFITS = {
   jalan: { name: 'Flanel abu + jeans hitam', top: 'flanel', bot: 'jeansK' },
   kerja: { name: 'Bantu kakek: kaus abu + celana kerja', top: 'kaus', bot: 'kerja' },
 };
+const SARUNG = v => motifKotak(v, 'aSarung', 'aSarungK', 3, ['kerja']);
+OUTFITS.rumah = { ...OUTFITS.kerja, name: 'Rumah: sarung kotak, kaus oblong putih',
+  sw: { asap: 'aOblong', boots: 'aSkin' },
+  fx: { pelvis: SARUNG, thighR: SARUNG, thighL: SARUNG, shinR: SARUNG, shinL: SARUNG } };
+OUTFITS.hujan = { ...OUTFITS.jalan, name: 'Hujan: ponco hitam',
+  sw: { flanel: 'prPoncoH', flanelK: 'prPoncoHS' },
+  fx: { head: v => tudung(v, 'prPoncoH', 'prPoncoHS'), pelvis: v => lapis(v, 'prPoncoH') } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeve(o);
   return assemble([
@@ -2885,7 +3185,8 @@ NS.laras = (() => {
 // di poni. Rangka skala 1.24 (sama dengan Rani), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
+const {  tasPinggang, lengan, payungLipat, tudung  } = NS.props;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -2893,6 +3194,7 @@ const PV = pivots(SKEL);
 const TAIL = [-7, 0, 15];   // ikatan kuncir tinggi (lokal kepala)
 
 addRamps({
+  lPara: ['#b4441c', '#d2562a', '#ea6c3a', '#f68c5c'], lParaS: ['#b4441c'],
   lSkin: ['#9a6640', '#b2774f', '#c48a60', '#d6a074'], lSkinS: ['#b2774f'], lBlush: ['#d9826a'],
   lHair: ['#100b08', '#1a120d', '#24160e', '#382517'], lHairT: ['#24160e', '#382517', '#4e3522', '#664630'],
   karet: ['#c23a2a'], jepit: ['#a87a40', '#c89050', '#dcaa6a', '#ecc488'],
@@ -3047,7 +3349,14 @@ const OUTFITS = {
   jalan: { name: 'Kemeja kotak di pinggang + jeans', top: 'hijau', bottom: 'jeans', shoe: 'kets' },
   rumah: { name: 'Daster batik pendek', top: 'daster', bottom: 'daster', shoe: 'sandal' },
 };
+OUTFITS.malam = { ...OUTFITS.jalan, name: 'Jualan malam: jaket parasut oranye, tas pinggang uang receh',
+  sw: { white: 'lPara', whiteS: 'lParaS' }, ball: { elbow: 'lPara' },
+  fx: { chest: v => tasPinggang(v, 34), foreR: v => lengan(v, 'lPara', 31, 'lParaS'), foreL: v => lengan(v, 'lPara', 31, 'lParaS') } };
+OUTFITS.hujan = { ...OUTFITS.jalan, propOn: 'all', name: 'Hujan: plastik kresek jadi jas hujan, payung sewaan besar (ojek payung)',
+  sw: { white: 'prKresek', whiteS: 'prKresekS' },
+  fx: { head: v => tudung(v, 'prKresek', 'prKresekS'), foreR: v => payungLipat(v, 'prPayungH', 22) } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), rok = o.bottom === 'rok';
   const top = { jualan: 'lOren', daster: 'daster' }[o.top] || 'white';
@@ -3076,7 +3385,8 @@ NS.rizal = (() => {
 // selempang kanvas berisi buku. Voxel halus 1/64 petak, rangka sama keluarga Arga tapi lebih ramping.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  payungLipat  } = NS.props;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 0.9 };
@@ -3265,7 +3575,9 @@ const OUTFITS = {
   rumah: { name: 'Kaus festival literasi + sarung', top: 'kaus', bot: 'sarung', shoe: 'sandal' },
   jalan: { name: 'Kemeja kotak cokelat + slacks + sepatu kanvas', top: 'kotak', bot: 'slack', shoe: 'rzKanvas' },
 };
+OUTFITS.hujan = { ...OUTFITS.jalan, propOn: 'all', name: 'Hujan: payung hitam besar', fx: { foreR: v => payungLipat(v, 'prPayungH', 22) } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), sar = o.bot === 'sarung';
   const leg = sar ? 'sarung' : legC(o);
@@ -3294,7 +3606,7 @@ NS.uti = (() => {
 // Rangka skala 1.24 (keluarga Rani), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -3468,6 +3780,7 @@ const OUTFITS = {
   malam: { name: 'Malam: jaket marun + helm kuning petir', top: 'malam', helm: true, helmOk: true },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const base = OUTFITS[opt.outfit || 'seragam'];
   const o = { ...base, expr: opt.expr || 'biasa', face: opt.face, helm: base.helm || !!opt.helm };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o), sh = o.top === 'futsal' || o.top === 'bengkel' || o.top === 'band';
@@ -3492,13 +3805,15 @@ NS.tegar = (() => {
 // ikat pinggang kulit, badge ketua kelas, pantofel. Skala lama 1.32, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  tudung  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  tJas: ['#14306a', '#1a3c80', '#224a96', '#3060b0'], tJasS: ['#e8e070'],
   tSkin: ['#c8987a', '#dcaf8e', '#f0c4a0', '#fad6b6'], tSkinS: ['#d8a888'], tBag: ['#c49a86'],
   tHair: ['#060505', '#0c0a0a', '#141010', '#221c1c'], tHairT: ['#4a4650'], tPart: ['#000000'],
   tFrame: ['#08080a', '#0e0e12', '#16161b', '#26262e'], tLens: ['#d8e8f2'],
@@ -3639,7 +3954,11 @@ const OUTFITS = {
   rumah: { name: 'Piama setelan biru tua', top: 'piama' },
   jalan: { name: 'Polo abu + chino + kets putih bersih', top: 'polo' },
 };
+OUTFITS.hujan = { ...OUTFITS.les, name: 'Hujan: jas hujan atas-bawah, tas dibungkus plastik',
+  sw: { langit: 'tJas', langitS: 'tJasS', bahan: 'tJas', ransel: 'prPlastik', bukuT: 'prPlastik', bukuM: 'prPlastik', bukuH: 'prPlastik' },
+  fx: { head: v => tudung(v, 'tJas') } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   return assemble([
@@ -3663,7 +3982,7 @@ NS.sasha = (() => {
 // Rangka skala 1.24 (keluarga Rani), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -3671,6 +3990,7 @@ const PV = pivots(SKEL);
 const TAIL = [-7, 0, 6];
 
 addRamps({
+  saSatin: ['#cfcac2', '#e4e0d8', '#f4f1ea', '#fffdf8'], saSatinS: ['#d6cfc2'], saBulu: ['#e89ab0', '#f2b0c2', '#f8c6d4', '#fdd8e2'], ketsK: ['#5e5a54', '#706c66', '#86827a', '#9a968e'],
   saSkin: ['#c8a088', '#dcb498', '#f2cdb0', '#fadcc4'], saSkinS: ['#e0b498'], lipP: ['#d86a84'], saBlush: ['#eea0a0'],
   saHair: ['#3a1c12', '#4a2618', '#5a3020', '#74402c'], saHairT: ['#8e5236'],
   pinkC: ['#c88898', '#dca0b0', '#f2b8c6', '#f8ccd8'], pinkCS: ['#d896a8'], saGold: ['#8e6e2a', '#ad8936', '#c9a24a', '#e0bc66'],
@@ -3823,7 +4143,12 @@ const OUTFITS = {
   jalan: { name: 'Dress bunga + jaket denim putih + tas mini', top: 'dress', bottom: 'dress', shoe: 'flat' },
   malam: { name: 'Penyamaran malam: hoodie hitam + masker', top: 'hoodie', bottom: 'training', shoe: 'kets', hood: true, mask: true },
 };
+OUTFITS.rumah = { ...OUTFITS.malam, hood: false, mask: false, name: 'Rumah: piama satin putih, sandal bulu',
+  sw: { hoodK: 'saSatin', hoodKS: 'saSatinS', ketsL: 'saBulu', sole: 'saBulu', lace: 'saBulu' } };
+OUTFITS.rahasia = { ...OUTFITS.malam, name: 'Rahasia: hoodie hitam polos, celana training, masker, kets lusuh (penyamaran)',
+  sw: { hoodKS: 'hoodK', ketsL: 'ketsK', lace: 'ketsK' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o);
   const sk = o.bottom === 'rok' ? ['saRok', 'saRokS'] : o.bottom === 'dress' ? ['dressP', 'denimWS'] : null;
@@ -3851,13 +4176,14 @@ NS.kirana = (() => {
 // dicat toska, mata tajam agak sipit, satu anting tindik, plester di siku/lutut. Rangka skala 1.26, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13.5, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9.5, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
 const TAIL = [-7, 0, 6];
 
 addRamps({
+  kJas: ['#141c34', '#1c2644', '#263256', '#34426c'], kJasS: ['#e8e070'],
   kSkin: ['#a8784e', '#c08c60', '#d8a878', '#e6bc90'], kSkinS: ['#c4935f'],
   kHair: ['#08080a', '#0e0e12', '#16161c', '#26262e'], kHairT: ['#34343e'], toska: ['#1e766e', '#26908a', '#2fa39a', '#52c0b6'],
   neon: ['#c85418', '#e8661e', '#ff7a2f', '#ff9a5c'], wpK: ['#121214', '#1a1a1e', '#242428', '#34343a'],
@@ -4021,7 +4347,10 @@ const OUTFITS = {
   balap: { name: 'Jaket balap toska-hitam #21 + helm full-face', top: 'balap', helm: true, helmOk: true },
   jalan: { name: 'Crop hoodie hitam + kargo + sneakers tinggi', top: 'crop' },
 };
+OUTFITS.hujan = { ...OUTFITS.balap, name: 'Hujan: jas hujan setelan motor (biru dongker, lis reflektor) + helm',
+  sw: { balap: 'kJas', balapK: 'kJas', toska: 'kJas', neon: 'kJasS' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const base = OUTFITS[opt.outfit || 'seragam'];
   const o = { ...base, expr: opt.expr || 'biasa', face: opt.face, helm: base.helm || !!opt.helm };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
@@ -4045,13 +4374,15 @@ NS.jojo = (() => {
 // tergantung di leher, rompi fotografer hijau army penuh saku. Skala lama 1.3, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  kartu  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 14, thigh: 14, up: 4, neck: 24, shY: 9, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  jHitam: ['#111114', '#19191d', '#232328', '#33333a'], jHitamS: ['#3a3a42'], jCelana: ['#0e0e11', '#16161a', '#1f1f24', '#2c2c33'],
   jSkin: ['#7e5236', '#94603f', '#a8724e', '#bc8660'], jSkinS: ['#946040'], tahi: ['#3a2418'],
   jHair: ['#120e0a', '#1a140e', '#2a2018', '#3a2e22'], jHairT: ['#6a5a48'], jSide: ['#2a2018', '#342820', '#403228', '#4e3e32'],
   army: ['#3e4828', '#4c5832', '#5c6b3c', '#71824c'], armyS: ['#46512c'], kamera: ['#121214', '#1a1a1d', '#242428', '#36363c'], lensa: ['#4a6a8a'], kameraT: ['#b8bcc4'],
@@ -4207,7 +4538,11 @@ const OUTFITS = {
   rumah: { name: 'Kaus "Horas!" + celana pendek', top: 'horas' },
   jalan: { name: 'Kemeja hawaii oranye + kargo + sandal gunung', top: 'hawai' },
 };
+OUTFITS.kerja = { ...OUTFITS.jalan, name: 'Kerja kru: kemeja & celana hitam, kartu kru',
+  sw: { hawai: 'jHitam', hawaiD: 'jHitam', hawaiB: 'jHitam', kargoJ: 'jCelana', gunung: 'jHitam' },
+  fx: { chest: v => kartu(v, 54, 44, 'prTali') } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   return assemble([
@@ -4231,7 +4566,7 @@ NS.andra = (() => {
 // Skala lama 1.32, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
@@ -4413,6 +4748,7 @@ const OUTFITS = {
   rumah: { name: 'Sarung + kaus partai bekas', top: 'rumah' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   const sar = o.top === 'rumah', panel = sg => sar ? plaid(skirtPanel('sarungA', 'sarungAS', sg, 5)) : null;
@@ -4439,7 +4775,8 @@ NS.mei = (() => {
 // tembam, mata sipit (hilang saat tertawa), noda tinta di jari kanan. Rangka keluarga Rani (1.24), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
+const {  tudung  } = NS.props;
 const {  skirtPelvis, skirtPanel, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -4447,6 +4784,7 @@ const PV = pivots(SKEL);
 const TAIL = [-7, 0, 6];
 
 addRamps({
+  meParuh: ['#d8762a', '#e8862e', '#f09a40', '#f8b058'],
   meSkin: ['#c8a07a', '#dcb690', '#f0cfa8', '#f8dcbc'], meSkinS: ['#dcb08a'], meBlush: ['#f0a090'],
   meHair: ['#08080a', '#101014', '#18181e', '#28282f'], meHairT: ['#363642'],
   pensil: ['#e3b23c'], pensilT: ['#f4ead2'], bulat: ['#3a2a1e', '#4a3626', '#5c4430', '#74583e'], bulatL: ['#e0eef4'],
@@ -4604,7 +4942,11 @@ const OUTFITS = {
   rumah: { name: 'Piama kucing + kaus kaki tidak sepasang', top: 'piama' },
   jalan: { name: 'Overall jeans + kaus garis + baret hijau + tas tote', top: 'jalan', beret: true },
 };
+OUTFITS.hujan = { ...OUTFITS.jalan, beret: false, name: 'Hujan: jas hujan kuning mustard bentuk bebek',
+  sw: { overallM: 'mustard', garis: 'mustard', garisM: 'mustard', tote: 'mustard', pinA: 'mustard', pinB: 'mustard' },
+  fx: { head: v => { tudung(v, 'mustard'); let xm = -99, zt = -99; v.each((x, y, z) => { if (x > xm) xm = x; if (z > zt) zt = z; }); for (let y = -3; y <= 2; y++) for (const dz of [0, 1]) { const x = v.front(y, zt - 2 - dz); if (x !== null) { v.set(x + 1, y, zt - 2 - dz, 'meParuh'); if (dz === 0) v.set(x + 2, y, zt - 2, 'meParuh'); } } for (const y of [-4, 3]) { const x = v.front(y, zt - 5); if (x !== null) v.set(x, y, zt - 5, 'kucingK'); } return v; } } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), sl = sleeveC(o), leg = legC(o), S = o.top === 'seragam';
   const P = assemble([
@@ -4631,7 +4973,7 @@ NS.gilang = (() => {
 // Rangka keluarga Arga (skala 1.34), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
@@ -4855,6 +5197,7 @@ const OUTFITS = {
   jalan: { name: 'Windbreaker kuning-biru loakan + jeans + topi terbalik', top: 'jalan', cap: true },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil outfit 'seragam': Gilang tidak sekolah, jadi pakai baju kerja. Galon bukan bagian badan: ia properti
   // gerakan 'galon' / 'galonWalk' (rig.js), jadi hilang sendiri saat Gilang berantem
   const base = OUTFITS[opt.outfit] || OUTFITS.kerja;
@@ -4885,7 +5228,8 @@ NS.wulan = (() => {
 // Rangka keluarga Rani (1.26), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
+const {  lapis  } = NS.props;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -5078,7 +5422,11 @@ const OUTFITS = {
   desa: { name: 'Di desa: kaus lengan panjang + sarung batik', top: 'desa', bottom: 'sarung' },
   kota: { name: 'Ke kota: kemeja kotak hijau + jeans + sepatu kanvas + tas anyaman', top: 'kota' },
 };
+OUTFITS.hujan = { ...OUTFITS.pemandu, name: 'Hujan: caping + jas hujan plastik + boots karet',
+  sw: { wlHijau: 'prKresek', wlHijauS: 'prKresekS' },
+  fx: { pelvis: v => lapis(v, 'prKresek') } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   const sk = o.bottom === 'span' ? ['spanW', 'spanWS', 13] : o.bottom === 'sarung' ? ['sarungW', 'sarungWS', 5] : null;
@@ -5106,7 +5454,8 @@ NS.darto = (() => {
 // jepit; saat kerja celemek hijau Warkop Simpang. Rangka keluarga Arga (skala 1.32), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  lapis, lengan  } = NS.props;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
@@ -5114,6 +5463,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  daJeansJ: ['#3a4a62', '#4a5c78', '#5e7290', '#7a8ca8'], daJeansJS: ['#2a3648'],
   daSkin: ['#8e5a3a', '#a86e48', '#c48a60', '#d49c72'], daSkinS: ['#a87050'], tatoD: ['#4a6a7a'],
   daHair: ['#141010', '#1e1a18', '#2a2420', '#3a322c'], daUban: ['#8a8680', '#a29e98', '#bab6ae', '#cfcbc4'], kumis: ['#141010'],
   oblong: ['#b8b2a2', '#cac4b4', '#dad4c4', '#e6e0d2'], oblongS: ['#a8a090'], celemek: ['#2a5a34', '#326a3e', '#3c7a48', '#50905c'], celemekT: ['#e8dcb0'],
@@ -5245,7 +5595,12 @@ const OUTFITS = {
   santai: { name: 'Santai: kaus oblong + sarung di pundak + celana pendek', top: 'oblong', bot: 'pendek', sarungBahu: true },
   rumah: { name: 'Di rumah: kaus kutang + sarung', top: 'kutang', bot: 'sarung' },
 };
+OUTFITS.malam = { ...OUTFITS.kerja, apron: false, name: 'Malam: jaket jeans tua, sarung melilit leher',
+  sw: { oblong: 'daJeansJ', oblongS: 'daJeansJS' }, ball: { elbow: 'daJeansJ' },
+  fx: { chest: v => { lapis(v, 'sarungD', 52, 56); v.each((x, y, z, c) => { if (c === 'sarungD' && (x + y) % 4 === 0) v.set(x, y, z, 'sarungDK'); }); return v; },
+        foreR: v => lengan(v, 'daJeansJ', 31, 'daJeansJS'), foreL: v => lengan(v, 'daJeansJ', 31, 'daJeansJS') } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Om Darto memakai baju kerja warkop
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kerja), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
@@ -5273,7 +5628,7 @@ NS.cici = (() => {
 // Rangka anak (skala lama 0.98): kepala tetap ukuran tokoh lain (gaya chibi), badan & kaki jauh lebih pendek. Voxel 1/64.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
 
 // rangka anak: pinggul z 20, dada z 23, bahu z 34, kepala z 39
 const SKEL = { ank: 3.5, shin: 8, thigh: 8.5, up: 3, neck: 16, shY: 6.5, shZ: 11, upper: 7, fore: 6.5, hipY: 3, flap: 4.5, ballR: 0.7 };
@@ -5399,6 +5754,7 @@ const OUTFITS = {
   piama: { name: 'Piama bintang + sandal bulu', top: 'piama' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = o.top === 'piama' ? 'piamaC' : 'ciSkin';
   return assemble([
@@ -5421,13 +5777,15 @@ NS.fajar = (() => {
 // Rangka keluarga Arga (skala 1.34), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  motifKotak  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  faKotak: ['#6a4430', '#7e5238', '#925e42', '#a6704e'], faKotakS: ['#c8b890'],
   faSkin: ['#80502e', '#9a663e', '#b8805a', '#c8926a'], faSkinS: ['#9a6844'], faOli: ['#24201c'],
   faHair: ['#0c0a08', '#14100c', '#1a1410', '#2a221c'], faHairT: ['#3a2e24'],
   kerjaF: ['#34404c', '#3e4c5a', '#4a5a6a', '#5e7084'], kerjaFS: ['#2a3440'], handukF: ['#c8c4b8', '#d8d4c8', '#e6e2d6', '#f2eee4'], handukFS: ['#c84a3a'],
@@ -5558,7 +5916,11 @@ const OUTFITS = {
   lampu: { name: 'Jaket Lampu Kota + sarung tangan + jeans', top: 'lampu' },
   santai: { name: 'Santai: kaus putih + jeans + sandal jepit + handuk', top: 'santai', towel: true },
 };
+const KOTAK_FA = v => motifKotak(v, 'faKotak', 'faKotakS', 3, ['kausF']);
+OUTFITS.paket_c = { ...OUTFITS.santai, towel: false, name: 'Paket C: kemeja kotak pinjaman Om Darto + jeans + sandal',
+  fx: { chest: KOTAK_FA, armR: KOTAK_FA, armL: KOTAK_FA } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Mas Fajar memakai baju bengkel
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.bengkel), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o);
@@ -5582,7 +5944,7 @@ NS.kobar = (() => {
 // dompet, suka tertawa mengaum. Rangka keluarga Bram (skala 1.36), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 11, fore: 11.5, hipY: 5, flap: 6, ballR: 1.1 };
 const PV = pivots(SKEL);
@@ -5716,6 +6078,7 @@ const OUTFITS = {
   balap: { name: 'Balap: jaket balap hitam-biru nomor 1 + sarung tangan', top: 'balap' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Kobar memakai baju geng
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.geng), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = o.top === 'bengkel' ? 'coverall' : 'celanaK';
@@ -5739,13 +6102,15 @@ NS.jaka = (() => {
 // jeans gelap, boots cokelat tua. Rangka keluarga Bram (skala 1.38), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  catZ  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 11, fore: 11.5, hipY: 5, flap: 6, ballR: 1.1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  jaKaus: ['#141416', '#1c1c1f', '#262629', '#343438'],
   jaSkin: ['#7e5236', '#94603e', '#a8724e', '#ba8460'], jaSkinS: ['#8e5c3c'], jaBeard: ['#2a1c14'],
   jaHair: ['#0a0808', '#121010', '#1a1616', '#282222'], jaHairT: ['#3a302c'], jaIkat: ['#6a4a2a'],
   jaTee: ['#6e7078', '#80828a', '#92949c', '#a6a8b0'], jaJeans: ['#1a2236', '#222c44', '#2c3854', '#3c4a6a'], jaJeansS: ['#141a2a'],
@@ -5890,7 +6255,11 @@ const OUTFITS = {
   latihan: { name: 'Latihan: kutang hitam + celana training + perban tangan (ujian masuk)', top: 'latihan' },
   santai: { name: 'Santai: kemeja flanel merah digulung + celana kargo + boots', top: 'santai' },
 };
+OUTFITS.kerja = { ...OUTFITS.santai, name: 'Kerja kuli angkut pasar: kaus hitam, celana kargo, sarung tangan kerja',
+  sw: { jaFlan: 'jaKaus', jaFlanS: 'jaKaus' },
+  fx: { foreR: v => catZ(v, 'prGlove', -99, 34), foreL: v => catZ(v, 'prGlove', -99, 34) } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bang Jaka memakai jaket Lampu Kota
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.lampu), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
@@ -5914,7 +6283,7 @@ NS.narti = (() => {
 // Rangka keluarga Nadia (skala 1.24) dengan bahu lebih lebar, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12, thigh: 12.5, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -6076,10 +6445,11 @@ function foot(o) {
 
 const OUTFITS = {
   daster: { name: 'Sehari-hari: bergo bunga + daster batik + sandal jepit + kipas', top: 'daster', hijab: 'bergo', flower: true },
-  arisan: { name: 'Arisan: bergo marun + tunik brokat + rok batik + selop + tas tangan', top: 'arisan', hijab: 'bergoP' },
+  arisan: { name: 'Arisan: bergo marun + tunik brokat + rok batik + selop + tas tangan', top: 'arisan', hijab: 'bergoP', propOn: 'all' },
   pengajian: { name: 'Pengajian: gamis hijau tua + bergo krem + selop', top: 'pengajian', hijab: 'bergoK' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Narti memakai daster
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.daster), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = dress(o), A = arm(o), Th = pat(o, skirtThigh(c)), Sn = pat(o, skirtShin(c, cS)), Ft = foot(o), sl = sleeveC(o);
@@ -6107,7 +6477,7 @@ NS.rtslamet = (() => {
 // warga + pulpen di saku. Rangka keluarga Arga (skala 1.32) dengan perut ala Om Darto, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
 const PV = pivots(SKEL);
@@ -6267,7 +6637,9 @@ const OUTFITS = {
   ronda: { name: 'Ronda malam: jaket parasut + sarung diselempang + senter', top: 'ronda' },
   kerja: { name: 'Kerja bakti: kaus merah + celana training + handuk leher + bot karet', top: 'kerja' },
 };
+OUTFITS.rumah = { ...OUTFITS.batik, propOn: 'baca', name: 'Rumah: kopiah hitam, kemeja batik lengan pendek, buku catatan warga' };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak RT memakai batik
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.batik), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
@@ -6292,7 +6664,7 @@ NS.haris = (() => {
 // tegap ramping, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -6432,6 +6804,7 @@ const OUTFITS = {
   batik: { name: 'Acara resmi: batik sutra hitam-emas lengan panjang', top: 'batik' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Haris memakai jas
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jas), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
@@ -6455,7 +6828,7 @@ NS.gito = (() => {
 // rambut menipis disisir ke belakang (dahi lebar), perut agak buncit. Rangka keluarga Arga (skala 1.3), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
 const PV = pivots(SKEL);
@@ -6608,6 +6981,7 @@ const OUTFITS = {
   kulit: { name: 'Malam: jaket kulit hitam + kaus merah + kalung emas', top: 'kulit' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Gito memakai safari
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.safari), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o);
@@ -6631,13 +7005,14 @@ NS.rio = (() => {
 // tapi badan lebar), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 11, fore: 11.5, hipY: 5, flap: 6, ballR: 1.1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  rioKulit: ['#24160e', '#301e14', '#40281a', '#583824'], rioKulitS: ['#6e4a32'], rioTee: ['#0c0c0e', '#141416', '#1c1c20', '#28282e'],
   rioSkin: ['#ae7c58', '#c89470', '#e0b088', '#ecc29c'], rioSkinS: ['#c48c66'],
   rioHair: ['#4a2a16', '#5a341c', '#6a4024', '#82522e'], rioHairT: ['#9a6a3e'], rioSide: ['#5a4434', '#665040', '#725c4a', '#7e6856'],
   rioTank: ['#e8e4dc', '#f2eee6', '#faf8f2', '#ffffff'], rioShort: ['#8a1a1a', '#a42222', '#bc2c2c', '#d23c3c'], rioShortS: ['#f2d23a'],
@@ -6758,10 +7133,14 @@ function foot(o) {   // sneakers hitam besar sol putih (tinju: sepatu tinju mera
 
 const OUTFITS = {
   seragam: { name: 'Seragam dikeluarkan, kancing terbuka, lengan digulung + kalung rantai', top: 'seragam' },
-  tinju: { name: 'Sasana tinju: kutang putih + celana tinju merah + sarung tinju', top: 'tinju' },
+  tinju: { name: 'Sasana tinju: kutang putih + celana tinju merah + sarung tinju', top: 'tinju', held: false },   // sarung tinju dipakai, bukan barang
   jalan: { name: 'Nongkrong: hoodie hitam garis merah + jeans + sneakers', top: 'jalan' },
 };
+OUTFITS.geng = { ...OUTFITS.jalan, name: 'Geng: kaus hitam ketat, jaket kulit imitasi',
+  sw: { rioHood: 'rioKulit', rioHoodS: 'rioKulitS', jeans: 'rioTee' },
+  fx: { chest: v => { for (let z = 38; z <= 57; z++) for (let y = -2; y <= 1; y++) { const x = v.front(y, z); if (x !== null) v.set(x, y, z, 'rioTee'); } return v; } } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   return assemble([
@@ -6784,7 +7163,7 @@ NS.kevin = (() => {
 // Rangka keluarga Rizal (ramping, skala 1.34), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -6917,6 +7296,7 @@ const OUTFITS = {
   rumah: { name: 'Kaus biru tua + celana pendek', top: 'rumah' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   return assemble([
@@ -6939,7 +7319,7 @@ NS.hartini = (() => {
 // emas, selop. Rangka keluarga Nadia (skala 1.26), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -6947,6 +7327,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  htKebH: ['#6e8466', '#82987a', '#98ae8e', '#b0c4a6'], htKebHS: ['#56684e'], htDaster: ['#8a3a4a', '#a44a5a', '#ba5c6c', '#cc7482'], htDasterK: ['#f0d8b0'],
   htSkin: ['#ae7a54', '#c8906a', '#d9a07a', '#e6b28e'], htSkinS: ['#c08862'], htBlush: ['#d8907a'],
   htHair: ['#140e0c', '#1c1410', '#261c16', '#34281e'], htUban: ['#a8a29a'], htTusuk: ['#c89a3a'],
   kebaya: ['#b8925a', '#cca46a', '#dcb87c', '#e8cc94'], kebayaS: ['#9a7644'], bros: ['#e8c050'], kutubaru: ['#6a3a1a', '#7a4422', '#8c522c', '#a06438'],
@@ -7069,7 +7450,12 @@ const OUTFITS = {
   korpri: { name: 'Senin: batik Korpri biru + rok hitam panjang', top: 'korpri' },
   rapat: { name: 'Rapat & sidang Bab 13: blazer biru tua + blus putih + map', top: 'rapat' },
 };
+OUTFITS.kerja = { ...OUTFITS.kebaya, name: 'Kerja: kebaya hijau sage + kain batik, kacamata rantai, sanggul',
+  sw: { kebaya: 'htKebH', kebayaS: 'htKebHS' } };
+OUTFITS.rumah = { ...OUTFITS.kebaya, name: 'Rumah: daster batik bunga + kain, sanggul',
+  sw: { kebaya: 'htDaster', kebayaS: 'htDasterK', kutubaru: 'htDaster', bros: 'htDasterK', rantaiHt: 'htSkin', kacaHt: 'htSkin' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Hartini memakai kebaya
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kebaya), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirt(o), A = arm(o), Th = sk(o, skirtThigh(c)), Sn = sk(o, skirtShin(c, cS)), Ft = foot(o), sl = sleeveC(o);
@@ -7097,7 +7483,7 @@ NS.ratna = (() => {
 // selalu di tangan kanan. Rangka keluarga Nadia (skala 1.26), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -7105,6 +7491,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  raBlzAbu: ['#34363e', '#40424a', '#4c4e58', '#5c5e6a'], raBlusB: ['#b6cce0', '#c8daea', '#d8e6f2', '#e8f0f8'],
   raSkin: ['#c48e68', '#dca882', '#e8b890', '#f4caa6'], raSkinS: ['#d8a27c'], raLip: ['#a8202c'],
   raHair: ['#08060a', '#100c10', '#1a1418', '#282024'], raHairT: ['#3a3038'], raFrame: ['#6a1420'], raLens: ['#e4eef4'],
   blazerR: ['#121216', '#1a1a20', '#24242a', '#323238'], blazerRS: ['#08080a'], blusR: ['#e6e2da', '#f0ece4', '#f8f6f0', '#ffffff'],
@@ -7227,7 +7614,10 @@ const OUTFITS = {
   batik: { name: 'Jumat: terusan batik marun motif kawung + penggaris', top: 'batik' },
   santai: { name: 'Akhir pekan: kardigan marun + kaus putih + kulot hitam', top: 'santai' },
 };
+OUTFITS.kerja = { ...OUTFITS.blazer, propOn: 'ajar', name: 'Kerja: blazer abu arang + blus biru muda + rok pensil, rambut dikonde, penggaris kayu',
+  sw: { blazerR: 'raBlzAbu', blusR: 'raBlusB' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Ratna memakai blazer
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.blazer), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), K = o.top === 'santai', [c, cS] = skirtC(o);
@@ -7255,13 +7645,15 @@ NS.hendro = (() => {
 // bergaris putih, sepatu lari putih. Rangka keluarga Arga (skala 1.36), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  motifKotak  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  heKausB: ['#1e4a8a', '#26589e', '#3068b2', '#4480c6'], heOblong: ['#cfcfca', '#e0e0da', '#eeeee8', '#fafaf4'], heSarung: ['#3a4a2a', '#4a5c36', '#5c7044', '#728856'], heSarungK: ['#8a6a2a'],
   heSkin: ['#86583a', '#9c6a46', '#b07a52', '#c08c64'], heSkinS: ['#9a6844'], heKumis: ['#120e0c'],
   heHair: ['#1a1410', '#221a14', '#2c221a', '#3a2e24'],
   topiH: ['#9a1e1e', '#b42626', '#cc3030', '#e04848'], topiHS: ['#f2f2f2'], peluit: ['#a8acb4', '#c4c8d0', '#dce0e8', '#f2f4f8'], taliH: ['#1a3a8a'],
@@ -7396,7 +7788,14 @@ const OUTFITS = {
   wasit: { name: 'Wasit futsal / liga resmi: kaus wasit hitam + kartu + peluit', top: 'wasit' },
   batik: { name: 'Jumat: batik hijau toska lengan pendek + celana bahan', top: 'batik' },
 };
+OUTFITS.kerja = { ...OUTFITS.olahraga, propOn: 'ajar', name: 'Kerja: kaus olahraga biru sekolah, topi biru, peluit',
+  sw: { heKaus: 'heKausB', topiH: 'heKausB' } };
+const SARUNG_HE = v => motifKotak(v, 'heSarung', 'heSarungK', 3, ['celHe']);
+OUTFITS.rumah = { ...OUTFITS.batik, name: 'Rumah: kaus oblong putih + sarung kotak',
+  sw: { batikHe: 'heOblong', batikHeS: 'heOblong', batikHeK: 'heOblong' },
+  fx: { pelvis: SARUNG_HE, thighR: SARUNG_HE, thighL: SARUNG_HE, shinR: SARUNG_HE, shinL: SARUNG_HE } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Hendro memakai baju olahraga
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.olahraga), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
@@ -7420,13 +7819,15 @@ NS.wawan = (() => {
 // tangan kiri, pulpen di saku. Rangka keluarga Arga (skala 1.3) dengan perut, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  motifKotak, strip  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  waPutih: ['#c8c8c4', '#dcdcd8', '#ececE8', '#f8f8f4'], waPutihS: ['#a8a8a4'], waOblong: ['#b8b4a8', '#ccc8bc', '#dcd8cc', '#eae6da'], waSarung: ['#5a2a2a', '#6c3434', '#7e3e3e', '#924a4a'], waSarungK: ['#2a2a3a'],
   waSkin: ['#9e6a46', '#b88058', '#c98e66', '#d6a07a'], waSkinS: ['#b07a54'], waKumis: ['#0e0a08'],
   waHair: ['#120e0c', '#1a1410', '#241c16', '#32281e'], waHairT: ['#4a3e34'],
   khaki: ['#9a8a5e', '#ae9e70', '#c0b082', '#d0c094'], khakiS: ['#7a6c46'], celKhaki: ['#4a3c2c', '#584836', '#665440', '#76624e'],
@@ -7543,7 +7944,14 @@ const OUTFITS = {
   senam: { name: 'Jumat pagi: setelan training biru Korpri + sneakers', top: 'senam' },
   batik: { name: 'Batik cokelat lengan panjang + celana hitam + buku pelanggaran', top: 'batik' },
 };
+OUTFITS.kerja = { ...OUTFITS.pns, propOn: 'baca', name: 'Kerja: kemeja PNS putih + celana hitam, kumis, buku pelanggaran',
+  sw: { khaki: 'waPutih', khakiS: 'waPutihS', celKhaki: 'pantoW' } };
+const SARUNG_WA = v => motifKotak(v, 'waSarung', 'waSarungK', 3, ['pantoW']);
+OUTFITS.rumah = { ...OUTFITS.batik, name: 'Rumah: kaus oblong + sarung kotak',
+  sw: { wwBatik: 'waOblong', wwBatikS: 'waOblong', batikWK: 'waOblong' },
+  fx: { pelvis: SARUNG_WA, thighR: SARUNG_WA, thighL: SARUNG_WA, shinR: SARUNG_WA, shinL: SARUNG_WA, foreL: v => strip(v, 'bukuW', 'bukuWK') } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Wawan memakai seragam PNS
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.pns), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
@@ -7567,7 +7975,7 @@ NS.sinta = (() => {
 // di tangan kiri. Rangka keluarga Nadia (skala 1.24), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -7575,6 +7983,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  siKardiB: ['#9aa4b0', '#aeb8c4', '#c2ccd6', '#d6dee6'], siDaster: ['#c47a8a', '#d48e9c', '#e2a4b0', '#eebcc6'], siDasterS: ['#a8606e'], siHijabR: ['#6a5a4a', '#7c6a58', '#907c68', '#a6927c'], siHijabRS: ['#5a4a3a'],
   siSkin: ['#c8946c', '#e0ac86', '#e8b48c', '#f4c8a4'], siSkinS: ['#d8a27c'], siBlush: ['#f0a090'],
   hijabSi: ['#c87a62', '#dc9078', '#eca890', '#f8c4ae'], hijabSiS: ['#c07058'], brosSi: ['#f4f0e8'], brosSiC: ['#e8b840'],
   hijabSiL: ['#7a6a9a', '#8e7eae', '#a494c2', '#bcaed6'], hijabSiLS: ['#6a5a8a'], hijabSiM: ['#4a7a6a', '#5a8c7a', '#6c9e8c', '#84b4a2'], hijabSiMS: ['#3a6a5a'],
@@ -7685,7 +8094,12 @@ const OUTFITS = {
   gamis: { name: 'Gamis ungu lembut + hijab ungu', top: 'gamis' },
   batik: { name: 'Jumat: batik biru motif kawung + hijab hijau mint', top: 'batik' },
 };
+OUTFITS.kerja = { ...OUTFITS.kardigan, propOn: 'baca', name: 'Kerja: hijab mint pastel, kardigan abu muda, buku',
+  sw: { hijabSi: 'hijabSiM', hijabSiS: 'hijabSiMS', kardiS: 'siKardiB' } };
+OUTFITS.rumah = { ...OUTFITS.gamis, name: 'Rumah: daster panjang merah jambu + hijab instan cokelat',
+  sw: { gamisSi: 'siDaster', gamisSiS: 'siDasterS', hijabSiL: 'siHijabR', hijabSiLS: 'siHijabRS' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Sinta memakai kardigan
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kardigan), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirtC(o), A = arm(o), Th = skirtThigh(c), Sn = skirtShin(c, cS), Ft = foot(o), sl = sleeveC(o);
@@ -7713,13 +8127,14 @@ NS.anton = (() => {
 // Rangka keluarga Arga (skala 1.34), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  anKemP: ['#c8ccd0', '#dce0e4', '#eceef2', '#fafbfc'], anKemPS: ['#a8b0b8'], anKaus: ['#4a5a4a', '#586a58', '#687c68', '#7c927c'],
   anSkin2: ['#b88460', '#cc9670', '#d9a27a', '#e6b28a'], anSkin2S: ['#c48e68'],
   anHair2: ['#140c08', '#1c120c', '#241810', '#322216'], anHair2T: ['#4a3626'], anFade: ['#4a3a30', '#544238', '#5e4a40', '#6a564a'],
   kemA: ['#6c96c4', '#82aad4', '#98bee2', '#b0d0ee'], kemAS: ['#5480b0'], chinoA: ['#5a5c62', '#686a72', '#787a82', '#8a8c94'],
@@ -7828,7 +8243,12 @@ const OUTFITS = {
   debat: { name: 'Klub debat: blazer biru tua + kaus putih + chino', top: 'debat' },
   denim: { name: 'Akhir pekan: jaket denim + kaus hitam + jeans', top: 'denim' },
 };
+OUTFITS.kerja = { ...OUTFITS.kemeja, name: 'Kerja: kemeja slim putih digulung + chino + sneakers',
+  sw: { kemA: 'anKemP', kemAS: 'anKemPS' } };
+OUTFITS.rumah = { ...OUTFITS.denim, name: 'Rumah: kaus hijau lumut + jeans',
+  sw: { denimA: 'anKaus', denimAS: 'anKaus', teeAH: 'anKaus' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Mr. Anton memakai kemeja
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kemeja), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
@@ -7852,13 +8272,15 @@ NS.gunadi = (() => {
 // kupu-kupu, celana abu, gelas kimia berasap di tangan. Rangka keluarga Arga (skala 1.28, sedikit membungkuk), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
+const {  motifKotak  } = NS.props;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 23, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  guPolo: ['#2a4a3a', '#345a46', '#3e6a52', '#4c7e62'], guSarung: ['#4a3a6a', '#5a487e', '#6a5892', '#7e6ca8'], guSarungK: ['#c8b890'],
   guSkin: ['#bc8c68', '#d4a07c', '#e0b088', '#ecc09a'], guSkinS: ['#c89672'], guKerut: ['#b8845e'],
   guHair: ['#a8a49c', '#c0bcb4', '#d6d2ca', '#ecebe6'], guHairS: ['#8e8a82'], guFrame: ['#2a2a30'], guLens: ['#dcecf4'],
   labC: ['#cfd2d6', '#e2e4e8', '#f0f2f4', '#fafbfc'], labS: ['#b0b4ba'], nodaH: ['#5aa04a'], nodaU: ['#8a4ab0'], nodaK: ['#d8a020'], nodaG: ['#4a3a2a'],
@@ -7974,7 +8396,18 @@ const OUTFITS = {
   rompi: { name: 'Mengajar teori: rompi wol cokelat + kemeja krem + dasi kupu-kupu', top: 'rompi' },
   kardigan: { name: 'Rumah: kardigan rajut bata + kemeja krem', top: 'kardigan' },
 };
+function rambutBerdiri(v) {   // helai uban mencuat ke atas, gaya ilmuwan
+  const top = new Map(); v.each((x, y, z, c) => { if (c === 'guHair' || c === 'guHairS') { const k = x + ',' + y; if (!top.has(k) || top.get(k) < z) top.set(k, z); } });
+  for (const [k, z] of top) { const [x, y] = k.split(',').map(Number), h = (Math.abs(x * 7 + y * 13) % 5); if (h >= 2) for (let i = 1; i <= h - 1; i++) v.set(x, y, z + i, i === h - 1 ? 'guHair' : 'guHairS'); }
+  return v;
+}
+OUTFITS.kerja = { ...OUTFITS.lab, name: 'Kerja: jas lab bernoda, rambut putih berdiri', fx: { head: rambutBerdiri } };
+const SARUNG_GU = v => motifKotak(v, 'guSarung', 'guSarungK', 3, ['celG2', 'pantoG']);
+OUTFITS.rumah = { ...OUTFITS.kardigan, name: 'Rumah: kaus polo hijau tua + sarung kotak ungu',
+  sw: { kardiG: 'guPolo', kemG: 'guPolo', dasiG: 'guPolo' },
+  fx: { pelvis: SARUNG_GU, thighR: SARUNG_GU, thighL: SARUNG_GU, shinR: SARUNG_GU, shinL: SARUNG_GU } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Gunadi memakai jas lab
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.lab), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o);
@@ -7998,7 +8431,7 @@ NS.melati = (() => {
 // bertumpuk, kalung manik, sandal kulit. Rangka keluarga Nadia (skala 1.25), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -8006,6 +8439,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  mlTenunB: ['#2a4a7a', '#34588e', '#4068a2', '#5480b8'], mlTenunBS: ['#16284a'],
   mlSkin: ['#ae7a54', '#c8906a', '#d9a07a', '#e6b28e'], mlSkinS: ['#c08862'], mlBlush: ['#d8806a'],
   mlHair: ['#0e0806', '#160e0a', '#20140e', '#2e1e16'], mlHairT: ['#40281c'], kamboja: ['#f8f4ea'], kambojaC: ['#f0c040'],
   tenun: ['#9a3a6a', '#b04a7c', '#c25a8a', '#d2709c'], tenunS: ['#4a1a3a'], tenunK: ['#f2d27a'], tenunU: ['#5a2a7a'],
@@ -8113,7 +8547,10 @@ const OUTFITS = {
   pensi: { name: 'Pensi: atasan hitam + rok tenun + selendang oranye', top: 'pensi' },
   santai: { name: 'Santai: terusan linen krem + gelang kayu', top: 'santai' },
 };
+OUTFITS.kerja = { ...OUTFITS.etnik, name: 'Kerja: gaun tenun ikat biru + selendang, gelang kayu',
+  sw: { tenun: 'mlTenunB', tenunS: 'mlTenunBS' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Melati memakai gaun etnik
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.etnik), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirtC(o), A = arm(o), Ft = foot(o), sl = sleeveC(o);
@@ -8142,7 +8579,7 @@ NS.ujang = (() => {
 // Rangka keluarga Arga (skala 1.24 lama, dibulatkan ke rangka cowok sedang supaya geraknya sama), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -8278,11 +8715,12 @@ function foot(o) {
 }
 
 const OUTFITS = {
-  kerja: { name: 'Kerja: topi pet + kaus abu + celana kain digulung + sapu lidi + serenceng kunci', top: 'kerja', hat: 'pet' },
+  kerja: { name: 'Kerja: topi pet + kaus abu + celana kain digulung + sapu lidi + serenceng kunci', top: 'kerja', hat: 'pet', propOn: 'sapu' },
   dinas: { name: 'Dinas: seragam penjaga sekolah hijau zaitun + papan nama + kunci', top: 'dinas', hat: 'pet' },
   rumah: { name: 'Sore di rumah: peci + kaus oblong + sarung kotak + gembor', top: 'rumah', hat: 'peci' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Ujang memakai baju kerja
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kerja), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), leg = legC(o);
@@ -8306,7 +8744,7 @@ NS.iyah = (() => {
 // Rangka keluarga Nadia/Bu Narti (skala 1.2), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12, thigh: 12.5, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -8464,10 +8902,11 @@ function foot(o) {
 
 const OUTFITS = {
   warung: { name: 'Warung: ikat kepala batik + daster bunga + celemek bernoda + sutil + sandal jepit', top: 'warung', head: 'iyIkat' },
-  pasar: { name: 'Ke pasar subuh: kerudung putih + kebaya encim marun + selendang + sarung batik + tas anyaman', top: 'pasar', head: 'mukena' },
+  pasar: { name: 'Ke pasar subuh: kerudung putih + kebaya encim marun + selendang + sarung batik + tas anyaman', top: 'pasar', head: 'mukena', propOn: 'all' },
   ngaji: { name: 'Pengajian: kerudung putih panjang + gamis ungu tua + tasbih', top: 'ngaji', head: 'mukena' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Mak Iyah memakai baju warung
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.warung), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = dress(o), A = arm(o), Ft = foot(o), sl = sleeveC(o);
@@ -8497,13 +8936,14 @@ NS.ama = (() => {
 // Rangka keluarga Nadia (skala 1.2 lama, dibulatkan ke rangka cewek), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  encim: ['#d8d4cc', '#e8e4dc', '#f4f2ec', '#fdfcf8'], encimS: ['#c8b8a8'], encimK: ['#d46a84'],
   amSkin: ['#c8a07a', '#dab48c', '#e8c49e', '#f2d4b0'], amSkinS: ['#d0a682'], amBlush: ['#e0a08c'],
   amHair: ['#b8b6b0', '#cecccc', '#e0dedc', '#f0eeec'], amHairS: ['#a09e98'], giok: ['#3a8a5a', '#46a06a', '#56b47a', '#6ac88e'],
   kacaAm: ['#141418'], kacaAmS: ['#3a3a42'],
@@ -8628,7 +9068,10 @@ const OUTFITS = {
   dapur: { name: 'Bikin bakpao: celemek bertepung + kukusan bambu berisi bakpao', top: 'dapur' },
   imlek: { name: 'Imlek: blus merah bersulam emas + selop merah + angpao', top: 'imlek' },
 };
+OUTFITS.rumah = { ...OUTFITS.toko, propOn: 'santai', name: 'Rumah: sanggul putih, kacamata tebal, kebaya encim bordir, kipas',
+  sw: { samfu: 'encim', samfuS: 'encimS', samfuK: 'encimK', samfuT: 'encimK' } };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Ama memakai baju jaga toko
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.toko), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = topC(o);
@@ -8652,7 +9095,7 @@ NS.karto = (() => {
 // kayu, sandal jepit. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -8759,10 +9202,11 @@ function foot() {
 }
 
 const OUTFITS = {
-  teras: { name: 'Teras: kaus oblong belel + sarung kotak hijau + tongkat + sandal jepit', top: 'teras' },
+  teras: { name: 'Teras: kaus oblong belel + sarung kotak hijau + tongkat + sandal jepit', top: 'teras', propOn: 'all' },
   ronda: { name: 'Pos ronda: peci + jaket lusuh + sarung di leher + kopi hitam', top: 'ronda', peci: true },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.teras), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o);
   return assemble([
@@ -8785,7 +9229,7 @@ NS.sum = (() => {
 // sandal jepit. Rangka keluarga Nadia (skala 1.22), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -8893,10 +9337,11 @@ function foot() {
 }
 
 const OUTFITS = {
-  jualan: { name: 'Keliling jualan: bergo hijau + caping + kaus oranye digulung + kain batik + tas pinggang + kangkung', top: 'jualan', hijab: 'smBergo', caping: true },
+  jualan: { name: 'Keliling jualan: bergo hijau + caping + kaus oranye digulung + kain batik + tas pinggang + kangkung', top: 'jualan', hijab: 'smBergo', caping: true, propOn: 'all' },
   rumah: { name: 'Di rumah: bergo hijau + daster batik merah muda', top: 'rumah', hijab: 'smBergo' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jualan), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirt(o), A = arm(o), Th = sk(o, skirtThigh(c)), Sn = sk(o, skirtShin(c, cS)), Ft = foot(o), sl = topC(o);
   const panel = s => sk(o, skirtPanel(c, cS, s, 5));
@@ -8923,7 +9368,7 @@ NS.darmin = (() => {
 // sepatu kets butut, handuk kecil di leher. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -9029,10 +9474,11 @@ function foot(o) {
 }
 
 const OUTFITS = {
-  ojek: { name: 'Mangkal: rompi oranye nomor 07 + jaket jeans + handuk leher + helm di tangan + kets butut', top: 'ojek' },
+  ojek: { name: 'Mangkal: rompi oranye nomor 07 + jaket jeans + handuk leher + helm di tangan + kets butut', top: 'ojek', propOn: 'all' },
   santai: { name: 'Sepi orderan: kaus kuning + celana pendek + sandal jepit + rokok di telinga', top: 'santai', rokok: true },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.ojek), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), leg = legC(o);
   return assemble([
@@ -9055,7 +9501,7 @@ NS.rini = (() => {
 // Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -9170,6 +9616,7 @@ const OUTFITS = {
   posyandu: { name: 'Ke posyandu: kerudung instan biru + tunik krem + gendongan + buku KIA', top: 'posyandu', hijab: 'kerRi' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.gendong), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = topC(o);
   return assemble([
@@ -9192,7 +9639,7 @@ NS.joko = (() => {
 // pakai kaus kutang + celana kerja. Rangka keluarga Bram/Kobar (badan besar), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 11, fore: 11.5, hipY: 5, flap: 6, ballR: 1.1 };
 const PV = pivots(SKEL);
@@ -9297,6 +9744,7 @@ const OUTFITS = {
   sore: { name: 'Sore: kaus kutang + celana kerja + palu ketok + sepatu safety', top: 'sore' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.las), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), leg = legC(o);
   return assemble([
@@ -9319,7 +9767,7 @@ NS.euis = (() => {
 // sandal jepit. Hari Minggu pakai gamis kuning + kerudung krem. Rangka keluarga Nadia (skala 1.22), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -9423,10 +9871,11 @@ function foot() {
 }
 
 const OUTFITS = {
-  jualan: { name: 'Jualan pecel: kerudung pink + blus toska + celemek batik merah + kain batik + pincuk pecel', top: 'jualan', hijab: 'euKer' },
+  jualan: { name: 'Jualan pecel: kerudung pink + blus toska + celemek batik merah + kain batik + pincuk pecel', top: 'jualan', hijab: 'euKer', propOn: 'jual' },
   minggu: { name: 'Hari Minggu: kerudung krem + gamis kuning', top: 'minggu', hijab: 'euKer2' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jualan), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirt(o), A = arm(o), Th = sk(o, skirtThigh(c)), Sn = sk(o, skirtShin(c, cS)), Ft = foot(o), sl = topC(o);
   const panel = s => sk(o, skirtPanel(c, cS, s, 5));
@@ -9454,7 +9903,7 @@ NS.ahong = (() => {
 // Rangka keluarga Arga dengan perut ala Om Darto, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
 const PV = pivots(SKEL);
@@ -9573,6 +10022,7 @@ const OUTFITS = {
   imlek: { name: 'Imlek: kemeja merah motif koin emas + celana hitam + pantofel + jeruk', top: 'imlek' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.toko), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), leg = legC(o);
   return assemble([
@@ -9799,7 +10249,7 @@ NS.rizki = (() => {
 // sepatu pantofel. Jumat: baju koko hijau + kopiah hitam. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -9913,6 +10363,7 @@ const OUTFITS = {
   jumat: { name: 'Jumatan: baju koko hijau + kopiah hitam + celana hitam + selop', top: 'jumat', kopiah: true },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jualan), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o);
   return assemble([
@@ -9936,7 +10387,7 @@ NS.hasan = (() => {
 // Rangka keluarga Arga sedikit kurus, voxel 1/64 petak. Gamis & sarung memakai isi rok (P.skirt) supaya tidak terbelah saat jalan.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -10048,9 +10499,10 @@ function foot() {
 
 const OUTFITS = {
   gamis: { name: 'Imam: gamis putih + peci haji rajut + sorban kotak merah-putih + tasbih kayu', top: 'gamis' },
-  harian: { name: 'Harian: koko krem + sarung kotak cokelat + peci hitam + Al-Qur\'an', top: 'harian' },
+  harian: { name: 'Harian: koko krem + sarung kotak cokelat + peci hitam + Al-Qur\'an', top: 'harian', propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.gamis), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skC(o), A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o);
   const P = assemble([
@@ -10076,7 +10528,7 @@ NS.bambang = (() => {
 // Ronda malam: jaket hitam tulisan SECURITY kuning di punggung + senter. Rangka keluarga Arga berperut, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
 const PV = pivots(SKEL);
@@ -10192,6 +10644,7 @@ const OUTFITS = {
   ronda: { name: 'Patroli malam: jaket hitam SECURITY + topi pet + senter', top: 'ronda', topi: true },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jaga), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o);
   return assemble([
@@ -10216,7 +10669,7 @@ NS.veronika = (() => {
 // Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.95 };
@@ -10341,9 +10794,10 @@ function foot(o) {
 
 const OUTFITS = {
   senam: { name: 'Senam pagi: bando ungu + kaus senam + jaket diikat di pinggang + legging + kets + handuk + botol minum', top: 'senam', bando: true },
-  arisan: { name: 'Arisan: blus bunga merah + rok span hitam + kalung mutiara + kacamata hitam di kepala + tas emas', top: 'arisan', kaca: true },
+  arisan: { name: 'Arisan: blus bunga merah + rok span hitam + kalung mutiara + kacamata hitam di kepala + tas emas', top: 'arisan', kaca: true, propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.senam), expr: opt.expr || 'biasa', face: opt.face };
   const S = o.top === 'senam', A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = topC(o), leg = S ? 'leggingV' : 'vrSkin';
   const list = [
@@ -10372,7 +10826,7 @@ NS.yuni = (() => {
 // Ke pasar: kardigan cokelat + keranjang belanja anyaman. Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -10477,10 +10931,11 @@ function foot() {
 }
 
 const OUTFITS = {
-  nyapu: { name: 'Nyapu halaman: kaus abu + celemek kotak biru + rok batik panjang + sapu lidi + sandal jepit', top: 'nyapu' },
-  pasar: { name: 'Ke pasar: kardigan cokelat + kaus putih + rok batik + keranjang belanja', top: 'pasar' },
+  nyapu: { name: 'Nyapu halaman: kaus abu + celemek kotak biru + rok batik panjang + sapu lidi + sandal jepit', top: 'nyapu', propOn: 'sapu' },
+  pasar: { name: 'Ke pasar: kardigan cokelat + kaus putih + rok batik + keranjang belanja', top: 'pasar', propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.nyapu), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = batik(skirtThigh('rokYu')), Sn = batik(skirtShin('rokYu', 'rokYuS')), Ft = foot(o), sl = topC(o);
   const panel = s => { const p = batik(skirtPanel('rokYu', 'rokYuS', s, 5)); if (s > 0 && o.top === 'nyapu') { for (let z = 21; z <= 31; z++) for (let y = -5; y <= 4; y++) { const x = p.front(y, z); if (x !== null) p.set(x + 1, y, z, ((y + 40) % 3 === 0) !== (z % 3 === 0) ? 'celYu' : 'celYuS'); } } return p; };
@@ -10509,7 +10964,7 @@ NS.raffi = (() => {
 // Rangka keluarga Arga agak ramping, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -10631,10 +11086,11 @@ function foot(o) {
 }
 
 const OUTFITS = {
-  kafe: { name: 'Nugas di kafe: hoodie navy kampus + chino + sneakers + tote bag laptop + es kopi susu', top: 'kafe' },
+  kafe: { name: 'Nugas di kafe: hoodie navy kampus + chino + sneakers + tote bag laptop + es kopi susu', top: 'kafe', propOn: 'all' },
   jogging: { name: 'Jogging sore: kaus lari oranye + celana pendek + headphone + jam pintar + sepatu lari', top: 'jogging', hp: true },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kafe), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), leg = legC(o), K = o.top === 'kafe';
   return assemble([
@@ -10659,7 +11115,7 @@ NS.willem = (() => {
 // Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 14, thigh: 14.5, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 11, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -10782,9 +11238,10 @@ function foot(o) {
 
 const OUTFITS = {
   taman: { name: 'Merawat anggrek: topi rimba + kemeja kotak biru muda + celana pendek khaki + kaus kaki tinggi + pot anggrek bulan', top: 'taman', topi: 'rimba' },
-  gereja: { name: 'Ke gereja: fedora abu + jas abu terang + dasi kupu-kupu marun + tongkat kayu', top: 'gereja', topi: 'fedora' },
+  gereja: { name: 'Ke gereja: fedora abu + jas abu terang + dasi kupu-kupu marun + tongkat kayu', top: 'gereja', topi: 'fedora', propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.taman), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), leg = legC(o), T = o.top === 'taman';
   return assemble([
@@ -10809,7 +11266,7 @@ NS.lita = (() => {
 // Rangka keluarga Nadia (sedikit lebih tinggi), voxel 1/64 petak. Rok panjang memakai rok.js supaya tidak terbelah.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 13, thigh: 13.5, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -10924,10 +11381,11 @@ function foot() {   // sepatu hak tinggi: ujung lancip, hak di belakang
 }
 
 const OUTFITS = {
-  kafe: { name: 'Ngopi cantik: kacamata hitam lebar + terusan panjang zamrud + tas monogram + gelang emas + hak tinggi', top: 'kafe', kaca: true },
-  kondangan: { name: 'Kondangan: sanggul + tusuk konde + kebaya brokat marun + kain batik + clutch emas', top: 'kondangan', sanggul: true },
+  kafe: { name: 'Ngopi cantik: kacamata hitam lebar + terusan panjang zamrud + tas monogram + gelang emas + hak tinggi', top: 'kafe', kaca: true, propOn: 'all' },
+  kondangan: { name: 'Kondangan: sanggul + tusuk konde + kebaya brokat marun + kain batik + clutch emas', top: 'kondangan', sanggul: true, propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kafe), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirt(o), A = arm(o), Th = sk(o, skirtThigh(c)), Sn = sk(o, skirtShin(c, cS)), Ft = foot(o), sl = topC(o);
   const panel = s => sk(o, skirtPanel(c, cS, s, 5));
@@ -10955,7 +11413,7 @@ NS.kurir = (() => {
 // Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -11058,6 +11516,7 @@ const OUTFITS = {
   istirahat: { name: 'Istirahat: topi hitam + kaus hitam + celana kargo + main HP', top: 'istirahat' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.antar), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), J = o.top === 'antar';
   return assemble([
@@ -11081,7 +11540,7 @@ NS.kevinkecil = (() => {
 // Sekolah: seragam SD swasta (kemeja putih + dasi kotak + celana kotak biru) + ransel. Rangka anak (sama dengan Cici).
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
 
 const SKEL = { ank: 3.5, shin: 8, thigh: 8.5, up: 3, neck: 16, shY: 6.5, shZ: 11, upper: 7, fore: 6.5, hipY: 3, flap: 4.5, ballR: 0.7 };
 const PV = pivots(SKEL);
@@ -11185,6 +11644,7 @@ const OUTFITS = {
   sekolah: { name: 'Sekolah: seragam SD swasta (kemeja putih + dasi kotak + celana kotak biru) + ransel oranye', top: 'sekolah' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.main), expr: opt.expr || 'biasa', face: opt.face };
   const Th = thigh(o), Sn = shin(o), Ft = foot(o), A = arm(o), sl = bodyC(o), leg = legC(o);
   return assemble([
@@ -11208,7 +11668,7 @@ NS.sugeng = (() => {
 // Dinas: topi pet cokelat + seragam berpangkat + kopel. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -11315,6 +11775,7 @@ const OUTFITS = {
   dinas: { name: 'Dinas: topi pet cokelat + seragam berpangkat + kopel + jam tangan', top: 'dinas' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.lantas), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o);
   return assemble([
@@ -11338,7 +11799,7 @@ NS.barista = (() => {
 // kotak merah + jeans + sneakers + tumbler. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -11446,6 +11907,7 @@ const OUTFITS = {
   santai: { name: 'Santai: kemeja flanel merah + jeans + sneakers + tumbler', top: 'santai' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kafe), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), K = o.top === 'kafe';
   return assemble([
@@ -11469,7 +11931,7 @@ NS.lastri = (() => {
 // + gelas jamu di tangan + sandal jepit. Meracik: daster batik hijau + celemek + cobek & ulekan. Rangka keluarga Nadia.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -11610,10 +12072,11 @@ function foot() {
 }
 
 const OUTFITS = {
-  keliling: { name: 'Keliling: kebaya kutubaru kuning + jarik cokelat + selendang lurik + bakul jamu + gelas jamu + sandal jepit', top: 'keliling' },
+  keliling: { name: 'Keliling: kebaya kutubaru kuning + jarik cokelat + selendang lurik + bakul jamu + gelas jamu + sandal jepit', top: 'keliling', propOn: 'jual' },
   racik: { name: 'Meracik: daster batik hijau + celemek + cobek & ulekan', top: 'racik' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.keliling), expr: opt.expr || 'biasa', face: opt.face };
   const c = cK(o), cS = cKS(o);
   const A = arm(o), Th = kain(o, skirtThigh(c)), Sn = kain(o, skirtShin(c, cS)), Ft = foot(o), sl = K(o) ? 'lsKeb' : 'lsDaster';
@@ -11647,7 +12110,7 @@ NS.tarno = (() => {
 // Ngaso: kaus oblong putih + celana pendek + handuk di leher + segelas kopi hitam. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -11761,10 +12224,11 @@ function foot() {
 }
 
 const OUTFITS = {
-  parkir: { name: 'Jaga parkir: topi biru + rompi oranye rambu P + kaus garis + handuk di bahu + peluit + karcis + celana abu + sandal jepit', top: 'parkir' },
+  parkir: { name: 'Jaga parkir: topi biru + rompi oranye rambu P + kaus garis + handuk di bahu + peluit + karcis + celana abu + sandal jepit', top: 'parkir', propOn: 'jual' },
   ngaso: { name: 'Ngaso: kaus oblong putih + celana pendek + handuk + segelas kopi hitam', top: 'ngaso' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.parkir), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), c = P_(o) ? 'trKaus' : 'trPutih', cl = P_(o) ? 'trCelana' : 'trPendek';
   return assemble([
@@ -11788,7 +12252,7 @@ NS.dewi = (() => {
 // Pulang: jaket jins + kaus putih + jins + sepatu kets + tas jinjing kanvas. Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -11919,10 +12383,11 @@ function foot(o) {
 }
 
 const OUTFITS = {
-  stan: { name: 'Jaga stan: topi merah SINYAL+ + polo merah kerah putih + kartu nama + celana hitam + sepatu flat + brosur & HP', top: 'stan' },
-  pulang: { name: 'Pulang: jaket jins + kaus putih + jins + sepatu kets + tas jinjing kanvas', top: 'pulang' },
+  stan: { name: 'Jaga stan: topi merah SINYAL+ + polo merah kerah putih + kartu nama + celana hitam + sepatu flat + brosur & HP', top: 'stan', propOn: 'jual' },
+  pulang: { name: 'Pulang: jaket jins + kaus putih + jins + sepatu kets + tas jinjing kanvas', top: 'pulang', propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.stan), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = S(o) ? 'dwMerah' : 'dwJaket', leg = S(o) ? 'dwHitam' : 'dwJins';
   return assemble([
@@ -11946,7 +12411,7 @@ NS.dul = (() => {
 // receh + jins robek + sandal. Nongkrong: jaket parka hijau + ukulele disandang di punggung. Rangka keluarga Arga.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -12070,10 +12535,11 @@ function foot() {
 }
 
 const OUTFITS = {
-  ngamen: { name: 'Ngamen: bandana merah + kaus hitam matahari + rompi jins tambalan + ukulele + kantong permen + jins robek + sandal', top: 'ngamen' },
+  ngamen: { name: 'Ngamen: bandana merah + kaus hitam matahari + rompi jins tambalan + ukulele + kantong permen + jins robek + sandal', top: 'ngamen', propOn: 'jual' },
   nongkrong: { name: 'Nongkrong: jaket parka hijau kerah bulu + ukulele disandang di punggung + jins', top: 'nongkrong' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.ngamen), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), c = N(o) ? 'dlKaus' : 'dlParka';
   return assemble([
@@ -12098,7 +12564,7 @@ NS.hendrik = (() => {
 // tas kanvas besar penuh koran. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -12221,10 +12687,11 @@ function foot() {
 }
 
 const OUTFITS = {
-  kios: { name: 'Jaga kios: topi pet abu + kacamata baca + kemeja kotak lengan pendek + pensil di telinga + tumpukan koran + celana cokelat + sandal kulit', top: 'kios' },
+  kios: { name: 'Jaga kios: topi pet abu + kacamata baca + kemeja kotak lengan pendek + pensil di telinga + tumpukan koran + celana cokelat + sandal kulit', top: 'kios', propOn: 'jual' },
   antar: { name: 'Antar pagi: jaket parasut biru tua + tas kanvas besar penuh koran + topi pet', top: 'antar' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kios), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), c = K(o) ? 'hkKemeja' : 'hkJaket';
   return assemble([
@@ -12249,7 +12716,7 @@ NS.wati = (() => {
 // Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -12360,9 +12827,10 @@ function foot(o) {
 
 const OUTFITS = {
   kantor: { name: 'Kantor bank: jilbab marun bros emas + blazer biru dongker lis emas + blus putih + kartu pegawai + rok span hitam + pantofel + buku tabungan & brosur', top: 'kantor' },
-  libur: { name: 'Akhir pekan: jilbab peach + tunik mint + kulot krem + tas selempang kecil + sepatu flat', top: 'libur' },
+  libur: { name: 'Akhir pekan: jilbab peach + tunik mint + kulot krem + tas selempang kecil + sepatu flat', top: 'libur', propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kantor), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), [Th, Sn] = legs(o), Ft = foot(o), sl = topC(o), leg = W(o) ? 'wtRok' : 'wtKulot';
   const P = assemble([
@@ -12389,7 +12857,7 @@ NS.ilham = (() => {
 // hitam + es teh plastik. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -12493,9 +12961,10 @@ function foot() {
 
 const OUTFITS = {
   narik: { name: 'Narik: helm hijau berkaca + jaket hijau OJEK KITA logo panah + jins + kets + HP', top: 'narik' },
-  ngetem: { name: 'Ngetem: helm ditenteng + jaket dibuka di atas kaus hitam + es teh plastik', top: 'ngetem' },
+  ngetem: { name: 'Ngetem: helm ditenteng + jaket dibuka di atas kaus hitam + es teh plastik', top: 'ngetem', propOn: 'jual' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.narik), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o);
   return assemble([
@@ -12519,7 +12988,7 @@ NS.nana = (() => {
 // Pulang: hoodie abu + celana jogger + sepatu kets + kantong belanja. Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -12637,9 +13106,10 @@ function foot(o) {
 
 const OUTFITS = {
   kasir: { name: 'Jaga kasir: kemeja biru muda + rompi merah SERBAMART + papan nama + celana hitam + pemindai barcode', top: 'kasir' },
-  pulang: { name: 'Pulang: hoodie abu + jogger + sepatu kets + kantong belanja', top: 'pulang' },
+  pulang: { name: 'Pulang: hoodie abu + jogger + sepatu kets + kantong belanja', top: 'pulang', propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kasir), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = K(o) ? 'nnKemeja' : 'nnHoodie', leg = K(o) ? 'nnHitam' : 'nnJogger';
   return assemble([
@@ -12663,7 +13133,7 @@ NS.darsono = (() => {
 // kotak kayu perkakas. Menjahit: celemek kulit + sepatu yang sedang disol + jarum besar & benang. Rangka keluarga Arga.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -12779,6 +13249,7 @@ const OUTFITS = {
   jahit: { name: 'Menjahit: celemek kulit + sepatu yang disol + jarum besar & benang', top: 'jahit' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.keliling), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o);
   return assemble([
@@ -12802,7 +13273,7 @@ NS.udin = (() => {
 // Ronda: kupluk rajut + jaket tentara lusuh + sarung dikalungkan + senter. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -12918,6 +13389,7 @@ const OUTFITS = {
   ronda: { name: 'Ronda malam: kupluk rajut + jaket tentara lusuh + sarung dikalungkan + senter', top: 'ronda' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.mancing), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), c = M(o) ? 'udSkin' : 'udJaket';
   return assemble([
@@ -12941,7 +13413,7 @@ NS.inah = (() => {
 // kepala + daster yang sama + kemeja basah & jepitan jemuran di tangan. Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -13050,6 +13522,7 @@ const OUTFITS = {
   jemur: { name: 'Jemur: handuk dililit di kepala + daster + kemeja basah & jepitan jemuran', top: 'jemur' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.nyuci), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = bunga(skirtThigh('inDaster')), Sn = bunga(skirtShin('inDaster', 'inDasterS')), Ft = foot(o);
   const panel = s => bunga(skirtPanel('inDaster', 'inDasterS', s, 9));
@@ -13078,7 +13551,7 @@ NS.ucok = (() => {
 // sepatu pantofel. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -13189,6 +13662,7 @@ const OUTFITS = {
   pesta: { name: 'Pesta adat: kemeja putih + ulos merah-hitam diselempang + celana hitam + pantofel', top: 'pesta' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.narik), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), c = N(o) ? 'ucKotak' : 'ucPutih', cl = N(o) ? 'ucJins' : 'ucHitam';
   return assemble([
@@ -13213,7 +13687,7 @@ NS.ijah = (() => {
 // Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -13315,6 +13789,7 @@ const OUTFITS = {
   ngaso: { name: 'Ngaso: rambut putih digelung + selendang di bahu + termos teh', top: 'ngaso' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jualan), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = jarik(skirtThigh('ijJarik')), Sn = jarik(skirtShin('ijJarik', 'ijJarikS')), Ft = foot(o);
   const panel = s => { const p = jarik(skirtPanel('ijJarik', 'ijJarikS', s, 5)); if (s > 0) for (let z = 6; z <= 30; z++) { const x = p.front(-6, z); if (x !== null) p.set(x, -6, z, 'ijJarikK'); } return p; };
@@ -13342,7 +13817,7 @@ NS.roni = (() => {
 // botol + gancu besi. Jumatan: koko putih bekas + sarung kotak hijau + peci hitam + sandal. Rangka keluarga Arga.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -13472,6 +13947,7 @@ const OUTFITS = {
   jumatan: { name: 'Jumatan: peci hitam + koko putih bekas + sarung kotak hijau + sandal', top: 'jumatan' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.mulung), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = M(o) ? 'rnKaus' : 'rnKoko', lg = M(o) ? 'rnCelana' : 'rnSarung';
   const P = assemble([
@@ -13498,7 +13974,7 @@ NS.lilis = (() => {
 // panjang + selendang tipis + clutch emas. Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -13618,9 +14094,10 @@ function foot(o) {
 
 const OUTFITS = {
   jahit: { name: 'Menjahit: blus kuning bunga + pita ukur di leher + bantalan jarum + gunting + kain + kulot cokelat + sandal', top: 'jahit' },
-  kondangan: { name: 'Kondangan: sanggul + kebaya modern tosca berenda + selendang tipis + rok batik + clutch emas', top: 'kondangan' },
+  kondangan: { name: 'Kondangan: sanggul + kebaya modern tosca berenda + selendang tipis + rok batik + clutch emas', top: 'kondangan', propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jahit), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), [Th, Sn] = legs(o), Ft = foot(o), sl = J(o) ? 'llBlus' : 'llKebaya', leg = J(o) ? 'llKulot' : 'llRok';
   const panel = s => rokBatik(skirtPanel('llRok', 'llRokS', s, 5));
@@ -13648,7 +14125,7 @@ NS.tejo = (() => {
 // celana pendek kargo + sandal jepit + HT di saku + segelas kopi hitam. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -13788,6 +14265,7 @@ const OUTFITS = {
   santai: { name: 'Santai: kaus oblong biru pudar + HT di saku + celana pendek kargo + sandal jepit + kopi hitam', top: 'santai' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jaga), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), jg = J(o);
   return assemble([
@@ -13811,7 +14289,7 @@ NS.satpamudin = (() => {
 // lis putih + kupluk + senter. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -13927,6 +14405,7 @@ const OUTFITS = {
   ronda: { name: 'Ronda malam: kupluk + jaket dongker lis putih + senter', top: 'ronda' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jaga), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), j = J(o);
   return assemble([
@@ -13950,7 +14429,7 @@ NS.ningsih = (() => {
 // belanja plastik berisi sayur. Rangka keluarga Nadia sedikit lebih lebar, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12, thigh: 12.5, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4.5, flap: 6, ballR: 0.9 };
@@ -14061,9 +14540,10 @@ function foot(o) {
 
 const OUTFITS = {
   kantin: { name: 'Kantin: bergo hijau tosca + blus krem + celemek kotak merah bernoda kuah + rok batik + sandal + sendok sayur & mangkuk soto', top: 'kantin' },
-  pasar: { name: 'Ke pasar: bergo cokelat + gamis biru bunga + keranjang belanja plastik berisi sayur', top: 'pasar' },
+  pasar: { name: 'Ke pasar: bergo cokelat + gamis biru bunga + keranjang belanja plastik berisi sayur', top: 'pasar', propOn: 'all' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kantin), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Ft = foot(o), sl = topC(o), c = skc(o), s = sks(o);
   const Th = deco(o, skirtThigh(c)), Sn = deco(o, skirtShin(c, s));
@@ -14091,7 +14571,7 @@ NS.cilok = (() => {
 // cilok mengepul + plastik cilok bertusuk. Pulang: hoodie abu + celana jins panjang + kets. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -14218,10 +14698,11 @@ function foot(o) {
 }
 
 const OUTFITS = {
-  jualan: { name: 'Jualan: topi kuning terbalik + kaus kuning sablon cilok + handuk di bahu + tas pinggang + jins selutut + sandal jepit + panci cilok + plastik cilok', top: 'jualan' },
+  jualan: { name: 'Jualan: topi kuning terbalik + kaus kuning sablon cilok + handuk di bahu + tas pinggang + jins selutut + sandal jepit + panci cilok + plastik cilok', top: 'jualan', propOn: 'jual' },
   pulang: { name: 'Pulang: hoodie abu + jins panjang + kets putih', top: 'pulang' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jualan), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), j = J(o);
   return assemble([
@@ -14246,7 +14727,7 @@ NS.andi = (() => {
 // satu buku tebal. Rangka keluarga Rizal (ramping), voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -14370,6 +14851,7 @@ const OUTFITS = {
   rumah: { name: 'Rumah: kaus biru tua bergambar planet + celana pendek + sandal + satu buku tebal', top: 'rumah' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), s = S_(o), c = s ? 'adKemeja' : 'adKaus', l = s ? 'adAbu' : 'adPendek';
   return assemble([
@@ -14393,7 +14875,7 @@ NS.fitri = (() => {
 // atas kaus putih + rok plisket mocca + tas mini selempang + sneakers. Rangka keluarga Nadia, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -14491,6 +14973,7 @@ const OUTFITS = {
   jalan: { name: 'Jalan: pashmina lilac + kardigan rajut krem + kaus putih + rok plisket mocca + tas mini + sneakers', top: 'jalan' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Ft = foot(o), sl = topC(o), c = skc(o), s = sks(o);
   const Th = pleat(o, skirtThigh(c)), Sn = pleat(o, skirtShin(c, s));
@@ -14518,7 +15001,7 @@ NS.rina = (() => {
 // keripik pedas. Jalan: jaket jins crop di atas kaus kuning + celana kulot hitam + sneakers + HP. Rangka keluarga Rani, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -14637,6 +15120,7 @@ const OUTFITS = {
   jalan: { name: 'Jalan: jaket jins crop + kaus kuning + kulot hitam + sneakers + HP', top: 'jalan' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), [Th, Sn] = legs(o), Ft = foot(o), s = S_(o), leg = s ? 'ryAbu' : 'ryKulot';
   const P = assemble([
@@ -14664,7 +15148,7 @@ NS.bayu = (() => {
 // kaki panjang + sepatu futsal. Rangka keluarga Arga, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -14785,6 +15269,7 @@ const OUTFITS = {
   futsal: { name: 'Futsal: jersey oranye #7 + celana pendek hitam + kaus kaki panjang + sepatu futsal', top: 'futsal' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), s = S_(o), c = s ? 'btKemeja' : 'btJersey', l = s ? 'btAbu' : 'btPendek';
   return assemble([
@@ -14809,7 +15294,7 @@ NS.maya = (() => {
 // bertali merah putih. Rangka keluarga Rani, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace, skullLayer  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -14926,6 +15411,7 @@ const OUTFITS = {
   latihan: { name: 'Latihan: topi putih + kaus putih lis merah + peluit bertali merah putih + celana training dongker + kets putih', top: 'latihan' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), [Th, Sn] = legs(o), Ft = foot(o), s = S_(o), leg = s ? 'myAbu' : 'myTrain';
   const P = assemble([
@@ -14953,7 +15439,7 @@ NS.bejo = (() => {
 // hitam robek di lutut + rantai dompet + boots. Rangka keluarga Arga lebih ramping, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -15067,6 +15553,7 @@ const OUTFITS = {
   nongkrong: { name: 'Nongkrong Serigala Besi: jaket hitam patch serigala + kaus merah + jins hitam robek + rantai dompet + boots', top: 'nongkrong' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), s = S_(o), c = s ? 'bjPutih' : 'bjJaket', l = s ? 'bjAbu' : 'bjJinsH';
   return assemble([
@@ -15091,7 +15578,7 @@ NS.sutris = (() => {
 // Rangka keluarga Arga dengan perut buncit, voxel 1/64 petak.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace  } = NS.model;
+const {  addRamps, assemble, dressing, paintFace  } = NS.model;
 
 const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -15200,6 +15687,7 @@ const OUTFITS = {
   santai: { name: 'Santai: kemeja batik cokelat + celana bahan hitam + pantofel + HP & kunci mobil', top: 'santai' },
 };
 function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.proyek), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), p = P_(o), l = p ? 'sutCelana' : 'sutHitam';
   return assemble([
@@ -15223,7 +15711,7 @@ NS.spawn_base = (() => {
 // rok & sarung memakai rok.js + P.skirt supaya tidak terbelah. Semua bahan berprefiks 'sp'.
 const {  Vox  } = NS.vox;
 const {  pivots  } = NS.rig;
-const {  addRamps, assemble, paintFace, skullLayer  } = NS.model;
+const {  addRamps, assemble, paintFace, skullLayer, HELD_KIND  } = NS.model;
 const {  skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo  } = NS.rok;
 
 /* ================= warna: ramp dibuat otomatis dari satu warna dasar */
@@ -15686,7 +16174,11 @@ function fore(d, G, side) {
   v.rbox(x0, a0, G.hz[0], x1 + 1, a1 - (d.age === 'anak' ? 0 : a1 - a0 > 4 ? 1 : 0), G.hz[1], K, 2); v.rrect(G.fist, x0 + 1, a0 + 1, x1, a1 - 1, K, 1);
   if (d.top.jam && side < 0) v.paint(x0, a0, G.fz[0] + 1, x1, a1, G.fz[0] + 2, 'spHP');
   const p = side > 0 ? d.handR : d.handL;
-  if (p) prop(v, d, G, p);
+  if (p) {   // barang pegangan digambar di salinan, selisihnya jadi bagian terpisah (propR / propL)
+    const w = new Vox().add(v); prop(w, d, G, p);
+    const held = new Vox(); w.each((x, y, z, c) => { if (v.get(x, y, z) !== c) held.set(x, y, z, c); });
+    if (held.m.size) v.held = held;
+  }
   if (d.fx && d.fx.fore) d.fx.fore(v, d, G, side);
   return v;
 }
@@ -15799,8 +16291,9 @@ function orang(d, expr = 'biasa') {
   const hem = B.hem ?? (d.sex === 'L' ? 5 : 7), panel = s => skirtLong ? pattern(skirtPanel(bc, bc + 'S', s, hem), bc, B.pat, B.pc) : null;
   const sl = sleeveCol(d) || K, long = d.top.sleeve === 'panjang' || d.top.kind === 'jaket' || d.top.kind === 'hoodie';
   const legM = B.kind === 'pendek' && !kid ? K : bc;
+  const fR = fore(d, G, 1), fL = fore(d, G, -1);
   const P = assemble([
-    ['foreR', fore(d, G, 1), PV.foreR], ['foreL', fore(d, G, -1).mirrorY(), PV.foreL],
+    ['foreR', fR, PV.foreR], ['propR', fR.held || null, PV.foreR], ['foreL', fL.mirrorY(), PV.foreL], ['propL', fL.held ? fL.held.mirrorY() : null, PV.foreL],
     ['head', head(d, EXPRS.includes(expr) ? expr : 'biasa'), [0, 0, 0]],
     ['armR', A, PV.armR], ['armL', A.mirrorY(), PV.armL],
     ['chest', chest(d, G), PV.chest],
@@ -15809,6 +16302,7 @@ function orang(d, expr = 'biasa') {
     ['shinR', Sn, PV.shinR], ['shinL', Sn.mirrorY(), PV.shinL],
     ['thighR', Th, PV.thighR], ['thighL', Th.mirrorY(), PV.thighL],
   ], { neck: K, shoulder: sl, elbow: long && !d.top.gulung ? sl : K, hip: kid && skirt ? K : bc, knee: skirtLong ? bc : kid ? (B.kind === 'panjang' ? bc : K) : legM }, skel, TAIL);
+  P.propOn = { propR: d.propOn || HELD_KIND[d.handR] || 'aktif', propL: d.propOn || HELD_KIND[d.handL] || 'aktif' };
   if (skirtLong) P.skirt = skirtInfo(P, bc, bc + 'S');
   else if (skirt && kid) P.skirt = { mats: [P.mat(bc), P.mat(bc + 'S')], fill: P.mat(bc), parts: ['pelvis'] };
   return P;
@@ -16628,6 +17122,7 @@ const OUTFITS = {
   pangsi: { name: 'Latihan: iket batik cokelat + pangsi hitam pudar + sabuk hijau kehormatan + nyeker' },
   kebun: { name: 'Kebun: caping + kaus lusuh lengan panjang + celana pangsi digulung + sandal jepit + arit' },
   teras: { name: 'Malam di teras: peci + kemeja koko krem + sarung kotak + sandal' },
+  silat: { name: 'Melatih silat: baju pangsi hitam pudar + ikat kepala batik cokelat + sabuk hijau + nyeker, rotan penunjuk' },
 };
 const EXPRS = EX;
 function desc(o) {
@@ -16650,6 +17145,7 @@ function desc(o) {
   d.top = { kind: 'pangsi', c: 'hitamPudar', sleeve: 'panjang', tuck: true };
   d.bot = { kind: 'celana', c: 'hitamPudar' }; d.feet = { kind: 'nyeker' };
   d.acc.push('sabuk'); d.sabukCol = 'hijauTua';
+  if (o === 'silat') { d.headPat = 'hitam'; d.handR = 'rotan'; }
   return d;
 }
 function build(opt = {}) {
@@ -16670,6 +17166,7 @@ const OUTFITS = {
   koko: { name: 'Harian: peci hitam + koko putih + sarung kotak hijau + sandal, tasbih kayu, pena di saku' },
   mengajar: { name: 'Mengajar: peci + koko krem + sarung hijau tua + kitab di tangan' },
   pasar: { name: 'Ke pasar hewan: peci + koko putih + payung hitam + tasbih' },
+  rumah: { name: 'Rumah: peci hitam + koko putih + sarung kotak hijau + nyeker, tasbih kayu, kacamata bulat emas' },
 };
 const EXPRS = EX;
 function build(opt = {}) {
@@ -16680,7 +17177,8 @@ function build(opt = {}) {
   d.fx = { chest: (v, dd, G) => { const nz = G.cz[1], y = G.ch[3] - 3; for (let z = nz - 12; z <= nz - 7; z++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === nz - 7 ? 'spEmas' : 'spHP'); } } };   // pena di saku kiri
   d.top = { kind: 'koko', c: o === 'mengajar' ? 'krem' : 'putih', sleeve: 'panjang' };
   d.bot = { kind: 'sarung', c: o === 'mengajar' ? 'hijauTua' : 'hijau', pat: 'kotak', pc: o === 'mengajar' ? 'hijau' : 'hijauTua' };
-  d.feet = { kind: 'sandal', c: 'coklat' };
+  d.feet = o === 'rumah' ? { kind: 'nyeker' } : { kind: 'sandal', c: 'coklat' };
+  if (o === 'rumah') d.bot.pc = 'krem';
   if (o === 'mengajar') { d.handR = 'buku'; d.propCol = 'hijauTua'; }
   else if (o === 'pasar') { d.handR = 'payung'; d.propCol = 'hitam'; d.handL = 'tasbih'; }
   else d.handR = 'tasbih';
@@ -16724,6 +17222,7 @@ const OUTFITS = {
   dinas: { name: 'Jaga pintu air: helm proyek kuning + kemeja dinas khaki kusam + celana gelap + bot karet, buku catatan' },
   hujan: { name: 'Jaga hujan: helm kuning + jas hujan biru + bot karet, senter' },
   rumah: { name: 'Rumah dinas: kaus oblong putih + sarung kotak + sandal, mug kopi' },
+  kerja: { name: 'Kerja: helm proyek kuning + kemeja dinas PU lengan panjang kusam + celana gelap + bot karet, buku catatan' },
 };
 const EXPRS = EX;
 function build(opt = {}) {
@@ -16734,7 +17233,7 @@ function build(opt = {}) {
   if (o === 'rumah') { d.top = { kind: 'kaus', c: 'putih' }; d.bot = { kind: 'sarung', c: 'coklat', pat: 'kotak', pc: 'krem' }; d.feet = { kind: 'sandal', c: 'hitam' }; d.handR = 'mug'; }
   else {
     d.head = 'helmProyek'; d.headCol = 'kuning';
-    d.top = o === 'hujan' ? { kind: 'jaket', c: 'biru', c2: 'biru', sleeve: 'panjang' } : { kind: 'pns', c: 'khakiPNS', sleeve: 'pendek', tuck: true };
+    d.top = o === 'hujan' ? { kind: 'jaket', c: 'biru', c2: 'biru', sleeve: 'panjang' } : o === 'kerja' ? { kind: 'pns', c: 'khakiPNS', sleeve: 'panjang', tuck: true, pat: 'kotor' } : { kind: 'pns', c: 'khakiPNS', sleeve: 'pendek', tuck: true };
     d.bot = { kind: 'celana', c: o === 'hujan' ? 'biru' : 'coklatPol', belt: o !== 'hujan' }; d.feet = { kind: 'bot', c: 'karet' };
     d.handR = o === 'hujan' ? 'senter' : 'buku'; d.propCol = 'biru';
   }
@@ -16803,6 +17302,7 @@ NS.ujo = (() => {
 const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
 const OUTFITS = {
   basecamp: { name: 'Basecamp: jaket gunung oranye pudar + kaus abu + celana kargo + sandal gunung, papan daftar pendaki' },
+  kerja: { name: 'Kerja: jaket gunung oranye pudar + kargo + sandal gunung, kantong sampah (bersih-bersih jalur)' },
   naik: { name: 'Memandu: kupluk + jaket oranye + carrier + celana kargo + sepatu gunung, tongkat trekking' },
 };
 const EXPRS = EX;
@@ -16814,7 +17314,7 @@ function build(opt = {}) {
   d.top = { kind: 'jaket', c: 'oranyePudar', c2: 'abu', sleeve: 'panjang', pat: 'kotor' };
   d.bot = { kind: 'celana', c: 'khaki' };
   if (o === 'naik') { d.head = 'kupluk'; d.headCol = 'hijauTua'; d.acc.push('carrier'); d.accCol = 'hijauTua'; d.feet = { kind: 'bot', c: 'coklat' }; d.handR = 'trekking'; }
-  else { d.feet = { kind: 'sandal', c: 'hitam' }; d.handR = 'papan'; }
+  else { d.feet = { kind: 'sandal', c: 'hitam' }; d.handR = o === 'kerja' ? 'kresekH' : 'papan'; }
   if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
   return orang(d, opt.expr || 'biasa');
 }
@@ -16828,6 +17328,7 @@ NS.sabar = (() => {
 const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
 const OUTFITS = {
   kebun: { name: 'Kebun: topi koboi anyaman + kemeja lengan panjang krem lusuh + celana cokelat + bot, peluit di leher' },
+  kerja: { name: 'Kerja: topi koboi anyaman + kemeja lengan panjang lusuh (tidak digulung) + celana cokelat + sepatu bot, peluit di leher' },
   pabrik: { name: 'Pabrik teh: topi koboi + kemeja + rompi khaki + bot, papan catatan timbang' },
 };
 const EXPRS = EX;
@@ -16836,7 +17337,7 @@ function build(opt = {}) {
   const d = gen(0, { sex: 'L', age: 'dewasa', skin: 3, build: 'sedang', hairCol: 'abu', hair: ['cepak'], salt: 391 });
   d.face = { skull: 'oval', eyes: 'sayu', brow: 'tipis', mouth: 'senyum', kumis: 'tebal', jenggot: false, kacamata: null, blush: false, hidung: 'lebar' };
   d.tegak = true; d.head = 'koboi';
-  d.top = { kind: 'kerja', c: 'krem', sleeve: 'panjang', gulung: true, pat: 'kotak', pc: 'coklatMuda', rompi: o === 'pabrik' ? 'khaki' : null };
+  d.top = { kind: 'kerja', c: 'krem', sleeve: 'panjang', gulung: o !== 'kerja', pat: o === 'kerja' ? 'kotor' : 'kotak', pc: 'coklatMuda', rompi: o === 'pabrik' ? 'khaki' : null };
   d.bot = { kind: 'celana', c: 'coklat', belt: true }; d.feet = { kind: 'bot', c: 'hitam' };
   d.acc.push('peluit');
   if (o === 'pabrik') d.handR = 'papan';
@@ -16853,6 +17354,7 @@ NS.yusuf = (() => {
 const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
 const OUTFITS = {
   raceControl: { name: 'Race control: kemeja oranye lengan panjang + radio di dada + celana hitam + sepatu, HT di tangan' },
+  kerja: { name: 'Kerja: kemeja race control oranye lengan panjang + radio di dada + celana hitam + sepatu' },
   santai: { name: 'Mes sirkuit: polo abu + celana khaki + sepatu, mug kopi' },
 };
 const EXPRS = EX;
@@ -16863,7 +17365,7 @@ function build(opt = {}) {
   d.tegak = true;
   d.fx = { fore: (v, dd, G, side) => { if (side > 0) return; v.each((x, y, z, k) => { if (k === 'spKulit1' && z <= G.hz[1] + 2 && (x + y * 2 + z) % 3 !== 0) v.set(x, y, z, 'spLuka'); }); } };   // bekas luka bakar tangan kiri
   if (o === 'santai') { d.top = { kind: 'polo', c: 'abu', tuck: true }; d.bot = { kind: 'celana', c: 'khaki', belt: true }; d.feet = { kind: 'sepatu', c: 'coklat' }; d.handR = 'mug'; }
-  else { d.top = { kind: 'kerja', c: 'oranye', sleeve: 'panjang', gulung: true, tuck: true, logo: 'putih' }; d.acc.push('radio'); d.bot = { kind: 'celana', c: 'hitam', belt: true }; d.feet = { kind: 'sepatu', c: 'hitam' }; d.handR = 'ht'; }
+  else { d.top = { kind: 'kerja', c: 'oranye', sleeve: 'panjang', gulung: true, tuck: true, logo: 'putih' }; d.acc.push('radio'); d.bot = { kind: 'celana', c: 'hitam', belt: true }; d.feet = { kind: 'sepatu', c: 'hitam' }; if (o === 'kerja') d.top.gulung = false; else d.handR = 'ht'; }
   if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'putih'; }
   return orang(d, opt.expr || 'biasa');
 }
@@ -16877,6 +17379,8 @@ NS.sri = (() => {
 const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
 const OUTFITS = {
   shift: { name: 'Shift: kerudung abu + seragam pabrik biru lengan panjang + masker di dagu + kartu ID + celana biru + kets, papan absen' },
+  kerja: { name: 'Kerja: kerudung abu + seragam pabrik biru + masker kain dipakai + kartu ID + celana biru + kets' },
+  rumah: { name: 'Rumah: kerudung abu + kaus panjang krem + rok batik + sandal' },
   kos: { name: 'Kos buruh: kerudung abu + kaus panjang krem + rok jins + sandal' },
 };
 const EXPRS = EX;
@@ -16885,8 +17389,9 @@ function build(opt = {}) {
   const d = gen(0, { sex: 'P', age: 'dewasa', skin: 1, build: 'kurus', hairCol: 'hitam', hair: ['kuncir'], salt: 411 });
   d.face = { skull: 'oval', eyes: 'tajam', brow: 'lurus', mouth: 'datar', kumis: null, jenggot: false, kacamata: null, blush: false, hidung: 'kecil' };
   d.hijab = 'abu';
-  if (o === 'kos') { d.top = { kind: 'kaus', c: 'krem', sleeve: 'panjang' }; d.bot = { kind: 'rok', c: 'jins' }; d.feet = { kind: 'sandal', c: 'hitam' }; }
-  else { d.maskerDagu = 'navy'; d.top = { kind: 'kerja', c: 'biru', sleeve: 'panjang', tuck: false, logo: 'putih' }; d.acc.push('idcard'); d.idCol = 'merah'; d.bot = { kind: 'celana', c: 'biru' }; d.feet = { kind: 'sneaker', c: 'putih' }; d.handR = 'papan'; }
+  if (o === 'rumah') { d.top = { kind: 'kaus', c: 'krem', sleeve: 'panjang' }; d.bot = { kind: 'rok', c: 'coklat', pat: 'batik', pc: 'krem' }; d.feet = { kind: 'sandal', c: 'hitam' }; }
+  else if (o === 'kos') { d.top = { kind: 'kaus', c: 'krem', sleeve: 'panjang' }; d.bot = { kind: 'rok', c: 'jins' }; d.feet = { kind: 'sandal', c: 'hitam' }; }
+  else { d.maskerDagu = 'navy'; d.top = { kind: 'kerja', c: 'biru', sleeve: 'panjang', tuck: false, logo: 'putih' }; d.acc.push('idcard'); d.idCol = 'merah'; d.bot = { kind: 'celana', c: 'biru' }; d.feet = { kind: 'sneaker', c: 'putih' }; if (o === 'kerja') { d.maskerDagu = null; d.masker = 'navy'; } else d.handR = 'papan'; }
   if (opt.helm) { d.hijab = null; d.head = 'helmMotor'; d.headCol = 'biru'; }
   return orang(d, opt.expr || 'biasa');
 }
@@ -16900,6 +17405,7 @@ NS.darmo = (() => {
 const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
 const OUTFITS = {
   jaga: { name: 'Jaga mercusuar: jaket tentara usang + sarung kotak + sandal jepit, kacamata tebal, lampu minyak' },
+  rumah: { name: 'Rumah: sarung hijau kotak + jaket tentara usang + sandal jepit, kacamata tebal, lampu minyak' },
   pagi: { name: 'Pagi di pantai: kupluk + kaus putih + sarung + tongkat' },
 };
 const EXPRS = EX;
@@ -16908,7 +17414,7 @@ function build(opt = {}) {
   const d = gen(0, { sex: 'L', age: 'lansia', skin: 3, build: 'kurus', hairCol: 'putih', hair: ['botakTengah'], salt: 421 });
   d.face = { skull: 'oval', eyes: 'lelah', brow: 'tipis', mouth: 'kecil', kumis: 'tipis', jenggot: true, kacamata: 'tebal', blush: false, hidung: 'lebar' };
   d.top = o === 'pagi' ? { kind: 'kaus', c: 'putih', pat: 'kotor' } : { kind: 'jaket', c: 'olive', c2: 'putih', sleeve: 'panjang', pat: 'kotor' };
-  d.bot = { kind: 'sarung', c: 'marun', pat: 'kotak', pc: 'hitam' }; d.feet = { kind: 'jepit', c: 'hitam' };
+  d.bot = o === 'rumah' ? { kind: 'sarung', c: 'hijauTua', pat: 'kotak', pc: 'krem' } : { kind: 'sarung', c: 'marun', pat: 'kotak', pc: 'hitam' }; d.feet = { kind: 'jepit', c: 'hitam' };
   if (o === 'pagi') { d.head = 'kupluk'; d.headCol = 'abu'; d.handR = 'tongkat'; } else d.handR = 'lampu';
   if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
   return orang(d, opt.expr || 'biasa');
@@ -16923,6 +17429,7 @@ NS.sumi = (() => {
 const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
 const OUTFITS = {
   jamu: { name: 'Jualan jamu: sanggul putih + kebaya lurik cokelat + jarik batik + selendang gendong botol jamu + sandal jepit' },
+  rumah: { name: 'Rumah: sanggul + kebaya lurik + kain jarik + selendang gendong botol jamu' },
   sawah: { name: 'Di sawah: caping + kebaya lurik + jarik + nyeker' },
 };
 const EXPRS = EX;
@@ -16933,7 +17440,7 @@ function build(opt = {}) {
   d.top = { kind: 'blus', c: 'coklat', sleeve: 'panjang', pat: 'lurik', pc: 'krem' };
   d.bot = { kind: 'rok', c: 'coklat', pat: 'batik', pc: 'kremS' };
   if (o === 'sawah') { d.head = 'caping'; d.feet = { kind: 'nyeker' }; }
-  else { d.acc.push('gendong'); d.gendongCol = 'merah'; d.feet = { kind: 'jepit', c: 'hitam' }; d.handR = 'botol'; }
+  else { d.acc.push('gendong'); d.gendongCol = 'merah'; d.feet = o === 'rumah' ? { kind: 'nyeker' } : { kind: 'jepit', c: 'hitam' }; if (o !== 'rumah') d.handR = 'botol'; }
   if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
   return orang(d, opt.expr || 'biasa');
 }
@@ -16947,6 +17454,7 @@ NS.tito = (() => {
 const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
 const OUTFITS = {
   bola: { name: 'Main bola: kaus bola merah nomor 10 kebesaran + celana pendek + kaus kaki + sepatu bola, lutut luka, bola' },
+  rumah: { name: 'Rumah: kaus bola merah kebesaran + celana pendek + nyeker, lutut luka' },
   sekolah: { name: 'Sekolah SD: kemeja putih + celana merah + sepatu hitam + ransel' },
 };
 const EXPRS = EX;
@@ -16956,7 +17464,7 @@ function build(opt = {}) {
   d.face = { skull: 'bulat', eyes: 'besar', brow: 'tebal', mouth: 'lebar', kumis: null, jenggot: false, kacamata: null, blush: true, hidung: 'kecil' };
   d.fx = { shin: (v, dd, G) => { for (const [x, y, z] of [[2, 2, 11], [2, 3, 11], [2, 2, 10], [1, 3, 12]]) { const xx = v.front(y, z); if (xx !== null) v.set(xx, y, z, (x + z) % 2 ? 'spLuka' : 'spMerahP'); } } };   // lutut lecet
   if (o === 'sekolah') { d.top = { kind: 'seragam', c: 'putih', tuck: true }; d.bot = { kind: 'pendek', c: 'merah' }; d.feet = { kind: 'sepatu', c: 'hitam' }; d.acc.push('ransel'); d.accCol = 'biru'; }
-  else { d.top = { kind: 'kaus', c: 'merah', lis: 'putih', nomor: 10, sleeve: 'pendek' }; d.bot = { kind: 'pendek', c: 'putih' }; d.feet = { kind: 'sneaker', c: 'hitam', kaus: true }; d.handR = 'bola'; }
+  else { d.top = { kind: 'kaus', c: 'merah', lis: 'putih', nomor: 10, sleeve: 'pendek' }; d.bot = { kind: 'pendek', c: 'putih' }; d.feet = o === 'rumah' ? { kind: 'nyeker' } : { kind: 'sneaker', c: 'hitam', kaus: true }; if (o !== 'rumah') d.handR = 'bola'; }
   if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'merah'; }
   return orang(d, opt.expr || 'biasa');
 }
@@ -16970,6 +17478,7 @@ NS.ayu = (() => {
 const {  gen, orang, EXPRS: EX  } = NS.spawn_base;
 const OUTFITS = {
   jaket: { name: 'Main: jaket balap merah-putih kebesaran + kaus hitam + celana jins + sneakers' },
+  rumah: { name: 'Rumah: jaket balap merah-putih kebesaran + kaus hitam + celana pendek + sandal jepit, rambut pendek' },
   silat: { name: 'Latihan silat: pangsi hitam + sabuk putih + nyeker' },
   sekolah: { name: 'SMP: kemeja putih + rok biru panjang + sepatu hitam' },
 };
@@ -16980,7 +17489,7 @@ function build(opt = {}) {
   d.face = { skull: 'oval', eyes: 'besar', brow: 'tebal', mouth: 'lebar', kumis: null, jenggot: false, kacamata: null, blush: true, hidung: 'kecil' };
   if (o === 'silat') { d.top = { kind: 'pangsi', c: 'hitamPudar', sleeve: 'panjang', tuck: true }; d.bot = { kind: 'celana', c: 'hitamPudar' }; d.feet = { kind: 'nyeker' }; d.acc.push('sabuk'); d.sabukCol = 'putih'; }
   else if (o === 'sekolah') { d.top = { kind: 'seragam', c: 'putih', tuck: true, sleeve: 'pendek' }; d.bot = { kind: 'rok', c: 'navy' }; d.feet = { kind: 'sepatu', c: 'hitam' }; }
-  else { d.top = { kind: 'jaket', c: 'merah', c2: 'hitam', sleeve: 'panjang', stripe: 'putih', logo: 'putih' }; d.bot = { kind: 'celana', c: 'jins' }; d.feet = { kind: 'sneaker', c: 'putih' }; }
+  else { d.top = { kind: 'jaket', c: 'merah', c2: 'hitam', sleeve: 'panjang', stripe: 'putih', logo: 'putih' }; d.bot = o === 'rumah' ? { kind: 'pendek', c: 'hitam' } : { kind: 'celana', c: 'jins' }; d.feet = o === 'rumah' ? { kind: 'jepit', c: 'hitam' } : { kind: 'sneaker', c: 'putih' }; }
   if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'merah'; }
   return orang(d, opt.expr || 'biasa');
 }
@@ -17381,7 +17890,7 @@ function voxelFrame(P, pose) {
   const r = rigPose(pose, P.boxes, P.skel, P.tailPiv), items = [];
   const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
   for (const p of P.parts) {
-    const M = r.mats[p.name]; if (!M) continue;
+    const M = r.mats[p.name] || r.mats[p.name === 'propR' ? 'foreR' : p.name === 'propL' ? 'foreL' : '']; if (!M) continue;   // barang ikut lengan bawah
     const b = p.box, bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9];
     for (let i = 0; i < 8; i++) {
       const q = apply(M, [b[i & 1 ? 3 : 0], b[i & 2 ? 4 : 1], b[i & 4 ? 5 : 2]]);
@@ -17612,7 +18121,7 @@ return { ANIMS, ANIM_LIST, exprFor };
 // ===== viewer.js
 NS.viewer = (() => {
 // Pratinjau WebGL kecil (tanpa library): kamera ortografis, warna vertex sudah membawa cahaya (sama seperti di game).
-const {  bikeVox, BIKE_PAL, BIKE_SEAT  } = NS.model;
+const {  bikeVox, BIKE_PAL, BIKE_SEAT, showProps  } = NS.model;
 const {  CHARS  } = NS.chars;
 const {  NPC_STYLES  } = NS.npc_styles;
 const {  voxelFrame, voxMesh  } = NS.frame;
@@ -17632,7 +18141,7 @@ const BIKES = {};
 const GEO = new Map();
 function rakaFrame(o) {
   if (o.pose || o.face) return makeFrame(o);
-  const key = [o.char, o.outfit, o.anim, o.i, o.expr, o.helm ? 1 : 0, o.bike === false ? 0 : 1].join('|');
+  const key = [o.char, o.outfit, o.anim, o.i, o.expr, o.helm ? 1 : 0, o.bike === false ? 0 : 1, o.prop ? 1 : 0].join('|');
   let g = GEO.get(key);
   if (!g) { if (GEO.size > 400) GEO.clear(); GEO.set(key, g = makeFrame(o)); }
   return g;
@@ -17642,7 +18151,7 @@ function makeFrame(o) {
   const t = A.loop ? i / A.n : i / Math.max(1, A.n - 1);
   const expr = o.expr && o.expr !== 'auto' ? o.expr : exprFor(o.anim, i, A.n);
   const C = CHARS[o.char] || CHARS.raka, P = partsFor(o.char || 'raka', o.outfit || 'seragam', C.EXPRS.includes(expr) ? expr : 'biasa', o.helm, o.face);
-  const f = voxelFrame(P, o.pose || A.pose(t));
+  const f = voxelFrame(showProps(P, o.anim || 'idle', o.prop), o.pose || A.pose(t));
   if (o.anim !== 'rideSport' || o.bike === false) return voxMesh(f, 0.5);
   // naik motor: pantat tokoh ditaruh tepat di jok; setang & pijakan motor dipasang di posisi tangan & kaki
   const dx = BIKE_SEAT[0] - f.buttX * 0.5, dz = BIKE_SEAT[1] - f.buttZ * 0.5;

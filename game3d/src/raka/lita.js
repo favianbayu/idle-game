@@ -5,7 +5,7 @@
 // Rangka keluarga Nadia (sedikit lebih tinggi), voxel 1/64 petak. Rok panjang memakai rok.js supaya tidak terbelah.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 13, thigh: 13.5, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -120,10 +120,11 @@ function foot() {   // sepatu hak tinggi: ujung lancip, hak di belakang
 }
 
 export const OUTFITS = {
-  kafe: { name: 'Ngopi cantik: kacamata hitam lebar + terusan panjang zamrud + tas monogram + gelang emas + hak tinggi', top: 'kafe', kaca: true },
-  kondangan: { name: 'Kondangan: sanggul + tusuk konde + kebaya brokat marun + kain batik + clutch emas', top: 'kondangan', sanggul: true },
+  kafe: { name: 'Ngopi cantik: kacamata hitam lebar + terusan panjang zamrud + tas monogram + gelang emas + hak tinggi', top: 'kafe', kaca: true, propOn: 'all' },
+  kondangan: { name: 'Kondangan: sanggul + tusuk konde + kebaya brokat marun + kain batik + clutch emas', top: 'kondangan', sanggul: true, propOn: 'all' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kafe), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirt(o), A = arm(o), Th = sk(o, skirtThigh(c)), Sn = sk(o, skirtShin(c, cS)), Ft = foot(o), sl = topC(o);
   const panel = s => sk(o, skirtPanel(c, cS, s, 5));

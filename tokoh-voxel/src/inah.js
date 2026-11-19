@@ -4,7 +4,7 @@
 // kepala + daster yang sama + kemeja basah & jepitan jemuran di tangan. Rangka keluarga Nadia, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -113,6 +113,7 @@ export const OUTFITS = {
   jemur: { name: 'Jemur: handuk dililit di kepala + daster + kemeja basah & jepitan jemuran', top: 'jemur' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.nyuci), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = bunga(skirtThigh('inDaster')), Sn = bunga(skirtShin('inDaster', 'inDasterS')), Ft = foot(o);
   const panel = s => bunga(skirtPanel('inDaster', 'inDasterS', s, 9));

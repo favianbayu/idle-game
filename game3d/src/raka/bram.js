@@ -3,13 +3,15 @@
 // & dimasukkan rapi, kancing atas terbuka, jam tangan perak, sepatu kulit cokelat. Voxel halus 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { catZ, jas, lengan, semua } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10, shZ: 17, upper: 11, fore: 11.5, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  bJersey: ['#0b0a0e', '#141318', '#1c1c22', '#2c2c35'], bEmas: ['#b8902e', '#d4aa40', '#e8c25a', '#f4d87e'], bJas: ['#0c0c10', '#15151a', '#1e1e25', '#2c2c36'], bJasS: ['#2e2e38'],
   mSkin: ['#b8835f', '#cf9b78', '#e2b392', '#eec3a2'], mSkinS: ['#cf9b78'],
   mHair: ['#07050a', '#0e0a0d', '#171115', '#241b20'], mHairT: ['#1c1a22', '#26242e', '#33313d', '#45434f'],
   mPants: ['#121116', '#1b1a20', '#25242b', '#36353e'], leather: ['#3a1a10', '#4f2416', '#6a311f', '#8a4630'],
@@ -135,7 +137,19 @@ export const OUTFITS = {
   geng: { name: 'Bomber geng + kacamata hitam', top: 'bomber', shades: true },
   rumah: { name: 'Kaus hitam + training', top: 'kaus' },
 };
+const NOMOR = [[0, 0], [1, 0], [2, 0], [3, 0], [3, -1], [2, -2], [2, -3], [1, -4], [1, -5]];   // angka 7
+OUTFITS.basket = { ...OUTFITS.rumah, name: 'Basket: jersey hitam pribadi, sepatu limited edition',
+  sw: { mTrack: 'mTee' },
+  fx: { chest: v => { for (const [dy, dz] of NOMOR) v.pf(dy - 2, 52 + dz, 'bEmas'); for (const y of [-8, 7]) for (let z = 37; z <= 56; z++) { const x = v.front(y, z); if (x !== null) v.set(x, y, z, 'bEmas'); } return v; },
+        armR: v => semua(v, 'mSkin'), armL: v => semua(v, 'mSkin'),
+        shinR: v => catZ(v, 'mSkin', -99, 17), shinL: v => catZ(v, 'mSkin', -99, 17) },
+  ball: { shoulder: 'mSkin', knee: 'mSkin' } };
+OUTFITS.resmi = { ...OUTFITS.seragam, name: 'Resmi: jas hitam setelan',
+  fx: { chest: v => jas(v, 'bJas', 37, 58, 47, 'bJasS'), armR: v => semua(v, 'bJas'), armL: v => semua(v, 'bJas'),
+        foreR: v => lengan(v, 'bJas', 35, 'white'), foreL: v => lengan(v, 'bJas', 35, 'white'), pelvis: v => semua(v, 'bJas', ['leather']) },
+  ball: { shoulder: 'bJas', elbow: 'bJas' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), top = o.top === 'bomber' ? 'bomber' : o.top === 'kaus' ? 'mTee' : 'white';
   return assemble([

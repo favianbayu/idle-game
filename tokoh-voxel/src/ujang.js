@@ -3,7 +3,7 @@
 // Rangka keluarga Arga (skala 1.24 lama, dibulatkan ke rangka cowok sedang supaya geraknya sama), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -139,11 +139,12 @@ function foot(o) {
 }
 
 export const OUTFITS = {
-  kerja: { name: 'Kerja: topi pet + kaus abu + celana kain digulung + sapu lidi + serenceng kunci', top: 'kerja', hat: 'pet' },
+  kerja: { name: 'Kerja: topi pet + kaus abu + celana kain digulung + sapu lidi + serenceng kunci', top: 'kerja', hat: 'pet', propOn: 'sapu' },
   dinas: { name: 'Dinas: seragam penjaga sekolah hijau zaitun + papan nama + kunci', top: 'dinas', hat: 'pet' },
   rumah: { name: 'Sore di rumah: peci + kaus oblong + sarung kotak + gembor', top: 'rumah', hat: 'peci' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Ujang memakai baju kerja
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kerja), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o), leg = legC(o);

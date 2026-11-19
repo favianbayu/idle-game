@@ -3,7 +3,7 @@
 // Rangka anak (skala lama 0.98): kepala tetap ukuran tokoh lain (gaya chibi), badan & kaki jauh lebih pendek. Voxel 1/64.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
 
 // rangka anak: pinggul z 20, dada z 23, bahu z 34, kepala z 39
 export const SKEL = { ank: 3.5, shin: 8, thigh: 8.5, up: 3, neck: 16, shY: 6.5, shZ: 11, upper: 7, fore: 6.5, hipY: 3, flap: 4.5, ballR: 0.7 };
@@ -129,6 +129,7 @@ export const OUTFITS = {
   piama: { name: 'Piama bintang + sandal bulu', top: 'piama' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = o.top === 'piama' ? 'piamaC' : 'ciSkin';
   return assemble([

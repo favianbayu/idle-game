@@ -3,6 +3,7 @@
 import { gen, orang, EXPRS as EX } from './spawn_base.js';
 export const OUTFITS = {
   basecamp: { name: 'Basecamp: jaket gunung oranye pudar + kaus abu + celana kargo + sandal gunung, papan daftar pendaki' },
+  kerja: { name: 'Kerja: jaket gunung oranye pudar + kargo + sandal gunung, kantong sampah (bersih-bersih jalur)' },
   naik: { name: 'Memandu: kupluk + jaket oranye + carrier + celana kargo + sepatu gunung, tongkat trekking' },
 };
 export const EXPRS = EX;
@@ -14,7 +15,7 @@ export function build(opt = {}) {
   d.top = { kind: 'jaket', c: 'oranyePudar', c2: 'abu', sleeve: 'panjang', pat: 'kotor' };
   d.bot = { kind: 'celana', c: 'khaki' };
   if (o === 'naik') { d.head = 'kupluk'; d.headCol = 'hijauTua'; d.acc.push('carrier'); d.accCol = 'hijauTua'; d.feet = { kind: 'bot', c: 'coklat' }; d.handR = 'trekking'; }
-  else { d.feet = { kind: 'sandal', c: 'hitam' }; d.handR = 'papan'; }
+  else { d.feet = { kind: 'sandal', c: 'hitam' }; d.handR = o === 'kerja' ? 'kresekH' : 'papan'; }
   if (opt.helm) { d.head = 'helmMotor'; d.headCol = 'hitam'; }
   return orang(d, opt.expr || 'biasa');
 }

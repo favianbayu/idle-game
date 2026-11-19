@@ -384,9 +384,99 @@ export const OUTFITS = {
 };
 
 // rakit bagian-bagian jadi data tokoh untuk voxelFrame. list = [[nama, Vox, pivot], ...] urut prioritas
+/* Varian baju: entri OUTFITS boleh membawa sw (ganti bahan: { lama: 'baru' }) dan fx (tambahan per bagian:
+   { chest: v => ..., foreR: v => ... }). build() tokoh memanggil dressing(OUTFITS[opt.outfit]) di awal; assemble()
+   memakainya lalu mengosongkannya. Jadi baju baru cukup { ...BASE, name, sw, fx } tanpa mengubah fungsi bagian badan. */
+let DRESS = null;
+export function dressing(def) { DRESS = def && (def.sw || def.fx || def.ball || def.propOn || def.held === false) ? def : null; }
+function dress(list, ballMat) {
+  const D = DRESS; DRESS = null;
+  if (!D) return [list, ballMat, mi];
+  const sw = D.sw || {}, fx = D.fx || {}, S = c => sw[c] || c;
+  list = list.map(([name, v, piv]) => {
+    if (!v && !fx[name]) return [name, v, piv];
+    let w = new Vox(); if (v) w.add(v);
+    if (fx[name]) w = fx[name](w) || w;
+    if (D.sw) { const o = new Vox(); w.each((x, y, z, c) => o.set(x, y, z, S(c))); w = o; }
+    return [name, w.m.size ? w : null, piv];
+  });
+  return [list, Object.fromEntries(Object.entries({ ...ballMat, ...(D.ball || {}) }).map(([k, c]) => [k, S(c)])), c => mi(S(c))];
+}
+/* ---------- barang pegangan: dipisah dari lengan bawah jadi bagian 'propR' / 'propL' (ikut tulang lengan bawah),
+   lalu game hanya menampilkannya saat anim aktivitas yang cocok (showProps). Pemisahan otomatis: lengan = kolom
+   penampang lengan atas (lapis z teratas, +1 voxel) dari ujung kepalan ke atas; sisanya = barang. */
+// anim yang dianggap "sedang beraktivitas" (bawaan barang yang tak dikenal jenisnya)
+export const ACT = ['talk', 'look', 'phone', 'squat', 'crouch', 'carry', 'galon', 'raiseHand', 'read', 'think', 'sitDesk', 'sit', 'sitDown', 'sweep',
+  'stretch', 'laugh', 'scratch', 'cast', 'fishCast', 'fishWait', 'fishPull', 'fishShow', 'cheer', 'push'];
+// jenis barang -> anim saat barang dipegang ('all' = selalu, mis. tongkat jalan, payung hujan, senapan jaga)
+export const PROP_KIND = {
+  all: 'all', aktif: ACT,
+  baca: ['read', 'talk', 'sitDesk', 'think', 'raiseHand', 'sitDown', 'look'], hp: ['phone'], radio: ['phone', 'talk', 'look', 'raiseHand'],
+  minum: ['sitDown', 'sit', 'sitDesk', 'talk'], sapu: ['sweep'], tani: ['squat', 'crouch', 'carry', 'sweep'],
+  angkut: ['carry', 'galon', 'galonWalk', 'walk', 'talk'], masak: ['carry', 'squat', 'talk'],
+  ikan: ['squat', 'carry', 'fishCast', 'fishWait', 'fishPull', 'fishShow', 'tread', 'cast'], bola: ['dribble', 'shoot', 'kickBall', 'catch', 'carry'],
+  olahraga: ['stretch', 'jump', 'carry', 'talk', 'catch'], sorak: ['cheer', 'clap', 'jump', 'wave', 'raiseHand'], ajar: ['talk', 'raiseHand', 'read', 'think', 'look'],
+  santai: ['sitDown', 'sit', 'talk', 'think', 'read', 'idle'], jual: ['walk', 'idle', 'talk', 'carry'], kerja: ['squat', 'crouch', 'carry'],
+  main: ['look', 'run', 'wave', 'idle', 'cheer', 'jump'],
+};
+// barang spawn_base (d.handR / d.handL) -> jenis
+export const HELD_KIND = {
+  arit: 'tani', cangkul: 'tani', sekop: 'tani', sapu: 'sapu', rotan: 'ajar', buku: 'baca', map: 'baca', papan: 'baca', peta: 'baca', hp: 'hp', ht: 'radio',
+  mug: 'minum', mangkok: 'minum', botol: 'jual', bola: 'bola', bendera: 'sorak', terompet: 'sorak', layangan: 'main', kunci: 'kerja', lap: 'kerja',
+  sutil: 'masak', dayung: 'ikan', jaring: 'ikan', ikan: 'ikan', ember: 'angkut', kardus: 'angkut', keranjang: 'angkut', rantang: 'angkut',
+  kresek: 'angkut', kresekH: 'angkut', kresekM: 'angkut', tasTangan: 'all', tasbih: 'santai', lampu: 'all', senter: 'all', payung: 'all',
+  senapan: 'all', tongkat: 'all', tongkatLL: 'all', trekking: 'all',
+};
+function splitFore(v) {
+  // puncak lengan bawah = lapis tertinggi yang penampangnya penuh (tali tas / gagang yang mencuat ke atas tidak dihitung)
+  const lc = new Map(); v.each((x, y, z) => lc.set(z, (lc.get(z) || 0) + 1));
+  const big = Math.max(...lc.values()); let zMax = -1e9; for (const [z, n] of lc) if (n >= big * 0.5 && z > zMax) zMax = z;
+  // bahan lengan atas = bahan yang banyak di 4 lapis teratas (barang yang kebetulan mencuat ke atas tidak ikut)
+  const tc = new Map(); let tn = 0; v.each((x, y, z, c) => { if (z >= zMax - 3) { tc.set(c, (tc.get(c) || 0) + 1); tn++; } });
+  const top = new Set([...tc].filter(([, n]) => n >= tn * 0.2).map(([c]) => c));
+  const b = [1e9, -1e9, 1e9, -1e9];
+  v.each((x, y, z, c) => { if (z >= zMax - 3 && top.has(c)) { b[0] = Math.min(b[0], x); b[1] = Math.max(b[1], x); b[2] = Math.min(b[2], y); b[3] = Math.max(b[3], y); } });
+  b[0]--; b[1]++; b[2]--; b[3]++;
+  const inB = (x, y) => x >= b[0] && x <= b[1] && y >= b[2] && y <= b[3];
+  const cnt = new Map(); v.each((x, y, z) => { if (inB(x, y)) cnt.set(z, (cnt.get(z) || 0) + 1); });
+  const A = cnt.get(zMax - 2) || 1; let zF = zMax;
+  for (let z = zMax; z > zMax - 60; z--) { if ((cnt.get(z) || 0) < A * 0.25) break; zF = z; }
+  const arm = new Vox(), held = new Vox();
+  v.each((x, y, z, c) => (inB(x, y) && z >= zF ? arm : held).set(x, y, z, c));
+  if (held.m.size < 6 || arm.m.size < 20) return [v, null];
+  // sisa barang di dalam kolom lengan (gagang dalam kepalan, batang menempel lengan): bahan barang yang bukan bahan
+  // lengan atas. Di luar penampang asli -> ikut barang; di dalam -> diwarnai seperti lapis lengan itu.
+  const hm = new Set(); held.each((x, y, z, c) => { if (!top.has(c)) hm.add(c); });
+  const lay = new Map(); arm.each((x, y, z, c) => { if (!hm.has(c)) { const m = lay.get(z) || new Map(); m.set(c, (m.get(c) || 0) + 1); lay.set(z, m); } });
+  const dom = z => { for (let k = 0; k < 8; k++) for (const zz of [z + k, z - k]) { const m = lay.get(zz); if (m) return [...m].sort((p, q) => q[1] - p[1])[0][0]; } return null; };
+  const inB0 = (x, y) => x > b[0] && x < b[1] && y > b[2] && y < b[3];
+  arm.each((x, y, z, c) => { if (!hm.has(c)) return; if (!inB0(x, y)) { arm.set(x, y, z, null); held.set(x, y, z, c); } else { const d = dom(z); if (d) arm.set(x, y, z, d); } });
+  return [arm, held];
+}
+function splitHeld(list) {
+  const out = [];
+  const own = new Set(list.filter(e => e[0].startsWith('prop')).map(e => e[0]));   // tokoh yang sudah memisah sendiri
+  for (const [name, v, piv] of list) {
+    if (v && (name === 'foreR' || name === 'foreL') && !own.has(name === 'foreR' ? 'propR' : 'propL')) { const [arm, held] = splitFore(v); out.push([name, arm, piv]); if (held) out.push([name === 'foreR' ? 'propR' : 'propL', held, piv]); }
+    else out.push([name, v, piv]);
+  }
+  return out;
+}
+const kindAnims = k => Array.isArray(k) ? k : PROP_KIND[k] || ACT;
+const SHOWN = new WeakMap();
+// P tanpa barang yang tidak cocok dengan anim ini (all = tampilkan semua, untuk lembar pratinjau)
+export function showProps(P, anim, all = false) {
+  if (all || !P.parts.some(p => p.name === 'propR' || p.name === 'propL')) return P;
+  const on = n => { const k = (P.propOn || {})[n]; const a = k === 'all' ? 'all' : kindAnims(k); return a === 'all' || a.includes(anim); };
+  const key = (on('propR') ? 'R' : '') + (on('propL') ? 'L' : '');
+  let c = SHOWN.get(P); if (!c) SHOWN.set(P, c = {});
+  return c[key] || (c[key] = { ...P, parts: P.parts.filter(p => (p.name !== 'propR' || key.includes('R')) && (p.name !== 'propL' || key.includes('L'))) });
+}
 export function assemble(list, ballMat, skel, tailPiv) {
+  const D = DRESS; let mat; [list, ballMat, mat] = dress(list, ballMat); if (!D || D.held !== false) list = splitHeld(list);
   const parts = list.filter(e => e[1]).map(([name, v, piv]) => { const g = dense(v, mi); return { name, g, piv, box: [g.o[0] - piv[0], g.o[1] - piv[1], g.o[2] - piv[2], g.o[0] + g.n[0] - piv[0], g.o[1] + g.n[1] - piv[1], g.o[2] + g.n[2] - piv[2]] }; });
-  return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat: Object.fromEntries(Object.entries(ballMat).map(([k, c]) => [k, mi(c)])), ramps: RAMP_RGB, mat: mi, skel, tailPiv };
+  const po = D && D.propOn, propOn = po ? (typeof po === 'object' && !Array.isArray(po) ? po : { propR: po, propL: po }) : null;
+  return { parts, boxes: Object.fromEntries(parts.map(p => [p.name, p.box])), ballMat: Object.fromEntries(Object.entries(ballMat).map(([k, c]) => [k, mi(c)])), ramps: RAMP_RGB, mat, skel, tailPiv, propOn };
 }
 // cat peta wajah ke voxel terdepan: map = baris (atas -> bawah), top = z baris pertama, c0 = y kolom pertama
 export function paintFace(v, map, chars, top, c0) { map.forEach((row, r) => [...row].forEach((ch, c) => { const k = chars[ch]; if (k) v.pf(c + c0, top - r, k); })); }
