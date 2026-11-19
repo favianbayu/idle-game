@@ -3,13 +3,15 @@
 // bergaris putih, sepatu lari putih. Rangka keluarga Arga (skala 1.36), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { motifKotak } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  heKausB: ['#1e4a8a', '#26589e', '#3068b2', '#4480c6'], heOblong: ['#cfcfca', '#e0e0da', '#eeeee8', '#fafaf4'], heSarung: ['#3a4a2a', '#4a5c36', '#5c7044', '#728856'], heSarungK: ['#8a6a2a'],
   heSkin: ['#86583a', '#9c6a46', '#b07a52', '#c08c64'], heSkinS: ['#9a6844'], heKumis: ['#120e0c'],
   heHair: ['#1a1410', '#221a14', '#2c221a', '#3a2e24'],
   topiH: ['#9a1e1e', '#b42626', '#cc3030', '#e04848'], topiHS: ['#f2f2f2'], peluit: ['#a8acb4', '#c4c8d0', '#dce0e8', '#f2f4f8'], taliH: ['#1a3a8a'],
@@ -144,7 +146,14 @@ export const OUTFITS = {
   wasit: { name: 'Wasit futsal / liga resmi: kaus wasit hitam + kartu + peluit', top: 'wasit' },
   batik: { name: 'Jumat: batik hijau toska lengan pendek + celana bahan', top: 'batik' },
 };
+OUTFITS.kerja = { ...OUTFITS.olahraga, propOn: 'ajar', name: 'Kerja: kaus olahraga biru sekolah, topi biru, peluit',
+  sw: { heKaus: 'heKausB', topiH: 'heKausB' } };
+const SARUNG_HE = v => motifKotak(v, 'heSarung', 'heSarungK', 3, ['celHe']);
+OUTFITS.rumah = { ...OUTFITS.batik, name: 'Rumah: kaus oblong putih + sarung kotak',
+  sw: { batikHe: 'heOblong', batikHeS: 'heOblong', batikHeK: 'heOblong' },
+  fx: { pelvis: SARUNG_HE, thighR: SARUNG_HE, thighL: SARUNG_HE, shinR: SARUNG_HE, shinL: SARUNG_HE } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Hendro memakai baju olahraga
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.olahraga), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);

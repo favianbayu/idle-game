@@ -3,7 +3,7 @@
 // bertumpuk, kalung manik, sandal kulit. Rangka keluarga Nadia (skala 1.25), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -11,6 +11,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  mlTenunB: ['#2a4a7a', '#34588e', '#4068a2', '#5480b8'], mlTenunBS: ['#16284a'],
   mlSkin: ['#ae7a54', '#c8906a', '#d9a07a', '#e6b28e'], mlSkinS: ['#c08862'], mlBlush: ['#d8806a'],
   mlHair: ['#0e0806', '#160e0a', '#20140e', '#2e1e16'], mlHairT: ['#40281c'], kamboja: ['#f8f4ea'], kambojaC: ['#f0c040'],
   tenun: ['#9a3a6a', '#b04a7c', '#c25a8a', '#d2709c'], tenunS: ['#4a1a3a'], tenunK: ['#f2d27a'], tenunU: ['#5a2a7a'],
@@ -118,7 +119,10 @@ export const OUTFITS = {
   pensi: { name: 'Pensi: atasan hitam + rok tenun + selendang oranye', top: 'pensi' },
   santai: { name: 'Santai: terusan linen krem + gelang kayu', top: 'santai' },
 };
+OUTFITS.kerja = { ...OUTFITS.etnik, name: 'Kerja: gaun tenun ikat biru + selendang, gelang kayu',
+  sw: { tenun: 'mlTenunB', tenunS: 'mlTenunBS' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Melati memakai gaun etnik
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.etnik), expr: opt.expr || 'biasa', face: opt.face };
   const [c, cS] = skirtC(o), A = arm(o), Ft = foot(o), sl = sleeveC(o);

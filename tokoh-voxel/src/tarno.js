@@ -4,7 +4,7 @@
 // Ngaso: kaus oblong putih + celana pendek + handuk di leher + segelas kopi hitam. Rangka keluarga Arga, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -118,10 +118,11 @@ function foot() {
 }
 
 export const OUTFITS = {
-  parkir: { name: 'Jaga parkir: topi biru + rompi oranye rambu P + kaus garis + handuk di bahu + peluit + karcis + celana abu + sandal jepit', top: 'parkir' },
+  parkir: { name: 'Jaga parkir: topi biru + rompi oranye rambu P + kaus garis + handuk di bahu + peluit + karcis + celana abu + sandal jepit', top: 'parkir', propOn: 'jual' },
   ngaso: { name: 'Ngaso: kaus oblong putih + celana pendek + handuk + segelas kopi hitam', top: 'ngaso' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.parkir), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), c = P_(o) ? 'trKaus' : 'trPutih', cl = P_(o) ? 'trCelana' : 'trPendek';
   return assemble([

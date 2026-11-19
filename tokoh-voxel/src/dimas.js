@@ -3,13 +3,15 @@
 // Rangka skala 1.38 (sama dengan Bram), voxel halus 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { lapis, kantongBola } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10, shZ: 17, upper: 11, fore: 11.5, hipY: 4.5, flap: 6, ballR: 1.05 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  dBatik: ['#5a3a1c', '#6e4824', '#84582e', '#9c6a3a'], dBatikK: ['#e0b860'], dPara: ['#2e5a4a', '#386c58', '#448068', '#56987e'], dParaS: ['#244a3c'],
   dSkin: ['#94603d', '#b07650', '#c98e66', '#dca57c'], dSkinS: ['#b07650'], dEar: ['#9a5e42', '#b87050', '#d08868', '#e09c7c'],
   dHair: ['#080607', '#100c0d', '#1a1415', '#28201f'], dHairF: ['#3a2e2c'],
   dFadeA: ['#1c1513', '#261c19', '#32251f', '#402f27'], dFadeB: ['#4e3324', '#603f2c', '#734c36', '#865a40'], dFadeC: ['#80553b', '#966446', '#ad7552', '#c0865f'],
@@ -161,7 +163,13 @@ export const OUTFITS = {
   jalan: { name: 'Hoodie biru + chino', top: 'hoodie', bot: 'chino' },
   rumah: { name: 'Kaus loreng + celana pendek', top: 'loreng', bot: 'short' },
 };
+const BATIK = v => { v.each((x, y, z, c) => { if (c === 'white' || c === 'whiteS') v.set(x, y, z, (x + y * 2 + z * 3) % 7 === 0 || (y - z + 64) % 6 === 0 ? 'dBatikK' : 'dBatik'); }); return v; };
+OUTFITS.resmi = { ...OUTFITS.seragam, name: 'Resmi: kemeja batik ayahnya yang terlalu besar (dikeluarkan)',
+  fx: { chest: v => BATIK(lapis(v, 'white', 36, 56)), armR: v => BATIK(lapis(v, 'white')), armL: v => BATIK(lapis(v, 'white')), pelvis: v => BATIK(lapis(v, 'white', 30, 99)) } };
+OUTFITS.hujan = { ...OUTFITS.jalan, propOn: 'angkut', name: 'Hujan: jaket parasut, bola di kantong plastik',
+  sw: { hoodie: 'dPara', hoodieS: 'dParaS' }, fx: { foreR: kantongBola } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Ft = foot(o);
   const top = o.top === 'jersey' ? 'dSkin' : o.top === 'loreng' ? 'loreng' : o.top === 'hoodie' ? 'hoodie' : 'white';

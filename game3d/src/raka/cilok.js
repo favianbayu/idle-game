@@ -4,7 +4,7 @@
 // cilok mengepul + plastik cilok bertusuk. Pulang: hoodie abu + celana jins panjang + kets. Rangka keluarga Arga, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -131,10 +131,11 @@ function foot(o) {
 }
 
 export const OUTFITS = {
-  jualan: { name: 'Jualan: topi kuning terbalik + kaus kuning sablon cilok + handuk di bahu + tas pinggang + jins selutut + sandal jepit + panci cilok + plastik cilok', top: 'jualan' },
+  jualan: { name: 'Jualan: topi kuning terbalik + kaus kuning sablon cilok + handuk di bahu + tas pinggang + jins selutut + sandal jepit + panci cilok + plastik cilok', top: 'jualan', propOn: 'jual' },
   pulang: { name: 'Pulang: hoodie abu + jins panjang + kets putih', top: 'pulang' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jualan), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), j = J(o);
   return assemble([

@@ -3,13 +3,15 @@
 // tangan kiri, pulpen di saku. Rangka keluarga Arga (skala 1.3) dengan perut, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { motifKotak, strip } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 7, ballR: 1.05 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  waPutih: ['#c8c8c4', '#dcdcd8', '#ececE8', '#f8f8f4'], waPutihS: ['#a8a8a4'], waOblong: ['#b8b4a8', '#ccc8bc', '#dcd8cc', '#eae6da'], waSarung: ['#5a2a2a', '#6c3434', '#7e3e3e', '#924a4a'], waSarungK: ['#2a2a3a'],
   waSkin: ['#9e6a46', '#b88058', '#c98e66', '#d6a07a'], waSkinS: ['#b07a54'], waKumis: ['#0e0a08'],
   waHair: ['#120e0c', '#1a1410', '#241c16', '#32281e'], waHairT: ['#4a3e34'],
   khaki: ['#9a8a5e', '#ae9e70', '#c0b082', '#d0c094'], khakiS: ['#7a6c46'], celKhaki: ['#4a3c2c', '#584836', '#665440', '#76624e'],
@@ -126,7 +128,14 @@ export const OUTFITS = {
   senam: { name: 'Jumat pagi: setelan training biru Korpri + sneakers', top: 'senam' },
   batik: { name: 'Batik cokelat lengan panjang + celana hitam + buku pelanggaran', top: 'batik' },
 };
+OUTFITS.kerja = { ...OUTFITS.pns, propOn: 'baca', name: 'Kerja: kemeja PNS putih + celana hitam, kumis, buku pelanggaran',
+  sw: { khaki: 'waPutih', khakiS: 'waPutihS', celKhaki: 'pantoW' } };
+const SARUNG_WA = v => motifKotak(v, 'waSarung', 'waSarungK', 3, ['pantoW']);
+OUTFITS.rumah = { ...OUTFITS.batik, name: 'Rumah: kaus oblong + sarung kotak',
+  sw: { wwBatik: 'waOblong', wwBatikS: 'waOblong', batikWK: 'waOblong' },
+  fx: { pelvis: SARUNG_WA, thighR: SARUNG_WA, thighL: SARUNG_WA, shinR: SARUNG_WA, shinL: SARUNG_WA, foreL: v => strip(v, 'bukuW', 'bukuWK') } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Pak Wawan memakai seragam PNS
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.pns), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);

@@ -3,7 +3,8 @@
 // tembam, mata sipit (hilang saat tertawa), noda tinta di jari kanan. Rangka keluarga Rani (1.24), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
+import { tudung } from './props.js';
 import { skirtPelvis, skirtPanel, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -11,6 +12,7 @@ const PV = pivots(SKEL);
 const TAIL = [-7, 0, 6];
 
 addRamps({
+  meParuh: ['#d8762a', '#e8862e', '#f09a40', '#f8b058'],
   meSkin: ['#c8a07a', '#dcb690', '#f0cfa8', '#f8dcbc'], meSkinS: ['#dcb08a'], meBlush: ['#f0a090'],
   meHair: ['#08080a', '#101014', '#18181e', '#28282f'], meHairT: ['#363642'],
   pensil: ['#e3b23c'], pensilT: ['#f4ead2'], bulat: ['#3a2a1e', '#4a3626', '#5c4430', '#74583e'], bulatL: ['#e0eef4'],
@@ -168,7 +170,11 @@ export const OUTFITS = {
   rumah: { name: 'Piama kucing + kaus kaki tidak sepasang', top: 'piama' },
   jalan: { name: 'Overall jeans + kaus garis + baret hijau + tas tote', top: 'jalan', beret: true },
 };
+OUTFITS.hujan = { ...OUTFITS.jalan, beret: false, name: 'Hujan: jas hujan kuning mustard bentuk bebek',
+  sw: { overallM: 'mustard', garis: 'mustard', garisM: 'mustard', tote: 'mustard', pinA: 'mustard', pinB: 'mustard' },
+  fx: { head: v => { tudung(v, 'mustard'); let xm = -99, zt = -99; v.each((x, y, z) => { if (x > xm) xm = x; if (z > zt) zt = z; }); for (let y = -3; y <= 2; y++) for (const dz of [0, 1]) { const x = v.front(y, zt - 2 - dz); if (x !== null) { v.set(x + 1, y, zt - 2 - dz, 'meParuh'); if (dz === 0) v.set(x + 2, y, zt - 2, 'meParuh'); } } for (const y of [-4, 3]) { const x = v.front(y, zt - 5); if (x !== null) v.set(x, y, zt - 5, 'kucingK'); } return v; } } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), sl = sleeveC(o), leg = legC(o), S = o.top === 'seragam';
   const P = assemble([

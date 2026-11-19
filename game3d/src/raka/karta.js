@@ -6,6 +6,7 @@ export const OUTFITS = {
   pangsi: { name: 'Latihan: iket batik cokelat + pangsi hitam pudar + sabuk hijau kehormatan + nyeker' },
   kebun: { name: 'Kebun: caping + kaus lusuh lengan panjang + celana pangsi digulung + sandal jepit + arit' },
   teras: { name: 'Malam di teras: peci + kemeja koko krem + sarung kotak + sandal' },
+  silat: { name: 'Melatih silat: baju pangsi hitam pudar + ikat kepala batik cokelat + sabuk hijau + nyeker, rotan penunjuk' },
 };
 export const EXPRS = EX;
 function desc(o) {
@@ -28,6 +29,7 @@ function desc(o) {
   d.top = { kind: 'pangsi', c: 'hitamPudar', sleeve: 'panjang', tuck: true };
   d.bot = { kind: 'celana', c: 'hitamPudar' }; d.feet = { kind: 'nyeker' };
   d.acc.push('sabuk'); d.sabukCol = 'hijauTua';
+  if (o === 'silat') { d.headPat = 'hitam'; d.handR = 'rotan'; }
   return d;
 }
 export function build(opt = {}) {

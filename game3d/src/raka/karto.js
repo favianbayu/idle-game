@@ -3,7 +3,7 @@
 // kayu, sandal jepit. Rangka keluarga Arga, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -110,10 +110,11 @@ function foot() {
 }
 
 export const OUTFITS = {
-  teras: { name: 'Teras: kaus oblong belel + sarung kotak hijau + tongkat + sandal jepit', top: 'teras' },
+  teras: { name: 'Teras: kaus oblong belel + sarung kotak hijau + tongkat + sandal jepit', top: 'teras', propOn: 'all' },
   ronda: { name: 'Pos ronda: peci + jaket lusuh + sarung di leher + kopi hitam', top: 'ronda', peci: true },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.teras), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = bodyC(o);
   return assemble([

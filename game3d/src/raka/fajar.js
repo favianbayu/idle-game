@@ -3,13 +3,15 @@
 // Rangka keluarga Arga (skala 1.34), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { motifKotak } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  faKotak: ['#6a4430', '#7e5238', '#925e42', '#a6704e'], faKotakS: ['#c8b890'],
   faSkin: ['#80502e', '#9a663e', '#b8805a', '#c8926a'], faSkinS: ['#9a6844'], faOli: ['#24201c'],
   faHair: ['#0c0a08', '#14100c', '#1a1410', '#2a221c'], faHairT: ['#3a2e24'],
   kerjaF: ['#34404c', '#3e4c5a', '#4a5a6a', '#5e7084'], kerjaFS: ['#2a3440'], handukF: ['#c8c4b8', '#d8d4c8', '#e6e2d6', '#f2eee4'], handukFS: ['#c84a3a'],
@@ -140,7 +142,11 @@ export const OUTFITS = {
   lampu: { name: 'Jaket Lampu Kota + sarung tangan + jeans', top: 'lampu' },
   santai: { name: 'Santai: kaus putih + jeans + sandal jepit + handuk', top: 'santai', towel: true },
 };
+const KOTAK_FA = v => motifKotak(v, 'faKotak', 'faKotakS', 3, ['kausF']);
+OUTFITS.paket_c = { ...OUTFITS.santai, towel: false, name: 'Paket C: kemeja kotak pinjaman Om Darto + jeans + sandal',
+  fx: { chest: KOTAK_FA, armR: KOTAK_FA, armL: KOTAK_FA } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Mas Fajar memakai baju bengkel
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.bengkel), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o);

@@ -1,5 +1,7 @@
 # Outfits still missing from the character sprites
 
+**Update 2026-11-19: all 54 are done.** Each one now exists in its model under the guide key, as a variant (`OUTFITS.<key> = { ...BASE, sw, fx }`; see `tokoh-voxel/PANDUAN-TOKOH.md` section 6b). `OVR` in `tools/export_rutin.py` keeps only Pak RT `kerja` -> `batik`, and `src/data/rutin.json` has been re-exported. Preview sheets are `tokoh-voxel/shots/outfit_guide1.png` and `outfit_guide2.png`. The table below is kept as a record.
+
 Generated 2026-11-19 from guide 35 (`guide/data/npc.json`) against the `OUTFITS` of each model in `game3d/src/raka/`.
 Each row is an outfit the schedule asks for that the model does not have yet. Until it exists, the game uses the stand-in shown.
 After adding an outfit to a model, rerun `python3 tools/export_rutin.py <guide folder> src/data/rutin.json` and drop the matching entry from `OVR` in that script.

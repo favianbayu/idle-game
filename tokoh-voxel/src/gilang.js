@@ -4,7 +4,7 @@
 // Rangka keluarga Arga (skala 1.34), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
@@ -228,6 +228,7 @@ export const OUTFITS = {
   jalan: { name: 'Windbreaker kuning-biru loakan + jeans + topi terbalik', top: 'jalan', cap: true },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil outfit 'seragam': Gilang tidak sekolah, jadi pakai baju kerja. Galon bukan bagian badan: ia properti
   // gerakan 'galon' / 'galonWalk' (rig.js), jadi hilang sendiri saat Gilang berantem
   const base = OUTFITS[opt.outfit] || OUTFITS.kerja;

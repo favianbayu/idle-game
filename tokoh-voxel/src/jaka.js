@@ -3,13 +3,15 @@
 // jeans gelap, boots cokelat tua. Rangka keluarga Bram (skala 1.38), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { catZ } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 11, fore: 11.5, hipY: 5, flap: 6, ballR: 1.1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  jaKaus: ['#141416', '#1c1c1f', '#262629', '#343438'],
   jaSkin: ['#7e5236', '#94603e', '#a8724e', '#ba8460'], jaSkinS: ['#8e5c3c'], jaBeard: ['#2a1c14'],
   jaHair: ['#0a0808', '#121010', '#1a1616', '#282222'], jaHairT: ['#3a302c'], jaIkat: ['#6a4a2a'],
   jaTee: ['#6e7078', '#80828a', '#92949c', '#a6a8b0'], jaJeans: ['#1a2236', '#222c44', '#2c3854', '#3c4a6a'], jaJeansS: ['#141a2a'],
@@ -154,7 +156,11 @@ export const OUTFITS = {
   latihan: { name: 'Latihan: kutang hitam + celana training + perban tangan (ujian masuk)', top: 'latihan' },
   santai: { name: 'Santai: kemeja flanel merah digulung + celana kargo + boots', top: 'santai' },
 };
+OUTFITS.kerja = { ...OUTFITS.santai, name: 'Kerja kuli angkut pasar: kaus hitam, celana kargo, sarung tangan kerja',
+  sw: { jaFlan: 'jaKaus', jaFlanS: 'jaKaus' },
+  fx: { foreR: v => catZ(v, 'prGlove', -99, 34), foreL: v => catZ(v, 'prGlove', -99, 34) } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bang Jaka memakai jaket Lampu Kota
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.lampu), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);

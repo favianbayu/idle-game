@@ -5,7 +5,7 @@
 // Rangka keluarga Nadia, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -107,6 +107,7 @@ export const OUTFITS = {
   ngaso: { name: 'Ngaso: rambut putih digelung + selendang di bahu + termos teh', top: 'ngaso' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.jualan), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = jarik(skirtThigh('ijJarik')), Sn = jarik(skirtShin('ijJarik', 'ijJarikS')), Ft = foot(o);
   const panel = s => { const p = jarik(skirtPanel('ijJarik', 'ijJarikS', s, 5)); if (s > 0) for (let z = 6; z <= 30; z++) { const x = p.front(-6, z); if (x !== null) p.set(x, -6, z, 'ijJarikK'); } return p; };

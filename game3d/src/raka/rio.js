@@ -3,13 +3,14 @@
 // tapi badan lebar), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 15, thigh: 15.5, up: 4, neck: 24, shY: 10.5, shZ: 17, upper: 11, fore: 11.5, hipY: 5, flap: 6, ballR: 1.1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  rioKulit: ['#24160e', '#301e14', '#40281a', '#583824'], rioKulitS: ['#6e4a32'], rioTee: ['#0c0c0e', '#141416', '#1c1c20', '#28282e'],
   rioSkin: ['#ae7c58', '#c89470', '#e0b088', '#ecc29c'], rioSkinS: ['#c48c66'],
   rioHair: ['#4a2a16', '#5a341c', '#6a4024', '#82522e'], rioHairT: ['#9a6a3e'], rioSide: ['#5a4434', '#665040', '#725c4a', '#7e6856'],
   rioTank: ['#e8e4dc', '#f2eee6', '#faf8f2', '#ffffff'], rioShort: ['#8a1a1a', '#a42222', '#bc2c2c', '#d23c3c'], rioShortS: ['#f2d23a'],
@@ -130,10 +131,14 @@ function foot(o) {   // sneakers hitam besar sol putih (tinju: sepatu tinju mera
 
 export const OUTFITS = {
   seragam: { name: 'Seragam dikeluarkan, kancing terbuka, lengan digulung + kalung rantai', top: 'seragam' },
-  tinju: { name: 'Sasana tinju: kutang putih + celana tinju merah + sarung tinju', top: 'tinju' },
+  tinju: { name: 'Sasana tinju: kutang putih + celana tinju merah + sarung tinju', top: 'tinju', held: false },   // sarung tinju dipakai, bukan barang
   jalan: { name: 'Nongkrong: hoodie hitam garis merah + jeans + sneakers', top: 'jalan' },
 };
+OUTFITS.geng = { ...OUTFITS.jalan, name: 'Geng: kaus hitam ketat, jaket kulit imitasi',
+  sw: { rioHood: 'rioKulit', rioHoodS: 'rioKulitS', jeans: 'rioTee' },
+  fx: { chest: v => { for (let z = 38; z <= 57; z++) for (let y = -2; y <= 1; y++) { const x = v.front(y, z); if (x !== null) v.set(x, y, z, 'rioTee'); } return v; } } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   return assemble([

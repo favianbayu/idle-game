@@ -4,7 +4,8 @@
 // Rangka keluarga Rani (1.26), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
+import { lapis } from './props.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -197,7 +198,11 @@ export const OUTFITS = {
   desa: { name: 'Di desa: kaus lengan panjang + sarung batik', top: 'desa', bottom: 'sarung' },
   kota: { name: 'Ke kota: kemeja kotak hijau + jeans + sepatu kanvas + tas anyaman', top: 'kota' },
 };
+OUTFITS.hujan = { ...OUTFITS.pemandu, name: 'Hujan: caping + jas hujan plastik + boots karet',
+  sw: { wlHijau: 'prKresek', wlHijauS: 'prKresekS' },
+  fx: { pelvis: v => lapis(v, 'prKresek') } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);
   const sk = o.bottom === 'span' ? ['spanW', 'spanWS', 13] : o.bottom === 'sarung' ? ['sarungW', 'sarungWS', 5] : null;

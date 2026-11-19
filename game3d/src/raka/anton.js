@@ -3,13 +3,14 @@
 // Rangka keluarga Arga (skala 1.34), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 9.5, shZ: 17, upper: 10.5, fore: 12, hipY: 4.5, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  anKemP: ['#c8ccd0', '#dce0e4', '#eceef2', '#fafbfc'], anKemPS: ['#a8b0b8'], anKaus: ['#4a5a4a', '#586a58', '#687c68', '#7c927c'],
   anSkin2: ['#b88460', '#cc9670', '#d9a27a', '#e6b28a'], anSkin2S: ['#c48e68'],
   anHair2: ['#140c08', '#1c120c', '#241810', '#322216'], anHair2T: ['#4a3626'], anFade: ['#4a3a30', '#544238', '#5e4a40', '#6a564a'],
   kemA: ['#6c96c4', '#82aad4', '#98bee2', '#b0d0ee'], kemAS: ['#5480b0'], chinoA: ['#5a5c62', '#686a72', '#787a82', '#8a8c94'],
@@ -118,7 +119,12 @@ export const OUTFITS = {
   debat: { name: 'Klub debat: blazer biru tua + kaus putih + chino', top: 'debat' },
   denim: { name: 'Akhir pekan: jaket denim + kaus hitam + jeans', top: 'denim' },
 };
+OUTFITS.kerja = { ...OUTFITS.kemeja, name: 'Kerja: kemeja slim putih digulung + chino + sneakers',
+  sw: { kemA: 'anKemP', kemAS: 'anKemPS' } };
+OUTFITS.rumah = { ...OUTFITS.denim, name: 'Rumah: kaus hijau lumut + jeans',
+  sw: { denimA: 'anKaus', denimAS: 'anKaus', teeAH: 'anKaus' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Mr. Anton memakai kemeja
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.kemeja), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);

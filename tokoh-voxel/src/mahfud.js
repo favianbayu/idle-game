@@ -6,6 +6,7 @@ export const OUTFITS = {
   koko: { name: 'Harian: peci hitam + koko putih + sarung kotak hijau + sandal, tasbih kayu, pena di saku' },
   mengajar: { name: 'Mengajar: peci + koko krem + sarung hijau tua + kitab di tangan' },
   pasar: { name: 'Ke pasar hewan: peci + koko putih + payung hitam + tasbih' },
+  rumah: { name: 'Rumah: peci hitam + koko putih + sarung kotak hijau + nyeker, tasbih kayu, kacamata bulat emas' },
 };
 export const EXPRS = EX;
 export function build(opt = {}) {
@@ -16,7 +17,8 @@ export function build(opt = {}) {
   d.fx = { chest: (v, dd, G) => { const nz = G.cz[1], y = G.ch[3] - 3; for (let z = nz - 12; z <= nz - 7; z++) { const x = v.front(y, z); if (x !== null) v.set(x + 1, y, z, z === nz - 7 ? 'spEmas' : 'spHP'); } } };   // pena di saku kiri
   d.top = { kind: 'koko', c: o === 'mengajar' ? 'krem' : 'putih', sleeve: 'panjang' };
   d.bot = { kind: 'sarung', c: o === 'mengajar' ? 'hijauTua' : 'hijau', pat: 'kotak', pc: o === 'mengajar' ? 'hijau' : 'hijauTua' };
-  d.feet = { kind: 'sandal', c: 'coklat' };
+  d.feet = o === 'rumah' ? { kind: 'nyeker' } : { kind: 'sandal', c: 'coklat' };
+  if (o === 'rumah') d.bot.pc = 'krem';
   if (o === 'mengajar') { d.handR = 'buku'; d.propCol = 'hijauTua'; }
   else if (o === 'pasar') { d.handR = 'payung'; d.propCol = 'hitam'; d.handL = 'tasbih'; }
   else d.handR = 'tasbih';

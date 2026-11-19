@@ -4,7 +4,7 @@
 // Pulang: jaket jins + kaus putih + jins + sepatu kets + tas jinjing kanvas. Rangka keluarga Nadia, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -135,10 +135,11 @@ function foot(o) {
 }
 
 export const OUTFITS = {
-  stan: { name: 'Jaga stan: topi merah SINYAL+ + polo merah kerah putih + kartu nama + celana hitam + sepatu flat + brosur & HP', top: 'stan' },
-  pulang: { name: 'Pulang: jaket jins + kaus putih + jins + sepatu kets + tas jinjing kanvas', top: 'pulang' },
+  stan: { name: 'Jaga stan: topi merah SINYAL+ + polo merah kerah putih + kartu nama + celana hitam + sepatu flat + brosur & HP', top: 'stan', propOn: 'jual' },
+  pulang: { name: 'Pulang: jaket jins + kaus putih + jins + sepatu kets + tas jinjing kanvas', top: 'pulang', propOn: 'all' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.stan), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = S(o) ? 'dwMerah' : 'dwJaket', leg = S(o) ? 'dwHitam' : 'dwJins';
   return assemble([

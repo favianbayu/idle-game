@@ -5,7 +5,7 @@
 // bertali merah putih. Rangka keluarga Rani, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -122,6 +122,7 @@ export const OUTFITS = {
   latihan: { name: 'Latihan: topi putih + kaus putih lis merah + peluit bertali merah putih + celana training dongker + kets putih', top: 'latihan' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.seragam), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), [Th, Sn] = legs(o), Ft = foot(o), s = S_(o), leg = s ? 'myAbu' : 'myTrain';
   const P = assemble([

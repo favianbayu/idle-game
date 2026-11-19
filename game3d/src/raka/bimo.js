@@ -2,13 +2,15 @@
 // seragam sesak di perut (kancing hampir lepas), HP di saku. Rangka skala 1.3 + perut buncit, voxel halus 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
+import { lapis, handukBahu } from './props.js';
 
 export const SKEL = { ank: 4.5, shin: 13.5, thigh: 14, up: 4, neck: 24, shY: 10, shZ: 17, upper: 10.5, fore: 12.5, hipY: 5, flap: 7, ballR: 1.15 };
 const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  bKausR: ['#b8862a', '#d09a34', '#e4ae46', '#f0c466'], bMi: ['#f6e6a0'], bMiK: ['#c8402e'],
   bSkin: ['#94603d', '#b07650', '#c98e66', '#dca57c'], bSkinS: ['#b07650'], blush: ['#d9826e'],
   bHair: ['#0d0a09', '#17120f', '#221a16', '#33281f'], bHairT: ['#1a1411', '#28201a', '#382b22', '#46372b'],
   btn: ['#d8d8d2'], glass: ['#141218', '#1c1a21', '#26232c', '#3a3642'], lensG: ['#cfe3f0'], phoneB: ['#2a2e3a'],
@@ -141,7 +143,13 @@ export const OUTFITS = {
   kaus: { name: 'Kaus Bakso Pak Pras', top: 'kaus' },
   koki: { name: 'Koki Warkop (celemek)', top: 'koki' },
 };
+OUTFITS.rumah = { ...OUTFITS.kaus, name: 'Rumah: kaus kebesaran bergambar mi, celana pendek',
+  sw: { bTee: 'bKausR', bowl: 'bMiK', bowlY: 'bMi' },
+  fx: { pelvis: v => lapis(v, 'bTee', 28, 99) } };
+OUTFITS.masak = { ...OUTFITS.koki, name: 'Masak: celemek bakso ayahnya, handuk di bahu',
+  fx: { chest: v => handukBahu(v, 'prHanduk', 1) } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), K = o.top !== 'kemeja';
   return assemble([

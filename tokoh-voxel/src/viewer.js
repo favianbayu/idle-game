@@ -1,5 +1,5 @@
 // Pratinjau WebGL kecil (tanpa library): kamera ortografis, warna vertex sudah membawa cahaya (sama seperti di game).
-import { bikeVox, BIKE_PAL, BIKE_SEAT } from './model.js';
+import { bikeVox, BIKE_PAL, BIKE_SEAT, showProps } from './model.js';
 import { CHARS } from './chars.js';
 import { NPC_STYLES } from './npc_styles.js';
 import { voxelFrame, voxMesh } from './frame.js';
@@ -19,7 +19,7 @@ const BIKES = {};
 const GEO = new Map();
 export function rakaFrame(o) {
   if (o.pose || o.face) return makeFrame(o);
-  const key = [o.char, o.outfit, o.anim, o.i, o.expr, o.helm ? 1 : 0, o.bike === false ? 0 : 1].join('|');
+  const key = [o.char, o.outfit, o.anim, o.i, o.expr, o.helm ? 1 : 0, o.bike === false ? 0 : 1, o.prop ? 1 : 0].join('|');
   let g = GEO.get(key);
   if (!g) { if (GEO.size > 400) GEO.clear(); GEO.set(key, g = makeFrame(o)); }
   return g;
@@ -29,7 +29,7 @@ function makeFrame(o) {
   const t = A.loop ? i / A.n : i / Math.max(1, A.n - 1);
   const expr = o.expr && o.expr !== 'auto' ? o.expr : exprFor(o.anim, i, A.n);
   const C = CHARS[o.char] || CHARS.raka, P = partsFor(o.char || 'raka', o.outfit || 'seragam', C.EXPRS.includes(expr) ? expr : 'biasa', o.helm, o.face);
-  const f = voxelFrame(P, o.pose || A.pose(t));
+  const f = voxelFrame(showProps(P, o.anim || 'idle', o.prop), o.pose || A.pose(t));
   if (o.anim !== 'rideSport' || o.bike === false) return voxMesh(f, 0.5);
   // naik motor: pantat tokoh ditaruh tepat di jok; setang & pijakan motor dipasang di posisi tangan & kaki
   const dx = BIKE_SEAT[0] - f.buttX * 0.5, dz = BIKE_SEAT[1] - f.buttZ * 0.5;

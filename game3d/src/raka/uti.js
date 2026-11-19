@@ -4,7 +4,7 @@
 // Rangka skala 1.24 (keluarga Rani), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8.5, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 1 };
 const PV = pivots(SKEL);
@@ -178,6 +178,7 @@ export const OUTFITS = {
   malam: { name: 'Malam: jaket marun + helm kuning petir', top: 'malam', helm: true, helmOk: true },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const base = OUTFITS[opt.outfit || 'seragam'];
   const o = { ...base, expr: opt.expr || 'biasa', face: opt.face, helm: base.helm || !!opt.helm };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o), sh = o.top === 'futsal' || o.top === 'bengkel' || o.top === 'band';

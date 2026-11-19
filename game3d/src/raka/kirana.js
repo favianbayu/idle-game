@@ -3,13 +3,14 @@
 // dicat toska, mata tajam agak sipit, satu anting tindik, plester di siku/lutut. Rangka skala 1.26, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13.5, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9.5, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
 const TAIL = [-7, 0, 6];
 
 addRamps({
+  kJas: ['#141c34', '#1c2644', '#263256', '#34426c'], kJasS: ['#e8e070'],
   kSkin: ['#a8784e', '#c08c60', '#d8a878', '#e6bc90'], kSkinS: ['#c4935f'],
   kHair: ['#08080a', '#0e0e12', '#16161c', '#26262e'], kHairT: ['#34343e'], toska: ['#1e766e', '#26908a', '#2fa39a', '#52c0b6'],
   neon: ['#c85418', '#e8661e', '#ff7a2f', '#ff9a5c'], wpK: ['#121214', '#1a1a1e', '#242428', '#34343a'],
@@ -173,7 +174,10 @@ export const OUTFITS = {
   balap: { name: 'Jaket balap toska-hitam #21 + helm full-face', top: 'balap', helm: true, helmOk: true },
   jalan: { name: 'Crop hoodie hitam + kargo + sneakers tinggi', top: 'crop' },
 };
+OUTFITS.hujan = { ...OUTFITS.balap, name: 'Hujan: jas hujan setelan motor (biru dongker, lis reflektor) + helm',
+  sw: { balap: 'kJas', balapK: 'kJas', toska: 'kJas', neon: 'kJasS' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const base = OUTFITS[opt.outfit || 'seragam'];
   const o = { ...base, expr: opt.expr || 'biasa', face: opt.face, helm: base.helm || !!opt.helm };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), leg = legC(o);

@@ -3,7 +3,8 @@
 // kebesaran, rok abu panjang, kets kanvas hitam, gitar di punggung. Rangka skala 1.24 (sama dengan Rani), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer } from './model.js';
+import { lengan, tudung } from './props.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -11,6 +12,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  sGaun: ['#121114', '#1a191d', '#242328', '#34333a'], sGaunS: ['#2a292f'], sHood: ['#2e3a30', '#38463a', '#445446', '#566856'],
   sSkin: ['#c4977a', '#dcb294', '#f0c8a8', '#fad9bf'], sSkinS: ['#dcb294'],
   sHair: ['#0c080a', '#150f12', '#1e1418', '#2e2226'], sHairT: ['#1e1418', '#2e2226', '#433238', '#5a464c'],
   lav: ['#6e4aa0', '#8a5ad0', '#a47ce0', '#c3a6ee'], lavS: ['#b9a3d6', '#cbb9e2', '#dccfee', '#ece4f6'],
@@ -161,7 +163,14 @@ export const OUTFITS = {
   jalan: { name: 'Flanel ungu + rok panjang', top: 'flanel', bottom: 'rok', sk: 'denim' },
   rumah: { name: 'Sweater lavender + piama', top: 'sweater', bottom: 'piama' },
 };
+OUTFITS.pentas = { ...OUTFITS.seragam, name: 'Pentas: gaun hitam sederhana, jaket jeans penuh pin, boots',
+  sw: { white: 'sGaun', whiteS: 'sGaunS', sSkirt: 'sGaun', sSkirtS: 'sGaunS', sock: 'gig', canvas: 'gig' },
+  fx: { chest: v => { const pin = ['rubber', 'rubberB', 'rubberY', 'starP']; v.each((x, y, z, c) => { if ((c === 'denim' || c === 'denimL') && (x * 7 + y * 13 + z * 5) % 17 === 0) v.set(x, y, z, pin[(y + z + 40) % 4]); }); return v; } } };
+OUTFITS.hujan = { ...OUTFITS.band, name: 'Hujan: hoodie bertudung, gitar dibungkus plastik besar',
+  sw: { bandT: 'sHood', bandP: 'sHood', gig: 'prPlastik', gigS: 'prPlastik' }, ball: { elbow: 'sHood' },
+  fx: { head: v => tudung(v, 'sHood'), foreR: v => lengan(v, 'sHood', 31), foreL: v => lengan(v, 'sHood', 31) } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), rok = o.bottom === 'rok';
   const top = { jeans: 'denim', band: 'bandT', sweater: 'lavS', flanel: 'lav' }[o.top] || 'white';

@@ -3,7 +3,7 @@
 import { STYLES, ANIMS, humanShape, buildVox, organicColor, makeRamps, faceCfg } from './voxlib.js';
 import { NPC_STYLES } from './npc_styles.js';
 import { EXTRA_STYLES } from './npc_extra.js';
-import { buildParts } from './raka/model.js';
+import { buildParts, showProps } from './raka/model.js';
 import { build as raniBuild } from './raka/rani.js';
 import { build as bimoBuild } from './raka/bimo.js';
 import { build as bramBuild } from './raka/bram.js';
@@ -218,7 +218,7 @@ self.onmessage = e => {
   const A = ANIMS[anim], st = STYLES[sid];
   const t = A.loop ? i / A.n : i / Math.max(1, A.n - 1);
   if (FINE[sid.split('~')[0]]) {
-    const f = voxelFrame(fineParts(sid, 'seragam', exprFor(anim, i, A.n), helmFor(anim)), A.pose(t)), H = 1 / 64;
+    const f = voxelFrame(showProps(fineParts(sid, 'seragam', exprFor(anim, i, A.n), helmFor(anim)), anim), A.pose(t)), H = 1 / 64;   // barang pegangan hanya saat anim aktivitasnya
     const g = mesh(f, H, -f.org[0], -f.org[1], f.org[2]);
     g.lift = f.lift * H; g.butt = f.buttZ * H; g.buttX = f.buttX * H;
     self.postMessage({ key, ...g }, [g.pos.buffer, g.nor.buffer, g.col.buffer, g.idx.buffer]);

@@ -3,7 +3,7 @@
 // selalu di tangan kanan. Rangka keluarga Nadia (skala 1.26), voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -11,6 +11,7 @@ const PV = pivots(SKEL);
 const TAIL = [-5, 0, 1];
 
 addRamps({
+  raBlzAbu: ['#34363e', '#40424a', '#4c4e58', '#5c5e6a'], raBlusB: ['#b6cce0', '#c8daea', '#d8e6f2', '#e8f0f8'],
   raSkin: ['#c48e68', '#dca882', '#e8b890', '#f4caa6'], raSkinS: ['#d8a27c'], raLip: ['#a8202c'],
   raHair: ['#08060a', '#100c10', '#1a1418', '#282024'], raHairT: ['#3a3038'], raFrame: ['#6a1420'], raLens: ['#e4eef4'],
   blazerR: ['#121216', '#1a1a20', '#24242a', '#323238'], blazerRS: ['#08080a'], blusR: ['#e6e2da', '#f0ece4', '#f8f6f0', '#ffffff'],
@@ -133,7 +134,10 @@ export const OUTFITS = {
   batik: { name: 'Jumat: terusan batik marun motif kawung + penggaris', top: 'batik' },
   santai: { name: 'Akhir pekan: kardigan marun + kaus putih + kulot hitam', top: 'santai' },
 };
+OUTFITS.kerja = { ...OUTFITS.blazer, propOn: 'ajar', name: 'Kerja: blazer abu arang + blus biru muda + rok pensil, rambut dikonde, penggaris kayu',
+  sw: { blazerR: 'raBlzAbu', blusR: 'raBlusB' } };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   // game memanggil 'seragam': Bu Ratna memakai blazer
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.blazer), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), sl = sleeveC(o), K = o.top === 'santai', [c, cS] = skirtC(o);

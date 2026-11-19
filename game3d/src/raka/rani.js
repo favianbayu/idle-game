@@ -3,7 +3,7 @@
 // Rangka skala 1.24 (tokoh lama), voxel halus 1/64 petak. Koordinat sama dengan Raka: x maju, y samping, z naik.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace, skullLayer, helmet } from './model.js';
+import { addRamps, assemble, dressing, paintFace, skullLayer, helmet } from './model.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
 const PV = pivots(SKEL);
@@ -184,6 +184,7 @@ export const OUTFITS = {
   rumah: { name: 'Kaus longgar + training', top: 'kaus', bottom: 'training', shoe: 'sandal' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...OUTFITS[opt.outfit || 'seragam'], expr: opt.expr || 'biasa', helm: !!opt.helm, face: opt.face };
   const A = arm(o), Th = thigh(o), Sn = shin(o), Ft = foot(o), skirt = o.bottom === 'rok';
   const top = o.top === 'lampu' ? 'jk' : o.top === 'jeans' ? 'denim' : o.top === 'kaus' ? 'rTee' : 'white';

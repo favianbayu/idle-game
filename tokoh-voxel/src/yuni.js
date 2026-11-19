@@ -4,7 +4,7 @@
 // Ke pasar: kardigan cokelat + keranjang belanja anyaman. Rangka keluarga Nadia, voxel 1/64 petak.
 import { Vox } from './vox.js';
 import { pivots } from './rig.js';
-import { addRamps, assemble, paintFace } from './model.js';
+import { addRamps, assemble, dressing, paintFace } from './model.js';
 import { skirtPelvis, skirtPanel, skirtThigh, skirtShin, skirtInfo } from './rok.js';
 
 export const SKEL = { ank: 4.5, shin: 12.5, thigh: 13, up: 4, neck: 21, shY: 8, shZ: 15, upper: 10, fore: 9, hipY: 4, flap: 6, ballR: 0.9 };
@@ -109,10 +109,11 @@ function foot() {
 }
 
 export const OUTFITS = {
-  nyapu: { name: 'Nyapu halaman: kaus abu + celemek kotak biru + rok batik panjang + sapu lidi + sandal jepit', top: 'nyapu' },
-  pasar: { name: 'Ke pasar: kardigan cokelat + kaus putih + rok batik + keranjang belanja', top: 'pasar' },
+  nyapu: { name: 'Nyapu halaman: kaus abu + celemek kotak biru + rok batik panjang + sapu lidi + sandal jepit', top: 'nyapu', propOn: 'sapu' },
+  pasar: { name: 'Ke pasar: kardigan cokelat + kaus putih + rok batik + keranjang belanja', top: 'pasar', propOn: 'all' },
 };
 export function build(opt = {}) {
+  dressing(OUTFITS[opt.outfit] || Object.values(OUTFITS)[0]);
   const o = { ...(OUTFITS[opt.outfit] || OUTFITS.nyapu), expr: opt.expr || 'biasa', face: opt.face };
   const A = arm(o), Th = batik(skirtThigh('rokYu')), Sn = batik(skirtShin('rokYu', 'rokYuS')), Ft = foot(o), sl = topC(o);
   const panel = s => { const p = batik(skirtPanel('rokYu', 'rokYuS', s, 5)); if (s > 0 && o.top === 'nyapu') { for (let z = 21; z <= 31; z++) for (let y = -5; y <= 4; y++) { const x = p.front(y, z); if (x !== null) p.set(x + 1, y, z, ((y + 40) % 3 === 0) !== (z % 3 === 0) ? 'celYu' : 'celYuS'); } } return p; };
