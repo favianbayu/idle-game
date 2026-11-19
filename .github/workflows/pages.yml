@@ -33,6 +33,7 @@ jobs:
         run: |
           mkdir -p _site
           cp game3d/index.html _site/index.html
+          cp -r game3d/ui _site/ui
           touch _site/.nojekyll
           cd _site
           git init -q -b gh-pages
