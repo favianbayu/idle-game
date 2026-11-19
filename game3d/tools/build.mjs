@@ -2,7 +2,8 @@
 import { build } from 'esbuild';
 import fs from 'fs';
 import path from 'path';
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+import { fileURLToPath } from 'url';
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const worker = await build({ entryPoints: [path.join(root, 'src/voxworker.js')], bundle: true, write: false, format: 'iife', minify: true });
 const main = await build({
   entryPoints: [path.join(root, 'src/main.js')], bundle: true, write: false, format: 'iife', minify: !process.env.DEV, target: 'es2020',
