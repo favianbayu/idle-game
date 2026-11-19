@@ -126,4 +126,8 @@ Tokoh: 15-year-old Indonesian girl, slim, pale skin, long straight black hair in
 hair ties, blunt bangs covering eyebrows, sleepy half-lidded dark eyes, oversized faded denim jacket over cream school
 shirt, a star-pattern bandage on one finger, guitar strap across the chest. Quiet, dreamy look.
 Key colors denim blue, lavender, black.
+Badan: slim, slightly slouched, head often tilted. Oversized faded denim jacket hanging past her hips over an untucked
+cream shirt and a long grey school skirt; a guitar strap crosses her chest to a guitar case on her back. Signature
+pose: both hands deep in the jacket pockets, weight on one leg. Small, drifting movements; when sleepy she leans on
+the guitar strap, when shy she pulls the jacket collar up over her chin.
 ```

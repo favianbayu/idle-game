@@ -47,7 +47,9 @@ Ki Sastro Wiryo (almarhum, pemberi hibah tanah 1950-an) hanya muncul di foto, pr
 - **Peran**: pemegang buku saksi hibah (Bab 12). Saksi kunci di sidang (Bab 13). Perpustakaannya jadi tempat belajar jalur
   kuliah (Bab 11).
 - **Portrait prompt**: `63-year-old Indonesian Muslim scholar, tall and thin, short white beard, round gold-rimmed
-  glasses, black peci cap, white koko shirt, green checked sarong, wooden prayer beads.`
+  glasses, black peci cap, white koko shirt, green checked sarong, wooden prayer beads.
+  Badan: tall and thin, slight stoop, sarong down past the thigh; signature pose prayer beads in the right hand, left hand
+  behind the back; small, calm movements.`
 - **Event persahabatan**:
   - 2: "Gula Aren". Pemain kembaliannya kelebihan di pasar dan mengembalikannya. Kyai memperhatikan, lalu mengajak minum teh.
   - 4: "Rak Paling Atas". Membantu menyusun perpustakaan, dan pemain melihat buku tua bersegel yang tidak boleh dibuka.
@@ -65,7 +67,9 @@ Ki Sastro Wiryo (almarhum, pemberi hibah tanah 1950-an) hanya muncul di foto, pr
 - **Peran**: guru silat pemain (membuka jurus lanjutan di segmen 70). Saksi sumpah Batu Tulis. Memimpin perguruan menjaga
   sekolah (Bab 13).
 - **Portrait prompt**: `71-year-old Indonesian martial arts master from a mountain village, short and upright,
-  sun-darkened skin, white hair combed back, brown batik headband, faded black pangsi outfit, thick calloused hands.`
+  sun-darkened skin, white hair combed back, brown batik headband, faded black pangsi outfit, thick calloused hands.
+  Badan: short and upright, batik sash belt, loose pangsi trousers; signature pose hands clasped behind the back, chest
+  out; small movements, angry is a single raised palm.`
 - **Event persahabatan**:
   - 2: "Murid Kota". Abah menyuruh pemain memikul air dari pancuran 10 kali sebelum boleh latihan.
   - 4: "Kecapi". Malam di teras, Abah memainkan lagu yang dulu dia mainkan bersama Pak Ujang.
@@ -82,7 +86,9 @@ Ki Sastro Wiryo (almarhum, pemberi hibah tanah 1950-an) hanya muncul di foto, pr
 - **Peran**: penjaga gerbang hubungan Dimas. Mengingat pemain di HUT batalyon (Bab 5), hadir di tribun final basket (Bab 9),
   dan mengizinkan anak asrama membantu aksi damai (Bab 13) kalau persahabatannya 4+.
 - **Portrait prompt**: `46-year-old Indonesian army sergeant major, upright and broad, crew cut, neat thin moustache,
-  stern face, green camouflage uniform, large wristwatch.`
+  stern face, green camouflage uniform, large wristwatch.
+  Badan: upright and broad, camouflage shirt tucked into trousers with a web belt; signature pose at ease with hands
+  behind the back; small, stiff movements.`
 - **Event persahabatan**:
   - 2: "Lari Subuh". Pemain ikut lari pagi dan tidak berhenti walau tertinggal.
   - 4: "Mi Instan". Di dapur asrama, Serma Hadi ternyata yang mengajari Dimas resep mi racikan.

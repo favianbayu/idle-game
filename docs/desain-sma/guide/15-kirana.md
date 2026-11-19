@@ -124,4 +124,8 @@ Tokoh: 16-year-old Indonesian girl from a vocational school, slim, light-tan sun
 tied low with teal-dyed tips, sharp slightly narrow eyes, small earring, bandage on elbow, black and teal racing jacket
 with number 21 and neon orange trim over a white vocational school shirt. Cool, competitive look.
 Key colors teal, black, neon orange.
+Badan: slim and fit, cool leaning stance with hip cocked. Black and teal racing jacket open over a white vocational
+school shirt, grey work trousers with a utility belt and a keychain clipped on. Signature pose: open-face helmet held
+under one arm, other thumb hooked on the belt. Medium, sharp movements; when competitive she points forward with two
+fingers, when shy she hides half her face behind the helmet.
 ```

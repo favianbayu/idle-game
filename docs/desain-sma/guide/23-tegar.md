@@ -123,4 +123,8 @@ Satu-satunya yang berani menyapanya akrab: **Bimo**.
 Tokoh: 15-year-old Indonesian boy, average build, pale skin, black hair neatly side-parted and combed with pomade, thick
 black-framed glasses, dark under-eye circles, very neat cream school shirt with a grey tie and class-leader badge.
 Serious, tired honor-student look. Key colors dark grey, sky blue, white.
+Badan: average build, stiff and very upright, almost at attention. Sharply ironed cream shirt tucked in with a grey
+tie, leather belt, long grey school trousers with a sharp crease. Signature pose: class attendance book held at his
+side, other hand pushing up his glasses with the middle finger. Medium but stiff movements; when confused he adjusts
+his glasses, when anxious he hugs the attendance book, when tired his tie hangs loose.
 ```

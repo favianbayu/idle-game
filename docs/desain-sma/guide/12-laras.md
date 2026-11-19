@@ -126,4 +126,8 @@ Tokoh: 16-year-old Indonesian girl, light tan skin, round cheeks, cute snaggleto
 in a high messy ponytail with loose strands, a wooden clip in the bangs, faded orange t-shirt with a turmeric-yellow
 apron printed with leaves, small towel over one shoulder. Energetic market-girl look.
 Key colors brick orange, turmeric yellow, banana-leaf green.
+Badan: medium height, sturdy and energetic. Faded orange t-shirt under a turmeric-yellow leaf-print apron that reaches
+mid-thigh, dark brown work trousers, small towel over one shoulder. Signature pose: one hand on her hip, the other
+giving a thumbs up. Big movements; laughing bends her forward, angry has her pointing with a wooden spatula, tired has
+her wiping sweat with the towel.
 ```

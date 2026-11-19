@@ -9,7 +9,7 @@ sebagai file `.md` supaya gampang dibuka lagi dan diubah satu per satu.
 |---|---|---|
 | 00 | Ringkasan | Halaman ini: premis, pilar, daftar segmen, ringkasan tokoh |
 | 01 | Tokoh utama (pemain) | Raka / Rani: penampilan, baju, statistik, gaya |
-| 02 | Gaya portrait & prompt | Aturan gaya portrait 480x480, prompt dasar, 12 ekspresi |
+| 02 | Gaya portrait & prompt | Portrait kepala sampai paha 480x720, prompt dasar, 12 ekspresi muka + pose badan |
 | 03 | Sistem hati | Aturan 8 hati, kado, kencan, pacaran, cemburu |
 | 04 | Alur cerita per bab & wilayah | 15 bab disusun ulang supaya semua wilayah peta daerah masuk cerita, sekutu Bab 13, epilog & misi per wilayah |
 | 10-17 | NPC utama cewek (8) | Nadia, Sekar, Laras, Uti, Sasha, Kirana, Mei, Wulan |

@@ -129,4 +129,8 @@ Tokoh: 16-year-old Sundanese Indonesian village girl, strong and lean, sun-darke
 one heavy braid over the shoulder, large calm eyes, straight brows, wearing a black silat martial arts uniform (pangsi)
 with a batik headband and a green tea-colored shawl. Calm, dignified look.
 Key colors tea green, wood brown, off-white.
+Badan: tall, lean and strong, calm upright martial artist posture with a low centre of gravity. Black silat pangsi top
+tied with a batik sash at the waist, loose black pangsi trousers, tea-green shawl over one shoulder. Signature pose:
+hands relaxed and loosely clasped in front of her sash. Small, calm movements; when angry she shifts into a half guard
+stance with one open palm forward, when shy she looks down and grips the end of her braid.
 ```

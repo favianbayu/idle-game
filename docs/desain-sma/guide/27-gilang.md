@@ -126,4 +126,8 @@ orang di kota termasuk NPC pengisi. Pernah diusir dari mal oleh **Bram**.
 Tokoh: 17-year-old Indonesian boy, lean and muscular from hard work, dark sun-tanned skin, messy black hair under a
 backwards cap, wide grin with a small gap in the front teeth, bandages on elbows, blue t-shirt printed "Depot Air Segar"
 with a small towel around the neck. Cheerful, cheeky street-kid look. Key colors water-gallon blue, yellow, faded white.
+Badan: lean and wiry from hauling water gallons, cheeky forward-leaning stance. Blue "Depot Air Segar" t-shirt, towel
+around the neck, knee-length faded black cargo shorts with a carabiner of keys, backwards cap. Signature pose:
+skateboard tucked under one arm, other hand giving a peace sign. Big movements; laughing bends him double over the
+skateboard, surprised has him jumping with one knee up, tired has him leaning on the upright skateboard.
 ```

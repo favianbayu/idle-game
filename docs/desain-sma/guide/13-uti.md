@@ -124,4 +124,8 @@ Menganggap **Bimo** adik.
 Tokoh: 15-year-old Indonesian tomboy girl, athletic, warm tan skin, short messy self-cut bob haircut, thick eyebrows, small
 scar on chin, oil smudge on cheek, wide grin, oversized maroon jacket over cream school shirt with sleeves rolled up, a
 wrench sticking out of the jacket pocket. Key colors maroon, oil black, helmet yellow.
+Badan: athletic, wide boyish stance with feet apart. Oversized maroon jacket open over a cream school shirt with
+rolled sleeves, untucked, long grey school trousers with a scuffed black belt, wrench in the jacket pocket. Signature
+pose: wrench resting on her shoulder, free hand in the trouser pocket. Big movements; she laughs with her head thrown
+back, sulks with arms crossed and one foot kicking, gets shy by rubbing the back of her neck.
 ```
