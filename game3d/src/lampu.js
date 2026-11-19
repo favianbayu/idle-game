@@ -89,7 +89,8 @@ export function makeLampu({ scene, kota, luar, player, waktu, quality }) {
       const set = curSet(), inDalam = player.area === 'dalam';
       night = inDalam ? 0 : nightOf(waktu.jam);
       const on = night > 0.02;
-      for (const s of [town, outSet]) if (s) { const v = on && s === set; s.pools.visible = v; s.glow.visible = v; s.bulbs.visible = v && night > 0.3; }
+      for (const s of [town, outSet]) if (s) { const v = on && s === set; s.pools.visible = v; s.glow.visible = v; s.bulbs.visible = s === set; }   // bohlam = kap lampu: siang kelihatan redup, malam menyala
+      bulbMat.color.setScalar(0.5 + 0.5 * Math.min(1, night * 1.5));
       poolMat.opacity = 0.42 * night; glowMat.opacity = Math.min(1, night * 1.2);
       // lampu sungguhan
       const nL = on && set ? [0, 2, 4][quality()] ?? 2 : 0;

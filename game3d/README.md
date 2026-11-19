@@ -139,7 +139,7 @@ Posisi pemain dan pengaturan tersimpan otomatis (localStorage).
 
 ## Barang di tangan tokoh
 
-Barang yang dipegang tokoh fine-voxel (buku, sapu, cangkul, gelas, HP, raket, dll.) adalah bagian terpisah `propR`/`propL`, bukan bagian lengan. Barang ikut tulang lengan bawah. `voxworker.js` memanggil `showProps(P, anim)` per frame, jadi barang hanya muncul saat anim aktivitas yang cocok dengan jenisnya. Contohnya sapu saat `sweep`, buku saat `read` atau `talk`, dan cangkul saat `squat`. Saat jalan atau idle, tangan kosong. Tongkat jalan, payung hujan, senapan jaga, dan tas tangan selalu tampil. Aturan dan daftar jenis barang ada di `tokoh-voxel/PANDUAN-TOKOH.md` bagian 6b.
+Barang yang dipegang tokoh fine-voxel adalah bagian terpisah `propR`/`propL`, bukan bagian lengan. `voxworker.js` memanggil `showProps(P, anim)`, dan hanya barang yang selalu dibawa yang tetap tampil: tongkat jalan, payung hujan, senapan jaga, tas tangan. Barang kegiatan seperti sapu, HP, buku, kardus, dan pancing datang dari anim (`raka/rig.js`), jadi tidak dobel dengan barang sprite. Aturannya ada di `tokoh-voxel/PANDUAN-TOKOH.md` bagian 6b.
 
 ## Kembangkan
 
