@@ -531,6 +531,29 @@ const sign = (xf, lx, y, lz, w, h, key) => SBG?.kinds.txt[key] != null && SBG.si
 function standSign(m, C, xf, key, w = 2.4, h = 0.6, y = 0.9) { for (const s of [-1, 1]) m.box(xf, s * (w / 2 - 0.15), 0, -0.04, 0.08, y + h, 0.08, col('#5a5a60')); m.box(xf, 0, y - 0.04, -0.07, w + 0.08, h + 0.08, 0.06, col('#3a3a40')); sign(xf, 0, y, -0.03, w, h, key); colLocal(C, xf, 0, -0.04, w, 0.15); }
 /* ------------------------------------------------------------------ bangun kota */
 let street_lamps = [];   // titik lampu malam, diisi saat kota dibangun (lampu.js)
+// titik lampu teras per tipe bangunan: [lx, tinggi, lz] lokal (depan = +z), di dinding depan tepat di bawah atap / kanopi
+// (ukuran mengikuti kampung(), panggung(), perum() di buildings.js dan toko.js)
+function porchSpot(h) {
+  const t = h.type, H = FLOOR * (h.tall || 1), d2 = h.d / 2;
+  if (h.region === 'bantaran') return [0.08, 2.0, 1.08];   // rumah panggung: dinding 0.72..2.3
+  switch (t) {
+    case 'K1': return [0.15, H - 0.3, 1.28];
+    case 'K2': return [0.66, H - 0.2, 1.18];   // di bawah atap teras
+    case 'K3': return [0.13, H - 0.3, 1.58];
+    case 'K4': return [1.23, H - 0.3, -0.22];
+    case 'K5': return [1.65, 1.5, 1.68];       // di bawah tenda warung
+    case 'K6': return [0.15, H - 0.3, 1.98];   // di bawah balkon
+    case 'P1': return [1.1, 1.58, d2 + 0.08];  // di atas pintu, di bawah dak
+    case 'P2': return [0, 2 * FLOOR - 0.45, d2 + 0.6];   // plafon portiko
+    case 'P3': return [-0.05, 1.5, d2 + 0.08];
+    case 'P4': return [1.0, 1.5, 0.08];
+    case 'R5': return [-0.3, 1.6, d2 + 0.12];
+    case 'R6': return [0, 1.66, d2 + 0.12];
+    case 'R7': return [0, 1.6, d2 + 0.3];      // di bawah tenda
+    case 'MM': return [0.3, 1.66, d2 + 0.12];
+    default: return /^R[1-4]$/.test(t) ? [0, 1.42, d2 + 0.16] : null;   // ruko: di bawah kanopi
+  }
+}
 export function buildKota(scene, C) {
   street_lamps = [];
   const K = KOTA, M = masks(K), [W, H] = K.size;
@@ -645,7 +668,7 @@ export function buildKota(scene, C) {
     const wallC = ageTint(pal.wall[h.wallI], age), roofC = k => ageTint(pick(pal.roof || PAL.kampung.roof, r(k)), age, 0.7);
     setAge(age, h.seed);
     if (h.region === 'bantaran') panggung(m, h.xf, { ...o, wall: wallC, roof: roofC(2) });
-    else if (h.type[0] === 'K') kampung(m, h.xf, h.type, { ...o, wall: wallC, roof: roofC(2), accent: pick(PAL.kampung.accent, r(3)), tall: /^K[125]$/.test(h.type) && r(80) < 0.28 ? 1.45 : 1 });
+    else if (h.type[0] === 'K') kampung(m, h.xf, h.type, { ...o, wall: wallC, roof: roofC(2), accent: pick(PAL.kampung.accent, r(3)), tall: h.tall = /^K[125]$/.test(h.type) && r(80) < 0.28 ? 1.45 : 1 });
     else if (/^P\d/.test(h.type)) perum(m, h.xf, h.type, { ...o, wall: wallC, roof: roofC(2) });
     else {
       const liar = !h.back && h.region === 'pusat' && /^R[1-4]$/.test(h.type) && r(60) < 0.55;
@@ -707,13 +730,14 @@ export function buildKota(scene, C) {
   plant(scene, veg);
   setParkGuard(null);
   const traffic = buildTraffic(scene, K, C, M, HT, lift);
-  // lampu teras rumah & lampu toko (titik lampu malam)
+  // lampu teras rumah & lampu toko (titik lampu malam): menempel di dinding depan, di bawah genteng / tritisan / kanopi
   for (const h of houses) {
     if (h.type === 'PK' || h.type === 'LK' || h.type === 'POS' || (h.special && h !== darto)) continue;
-    const toko = /^(R[4-7]|MM)$/.test(h.type), r = hash(Math.round(h.xf.x * 7), Math.round(h.xf.z * 7));
+    const toko = h.region !== 'bantaran' && /^(R[4-7]|MM)$/.test(h.type), r = hash(Math.round(h.xf.x * 7), Math.round(h.xf.z * 7));
     if (!toko && r > 0.7) continue;
-    const [hx, hz] = L(h.xf, toko ? 0 : (r - 0.35) * h.w * 0.5, h.d / 2 + 0.12), [gx, gz] = L(h.xf, toko ? 0 : (r - 0.35) * h.w * 0.5, h.d / 2 + (toko ? 1.6 : 1.0));
-    street_lamps.push({ x: hx, z: hz, y: toko ? 2.6 : 2.05, r: toko ? 4.2 : 2.6, k: toko ? 'toko' : 'teras', gx, gz });
+    const sp = porchSpot(h.special === 'darto' ? { ...h, type: 'K2', tall: 1 } : h); if (!sp) continue;
+    const [lx, ly, lz] = sp, [hx, hz] = L(h.xf, lx, lz), [gx, gz] = L(h.xf, lx, lz + (toko ? 1.4 : 1.0));
+    street_lamps.push({ x: hx, z: hz, y: HT(hx, hz) + ly, abs: true, r: toko ? 4.2 : 2.6, k: toko ? 'toko' : 'teras', gx, gz });
   }
   return {
     lamps: street_lamps,
