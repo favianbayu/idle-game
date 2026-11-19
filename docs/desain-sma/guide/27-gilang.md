@@ -8,12 +8,12 @@
 | Keluarga | Ayah tukang becak, ibu buruh cuci, empat adik. Gilang anak sulung |
 | Romance | Pemain cewek |
 | Warna kunci | Biru galon `#3d9be0`, kuning `#f5d13a`, putih kusam |
-| Gaya voxel | `messy`, topi terbalik, skateboard, galon di pundak |
+| Gaya voxel | `messy`, topi terbalik biru-kuning, skateboard, galon di pundak (properti gerakan, bukan baju). Outfit sprite: `kerja` (default), `skate`, `paket`, `rumah`, `jalan` |
 
 ## Penampilan
 
 Tinggi 1.34, ramping berotot dari mengangkat galon, kulit cokelat gelap terbakar matahari. Rambut hitam berantakan di bawah
-topi terbalik. Senyum lebar dengan gigi depan sedikit renggang. Lutut dan siku penuh plester dari jatuh skateboard. Mata
+topi terbalik biru-kuning. Senyum lebar dengan gigi depan sedikit renggang. Lutut dan siku penuh plester dari jatuh skateboard. Mata
 berbinar jahil.
 
 ## Pakaian

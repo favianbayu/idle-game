@@ -8,7 +8,7 @@
 | Keluarga | Ayah pejabat dinas tata kota (rekan Pak Haris), ibu sosialita pemilik butik. Anak tunggal |
 | Romance | Pemain cowok |
 | Warna kunci | Merah muda pastel `#f2b8c6`, putih gading `#f7f1e6`, emas `#c9a24a` |
-| Gaya voxel | `long` bergelombang, cardigan pink, tas mahal |
+| Gaya voxel | `long` bergelombang belah tengah tanpa poni, cardigan pink. Outfit sprite: `seragam`, `geng` (kacamata hitam di kepala + tas putih), `jalan`, `malam` |
 
 ## Penampilan
 

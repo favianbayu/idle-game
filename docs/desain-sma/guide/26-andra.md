@@ -8,7 +8,7 @@
 | Keluarga | Nek Sumi (penjual jamu gendong, segmen 33). Ayah di penjara (pencurian), ibu kerja di pabrik kota lain |
 | Romance | Pemain cewek |
 | Warna kunci | Cat semprot kuning `#f2c12e`, biru elektrik `#2d6cdf`, abu beton `#9a9a95` |
-| Gaya voxel | `curly` diikat, kaus penuh cat, kaleng semprot |
+| Gaya voxel | `curly` diikat setengah, kaus penuh cat, kaleng semprot. Outfit sprite: `seragam`, `mural`, `geng`, `jalan`, `rumah` |
 
 ## Penampilan
 

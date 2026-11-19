@@ -8,11 +8,11 @@
 | Keluarga | Ayah Pak Haris Megantara, ibu sudah lama pergi ke luar negeri. Tinggal dengan ayah dan pembantu |
 | Romance | Pemain cewek |
 | Warna kunci | Hitam `#1c1c22`, merah anggur `#7a1f2b`, perak jam `#b8bcc4` |
-| Gaya voxel | `sidepart` klimis, jam tangan, kemeja bermerek |
+| Gaya voxel | klimis disisir ke belakang (belahan kiri), jam tangan perak, kemeja bermerek. Outfit sprite: `seragam`, `geng`, `rumah` |
 
 ## Penampilan
 
-Tinggi 1.36, tegap, kulit kuning langsat bersih. Rambut hitam klimis disisir ke belakang, satu helai selalu jatuh di dahi.
+Tinggi 1.38, tegap, dada bidang pinggang ramping (bentuk V), kulit kuning langsat bersih. Rambut hitam klimis disisir ke belakang, satu helai selalu jatuh di dahi.
 Rahang tegas, mata tajam yang meremehkan. Jam tangan perak mahal. Kalau diperhatikan, ada bekas lebam samar di lengan
 yang selalu ditutupi.
 
@@ -124,7 +124,7 @@ Pemimpin geng **Rio**, **Kevin**, **Sasha**. Anak **Pak Haris**. Rival basket **
 Baju portrait = outfit voxel `geng` (sama dengan sprite di `tokoh-voxel/src/`).
 
 ```
-Tokoh: 17-year-old Indonesian boy, tall and well built, fair skin, black hair slicked back with one strand falling
+Tokoh: 17-year-old Indonesian boy, tall and well built, clean light-tan skin, black hair slicked back with one strand falling
 over the forehead, sharp jaw, sharp contemptuous eyes, expensive tailored cream school shirt with top button open,
 silver luxury watch, black bomber jacket with wine-red embroidery over the shoulders. Arrogant rich-kid rival look
 with hidden sadness. Key colors black, wine red, silver.

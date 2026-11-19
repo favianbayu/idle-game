@@ -8,7 +8,7 @@
 | Keluarga | Kakek Pak Ujang. Orang tua meninggal kecelakaan bus saat Arga 7 tahun |
 | Romance | Pemain cewek |
 | Warna kunci | Cokelat kulit `#5a3a28`, abu asap `#7b7f86`, kuning lampu `#f3c44a` |
-| Gaya voxel | `buzz`, jaket kulit cokelat tua, motor tua |
+| Gaya voxel | `buzz`, jaket kulit cokelat tua, motor tua. Outfit sprite: `seragam`, `lampu`, `jalan`, `kerja` |
 
 ## Penampilan
 

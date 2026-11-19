@@ -8,12 +8,12 @@
 | Keluarga | Ayah Serma Hadi Aditya (tegas, segmen 33), ibu guru TK, adik perempuan Dinda (10) |
 | Romance | Pemain cewek (sahabat untuk pemain cowok) |
 | Warna kunci | Biru royal `#2f5fb3`, putih, oranye bola `#e07b39` |
-| Gaya voxel | `short`, jersey basket biru nomor 11, sepatu tinggi |
+| Gaya voxel | `short` fade, jersey basket biru nomor 11, sepatu tinggi. Outfit sprite: `seragam`, `basket`, `jalan`, `rumah` |
 
 ## Penampilan
 
-Tinggi 1.36 (paling tinggi seangkatan), bahu lebar, kulit sawo matang, rambut cepak rapi gaya anak tentara dengan poni
-sedikit. Wajah ramah, telinga gampang merah. Selalu memakai deker lutut hitam di kaki kiri (cedera lama).
+Tinggi 1.38 (paling tinggi seangkatan), bahu lebar, kulit sawo matang, rambut cepak rapi gaya anak tentara dengan poni
+sedikit, samping dan belakang bawah fade. Wajah ramah, telinga gampang merah. Selalu memakai deker lutut hitam di kaki kiri (cedera lama).
 
 ## Pakaian
 

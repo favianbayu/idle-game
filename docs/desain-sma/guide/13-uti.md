@@ -8,7 +8,7 @@
 | Keluarga | Bapak sopir truk (sering pergi), ibu jualan pulsa. Kakak laki-laki, Mas Danu, meninggal 2 tahun lalu |
 | Romance | Pemain cowok (sahabat untuk pemain cewek, tetap tokoh terdekat) |
 | Warna kunci | Merah marun `#8c2f39`, hitam oli `#2a2a2a`, kuning helm `#f2c230` |
-| Gaya voxel | `bob`, jaket marun, kunci pas di saku |
+| Gaya voxel | `bob`, jaket marun, kunci pas di saku. Outfit sprite: `seragam`, `futsal`, `bengkel`, `jalan`, `malam` |
 
 ## Penampilan
 

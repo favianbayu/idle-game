@@ -8,11 +8,11 @@
 | Keluarga | Ayah dokter bedah, ibu dokter anak, kakak perempuan mahasiswa kedokteran di luar negeri |
 | Romance | Pemain cewek (sahabat untuk pemain cowok, salah satu dari lima sahabat) |
 | Warna kunci | Abu tua `#4a4f57`, biru langit `#8fb6d9`, putih |
-| Gaya voxel | `sidepart`, kacamata, seragam sangat rapi |
+| Gaya voxel | `sidepart` klimis belah kiri, kacamata tebal, seragam sangat rapi + dasi abu + badge ketua kelas. Outfit sprite: `seragam`, `les`, `rumah`, `jalan` |
 
 ## Penampilan
 
-Tinggi 1.3, badan sedang, kulit putih pucat. Rambut hitam lurus belah samping disisir dengan minyak rambut. Kacamata
+Tinggi 1.32, badan sedang, kulit putih pucat. Rambut hitam lurus belah samping disisir dengan minyak rambut. Kacamata
 bingkai hitam tebal. Wajah selalu serius, kantong mata gelap (kurang tidur). Saat dilepas kacamatanya, wajahnya terlihat
 jauh lebih muda dan lembut.
 

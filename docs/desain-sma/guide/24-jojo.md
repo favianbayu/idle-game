@@ -8,11 +8,11 @@
 | Keluarga | Paman (fotografer pernikahan), bibi, dua sepupu kecil. Orang tua di Medan (luar peta), dia dititipkan |
 | Romance | Pemain cewek (sahabat untuk pemain cowok, salah satu dari lima sahabat) |
 | Warna kunci | Hijau army `#5c6b3c`, oranye `#e8843a`, hitam kamera |
-| Gaya voxel | `mohawk` kecil, rompi fotografer, kamera di leher |
+| Gaya voxel | `mohawk` kecil, rompi fotografer, kamera di leher. Outfit sprite: `seragam`, `liputan`, `rumah`, `jalan` |
 
 ## Penampilan
 
-Tinggi 1.28, kurus jangkung, kulit sawo matang, rambut mohawk kecil yang diberi gel (ditegur tiap Senin). Mata besar
+Tinggi 1.3, kurus jangkung, kulit sawo matang, rambut mohawk kecil yang diberi gel (ditegur tiap Senin). Mata besar
 penuh rasa ingin tahu, senyum lebar dengan gigi rapi. Kamera DSLR tua selalu tergantung di leher. Tahi lalat kecil di bawah
 mata kanan.
 

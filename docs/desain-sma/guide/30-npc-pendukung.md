@@ -84,7 +84,8 @@ memberi bonus permanen.
 
 ## Bimo Prasetyo
 
-- **Penampilan**: gendut, rambut keriting tebal, pipi bulat, seragam sesak di perut, kancing hampir lepas. Di rumah kaus
+- **Penampilan**: gendut, rambut keriting tebal, kacamata hitam tebal kotak membulat, pipi bulat, seragam sesak di
+  perut (dimasukkan, ikat pinggang di bawah perut), kancing hampir lepas, HP di saku. Di rumah kaus
   bergambar mangkuk bakso dari usaha bapaknya.
 - **Watak**: ceria, penakut, setia, ingin dianggap berani. Jago masak.
 - **Hobi**: memasak, makan, nonton acara masak, main game HP.
@@ -163,9 +164,9 @@ memberi bonus permanen.
 
 ## Rio dan Kevin
 
-- **Rio**: badan besar, potongan undercut, kalung rantai, tukang pukul geng Bram. Bodoh tapi tidak jahat. Arc: ingin jadi
+- **Rio**: badan besar, potongan undercut (atas cokelat disisir ke belakang, samping dicukur tipis), kalung rantai perak, tukang pukul geng Bram. Bodoh tapi tidak jahat. Arc: ingin jadi
   atlet tinju. Bisa dibalik jadi netral lewat misi "Sasana Tinju" (event 4 hati).
-- **Kevin**: kurus, kacamata bulat tipis, rambut belah tengah, selalu memegang HP. Otak licik geng, ahli fitnah lewat
+- **Kevin**: kurus jangkung, kacamata bulat tipis, rambut belah tengah dengan poni tirai, selalu memegang HP di tangan kanan. Otak licik geng, ahli fitnah lewat
   media sosial. Bisa dibalik lewat misi "Akun Palsu" (pemain membuktikan Kevin juga diancam Pak Haris).
 - Keduanya punya 4 event persahabatan sederhana (2: perkenalan konflik, 4: rahasia, 6: dibalik, 8: teman epilog).
 
@@ -173,17 +174,17 @@ memberi bonus permanen.
 
 | Tokoh | Penampilan | Fungsi | Event 8 (bonus) |
 |---|---|---|---|
-| Bu Hartini | Kebaya kerja, kacamata rantai, sanggul | Jalur legal Bab 13 | Rekomendasi beasiswa (ending prestasi) |
-| Bu Ratna | Blazer hitam, rambut dikonde, penggaris kayu | Remedial Matematika | Nilai Matematika +5 semua ujian |
-| Pak Hendro | Kaus olahraga, peluit, topi | Futsal, liga balap resmi | Perk Kelincahan +1 |
-| Pak Wawan | Seragam PNS, kumis, buku pelanggaran | Patroli bolos | Poin pelanggaran -50% |
-| Bu Sinta | Hijab pastel, kardigan, buku | Mading, lomba menulis | Bonus lomba menulis |
-| Mr. Anton | Kemeja slim, sneakers, gaya gaul | Debat, Bahasa Inggris | Opsi dialog "English" |
-| Pak Gunadi | Jas lab bernoda, rambut putih berdiri | Resep racikan | Resep bom asap & kopi spesial |
-| Bu Melati | Gaun etnik, gelang kayu | Band, pensi | Mini game ritme lebih mudah |
-| Pak Ujang | Kaus abu, topi pet, sapu lidi, kunci banyak | Kunci Gedung Lama | Akses semua ruang sekolah |
-| Mak Iyah | Daster, celemek, kain di kepala | Warung bolos, utang gorengan | Makan gratis 1x sehari |
-| Ama | Rambut putih disanggul, kacamata tebal, kipas | Nenek Mei, penjaga toko | Bakpao gratis tiap minggu (kado) |
+| Bu Hartini | Kebaya kerja krem-cokelat dengan bros, kain batik panjang, kacamata rantai emas, sanggul rendah bertusuk konde | Jalur legal Bab 13 | Rekomendasi beasiswa (ending prestasi) |
+| Bu Ratna | Blazer hitam di atas blus putih, rok pensil selutut, rambut dikonde tinggi, kacamata kotak merah tua, penggaris kayu di tangan kanan | Remedial Matematika | Nilai Matematika +5 semua ujian |
+| Pak Hendro | Kaus olahraga merah bergaris putih, training biru tua, peluit perak, topi merah, kumis tebal | Futsal, liga balap resmi | Perk Kelincahan +1 |
+| Pak Wawan | Seragam PNS khaki + pin Korpri, kumis lebat melengkung, rambut belah samping berminyak, buku pelanggaran merah | Patroli bolos | Poin pelanggaran -50% |
+| Bu Sinta | Hijab segi empat persik berbros bunga, kardigan krem, rok panjang cokelat susu, novel di tangan kiri | Mading, lomba menulis | Bonus lomba menulis |
+| Mr. Anton | Rambut quiff, kemeja slim biru muda lengan digulung, chino abu, sneakers putih, jam pintar | Debat, Bahasa Inggris | Opsi dialog "English" |
+| Pak Gunadi | Jas lab bernoda warna-warni, dasi kupu-kupu, rambut putih berdiri, janggut pendek, kacamata bulat tebal, gelas kimia berasap | Resep racikan | Resep bom asap & kopi spesial |
+| Bu Melati | Gaun tenun ikat pink-ungu, selendang, gelang kayu bertumpuk, rambut panjang bergelombang berjepit kamboja | Band, pensi | Mini game ritme lebih mudah |
+| Pak Ujang | Kaus abu, topi pet abu, rambut dan kumis-janggut tipis putih, sapu lidi, serenceng kunci di pinggang | Kunci Gedung Lama | Akses semua ruang sekolah |
+| Mak Iyah | Daster bunga, celemek bernoda minyak, kain batik biru diikat di kepala, sutil di tangan | Warung bolos, utang gorengan | Makan gratis 1x sehari |
+| Ama | Rambut putih disanggul bertusuk giok, kacamata tebal hitam, blus samfu bunga, kipas lipat merah, gelang giok | Nenek Mei, penjaga toko | Bakpao gratis tiap minggu (kado) |
 
 Setiap guru punya 4 event dengan pola: 2 = kenal di kelas, 4 = membantu urusan pribadi guru, 6 = membela guru dari masalah
 (sering terkait proyek relokasi), 8 = bonus permanen di tabel.

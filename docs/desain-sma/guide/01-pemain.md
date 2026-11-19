@@ -12,24 +12,57 @@
 
 ## Penampilan default
 
-- **Raka**: tinggi sedang (skala voxel 1.3), kulit sawo matang, rambut pendek hitam agak berantakan, alis tebal, sedikit
-  belang matahari di tulang pipi dari kerja di sawah. Senyum lebar.
-- **Rani**: tinggi 1.24, kulit kuning langsat, rambut hitam dikuncir kuda, poni tipis, mata besar.
+Mengikuti sprite voxel yang sudah disetujui (`tokoh-voxel/src/model.js` untuk Raka, `rani.js` untuk Rani).
+
+- **Raka**: tinggi sedang (skala voxel 1.3), kulit sawo matang, **rambut mullet modern** hitam (atas bervolume dan
+  bertekstur, poni jatuh tak rata, samping tipis, belakang turun ke tengkuk sampai kerah), alis tebal, plester di pipi
+  kanan. Lakban di buku jari tangan kanan, gelang karet hitam di tangan kiri. Senyum lebar, gaya anak bandel yang suka
+  berantem dan balapan.
+- **Rani**: tinggi 1.24, kulit kuning langsat, rambut hitam **kuncir kuda tinggi** dengan ikat rambut merah sampai tengah
+  punggung, poni tipis menyamping, helai samping membingkai pipi, mata besar, **plester di batang hidung**. Gaya
+  berandal: siap nendang.
 
 ## Pakaian
 
 | Situasi | Raka | Rani |
 |---|---|---|
-| Sekolah Senin-Selasa, Kamis | Kemeja putih, celana abu, ikat pinggang hitam, sepatu hitam | Kemeja putih, rok abu panjang, sepatu hitam |
+| Sekolah Senin-Selasa, Kamis (sprite `seragam`) | Seragam bandel: kemeja putih dikeluarkan dan dibiarkan terbuka di atas kaus hitam bersablon petir kuning, lengan digulung, jaket hitam Lampu Kota diikat di pinggang, celana abu, ikat pinggang hitam, rantai dompet, sneakers high-top merah. Badge OSIS + papan nama | Seragam berandal: kemeja dikeluarkan dengan kancing atas terbuka, dasi abu longgar miring, jaket jeans kebesaran, rok abu selutut di atas legging hitam, sneakers putih |
 | Rabu | Seragam pramuka cokelat + hasduk merah-putih | sama |
 | Jumat | Batik sekolah cokelat-krem motif parang kecil | sama |
-| Di rumah | Kaus oblong kuning pudar, celana pendek, sandal jepit | Kaus longgar + celana training |
+| Di rumah (sprite `rumah`) | Kaus oblong kuning pudar, celana pendek, sandal jepit biru | Kaus longgar merah marun + celana training biru tua, sandal |
 | Kerja kopi keliling | Kaus + celemek hijau Warkop Simpang + topi | sama |
 | Malam / nongkrong | Hoodie abu, celana jeans | Jaket denim, jeans |
-| Klub motor | Jaket hitam berlis kuning Lampu Kota + helm | sama |
+| Klub motor (sprite `balap`) | Jaket hitam berlis kuning Lampu Kota (emblem bohlam di punggung), sarung tangan, jeans, helm half-face hitam bergaris kuning dengan goggle | Jaket Lampu Kota tertutup berkerah kuning + jeans |
 | Olahraga | Kaus olahraga sekolah biru + celana training | sama |
 
-Seragam bisa "dikeluarkan" (keren, +gaya, tapi ditegur guru) atau "dimasukkan" (rapi, guru senang).
+Seragam bisa "dikeluarkan" (keren, +gaya, tapi ditegur guru) atau "dimasukkan" (rapi, guru senang). Sprite juga punya `seragam2` (seragam tanpa jaket). Versi rapi (dimasukkan) belum ada di sprite.
+
+## Prompt portrait
+
+Baju portrait = outfit voxel `seragam`. Pakai prompt dasar di segmen 02.
+
+```
+Tokoh: 15-year-old Indonesian boy, warm tan skin, black modern mullet haircut (textured volume on top, uneven fringe,
+thin sides, back falling to the collar), thick eyebrows, a plaster on his right cheek, wide cocky grin. Key colors
+cream white, black, lightning yellow, sneaker red.
+Badan: medium height, lean fighter build, loose cocky stance. Cream school shirt untucked and left open over a black
+t-shirt with a yellow lightning print, sleeves rolled up, black Lampu Kota jacket with yellow trim tied around the
+waist, grey school trousers, black belt with a wallet chain, OSIS badge and name tag. Tape wrapped on the right
+knuckles, black rubber band on the left wrist. Signature pose: one fist resting on his shoulder, other hand in the
+trouser pocket. Big movements; laughing throws his head back, angry raises both fists in a guard, shy has him
+rubbing the back of his mullet.
+```
+
+```
+Tokoh: 15-year-old Indonesian girl, light yellowish skin, black hair in a high ponytail with a red scrunchie reaching
+mid-back, thin side-swept bangs, strands framing the cheeks, big bright eyes, a plaster across the bridge of her
+nose, confident grin. Key colors denim blue, school grey, scrunchie red.
+Badan: medium height, slim and athletic, tomboy fighter stance. Cream school shirt untucked with the top button open,
+loose grey tie hanging crooked, oversized denim jacket, grey pleated skirt to the knee over black leggings. Signature
+pose: hands in the denim jacket pockets, weight on one leg, chin up. Big movements; angry has her in a kick-ready
+stance with fists up, shy has her tugging the ponytail, laughing bends her forward.
+```
+
 
 ## Statistik pemain
 

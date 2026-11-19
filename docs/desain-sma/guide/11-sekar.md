@@ -8,11 +8,11 @@
 | Keluarga | Ayah dokter gigi, ibu notaris (sering lembur), kakak laki-laki kuliah di luar kota |
 | Romance | Pemain cowok |
 | Warna kunci | Biru jeans `#5b7fa8`, ungu lavender `#b9a3d6`, hitam |
-| Gaya voxel | `twintail`, jaket jeans, gitar di punggung |
+| Gaya voxel | `twintail`, jaket jeans, gitar di punggung. Outfit sprite: `seragam`, `band`, `jalan`, `rumah` |
 
 ## Penampilan
 
-Tinggi 1.2, kurus, kulit putih pucat karena jarang keluar siang, rambut hitam panjang dikuncir dua rendah dengan ikat
+Tinggi 1.24, kurus, kulit putih pucat karena jarang keluar siang, rambut hitam panjang dikuncir dua rendah dengan ikat
 rambut ungu. Poni menutupi alis, mata sayu agak mengantuk. Ujung jari kiri kapalan karena senar. Plester motif bintang
 hampir selalu ada di salah satu jari.
 

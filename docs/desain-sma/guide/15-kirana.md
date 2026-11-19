@@ -8,7 +8,7 @@
 | Keluarga | Ayah pemilik bengkel (keras, mantan pembalap), kakak Kobar (19). Ibu pergi saat Kirana kecil |
 | Romance | Pemain cowok |
 | Warna kunci | Hijau toska `#2fa39a`, hitam `#1f1f1f`, oranye neon `#ff7a2f` |
-| Gaya voxel | `long` diikat rendah, jaket balap toska-hitam, helm full-face |
+| Gaya voxel | `long` diikat rendah, jaket balap toska-hitam, helm full-face. Outfit sprite: `seragam`, `bengkel`, `balap`, `jalan` |
 
 ## Penampilan
 

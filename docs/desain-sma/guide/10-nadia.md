@@ -8,11 +8,11 @@
 | Keluarga | Ayah imam masjid & guru ngaji, ibu penjahit, dua adik kembar (SD) |
 | Romance | Pemain cowok (sahabat untuk pemain cewek) |
 | Warna kunci | Abu-biru muda `#d8e2ea` (hijab), krem `#efe3c8`, hijau mint `#9fd3b5` |
-| Gaya voxel | `hijab`, seragam rapi dimasukkan, tas ransel kotak |
+| Gaya voxel | `hijab`, seragam rapi dimasukkan. Outfit sprite: `seragam`, `osis`, `jalan`, `rumah` |
 
 ## Penampilan
 
-Tinggi 1.22, wajah oval, kulit kuning langsat, alis rapi tipis, mata cokelat tajam yang melunak saat tersenyum. Hijab
+Tinggi 1.24, wajah oval, kulit kuning langsat, alis rapi tipis, mata cokelat tajam yang melunak saat tersenyum. Hijab
 segi empat abu-biru dilipat rapi, peniti mutiara kecil di bawah dagu. Pipi gampang merah kalau dipuji. Pulpen selalu
 terselip di saku, jam tangan kecil tali kulit cokelat yang selalu dilirik.
 

@@ -8,12 +8,12 @@
 | Keluarga | Ibu (sakit pinggang, berhenti jualan), adik laki-laki Doni (11). Ayah meninggal saat Laras SMP |
 | Romance | Pemain cowok |
 | Warna kunci | Oranye bata `#d9774a`, kuning kunyit `#e8b84a`, hijau daun pisang `#6c9a4a` |
-| Gaya voxel | `ponytail`, celemek oranye, bakul di tangan |
+| Gaya voxel | `ponytail` tinggi berkaret merah, celemek kunyit. Outfit sprite: `seragam`, `jualan`, `jalan`, `rumah` |
 
 ## Penampilan
 
-Tinggi 1.22, kulit sawo matang terang, pipi bulat, gigi gingsul yang terlihat saat tertawa. Rambut hitam tebal dikuncir
-tinggi dengan karet gelang biasa, anak rambut berantakan. Tangan cekatan dengan bekas luka kecil kena minyak. Selalu ada
+Tinggi 1.24, kulit sawo matang terang, pipi bulat, gigi gingsul yang terlihat saat tertawa. Rambut hitam tebal dikuncir
+tinggi dengan karet gelang merah, anak rambut berantakan. Tangan cekatan dengan bekas luka kecil kena minyak. Selalu ada
 jepit rambut jepitan kayu di poni.
 
 ## Pakaian

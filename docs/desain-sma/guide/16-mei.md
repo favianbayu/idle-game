@@ -8,7 +8,7 @@
 | Keluarga | Ayah dan ibu pengelola toko buku (keturunan Tionghoa-Jawa), nenek (Ama) yang galak tapi lucu |
 | Romance | Pemain cowok |
 | Warna kunci | Kuning mustard `#e3b23c`, hijau tua `#3f6b4f`, krem kertas `#f4ead2` |
-| Gaya voxel | `bob` dengan jepit, kacamata bulat, apron toko |
+| Gaya voxel | `bob` dengan jepit, kacamata bulat, apron toko. Outfit sprite: `seragam`, `toko`, `rumah`, `jalan` |
 
 ## Penampilan
 
@@ -20,7 +20,7 @@ besar yang sering melorot. Pipi tembam, mata sipit yang hilang saat tertawa. Ada
 | Situasi | Pakaian |
 |---|---|
 | Sekolah (Bina Bangsa) | Kemeja putih, rompi kotak hijau tua, rok kotak, dasi pita, kaus kaki putih panjang, sepatu loafers |
-| Jaga toko | Kaus kuning mustard + apron hijau bertuliskan "PENA", pensil di telinga |
+| Jaga toko | Kaus kuning mustard + apron hijau bertuliskan "PENA", jeans, pensil di telinga |
 | Di rumah | Piama bergambar kucing, kaus kaki tidak sepasang |
 | Jalan-jalan | Overall jeans di atas kaus garis-garis, tas tote penuh pin, topi baret hijau |
 | Lomba gambar | Kemeja putih kebesaran (biar kena cat tidak masalah) |

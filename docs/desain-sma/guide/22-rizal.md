@@ -8,11 +8,11 @@
 | Keluarga | Ibu tunggal (kasir minimarket shift malam), nenek tinggal di kampung (luar peta) |
 | Romance | Pemain cewek |
 | Warna kunci | Cokelat sweater `#8a6a4a`, biru tinta `#2e4a7a`, krem |
-| Gaya voxel | `sidepart`, kacamata, sweater rompi |
+| Gaya voxel | `sidepart`, kacamata, sweater rompi. Outfit sprite: `seragam`, `osis`, `rumah`, `jalan` |
 
 ## Penampilan
 
-Tinggi 1.3, kurus, kulit kuning langsat, rambut belah samping yang selalu jatuh ke dahi. Kacamata bingkai tipis kotak.
+Tinggi 1.32, kurus, kulit kuning langsat, rambut hitam-cokelat belah samping yang selalu jatuh ke dahi. Kacamata bingkai tipis kotak.
 Wajah lembut, bulu mata panjang. Jari selalu belepotan tinta pulpen. Suka menunduk saat berjalan.
 
 ## Pakaian

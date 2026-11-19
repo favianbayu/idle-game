@@ -8,12 +8,13 @@
 | Keluarga | Kakek Abah Karta (guru perguruan silat "Kembang Teh", segmen 33), ibu pemetik teh, tiga adik (yang sulung Neng Ayu) |
 | Romance | Pemain cowok |
 | Warna kunci | Hijau teh `#7aa35a`, cokelat kayu `#7a5233`, putih `#f3f1ea` |
-| Gaya voxel | `ponytail` dikepang, baju silat hitam, selendang hijau |
+| Gaya voxel | kepang satu menempel di punggung sampai pinggang, baju silat hitam + sabuk hijau + ikat kepala batik. Outfit sprite: `seragam`, `silat`, `pemandu`, `desa`, `kota` |
 
 ## Penampilan
 
 Tinggi 1.26 (tinggi untuk cewek), kulit sawo matang terbakar matahari, tubuh kuat dan lentur. Rambut hitam panjang
-dikepang satu tebal sampai pinggang. Mata besar teduh, alis lurus. Bekas memar kecil di lengan bawah dari latihan.
+ditarik rapi ke belakang (belah tengah tipis, telinga kelihatan), dikepang satu tebal di punggung sampai pinggang,
+ikat hijau di ujung. Mata besar teduh, alis lurus. Bekas memar kecil di lengan bawah dari latihan.
 Senyum tenang seperti orang yang tidak pernah terburu-buru.
 
 ## Pakaian
