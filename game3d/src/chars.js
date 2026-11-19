@@ -114,8 +114,12 @@ export function visualSid(sid, name) {
   if (sex && SEED_SEX[role] && !SEED_SEX[role].includes(sex)) { role = SEX_ALT[sex][role] || role; outfit = null; }
   return role + '_' + pickSeed(role, SEED_SEX[role]?.includes(sex) ? sex : null) + (outfit ? '~' + outfit : '');
 }
+export const ALL_CHARS = new Set();   // semua tokoh (lampu.js mewarnai gelap/terang di malam hari)
 export class Character {
+  // warna pengali (malam: gelap kebiruan, dekat lampu: hangat). Material baru dibuat sekali saat pertama dipakai.
+  tint(c) { if (!this._m) { if (c.r === 1 && c.g === 1 && c.b === 1) return; this._m = this.mesh.material.clone(); this.mesh.material = this._m; } if (!this._m.color.equals(c)) this._m.color.copy(c); }
   constructor(sid, o = {}) {
+    ALL_CHARS.add(this);
     this.sid = sid; this.vsid = o.vsid || visualSid(sid, o.name); this.anim = 'idle'; this.t = 0; this.prio = o.prio || 0;
     this.group = new THREE.Group();
     this.mesh = new THREE.Mesh(undefined, CHAR_MAT); this.mesh.castShadow = true; this.mesh.visible = false;

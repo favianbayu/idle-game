@@ -648,13 +648,14 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     // air menghalangi (kecuali jembatan) — mask 2 sel/petak
     if (first) collision.mask({ ox: Z.x0, oz: Z.z0 + LZ, res: G.R, w: G.W, h: G.H, data: G.water });
     // bangunan
-    const ch = new Chunks(32), bveg = [];
+    const ch = new Chunks(32), bveg = [], lamps = [];
     for (const b of K.bldgs) {
       if (zoneOf(b.x, b.y) !== id) continue;
       const m = ch.at(b.x, b.y + LZ), y = heightAt(b.x, b.y), sp = SPECIAL.find(([x, z]) => Math.abs(x - b.x) < 0.6 && Math.abs(z - b.y) < 0.6);
       if (sp) { const solid = sp[2](m, b, y, C); if (solid === false) C.box(b.x, b.y + LZ, b.w / 2, b.h / 2, b.a); continue; }
       if (Math.abs(b.y - 258) < 0.5 && b.x >= 119 && b.x <= 157) { warungPantai(m, b, y, C); continue; }
       const r = house(m, b, y, C, bveg); if (!r) continue;
+      if (hash(Math.round(b.x * 7), Math.round(b.y * 7)) < 0.6) { const sn = Math.sin(r.xf.a), cs = Math.cos(r.xf.a), f = r.d / 2 + 0.12; lamps.push({ x: r.xf.x - sn * f, z: r.xf.z + cs * f, y: r.xf.y + 2.0, r: 2.6, k: 'teras', gx: r.xf.x - sn * (f + 0.9), gz: r.xf.z + cs * (f + 0.9), abs: true }); }   // lampu teras (malam)
       if (b.x >= 303 && b.x <= 326 && Math.abs(b.y - 40) < 1) { /* barak: atap hijau tentara */ m.gable({ ...r.xf, a: r.xf.a + Math.PI / 2 }, 0, FLOOR * 1.3 + 0.02, 0, r.d, r.w, 1.0, col('#5a7a4a'), 0.32); }
       C.box(b.x, b.y + LZ, r.w / 2 + 0.05, r.d / 2 + 0.05, r.xf.a);
     }
@@ -752,7 +753,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
       pick: (r, h, h2) => r.only ? { type: 'motor', kind: h2 < 0.75 ? 'sport' : 'trail' }
         : desa ? (h < 0.18 ? { type: 'car', kind: ['pikap', 'pikap', 'angkot', 'mpv', 'truk', 'suv'][Math.floor(h2 * 6)] } : h < 0.88 ? { type: 'motor', kind: ['bebek', 'bebek', 'matic', 'trail', 'matic', 'vespa'][Math.floor(h2 * 6)] } : { type: 'sepeda', kind: 'onthel' })
         : (h < 0.4 ? { type: 'car', kind: ['truk', 'truk', 'pikap', 'mpv', 'angkot', 'sedan'][Math.floor(h2 * 6)] } : h < 0.95 ? { type: 'motor' } : { type: 'sepeda' }) } }, null, null, (x, z) => heightAt(x, z - LZ));
-    cur = { Z, group, texs, ims, folk: [...folk, ...warga.list], canvas: cv, traffic, TG };
+    cur = { Z, group, texs, ims, folk: [...folk, ...warga.list], canvas: cv, traffic, TG, lamps };
   }
   const centroid = pts => { let x = 0, z = 0; for (const p of pts) { x += p[0]; z += p[1]; } return [x / pts.length, z / pts.length]; };
   function unload() {
@@ -771,6 +772,7 @@ export function makeLuar({ scene, collision, player, Character, npcs }) {
     ZONES, LZ, portals, marks, zoneOf, bldgs: K.bldgs,
     get cur() { return cur && cur.Z; },
     get traffic() { return cur && cur.traffic; },
+    get lamps() { return cur ? cur.lamps : []; },
     load, unload, heightAt,
     groundY: (x, z) => heightAt(x, z - LZ),
     // boleh berdiri di sini? (hanya di dalam wilayah yang sedang dimuat)

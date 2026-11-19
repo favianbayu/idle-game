@@ -20,6 +20,7 @@ import { makeKolam } from './kolam.js';
 import { makeStory } from './story.js';
 import { makeWaktu } from './waktu.js';
 import { makeRutin } from './rutin.js';
+import { makeLampu } from './lampu.js';
 import { parked } from './parked.js';
 import { makeLuar } from './luar.js';
 
@@ -173,6 +174,7 @@ const jajan = makeJajan({ scene, kota, collision, player, Character, npcs, shop,
 const animals = makeAnimals({ scene, kota, collision, player, toast });
 // wilayah luar kota (guide 86): area terpisah, dimuat satu-satu lewat travel
 const luar = makeLuar({ scene, collision, player, Character, npcs });
+const lampu = makeLampu({ scene, kota, luar, player, waktu, quality: () => opt.quality });   // lampu malam
 if (player.area === 'luar') { if (luar.ZONES.some(Z => Z.id === player.zone)) luar.load(player.zone); else Object.assign(player, { x: SPAWN.x, z: SPAWN.z, area: 'kota' }); }
 placeParked();
 if (player.area === 'dalam' && !interiors.cur) Object.assign(player, { x: SPAWN.x, z: SPAWN.z, area: 'kota' });
@@ -712,7 +714,7 @@ function loop(now) {
     const sx = Math.round(cam.x / step) * step, sz = Math.round(cam.z / step) * step;
     sun.target.position.set(sx, 0, sz); sun.position.set(sx + sunOff.dx, sunOff.dy, sz + sunOff.dz);
   }
-  jajan.update(dt); animals.update(dt); race.update(dt); kolam.update(dt); story.update(dt); rutin.update(dt);
+  jajan.update(dt); animals.update(dt); race.update(dt); kolam.update(dt); story.update(dt); rutin.update(dt); lampu.update(dt);
   const inside = player.area === 'dalam';
   if (inside !== wasInside) { wasInside = inside; if (inside) { scene.background = DARKBG; scene.fog.color.copy(DARKBG); hemi.intensity = 1.9; hemi.color.set('#e6efff'); sun.intensity = 2.1; sun.color.set('#fff1d6'); } }
   if (inside) { scene.fog.near = 60; scene.fog.far = 140; interiors.update(camera); }
@@ -744,4 +746,4 @@ renderer.compile(scene, camera);
 ui.loading.style.display = 'none';
 requestAnimationFrame(t => { last = t; loop(t); });
 // debug / tes otomatis
-window.__game = { kolam, story, waktu, rutin, luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };
+window.__game = { kolam, story, waktu, rutin, lampu, luar, travel, parked, race, collision, fight, acts, shop, interiors, jajan, animals, makeRide, mount, dismount, garage, emote, vegPlant, Character, player, cam, npcs, renderer, scene, camera, opt, kota, sekolah, act, rotateCam, toggleFollow, zoom, findTarget: () => target };

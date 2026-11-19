@@ -530,7 +530,9 @@ const sign = (xf, lx, y, lz, w, h, key) => SBG?.kinds.txt[key] != null && SBG.si
 // papan berdiri dua tiang (menghadap +z lokal)
 function standSign(m, C, xf, key, w = 2.4, h = 0.6, y = 0.9) { for (const s of [-1, 1]) m.box(xf, s * (w / 2 - 0.15), 0, -0.04, 0.08, y + h, 0.08, col('#5a5a60')); m.box(xf, 0, y - 0.04, -0.07, w + 0.08, h + 0.08, 0.06, col('#3a3a40')); sign(xf, 0, y, -0.03, w, h, key); colLocal(C, xf, 0, -0.04, w, 0.15); }
 /* ------------------------------------------------------------------ bangun kota */
+let street_lamps = [];   // titik lampu malam, diisi saat kota dibangun (lampu.js)
 export function buildKota(scene, C) {
+  street_lamps = [];
   const K = KOTA, M = masks(K), [W, H] = K.size;
   C.mask(M.block);
   const regionAt = (x, z) => { for (let i = 1; i <= 6; i++) if (inPoly(x, z, K.areas[i].pts)) return REGION_KEY[i]; return z < 34 ? 'bukit' : null; };
@@ -705,7 +707,16 @@ export function buildKota(scene, C) {
   plant(scene, veg);
   setParkGuard(null);
   const traffic = buildTraffic(scene, K, C, M, HT, lift);
+  // lampu teras rumah & lampu toko (titik lampu malam)
+  for (const h of houses) {
+    if (h.type === 'PK' || h.type === 'LK' || h.type === 'POS' || (h.special && h !== darto)) continue;
+    const toko = /^(R[4-7]|MM)$/.test(h.type), r = hash(Math.round(h.xf.x * 7), Math.round(h.xf.z * 7));
+    if (!toko && r > 0.7) continue;
+    const [hx, hz] = L(h.xf, toko ? 0 : (r - 0.35) * h.w * 0.5, h.d / 2 + 0.12), [gx, gz] = L(h.xf, toko ? 0 : (r - 0.35) * h.w * 0.5, h.d / 2 + (toko ? 1.6 : 1.0));
+    street_lamps.push({ x: hx, z: hz, y: toko ? 2.6 : 2.05, r: toko ? 4.2 : 2.6, k: toko ? 'toko' : 'teras', gx, gz });
+  }
   return {
+    lamps: street_lamps,
     traffic, signs, parkir, portal, posSatpam: portal?.pos, M, places, specials, standSigns, trees: veg.filter(v => ['bulat', 'ketapang', 'cemara', 'kelapa', 'pisang', 'bambu'].includes(v.k)).map(v => ({ x: v.x, z: v.z })),
     walkPaths: street.walkPaths, groundY: (x, z) => HT(x, z) + (street.walkAt(x, z) ? 0.1 : 0), heightAt: HT, lift,
     regionAt: (x, z) => { const r = regionAt(x, z); return r ? REGIONS[REGION_KEY.indexOf(r)] : 'Wirabumi'; },
@@ -1059,6 +1070,7 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = 
     return best;
   };
   const poles = [];
+  const LAMPS = street_lamps;   // titik lampu malam (lampu.js): {x, z, y, r, k, gx, gz}
   // trotoar: grid tinggi (4 sel/petak) supaya pemain, sepeda & NPC naik ke atas trotoar, plus jalur jalan kaki per sisi jalan
   const [GW, GH] = K.size, WR = 4, WK = new Uint8Array(GW * WR * GH * WR), walkPaths = [];
   const stamp = (x, z, a, nx, nz, u0, u1) => { const tx = Math.cos(a), tz = Math.sin(a); for (let t = -0.3; t <= 0.3; t += 0.12) for (let u = u0; u <= u1; u += 0.12) { const i = Math.floor((x + tx * t + nx * u) * WR), j = Math.floor((z + tz * t + nz * u) * WR); if (i >= 0 && j >= 0 && i < GW * WR && j < GH * WR) WK[j * GW * WR + i] = 1; } };
@@ -1117,6 +1129,7 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = 
         if (!M.waterAt(x, z) && !M.roadAt(x, z) && !occ.get(x, z) && M.roadDist(x, z) > 0.3) {
           const m = thin.at(x, z), xf = { x, z, a: Math.atan2(-nz * s, -nx * s) };
           m.box(xf, 0, 0, 0, 0.14, 3.4, 0.14, col('#5a5a60')); m.box(xf, 0.5, 3.3, 0, 1.0, 0.08, 0.1, col('#5a5a60')); m.box(xf, 0.95, 3.18, 0, 0.34, 0.12, 0.24, col('#fff2b0'));
+          { const [hx, hz] = L(xf, 0.95, 0), [gx, gz] = L(xf, 1.5, 0); LAMPS.push({ x: hx, z: hz, y: 3.1, r: 6, k: 'jalan', gx, gz }); }
           C.circle(x, z, 0.12);
           if (reg === 'pusat') { const tx = x + p.tx * 5, tz = z + p.tz * 5; if (M.roadDist(tx, tz) > 0.9 && !occ.get(tx, tz) && !M.waterAt(tx, tz)) { veg.push({ k: 'bulat', x: tx, z: tz, a: 0, s: 0.6 }); C.circle(tx, tz, 0.2); } }   // pohon peneduh trotoar
         }
@@ -1143,6 +1156,12 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = 
     for (const o of [-0.4, 0.4]) m.cyl(xf, 0, 3.98, o, 0.035, 0.08, col('#e8e4d8'), { seg: 5 });                                         // isolator
     if (hash(Math.round(A.x * 3), Math.round(A.z * 3)) < 0.35) { m.cyl(xf, 0.24, 3.3, 0, 0.13, 0.42, col('#6a7a6a'), { seg: 8 }); m.cyl(xf, 0.24, 3.72, 0, 0.14, 0.04, col('#5a6a5a'), { seg: 8 }); }   // trafo tabung
     m.box(xf, 0, 2.4, 0.09, 0.06, 0.1, 0.02, col('#f2f2ee'));   // pelat nomor tiang
+    { const hh = hash(Math.round(A.x * 3), Math.round(A.z * 3));   // lampu PJU kampung di tiang listrik: lengan pendek ke arah jalan
+      if (hh >= 0.35 && hh < 0.85 && A.road.kind !== 'raya') {
+        const sd = M.roadDist(...L(xf, 0, 0.8)) < M.roadDist(...L(xf, 0, -0.8)) ? 1 : -1;
+        m.box(xf, 0, 3.52, sd * 0.32, 0.05, 0.05, 0.62, col('#5a5a60')); m.box(xf, 0, 3.42, sd * 0.64, 0.16, 0.09, 0.22, col('#fff2b0'));
+        const [hx, hz] = L(xf, 0, sd * 0.64), [gx, gz] = L(xf, 0, sd * 1.3); LAMPS.push({ x: hx, z: hz, y: 3.38, r: 4.5, k: 'tiang', gx, gz });
+      } }
     C.circle(A.x, A.z, 0.14);
     for (const B of A.n) {
       if (wired.has(B)) continue;
@@ -1168,7 +1187,8 @@ function streetStuff(ch, K, M, C, veg, regionAt, occ, houses, thin, streetOut = 
     const x = 146 + Math.cos(t) * 10.2, z = 76 + Math.sin(t) * 6.3, m = ch.at(x, z), a = Math.atan2(Math.cos(t) * 6.3, -Math.sin(t) * 10.2);
     m.box({ x, z, a }, 0, 0, 0, 0.92, 0.5, 0.06, col('#2f6a4a'));
     if (i % 8 === 4) { const q = { x, z, a }; m.cyl(q, 0, 0, 0.4, 0.09, 0.12, col('#3a3a3e'), { seg: 8 }); m.cyl(q, 0, 0.12, 0.4, 0.04, 1.3, col('#2a2a2e'), { seg: 6 }); m.cyl(q, 0, 1.4, 0.4, 0.05, 0.06, col('#3a3a3e'), { r2: 0.09, seg: 8 });
-      m.ball(q, 0, 1.6, 0.4, 0.16, col('#fff6d0')); m.cyl(q, 0, 1.74, 0.4, 0.07, 0.05, col('#2a2a2e'), { seg: 8 }); }   // lampu taman bola
+      m.ball(q, 0, 1.6, 0.4, 0.16, col('#fff6d0')); m.cyl(q, 0, 1.74, 0.4, 0.07, 0.05, col('#2a2a2e'), { seg: 8 });   // lampu taman bola
+      { const [hx, hz] = L(q, 0, 0.4); street_lamps.push({ x: hx, z: hz, y: 1.6, r: 3.2, k: 'taman', gx: hx, gz: hz }); } }
   }
   { // panggung alun-alun: lantai papan berlis, rok kain merah-putih, tangga, tiang & atap kain, latar bergambar, pengeras suara
     const m = ch.at(146, 71), xf = { x: 146, z: 70.6, a: 0 }, wood = col('#8a5a34'), red = col('#c83a3a'), wht = col('#f2f0e8'), iron = col('#3a3a40');
